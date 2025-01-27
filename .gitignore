@@ -1,0 +1,11 @@
+/build
+/dist
+/*.so
+/*.dylib
+/*.dll
+.DS_Store
+.vscode
+dep/*
+!dep/
+!dep/Makefile
+
