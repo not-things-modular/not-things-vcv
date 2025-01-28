@@ -53,6 +53,10 @@ TEST_P(LimitValueParameterizedTest, ValueBelowLimitsButWillNotGoOverUpperLimitLi
     EXPECT_FLOAT_EQ(getLimitValueFunction()(1.23f, 3.f, 3.24f), 3.23f);
     // There is less than one volt between the limits, but moving the value upwards ends up exactly at the upper limit
     EXPECT_FLOAT_EQ(getLimitValueFunction()(1.23f, 3.f, 3.23f), 3.23f);
+    // The fractal part of the original value is lower then the fractal part of the lower limit, so just adding the difference
+    // between the non-fractal parts of them to the original value will still end up (just) below the lower limit, and an
+    // additional octave will have to be added (i.e. this test is specific for the limitValueIf version)
+    EXPECT_FLOAT_EQ(getLimitValueFunction()(1.22f, 3.23f, 4.23f), 4.22f);
 }
 
 TEST_P(LimitValueParameterizedTest, ValueBelowLimitsAndGoesAboveUpperLimitLimitsDownward) {

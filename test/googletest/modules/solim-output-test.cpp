@@ -9,6 +9,7 @@
 #include "modules/solim-input-octaver.hpp"
 
 #include "../common/vcv-registration.hpp"
+#include "../common/save-data.hpp"
 
 struct DummyWidget : ModuleWidget {
     DummyWidget(Module* module) {}
@@ -310,4 +311,66 @@ TEST(SolimOutputTest, WithSolimOutputExpanderAndSolimRandomAndSolimOutputOctaver
     solimOutputModule.draw(widget::Widget::DrawArgs());
 
     expectConnected(solimOutputModule, false);
+}
+
+
+TEST(SolimOutputTest, ShouldDefaultToMonophonicOutputMode) {
+    SolimOutputModule solimOutputModule;
+
+    EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+    json_t* jsonData = solimOutputModule.dataToJson();
+    checkJsonSolimOutputMode(solimOutputModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+
+    delete jsonData;
+}
+
+TEST(SolimOutputTest, ShouldSwitchToPolyphonicModeFromJsonData) {
+    SolimOutputModule solimOutputModule;
+
+	json_t *jsonData = json_object();
+	json_object_set_new(jsonData, "ntSolimOutputMode", json_integer(static_cast<SolimOutputMode>(SolimOutputMode::OUTPUT_MODE_POLYPHONIC)));
+    solimOutputModule.dataFromJson(jsonData);
+
+    EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+
+    delete jsonData;
+}
+
+TEST(SolimOutputTest, ShouldSwitchToMonophonicModeFromJsonData) {
+    SolimOutputModule solimOutputModule;
+
+	json_t *jsonData = json_object();
+	json_object_set_new(jsonData, "ntSolimOutputMode", json_integer(static_cast<SolimOutputMode>(SolimOutputMode::OUTPUT_MODE_MONOPHONIC)));
+    solimOutputModule.dataFromJson(jsonData);
+    EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+
+    solimOutputModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+
+    solimOutputModule.dataFromJson(jsonData);
+    EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+
+    delete jsonData;
+}
+
+TEST(SolimOutputTest, ShouldPersistPolyphonicOutputMode) {
+    SolimOutputModule solimOutputModule;
+
+    solimOutputModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+    EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+    json_t* jsonData = solimOutputModule.dataToJson();
+    checkJsonSolimOutputMode(solimOutputModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+
+    delete jsonData;
+}
+
+TEST(SolimOutputTest, ShouldPersistMonophonicOutputMode) {
+    SolimOutputModule solimOutputModule;
+
+    solimOutputModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+    solimOutputModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+    EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+    json_t* jsonData = solimOutputModule.dataToJson();
+    checkJsonSolimOutputMode(solimOutputModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+
+    delete jsonData;
 }

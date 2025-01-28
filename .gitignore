@@ -5,7 +5,7 @@
 /*.dll
 .DS_Store
 .vscode
-dep/*
-!dep/
-!dep/Makefile
+dep-test/*
+!dep-test/
+!dep-test/Makefile
 
