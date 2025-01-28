@@ -6,18 +6,18 @@ using namespace rack;
 
 
 struct NTPanel : ThemedSvgPanel, ThemeChangeListener {
-    DrawListener *drawListener;
+	DrawListener *drawListener;
 	std::shared_ptr<window::Svg> ntLightSvg;
 	std::shared_ptr<window::Svg> ntDarkSvg;
 
-    ThemeIds themeId;
+	ThemeIds themeId;
 
-    NTPanel(std::shared_ptr<window::Svg> lightSvg, std::shared_ptr<window::Svg> darkSvg, DrawListener *drawListener = nullptr);
+	NTPanel(std::shared_ptr<window::Svg> lightSvg, std::shared_ptr<window::Svg> darkSvg, DrawListener *drawListener = nullptr);
 
-    void themeChanged(const ThemeIds& theme) override;
+	void themeChanged(const ThemeIds& theme) override;
 
-    void draw(const DrawArgs& args) override;
-    // void drawLayer(const DrawArgs& args, int layer) override;
+	void draw(const DrawArgs& args) override;
+	// void drawLayer(const DrawArgs& args, int layer) override;
 };
 
 NTPanel* createNTPanel(std::string lightSvgPath, std::string darkSvgPath, DrawListener *drawListener = nullptr);

@@ -9,9 +9,9 @@ struct NTPort : ThemedPJ301MPort, ThemeChangeListener {
 	std::shared_ptr<window::Svg> ntLightSvg;
 	std::shared_ptr<window::Svg> ntDarkSvg;
 
-    ThemeIds themeId;
+	ThemeIds themeId;
 
-    NTPort();
+	NTPort();
 
-    void themeChanged(const ThemeIds& theme) override;
+	void themeChanged(const ThemeIds& theme) override;
 };

@@ -7,10 +7,10 @@ using namespace rack;
 
 
 enum ThemeIds {
-    VCV,
-    LIGHT,
-    DARK,
-    THEME_COUNT
+	VCV,
+	LIGHT,
+	DARK,
+	THEME_COUNT
 };
 
 enum SolimOutputMode {
@@ -29,7 +29,7 @@ struct DrawListener {
 };
 
 struct NTModule : Module {
-    ThemeIds themeId = VCV;
+	ThemeIds themeId = VCV;
 	std::vector<ThemeChangeListener*> themeChangeListeners;
 
 	json_t *dataToJson() override;
@@ -40,16 +40,16 @@ struct NTModule : Module {
 };
 
 struct NTModuleWidget : ModuleWidget {
-    NTModuleWidget(Module* module, std::string slug);
+	NTModuleWidget(Module* module, std::string slug);
 	void setPanel(widget::Widget* panel);
 	void addChild(Widget* child);
 	void addInput(PortWidget* input);
 	void addOutput(PortWidget* output);
 
-    void appendContextMenu(Menu* menu) override;
+	void appendContextMenu(Menu* menu) override;
 
 	void addThemeChangeListener(Widget* widget);
-    void setTheme(ThemeIds themeId);
+	void setTheme(ThemeIds themeId);
 
 	NTModule* getNTModule();
 };

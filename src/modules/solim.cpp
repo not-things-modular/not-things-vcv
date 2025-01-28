@@ -161,7 +161,7 @@ void SolimModule::draw(const widget::Widget::DrawArgs& args) {
 }
 
 void SolimModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
-    clockDivider.setDivision(sampleRateChangeEvent.sampleRate / 6000);
+	clockDivider.setDivision(sampleRateChangeEvent.sampleRate / 6000);
 }
 
 SolimModule::ProcessRate SolimModule::getProcessRate() {

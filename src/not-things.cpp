@@ -37,15 +37,15 @@ void NTModule::addThemeChangeListener(ThemeChangeListener* listener) {
 
 NTModuleWidget::NTModuleWidget(Module* module, std::string slug) {
 	setModule(module);
-    std::string svgPath = "res/" + slug;
+	std::string svgPath = "res/" + slug;
 	setPanel(createNTPanel(asset::plugin(pluginInstance, svgPath + ".svg"), asset::plugin(pluginInstance, svgPath + "-dark.svg"), dynamic_cast<DrawListener*>(module)));
 
-    addChild(createWidget<NTScrew>(Vec(box.size.x - RACK_GRID_WIDTH, 0)));
-    addChild(createWidget<NTScrew>(Vec(0, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	addChild(createWidget<NTScrew>(Vec(box.size.x - RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<NTScrew>(Vec(0, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 	if (getPanel()->box.getWidth() > 45) {
-        addChild(createWidget<NTScrew>(Vec(0, 0)));
-        addChild(createWidget<NTScrew>(Vec(box.size.x - RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-    }
+		addChild(createWidget<NTScrew>(Vec(0, 0)));
+		addChild(createWidget<NTScrew>(Vec(box.size.x - RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	}
 }
 
 void NTModuleWidget::setPanel(Widget* panel) {
