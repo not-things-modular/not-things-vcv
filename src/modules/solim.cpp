@@ -77,7 +77,7 @@ void SolimModule::dataFromJson(json_t *rootJ) {
 	json_t *ntSolimOutputModeJson = json_object_get(rootJ, "ntSolimOutputMode");
 	if (ntSolimOutputModeJson) {
 		json_int_t outputModeNumber = json_integer_value(ntSolimOutputModeJson);
-		if (outputModeNumber > 0 && outputModeNumber < SolimOutputMode::OUTPUT_MODE_COUNT) {
+		if (outputModeNumber > 0 && outputModeNumber < SolimOutputMode::NUM_OUTPUT_MODES) {
 			setOutputMode(static_cast<SolimOutputMode>(outputModeNumber));
 		} else {
 			setOutputMode(SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
@@ -179,7 +179,7 @@ void SolimModule::setOutputMode(SolimOutputMode outputMode) {
 	m_outputMode = outputMode;
 }
 
-float SolimModule::getCvOrParamVoltage(InputsIds inputId, ParamsIds paramId, int channel) {
+float SolimModule::getCvOrParamVoltage(InputId inputId, ParamId paramId, int channel) {
 	float result;
 	int channels = inputs[inputId].getChannels();
 	if (channels > channel) {
@@ -203,7 +203,7 @@ void SolimModule::detectExpanders() {
 	Expander* expanderModule = &getLeftExpander();
 	while ((expanderModule->module) && ((m_solimExpanders.inputCount < 8) || (m_solimExpanders.solimRandom == nullptr) || (m_solimExpanders.solimInputOctaver == nullptr))) {
 		if ((expanderModule->module->getModel() == modelSolimInput) && (m_solimExpanders.inputCount < 8)) {
-			m_solimExpanders.inputIterators[m_solimExpanders.inputCount] = expanderModule->module->inputs.begin() + SolimInputModule::InputsIds::IN_INPUTS;
+			m_solimExpanders.inputIterators[m_solimExpanders.inputCount] = expanderModule->module->inputs.begin() + SolimInputModule::InputId::IN_INPUTS;
 			m_solimExpanders.inputCount++;
 		} else if ((m_solimExpanders.solimRandom == nullptr) && (expanderModule->module->getModel() == modelSolimRandom)) {
 			m_solimExpanders.solimRandom = reinterpret_cast<SolimRandomModule*>(expanderModule->module);
@@ -220,14 +220,14 @@ void SolimModule::detectExpanders() {
 	m_solimExpanders.outputIterators[0] = outputs.begin() + OUT_OUTPUTS;
 	m_solimExpanders.outputModes[0] = m_outputMode;
 	m_solimExpanders.lightIterators[0] = lights.begin() + OUT_LIGHTS;
-	m_solimExpanders.polyphonicLights[0] = &lights[LightIds::OUT_POLYPHONIC_LIGHT];
+	m_solimExpanders.polyphonicLights[0] = &lights[LightId::OUT_POLYPHONIC_LIGHT];
 	expanderModule = &getRightExpander();
 	while ((expanderModule->module) && ((m_solimExpanders.outputCount < 8) || (m_solimExpanders.solimRandom == nullptr))) {
 		if ((expanderModule->module->getModel() == modelSolimOutput) && (m_solimExpanders.outputCount < 8)) {
-			m_solimExpanders.outputIterators[m_solimExpanders.outputCount] = expanderModule->module->outputs.begin() + SolimOutputModule::OutputsIds::OUT_OUTPUTS;
+			m_solimExpanders.outputIterators[m_solimExpanders.outputCount] = expanderModule->module->outputs.begin() + SolimOutputModule::OutputId::OUT_OUTPUTS;
 			m_solimExpanders.outputModes[m_solimExpanders.outputCount] = reinterpret_cast<SolimOutputModule*>(expanderModule->module)->getOutputMode();
-			m_solimExpanders.lightIterators[m_solimExpanders.outputCount] = expanderModule->module->lights.begin() + SolimOutputModule::LightIds::OUT_LIGHTS;
-			m_solimExpanders.polyphonicLights[m_solimExpanders.outputCount] = &expanderModule->module->lights[SolimOutputModule::LightIds::OUT_POLYPHONIC_LIGHT];
+			m_solimExpanders.lightIterators[m_solimExpanders.outputCount] = expanderModule->module->lights.begin() + SolimOutputModule::LightId::OUT_LIGHTS;
+			m_solimExpanders.polyphonicLights[m_solimExpanders.outputCount] = &expanderModule->module->lights[SolimOutputModule::LightId::OUT_POLYPHONIC_LIGHT];
 			m_solimExpanders.outputCount++;
 		} else if ((m_solimExpanders.solimRandom == nullptr) && (expanderModule->module->getModel() == modelSolimRandom)) {
 			m_solimExpanders.solimRandom = reinterpret_cast<SolimRandomModule*>(expanderModule->module);

@@ -9,9 +9,9 @@ struct NTScrew : ThemedScrew, ThemeChangeListener {
 	std::shared_ptr<window::Svg> ntLightSvg;
 	std::shared_ptr<window::Svg> ntDarkSvg;
 
-	ThemeIds themeId;
+	ThemeId themeId;
 
 	NTScrew();
 
-	void themeChanged(const ThemeIds& theme) override;
+	void themeChanged(const ThemeId& theme) override;
 };

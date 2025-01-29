@@ -15,15 +15,15 @@ void NTModule::dataFromJson(json_t *rootJ) {
 	json_t *ntThemeJson = json_object_get(rootJ, "ntTheme");
 	if (ntThemeJson) {
 		json_int_t ntThemeNumber = json_integer_value(ntThemeJson);
-		if (ntThemeNumber > 0 && ntThemeNumber < ThemeIds::THEME_COUNT) {
-			this->themeId = static_cast<ThemeIds>(ntThemeNumber);
+		if (ntThemeNumber > 0 && ntThemeNumber < ThemeId::NUM_THEMES) {
+			this->themeId = static_cast<ThemeId>(ntThemeNumber);
 		} else {
-			this->themeId = ThemeIds::VCV;
+			this->themeId = ThemeId::VCV;
 		}
 	}
-}	
+}
 
-void NTModule::setTheme(ThemeIds& themeId) {
+void NTModule::setTheme(ThemeId& themeId) {
 	this->themeId = themeId;
 	for (ThemeChangeListener* listener : this->themeChangeListeners) {
 		listener->themeChanged(themeId);
@@ -69,13 +69,13 @@ void NTModuleWidget::addOutput(PortWidget* output) {
 }
 
 void NTModuleWidget::appendContextMenu(Menu* menu) {
-	ThemeIds currentThemeId = getModule() ? getNTModule()->themeId : ThemeIds::VCV;
+	ThemeId currentThemeId = getModule() ? getNTModule()->themeId : ThemeId::VCV;
 	menu->addChild(new MenuSeparator);
 	menu->addChild(createSubmenuItem("Panel theme", "",
 		[this, currentThemeId](Menu* menu) {
-			menu->addChild(createCheckMenuItem("Follow VCV Panel Theme", "", [currentThemeId]() { return currentThemeId == ThemeIds::VCV; }, [this]() { this->setTheme(ThemeIds::VCV); }));
-			menu->addChild(createCheckMenuItem("Light", "", [currentThemeId]() { return currentThemeId == ThemeIds::LIGHT; }, [this]() { this->setTheme(ThemeIds::LIGHT); }));
-			menu->addChild(createCheckMenuItem("Dark", "", [currentThemeId]() { return currentThemeId == ThemeIds::DARK; }, [this]() { this->setTheme(ThemeIds::DARK); }));
+			menu->addChild(createCheckMenuItem("Follow VCV Panel Theme", "", [currentThemeId]() { return currentThemeId == ThemeId::VCV; }, [this]() { this->setTheme(ThemeId::VCV); }));
+			menu->addChild(createCheckMenuItem("Light", "", [currentThemeId]() { return currentThemeId == ThemeId::LIGHT; }, [this]() { this->setTheme(ThemeId::LIGHT); }));
+			menu->addChild(createCheckMenuItem("Dark", "", [currentThemeId]() { return currentThemeId == ThemeId::DARK; }, [this]() { this->setTheme(ThemeId::DARK); }));
 		}
 	));
 }
@@ -91,7 +91,7 @@ void NTModuleWidget::addThemeChangeListener(Widget* widget) {
 	}
 }
 
-void NTModuleWidget::setTheme(ThemeIds themeId) {
+void NTModuleWidget::setTheme(ThemeId themeId) {
 	if (getModule()) {
 		getNTModule()->setTheme(themeId);
 	}

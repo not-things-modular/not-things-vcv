@@ -4,17 +4,17 @@
 
 
 struct SolimOutputModule : NTModule, DrawListener {
-	enum ParamsIds {
+	enum ParamId {
 		NUM_PARAMS
 	};
-	enum InputsIds {
+	enum InputId {
 		NUM_INPUTS
 	};
-	enum OutputsIds {
+	enum OutputId {
 		ENUMS(OUT_OUTPUTS, 8),
 		NUM_OUTPUTS
 	};
-	enum LightIds {
+	enum LightId {
 		OUT_POLYPHONIC_LIGHT,
 		ENUMS(OUT_LIGHTS, 8),
 		LIGHT_CONNECTED,

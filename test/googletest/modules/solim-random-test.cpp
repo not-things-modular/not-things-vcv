@@ -15,21 +15,21 @@ struct DummyWidget : ModuleWidget {
 };
 
 void initializeSolimRandomModule(SolimRandomModule& solimRandomModule) {
-	for (int i = 0; i < SolimRandomModule::LightsIds::NUM_LIGHTS; i++) {
+	for (int i = 0; i < SolimRandomModule::LightId::NUM_LIGHTS; i++) {
 		solimRandomModule.lights[i].setBrightness(-99.f);
 	}
-	for (int i = 0; i < SolimRandomModule::InputsIds::NUM_INPUTS; i++) {
+	for (int i = 0; i < SolimRandomModule::InputId::NUM_INPUTS; i++) {
 		solimRandomModule.inputs[i].setChannels(0);
 		solimRandomModule.inputs[i].setVoltage(0.f);
 	}
-	for (int i = 0; i < SolimRandomModule::ParamsIds::NUM_PARAMS; i++) {
+	for (int i = 0; i < SolimRandomModule::ParamId::NUM_PARAMS; i++) {
 		solimRandomModule.params[i].setValue(0.f);
 	}
 }
 
 void expectConnected(SolimRandomModule& solimRandomModule, bool connectedLeft, bool connectedRight) {
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_CONNECTED_LEFT].getBrightness(), connectedLeft ? 1.f : 0.f, 0.0001f);
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_CONNECTED_RIGHT].getBrightness(), connectedRight ? 1.f : 0.f, 0.0001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_CONNECTED_LEFT].getBrightness(), connectedLeft ? 1.f : 0.f, 0.0001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_CONNECTED_RIGHT].getBrightness(), connectedRight ? 1.f : 0.f, 0.0001f);
 }
 
 TEST(SolimRandomTest, WithNoExpandersShouldDeactivateLed) {
@@ -450,19 +450,19 @@ void expectNotTriggered(SolimRandomModule& solimRandomModule, bool checkMove, bo
 	for (int i = 0; i < 8; i++) {
 		if (checkMove) {
 			EXPECT_EQ(solimRandomModule.m_moveCounters[i], 0);
-			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].getBrightness(), 0.f, 0.000001f);
+			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].getBrightness(), 0.f, 0.000001f);
 		}
 		if (checkOne) {
 			EXPECT_EQ(solimRandomModule.m_oneCounters[i], 0);
-			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].getBrightness(), 0.f, 0.000001f);
+			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].getBrightness(), 0.f, 0.000001f);
 		}
 		if (checkAll) {
 			EXPECT_EQ(solimRandomModule.m_allCounters[i], 0);
-			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].getBrightness(), 0.f, 0.000001f);
+			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].getBrightness(), 0.f, 0.000001f);
 		}
 		if (checkReset) {
 			EXPECT_EQ(solimRandomModule.m_resetCounters[i], 0);
-			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].getBrightness(), 0.f, 0.000001f);
+			EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].getBrightness(), 0.f, 0.000001f);
 		}
 	}
 }
@@ -482,39 +482,39 @@ TEST(SolimRandomTest, ShouldHandleMoveTrigger) {
 	initializeSolimRandomModule(solimRandomModule);
 
 	for (int i = 0; i < 8; i++) {
-		solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_MOVE].channels = 8;
+		solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_MOVE].channels = 8;
 	}
 
 	// Initialize the triggers
 	solimRandomModule.process(Module::ProcessArgs());
 
 	// Now press the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_MOVE].setValue(1.f);
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_MOVE].setValue(1.f);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, false, true, true, true);
 
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_moveCounters[i], 1);
-		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].getBrightness(), 1.f, 0.000001f);
+		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].getBrightness(), 1.f, 0.000001f);
 	}
 
 	// Release the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_MOVE].setValue(0.f);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_MOVE].setValue(0.f);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, false, true, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_moveCounters[i], 1);
 	}
 
 	// Trigger through the input
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_MOVE].setVoltage(1.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_MOVE].setVoltage(1.f, 3);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, false, true, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if (i != 3) {
 			EXPECT_EQ(solimRandomModule.m_moveCounters[i], 1);
@@ -524,13 +524,13 @@ TEST(SolimRandomTest, ShouldHandleMoveTrigger) {
 	}
 
 	// Remove the input trigger again, and trigger another
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_MOVE].setVoltage(0.f, 3);
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_MOVE].setVoltage(1.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_MOVE].setVoltage(0.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_MOVE].setVoltage(1.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, false, true, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_moveCounters[i], 1);
@@ -540,12 +540,12 @@ TEST(SolimRandomTest, ShouldHandleMoveTrigger) {
 	}
 
 	// Remove the last input trigger
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_MOVE].setVoltage(0.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_MOVE].setVoltage(0.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, false, true, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_MOVE].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_MOVE].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_moveCounters[i], 1);
@@ -560,39 +560,39 @@ TEST(SolimRandomTest, ShouldHandleOneTrigger) {
 	initializeSolimRandomModule(solimRandomModule);
 
 	for (int i = 0; i < 8; i++) {
-		solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ONE].channels = 8;
+		solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ONE].channels = 8;
 	}
 
 	// Initialize the triggers
 	solimRandomModule.process(Module::ProcessArgs());
 
 	// Now press the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_ONE].setValue(1.f);
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_ONE].setValue(1.f);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, false, true, true);
 
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_oneCounters[i], 1);
-		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].getBrightness(), 1.f, 0.000001f);
+		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].getBrightness(), 1.f, 0.000001f);
 	}
 
 	// Release the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_ONE].setValue(0.f);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_ONE].setValue(0.f);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, false, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_oneCounters[i], 1);
 	}
 
 	// Trigger through the input
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ONE].setVoltage(1.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ONE].setVoltage(1.f, 3);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, false, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if (i != 3) {
 			EXPECT_EQ(solimRandomModule.m_oneCounters[i], 1);
@@ -602,13 +602,13 @@ TEST(SolimRandomTest, ShouldHandleOneTrigger) {
 	}
 
 	// Remove the input trigger again, and trigger another
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ONE].setVoltage(0.f, 3);
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ONE].setVoltage(1.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ONE].setVoltage(0.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ONE].setVoltage(1.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, false, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_oneCounters[i], 1);
@@ -618,12 +618,12 @@ TEST(SolimRandomTest, ShouldHandleOneTrigger) {
 	}
 
 	// Remove the last input trigger
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ONE].setVoltage(0.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ONE].setVoltage(0.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, false, true, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ONE].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ONE].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_oneCounters[i], 1);
@@ -638,39 +638,39 @@ TEST(SolimRandomTest, ShouldHandleAllTrigger) {
 	initializeSolimRandomModule(solimRandomModule);
 
 	for (int i = 0; i < 8; i++) {
-		solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ALL].channels = 8;
+		solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ALL].channels = 8;
 	}
 
 	// Initialize the triggers
 	solimRandomModule.process(Module::ProcessArgs());
 
 	// Now press the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_ALL].setValue(1.f);
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_ALL].setValue(1.f);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, false, true);
 
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_allCounters[i], 1);
-		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].getBrightness(), 1.f, 0.000001f);
+		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].getBrightness(), 1.f, 0.000001f);
 	}
 
 	// Release the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_ALL].setValue(0.f);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_ALL].setValue(0.f);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, false, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_allCounters[i], 1);
 	}
 
 	// Trigger through the input
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ALL].setVoltage(1.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ALL].setVoltage(1.f, 3);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, false, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if (i != 3) {
 			EXPECT_EQ(solimRandomModule.m_allCounters[i], 1);
@@ -680,13 +680,13 @@ TEST(SolimRandomTest, ShouldHandleAllTrigger) {
 	}
 
 	// Remove the input trigger again, and trigger another
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ALL].setVoltage(0.f, 3);
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ALL].setVoltage(1.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ALL].setVoltage(0.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ALL].setVoltage(1.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, false, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_allCounters[i], 1);
@@ -696,12 +696,12 @@ TEST(SolimRandomTest, ShouldHandleAllTrigger) {
 	}
 
 	// Remove the last input trigger
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_ALL].setVoltage(0.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_ALL].setVoltage(0.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, false, true);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_ALL].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_ALL].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_allCounters[i], 1);
@@ -716,39 +716,39 @@ TEST(SolimRandomTest, ShouldHandleResetTrigger) {
 	initializeSolimRandomModule(solimRandomModule);
 
 	for (int i = 0; i < 8; i++) {
-		solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_RESET].channels = 8;
+		solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_RESET].channels = 8;
 	}
 
 	// Initialize the triggers
 	solimRandomModule.process(Module::ProcessArgs());
 
 	// Now press the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_RESET].setValue(1.f);
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_RESET].setValue(1.f);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, true, false);
 
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_resetCounters[i], 1);
-		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].getBrightness(), 1.f, 0.000001f);
+		EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].getBrightness(), 1.f, 0.000001f);
 	}
 
 	// Release the button
-	solimRandomModule.params[SolimRandomModule::ParamsIds::PARAM_TRIG_RESET].setValue(0.f);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.params[SolimRandomModule::ParamId::PARAM_TRIG_RESET].setValue(0.f);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, true, false);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(solimRandomModule.m_resetCounters[i], 1);
 	}
 
 	// Trigger through the input
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_RESET].setVoltage(1.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_RESET].setVoltage(1.f, 3);
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, true, false);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if (i != 3) {
 			EXPECT_EQ(solimRandomModule.m_resetCounters[i], 1);
@@ -758,13 +758,13 @@ TEST(SolimRandomTest, ShouldHandleResetTrigger) {
 	}
 
 	// Remove the input trigger again, and trigger another
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_RESET].setVoltage(0.f, 3);
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_RESET].setVoltage(1.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_RESET].setVoltage(0.f, 3);
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_RESET].setVoltage(1.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, true, false);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].getBrightness(), 1.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].getBrightness(), 1.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_resetCounters[i], 1);
@@ -774,12 +774,12 @@ TEST(SolimRandomTest, ShouldHandleResetTrigger) {
 	}
 
 	// Remove the last input trigger
-	solimRandomModule.inputs[SolimRandomModule::InputsIds::INPUT_TRIG_RESET].setVoltage(0.f, 4);
-	solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
+	solimRandomModule.inputs[SolimRandomModule::InputId::INPUT_TRIG_RESET].setVoltage(0.f, 4);
+	solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].setBrightness(-1.f); // Set the light brightness to a low value, so that the module setting it to 0.f will be applied immediately insteady of smoothly
 	solimRandomModule.process(Module::ProcessArgs());
 	expectNotTriggered(solimRandomModule, true, true, true, false);
 
-	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightsIds::LIGHT_TRIG_RESET].getBrightness(), 0.f, 0.000001f);
+	EXPECT_NEAR(solimRandomModule.lights[SolimRandomModule::LightId::LIGHT_TRIG_RESET].getBrightness(), 0.f, 0.000001f);
 	for (int i = 0; i < 8; i++) {
 		if ((i != 3) && (i != 4)) {
 			EXPECT_EQ(solimRandomModule.m_resetCounters[i], 1);

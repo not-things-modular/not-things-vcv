@@ -27,7 +27,7 @@ void SolimOutputModule::dataFromJson(json_t *rootJ) {
 	json_t *ntSolimOutputModeJson = json_object_get(rootJ, "ntSolimOutputMode");
 	if (ntSolimOutputModeJson) {
 		json_int_t outputModeNumber = json_integer_value(ntSolimOutputModeJson);
-		if (outputModeNumber > 0 && outputModeNumber < SolimOutputMode::OUTPUT_MODE_COUNT) {
+		if (outputModeNumber > 0 && outputModeNumber < SolimOutputMode::NUM_OUTPUT_MODES) {
 			setOutputMode(static_cast<SolimOutputMode>(outputModeNumber));
 		} else {
 			setOutputMode(SolimOutputMode::OUTPUT_MODE_MONOPHONIC);

@@ -4,21 +4,21 @@
 
 
 struct SolimOutputOctaverModule : NTModule, DrawListener {
-	enum ParamsIds {
+	enum ParamId {
 		ENUMS(PARAM_ADD_OCTAVE, 8),
 		ENUMS(PARAM_REPLACE_ORIGINAL, 8),
 		PARAM_RESORT,
 		NUM_PARAMS
 	};
-	enum InputsIds {
+	enum InputId {
 		ENUMS(IN_ADD_OCTAVE, 8),
 		ENUMS(IN_REPLACE_ORIGINAL, 8),
 		NUM_INPUTS
 	};
-	enum OutputsIds {
+	enum OutputId {
 		NUM_OUTPUTS
 	};
-	enum LightIds {
+	enum LightId {
 		ENUMS(LIGHT_REPLACE_ORIGINAL, 8),
 		LIGHT_CONNECTED,
 		LIGHT_NOT_CONNECTED,

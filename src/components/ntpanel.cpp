@@ -9,13 +9,13 @@ NTPanel::NTPanel(std::shared_ptr<window::Svg> lightSvg, std::shared_ptr<window::
 	setBackground(lightSvg, darkSvg);
 }
 
-void NTPanel::themeChanged(const ThemeIds& themeId) {
+void NTPanel::themeChanged(const ThemeId& themeId) {
 	this->themeId = themeId;
 	switch (themeId) {
-		case ThemeIds::LIGHT:
+		case ThemeId::LIGHT:
 			setBackground(this->ntLightSvg, this->ntLightSvg);
 			break;
-		case ThemeIds::DARK:
+		case ThemeId::DARK:
 			setBackground(this->ntDarkSvg, this->ntDarkSvg);
 			break;
 		default:

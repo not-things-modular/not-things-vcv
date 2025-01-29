@@ -15,25 +15,25 @@ struct DummyWidget : ModuleWidget {
 };
 
 void initializeSolimInputOctaverModule(SolimInputOctaverModule& solimInputOctaverModule) {
-	for (int i = 0; i < SolimInputOctaverModule::LightIds::NUM_LIGHTS; i++) {
+	for (int i = 0; i < SolimInputOctaverModule::LightId::NUM_LIGHTS; i++) {
 		solimInputOctaverModule.lights[i].setBrightness(-99.f);
 	}
-	for (int i = 0; i < SolimInputOctaverModule::InputsIds::NUM_INPUTS; i++) {
+	for (int i = 0; i < SolimInputOctaverModule::InputId::NUM_INPUTS; i++) {
 		solimInputOctaverModule.inputs[i].setChannels(0);
 		solimInputOctaverModule.inputs[i].setVoltage(0.f);
 	}
-	for (int i = 0; i < SolimInputOctaverModule::ParamsIds::NUM_PARAMS; i++) {
+	for (int i = 0; i < SolimInputOctaverModule::ParamId::NUM_PARAMS; i++) {
 		solimInputOctaverModule.params[i].setValue(0.f);
 	}
 }
 
 void expectConnected(SolimInputOctaverModule& solimInputOctaverModule, bool connected) {
 	if (connected) {
-		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_CONNECTED].getBrightness(), 1.f, 0.0001f);
-		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_NOT_CONNECTED].getBrightness(), 0.f, 0.0001f);
+		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_CONNECTED].getBrightness(), 1.f, 0.0001f);
+		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_NOT_CONNECTED].getBrightness(), 0.f, 0.0001f);
 	} else {
-		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_CONNECTED].getBrightness(), 0.f, 0.0001f);
-		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_NOT_CONNECTED].getBrightness(), 1.f, 0.0001f);
+		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_CONNECTED].getBrightness(), 0.f, 0.0001f);
+		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_NOT_CONNECTED].getBrightness(), 1.f, 0.0001f);
 	}
 }
 
@@ -276,17 +276,17 @@ TEST(SolimInputOctaverTest, ShouldLightReplaceOriginalLedsBasedOnParams) {
 	SolimInputOctaverModule solimInputOctaverModule;
 
 	// Enable buttons 1, 3, 5 and 7
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 1].setValue(1.0f);
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 3].setValue(1.0f);
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 5].setValue(1.0f);
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 7].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 1].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 3].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 5].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 7].setValue(1.0f);
 
 	solimInputOctaverModule.draw(widget::Widget::DrawArgs());
 
 	for (int i = 0; i < 8; i += 2) {
 		// Even lights should be turned off, uneven ones turned on
-		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + i].getBrightness(), 0.f, 0.0001f);
-		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + i + 1].getBrightness(), 1.f, 0.0001f);
+		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + i].getBrightness(), 0.f, 0.0001f);
+		EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + i + 1].getBrightness(), 1.f, 0.0001f);
 	}
 }
 
@@ -294,20 +294,20 @@ TEST(SolimInputOctaverTest, ShouldLightReplaceOriginalLedsBasedOnInputs) {
 	SolimInputOctaverModule solimInputOctaverModule;
 
 	// Connnect inputs 2, 4, 6, and set voltage for 2 and 6 to on
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 2].channels = 1;
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 2].setVoltage(1.f);
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 4].channels = 1;
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 4].setVoltage(0.f);
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 6].channels = 1;
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 6].setVoltage(1.f);
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 2].channels = 1;
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 2].setVoltage(1.f);
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 4].channels = 1;
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 4].setVoltage(0.f);
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 6].channels = 1;
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 6].setVoltage(1.f);
 
 	solimInputOctaverModule.draw(widget::Widget::DrawArgs());
 
 	for (int i = 0; i < 8; i++) {
 		if (i == 2 || i == 6) {
-			EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + i].getBrightness(), 1.f, 0.0001f);
+			EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + i].getBrightness(), 1.f, 0.0001f);
 		} else {
-			EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + i].getBrightness(), 0.f, 0.0001f);
+			EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + i].getBrightness(), 0.f, 0.0001f);
 		}
 	}
 }
@@ -316,27 +316,27 @@ TEST(SolimInputOctaverTest, ShouldOnlyUseParamForLightReplaceOriginalIfInputIsNo
 	SolimInputOctaverModule solimInputOctaverModule;
 
 	// The buttons for 1, 2, 5 and 6 are turned on.
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 1].setValue(1.0f);
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 2].setValue(1.0f);
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 4].setValue(1.0f);
-	solimInputOctaverModule.params[SolimInputOctaverModule::ParamsIds::PARAM_REPLACE_ORIGINAL + 6].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 1].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 2].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 4].setValue(1.0f);
+	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 6].setValue(1.0f);
 
 	// Connnect inputs 2, 4, 6, and set voltage for 2 and 6 to on
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 2].channels = 1;
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 2].setVoltage(1.f);
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 4].channels = 1;
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 4].setVoltage(0.f);
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 6].channels = 1;
-	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputsIds::IN_REPLACE_ORIGINAL + 6].setVoltage(1.f);
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 2].channels = 1;
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 2].setVoltage(1.f);
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 4].channels = 1;
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 4].setVoltage(0.f);
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 6].channels = 1;
+	solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 6].setVoltage(1.f);
 
 	solimInputOctaverModule.draw(widget::Widget::DrawArgs());
 
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 0].getBrightness(), 0.f, 0.0001f);
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 1].getBrightness(), 1.f, 0.0001f);
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 2].getBrightness(), 1.f, 0.0001f);
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 3].getBrightness(), 0.f, 0.0001f);
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 4].getBrightness(), 0.f, 0.0001f);
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 5].getBrightness(), 0.f, 0.0001f);
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 6].getBrightness(), 1.f, 0.0001f);
-	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightIds::LIGHT_REPLACE_ORIGINAL + 7].getBrightness(), 0.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 0].getBrightness(), 0.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 1].getBrightness(), 1.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 2].getBrightness(), 1.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 3].getBrightness(), 0.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 4].getBrightness(), 0.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 5].getBrightness(), 0.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 6].getBrightness(), 1.f, 0.0001f);
+	EXPECT_NEAR(solimInputOctaverModule.lights[SolimInputOctaverModule::LightId::LIGHT_REPLACE_ORIGINAL + 7].getBrightness(), 0.f, 0.0001f);
 }

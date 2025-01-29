@@ -16,22 +16,22 @@ struct DummyWidget : ModuleWidget {
 };
 
 void initializeSolimOutputModule(SolimOutputModule& solimOutputModule) {
-	for (int i = 0; i < SolimOutputModule::LightIds::NUM_LIGHTS; i++) {
+	for (int i = 0; i < SolimOutputModule::LightId::NUM_LIGHTS; i++) {
 		solimOutputModule.lights[i].setBrightness(-99.f);
 	}
 }
 
 void expectConnected(SolimOutputModule& solimOutputModule, bool connected) {
 	if (connected) {
-		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightIds::LIGHT_CONNECTED].getBrightness(), 1.f, 0.0001f);
-		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightIds::LIGHT_NOT_CONNECTED].getBrightness(), 0.f, 0.0001f);
-		for (int i = SolimOutputModule::LightIds::OUT_LIGHTS; i < SolimOutputModule::LightIds::OUT_LIGHTS + 8; i++) {
+		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightId::LIGHT_CONNECTED].getBrightness(), 1.f, 0.0001f);
+		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightId::LIGHT_NOT_CONNECTED].getBrightness(), 0.f, 0.0001f);
+		for (int i = SolimOutputModule::LightId::OUT_LIGHTS; i < SolimOutputModule::LightId::OUT_LIGHTS + 8; i++) {
 			EXPECT_NEAR(solimOutputModule.lights[i].getBrightness(), -99.f, 0.0001f);
 		}
 	} else {
-		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightIds::LIGHT_CONNECTED].getBrightness(), 0.f, 0.0001f);
-		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightIds::LIGHT_NOT_CONNECTED].getBrightness(), 1.f, 0.0001f);
-		for (int i = SolimOutputModule::LightIds::OUT_LIGHTS; i < SolimOutputModule::LightIds::OUT_LIGHTS + 8; i++) {
+		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightId::LIGHT_CONNECTED].getBrightness(), 0.f, 0.0001f);
+		EXPECT_NEAR(solimOutputModule.lights[SolimOutputModule::LightId::LIGHT_NOT_CONNECTED].getBrightness(), 1.f, 0.0001f);
+		for (int i = SolimOutputModule::LightId::OUT_LIGHTS; i < SolimOutputModule::LightId::OUT_LIGHTS + 8; i++) {
 			EXPECT_NEAR(solimOutputModule.lights[i].getBrightness(), 0.f, 0.0001f);
 		}
 	}
