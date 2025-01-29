@@ -58,26 +58,26 @@ TEST(SolimTest, DrawShouldUpdateNoteDisplays) {
 	solimValueSet.lowerLimit = -0.9999f;
 	solimValueSet.upperLimit = 1.0001f;
 	solimModule.draw(widget::Widget::DrawArgs());
-	EXPECT_EQ(solimModule.m_lowerDisplay->scale, 4);
-	EXPECT_EQ(solimModule.m_lowerDisplay->note, 0);
-	EXPECT_EQ(solimModule.m_upperDisplay->scale, 6);
-	EXPECT_EQ(solimModule.m_upperDisplay->note, 0);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 4);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 0);
+	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 6);
+	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 0);
 
 	solimValueSet.lowerLimit = -1.00001f;
 	solimValueSet.upperLimit = 1.0001f;
 	solimModule.draw(widget::Widget::DrawArgs());
-	EXPECT_EQ(solimModule.m_lowerDisplay->scale, 3);
-	EXPECT_EQ(solimModule.m_lowerDisplay->note, 11);
-	EXPECT_EQ(solimModule.m_upperDisplay->scale, 6);
-	EXPECT_EQ(solimModule.m_upperDisplay->note, 0);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 3);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 11);
+	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 6);
+	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 0);
 
 	solimValueSet.lowerLimit = -1.00001f;
 	solimValueSet.upperLimit = -4.250f;
 	solimModule.draw(widget::Widget::DrawArgs());
-	EXPECT_EQ(solimModule.m_lowerDisplay->scale, 3);
-	EXPECT_EQ(solimModule.m_lowerDisplay->note, 11);
-	EXPECT_EQ(solimModule.m_upperDisplay->scale, 0);
-	EXPECT_EQ(solimModule.m_upperDisplay->note, 9);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 3);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 11);
+	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 0);
+	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 9);
 
 	delete solimModule.m_lowerDisplay;
 	delete solimModule.m_upperDisplay;

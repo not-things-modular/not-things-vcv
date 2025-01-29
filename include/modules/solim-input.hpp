@@ -22,7 +22,6 @@ struct SolimInputModule : NTModule, DrawListener {
 
 	SolimInputModule();
 
-	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 };
 

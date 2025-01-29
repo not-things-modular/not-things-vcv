@@ -2,21 +2,21 @@
 
 
 NTScrew::NTScrew() {
-	this->ntLightSvg = this->lightSvg;
-	this->ntDarkSvg = this->darkSvg;
+	m_ntLightSvg = lightSvg;
+	m_ntDarkSvg = darkSvg;
 }
 
 void NTScrew::themeChanged(const ThemeId& themeId) {
-	this->themeId = themeId;
+	m_themeId = themeId;
 	switch (themeId) {
 		case ThemeId::LIGHT:
-			setSvg(this->ntLightSvg, this->ntLightSvg);
+			setSvg(m_ntLightSvg, m_ntLightSvg);
 			break;
 		case ThemeId::DARK:
-			setSvg(this->ntDarkSvg, this->ntDarkSvg);
+			setSvg(m_ntDarkSvg, m_ntDarkSvg);
 			break;
 		default:
-			setSvg(this->ntLightSvg, this->ntDarkSvg);
+			setSvg(m_ntLightSvg, m_ntDarkSvg);
 			break;
 	}
 }

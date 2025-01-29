@@ -3,30 +3,30 @@
 
 
 NTPanel::NTPanel(std::shared_ptr<window::Svg> lightSvg, std::shared_ptr<window::Svg> darkSvg, DrawListener *drawListener) {
-	this->drawListener = drawListener;
-	this->ntLightSvg = lightSvg;
-	this->ntDarkSvg = darkSvg;
+	m_drawListener = drawListener;
+	m_ntLightSvg = lightSvg;
+	m_ntDarkSvg = darkSvg;
 	setBackground(lightSvg, darkSvg);
 }
 
 void NTPanel::themeChanged(const ThemeId& themeId) {
-	this->themeId = themeId;
+	m_themeId = themeId;
 	switch (themeId) {
 		case ThemeId::LIGHT:
-			setBackground(this->ntLightSvg, this->ntLightSvg);
+			setBackground(m_ntLightSvg, m_ntLightSvg);
 			break;
 		case ThemeId::DARK:
-			setBackground(this->ntDarkSvg, this->ntDarkSvg);
+			setBackground(m_ntDarkSvg, m_ntDarkSvg);
 			break;
 		default:
-			setBackground(this->ntLightSvg, this->ntDarkSvg);
+			setBackground(m_ntLightSvg, m_ntDarkSvg);
 			break;
 	}
 }
 
 void NTPanel::draw(const DrawArgs& args) {
-	if (drawListener) {
-		drawListener->draw(args);
+	if (m_drawListener) {
+		m_drawListener->draw(args);
 	}
 	ThemedSvgPanel::draw(args);
 }

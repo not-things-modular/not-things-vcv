@@ -6,12 +6,13 @@ using namespace rack;
 
 
 struct NTPort : ThemedPJ301MPort, ThemeChangeListener {
-	std::shared_ptr<window::Svg> ntLightSvg;
-	std::shared_ptr<window::Svg> ntDarkSvg;
-
-	ThemeId themeId;
-
 	NTPort();
 
 	void themeChanged(const ThemeId& theme) override;
+
+	private:
+		std::shared_ptr<window::Svg> m_ntLightSvg;
+		std::shared_ptr<window::Svg> m_ntDarkSvg;
+
+		ThemeId m_themeId;
 };

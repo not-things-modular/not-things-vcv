@@ -29,14 +29,16 @@ struct DrawListener {
 };
 
 struct NTModule : Module {
-	ThemeId themeId = VCV;
-	std::vector<ThemeChangeListener*> themeChangeListeners;
-
 	json_t *dataToJson() override;
 	void dataFromJson(json_t *rootJ) override;
 
-	void setTheme(ThemeId& themeId);
+	ThemeId getTheme();
+	void setTheme(ThemeId themeId);
 	void addThemeChangeListener(ThemeChangeListener* listener);
+
+	private:
+		ThemeId m_themeId = VCV;
+		std::vector<ThemeChangeListener*> m_themeChangeListeners;
 };
 
 struct NTModuleWidget : ModuleWidget {

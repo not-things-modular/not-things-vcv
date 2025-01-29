@@ -14,9 +14,6 @@ SolimInputModule::SolimInputModule() {
 	}
 }
 
-void SolimInputModule::process(const ProcessArgs& args) {
-}
-
 void SolimInputModule::draw(const widget::Widget::DrawArgs& args) {
 	int inputCount = 0;
 	bool hasSolimModule = false;

@@ -17,7 +17,7 @@ SolimOutputModule::SolimOutputModule() {
 
 json_t *SolimOutputModule::dataToJson() {
 	json_t *rootJ = NTModule::dataToJson();
-	json_object_set_new(rootJ, "ntSolimOutputMode", json_integer(this->m_outputMode));
+	json_object_set_new(rootJ, "ntSolimOutputMode", json_integer(m_outputMode));
 	return rootJ;
 }
 
@@ -33,9 +33,6 @@ void SolimOutputModule::dataFromJson(json_t *rootJ) {
 			setOutputMode(SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 		}
 	}
-}
-
-void SolimOutputModule::process(const ProcessArgs& args) {
 }
 
 void SolimOutputModule::draw(const widget::Widget::DrawArgs& args) {
@@ -105,7 +102,7 @@ void SolimOutputWidget::appendContextMenu(Menu* menu) {
 	NTModuleWidget::appendContextMenu(menu);
 
 	SolimOutputMode outputMode = getModule() ? dynamic_cast<SolimOutputModule *>(getModule())->getOutputMode() : SolimOutputMode::OUTPUT_MODE_MONOPHONIC;
-	menu->addChild(createCheckMenuItem("Polyphonic output", "", [outputMode]() { return outputMode == SolimOutputMode::OUTPUT_MODE_POLYPHONIC; }, [this]() { this->switchOutputMode(); }));
+	menu->addChild(createCheckMenuItem("Polyphonic output", "", [outputMode]() { return outputMode == SolimOutputMode::OUTPUT_MODE_POLYPHONIC; }, [this]() { switchOutputMode(); }));
 }
 
 void SolimOutputWidget::switchOutputMode() {

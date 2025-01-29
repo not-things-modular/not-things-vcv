@@ -60,6 +60,22 @@ constexpr std::array<std::array<float, 2>, 18> SHARP_COORDS = {{
 constexpr std::array<int, 12> ACCIDENTALS = { 0, 1, 0, -1, 0, 0, 1, 0, -1, 0, -1, 0 };
 
 
+int NoteDisplay::getScale() {
+	return m_scale;
+}
+
+void NoteDisplay::setScale(int scale) {
+	m_scale = scale;
+}
+
+int NoteDisplay::getNote() {
+	return m_note;
+}
+
+void NoteDisplay::setNote(int note) {
+	m_note = note;
+}
+
 void NoteDisplay::drawLayer(const DrawArgs& args, int layer) {
 	if (layer != 1)
 		return;
@@ -68,7 +84,7 @@ void NoteDisplay::drawLayer(const DrawArgs& args, int layer) {
 	nvgBeginPath(args.vg);
 	
 	// The note name
-	const std::array<int, 20>& letterDots = DOTS_LETTERS[this->note];
+	const std::array<int, 20>& letterDots = DOTS_LETTERS[m_note];
 	for (int i : letterDots) {
 		if (i == -1)
 			break;
@@ -77,7 +93,7 @@ void NoteDisplay::drawLayer(const DrawArgs& args, int layer) {
 	}
 
 	// The flat or sharp sign
-	int accidentals = ACCIDENTALS[this->note];
+	int accidentals = ACCIDENTALS[m_note];
 	if (accidentals == 1) {
 		for (const std::array<float, 2>& coords : SHARP_COORDS) {
 			nvgCircle(args.vg, coords[0], coords[1], 1.f);
@@ -89,7 +105,7 @@ void NoteDisplay::drawLayer(const DrawArgs& args, int layer) {
 	}
 
 	// The scale number
-	const std::array<int, 17>& numberDots = DOTS_NUMBERS[this->scale];
+	const std::array<int, 17>& numberDots = DOTS_NUMBERS[m_scale];
 	for (int i : numberDots) {
 		if (i == -1)
 			break;

@@ -19,9 +19,6 @@ SolimOutputOctaverModule::SolimOutputOctaverModule() {
 	configSwitch(PARAM_RESORT, 0.f, 1.f, 0.f, "Resort end result", {"No", "Yes"});
 }
 
-void SolimOutputOctaverModule::process(const ProcessArgs& args) {
-}
-
 void SolimOutputOctaverModule::draw(const widget::Widget::DrawArgs& args) {
 	for (int i = 0; i < 8; i++) {
 		bool lighted = false;

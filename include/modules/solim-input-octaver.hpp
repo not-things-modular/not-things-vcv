@@ -28,7 +28,6 @@ struct SolimInputOctaverModule : NTModule, DrawListener {
 
 	SolimInputOctaverModule();
 
-	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 };
 

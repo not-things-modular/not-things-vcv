@@ -56,8 +56,8 @@ SolimModule::~SolimModule() {
 
 json_t *SolimModule::dataToJson() {
 	json_t *rootJ = NTModule::dataToJson();
-	json_object_set_new(rootJ, "ntSolimProcessRate", json_integer(this->m_processRate));
-	json_object_set_new(rootJ, "ntSolimOutputMode", json_integer(this->m_outputMode));
+	json_object_set_new(rootJ, "ntSolimProcessRate", json_integer(m_processRate));
+	json_object_set_new(rootJ, "ntSolimOutputMode", json_integer(m_outputMode));
 	return rootJ;
 }
 
@@ -144,18 +144,18 @@ void SolimModule::draw(const widget::Widget::DrawArgs& args) {
 	int limit;
 	float lowerLimit = m_solimCore->getActiveValues(0).lowerLimit;
 	float upperLimit = m_solimCore->getActiveValues(0).upperLimit;
-	if (this->m_upperDisplay != nullptr && m_lastUpperDisplayed != upperLimit) {
+	if (m_upperDisplay != nullptr && m_lastUpperDisplayed != upperLimit) {
 		limit = static_cast<int>(upperLimit + 5);
-		this->m_upperDisplay->scale = limit < 0 ? 0 : limit > 9 ? 9 : limit;
+		m_upperDisplay->setScale(limit < 0 ? 0 : limit > 9 ? 9 : limit);
 		limit = static_cast<int>((upperLimit + 5 - static_cast<int>(upperLimit + 5)) * 12);
-		this->m_upperDisplay->note = limit < 0 ? 0 : limit > 11 ? 11 : limit;
+		m_upperDisplay->setNote(limit < 0 ? 0 : limit > 11 ? 11 : limit);
 		m_lastUpperDisplayed = upperLimit;
 	}
-	if (this->m_lowerDisplay != nullptr && m_lastLowerDisplayed != lowerLimit) {
+	if (m_lowerDisplay != nullptr && m_lastLowerDisplayed != lowerLimit) {
 		limit = static_cast<int>(lowerLimit + 5);
-		this->m_lowerDisplay->scale = limit < 0 ? 0 : limit > 9 ? 9 : limit;
+		m_lowerDisplay->setScale(limit < 0 ? 0 : limit > 9 ? 9 : limit);
 		limit = static_cast<int>((lowerLimit + 5 - static_cast<int>(lowerLimit + 5)) * 12);
-		this->m_lowerDisplay->note = limit < 0 ? 0 : limit > 11 ? 11 : limit;
+		m_lowerDisplay->setNote(limit < 0 ? 0 : limit > 11 ? 11 : limit);
 		m_lastLowerDisplayed = lowerLimit;
 	}
 }
@@ -400,8 +400,8 @@ SolimWidget::SolimWidget(SolimModule* module): NTModuleWidget(dynamic_cast<NTMod
 
 	NoteDisplay* lowerDisplay = createWidget<NoteDisplay>(Vec(56+0.25, 44-1.25));
 	lowerDisplay->box.size = Vec(95.5-61, 60-42.5);
-	lowerDisplay->scale = 4;
-	lowerDisplay->note = 0;
+	lowerDisplay->setScale(4);
+	lowerDisplay->setNote(0);
 	addChild(lowerDisplay);
 	if (module != nullptr) {
 		module->m_lowerDisplay = lowerDisplay;
@@ -409,8 +409,8 @@ SolimWidget::SolimWidget(SolimModule* module): NTModuleWidget(dynamic_cast<NTMod
 
 	NoteDisplay* upperDisplay = createWidget<NoteDisplay>(Vec(56+0.25, 164-1.25));
 	upperDisplay->box.size = Vec(95.5-61, 60-42.5);
-	upperDisplay->scale = 5;
-	upperDisplay->note = 0;
+	upperDisplay->setScale(5);
+	upperDisplay->setNote(0);
 	addChild(upperDisplay);
 	if (module != nullptr) {
 		module->m_upperDisplay = upperDisplay;
@@ -426,10 +426,10 @@ void SolimWidget::appendContextMenu(Menu* menu) {
 	NTModuleWidget::appendContextMenu(menu);
 
 	SolimModule::ProcessRate processRate = getModule() ? dynamic_cast<SolimModule *>(getModule())->getProcessRate() : SolimModule::ProcessRate::DIVIDED;
-	menu->addChild(createCheckMenuItem("Process at audio rate", "", [processRate]() { return processRate == SolimModule::ProcessRate::AUDIO; }, [this]() { this->switchProcessRate(); }));
+	menu->addChild(createCheckMenuItem("Process at audio rate", "", [processRate]() { return processRate == SolimModule::ProcessRate::AUDIO; }, [this]() { switchProcessRate(); }));
 
 	SolimOutputMode outputMode = getModule() ? dynamic_cast<SolimModule *>(getModule())->getOutputMode() : SolimOutputMode::OUTPUT_MODE_MONOPHONIC;
-	menu->addChild(createCheckMenuItem("Polyphonic output", "", [outputMode]() { return outputMode == SolimOutputMode::OUTPUT_MODE_POLYPHONIC; }, [this]() { this->switchOutputMode(); }));
+	menu->addChild(createCheckMenuItem("Polyphonic output", "", [outputMode]() { return outputMode == SolimOutputMode::OUTPUT_MODE_POLYPHONIC; }, [this]() { switchOutputMode(); }));
 }
 
 void SolimWidget::switchProcessRate() {

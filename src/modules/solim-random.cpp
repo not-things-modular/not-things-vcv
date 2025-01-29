@@ -65,7 +65,7 @@ void SolimRandomModule::draw(const widget::Widget::DrawArgs& args) {
 	bool hasLeftSolimModule = false;
 	encounteredInputOctaver = false;
 	bool encounteredOutputOctaver = false;
-	expanderModule = &this->getLeftExpander();
+	expanderModule = &getLeftExpander();
 	while (expanderModule->module != nullptr) {
 		if (!hasLeftSolimModule) {
 			if (expanderModule->module->getModel() == modelSolim) {
