@@ -6,5 +6,5 @@ using namespace rack;
 
 
 struct DualBefacoSwitch : SvgSwitch {
-    DualBefacoSwitch();
+	DualBefacoSwitch();
 };

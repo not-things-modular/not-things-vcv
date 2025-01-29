@@ -9,16 +9,16 @@ extern Model* modelSolimOutput;
 extern Model* modelSolimOutputOctaver;
 
 enum ExpanderSide {
-    LEFT=0,
-    RIGHT=1
+	LEFT=0,
+	RIGHT=1
 };
 
 struct ExpanderData {
-    ExpanderData(Module& expanderModule, Model* expanderModel, ExpanderSide side);
+	ExpanderData(Module& expanderModule, Model* expanderModel, ExpanderSide side);
 
-    Module& expanderModule;
-    Model* expanderModel;
-    ExpanderSide side;
+	Module& expanderModule;
+	Model* expanderModel;
+	ExpanderSide side;
 };
 
 void registerExpanderModule(Module& mainModule, ExpanderData expanderData);

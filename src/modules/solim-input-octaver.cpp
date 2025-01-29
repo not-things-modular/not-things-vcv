@@ -20,9 +20,6 @@ SolimInputOctaverModule::SolimInputOctaverModule() {
 	}
 }
 
-void SolimInputOctaverModule::process(const ProcessArgs& args) {
-}
-
 void SolimInputOctaverModule::draw(const widget::Widget::DrawArgs& args) {
 	for (int i = 0; i < 8; i++) {
 		bool lighted = false;

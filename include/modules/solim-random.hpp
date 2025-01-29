@@ -4,24 +4,24 @@
 
 
 struct SolimRandomModule : NTModule, DrawListener {
-	enum ParamsIds {
+	enum ParamId {
 		PARAM_TRIG_MOVE,
 		PARAM_TRIG_ONE,
 		PARAM_TRIG_ALL,
 		PARAM_TRIG_RESET,
 		NUM_PARAMS
 	};
-	enum InputsIds {
+	enum InputId {
 		INPUT_TRIG_MOVE,
 		INPUT_TRIG_ONE,
 		INPUT_TRIG_ALL,
 		INPUT_TRIG_RESET,
 		NUM_INPUTS
 	};
-	enum OutputsIds {
+	enum OutputId {
 		NUM_OUTPUTS
 	};
-	enum LightsIds {
+	enum LightId {
 		LIGHT_TRIG_MOVE,
 		LIGHT_TRIG_ONE,
 		LIGHT_TRIG_ALL,
@@ -30,7 +30,7 @@ struct SolimRandomModule : NTModule, DrawListener {
 		LIGHT_CONNECTED_RIGHT,
 		NUM_LIGHTS
 	};
-	enum TriggersIds {
+	enum TriggerId {
 		TRIG_MOVE,
 		TRIG_ONE,
 		TRIG_ALL,
@@ -49,10 +49,10 @@ struct SolimRandomModule : NTModule, DrawListener {
 	void draw(const widget::Widget::DrawArgs& args) override;
 
 	private:
-		dsp::BooleanTrigger m_buttonTrigger[TriggersIds::NUM_TRIGGERS];
-		dsp::TSchmittTrigger<float> m_trigTriggers[TriggersIds::NUM_TRIGGERS][8];
+		dsp::BooleanTrigger m_buttonTrigger[TriggerId::NUM_TRIGGERS];
+		dsp::TSchmittTrigger<float> m_trigTriggers[TriggerId::NUM_TRIGGERS][8];
 
-		bool processTriggers(ParamsIds paramId, InputsIds inputId, TriggersIds triggerId, std::array<int, 8>& counters);
+		bool processTriggers(ParamId paramId, InputId inputId, TriggerId triggerId, std::array<int, 8>& counters);
 };
 
 struct SolimRandomWidget : NTModuleWidget {

@@ -6,22 +6,22 @@ using namespace rack;
 
 
 
-enum ThemeIds {
-    VCV,
-    LIGHT,
-    DARK,
-    THEME_COUNT
+enum ThemeId {
+	VCV,
+	LIGHT,
+	DARK,
+	NUM_THEMES
 };
 
 enum SolimOutputMode {
 	OUTPUT_MODE_MONOPHONIC,
 	OUTPUT_MODE_POLYPHONIC,
-	OUTPUT_MODE_COUNT
+	NUM_OUTPUT_MODES
 };
 
 
 struct ThemeChangeListener {
-	virtual void themeChanged(const ThemeIds& themeId) = 0;
+	virtual void themeChanged(const ThemeId& themeId) = 0;
 };
 
 struct DrawListener {
@@ -29,27 +29,29 @@ struct DrawListener {
 };
 
 struct NTModule : Module {
-    ThemeIds themeId = VCV;
-	std::vector<ThemeChangeListener*> themeChangeListeners;
-
 	json_t *dataToJson() override;
 	void dataFromJson(json_t *rootJ) override;
 
-	void setTheme(ThemeIds& themeId);
+	ThemeId getTheme();
+	void setTheme(ThemeId themeId);
 	void addThemeChangeListener(ThemeChangeListener* listener);
+
+	private:
+		ThemeId m_themeId = VCV;
+		std::vector<ThemeChangeListener*> m_themeChangeListeners;
 };
 
 struct NTModuleWidget : ModuleWidget {
-    NTModuleWidget(Module* module, std::string slug);
+	NTModuleWidget(Module* module, std::string slug);
 	void setPanel(widget::Widget* panel);
 	void addChild(Widget* child);
 	void addInput(PortWidget* input);
 	void addOutput(PortWidget* output);
 
-    void appendContextMenu(Menu* menu) override;
+	void appendContextMenu(Menu* menu) override;
 
 	void addThemeChangeListener(Widget* widget);
-    void setTheme(ThemeIds themeId);
+	void setTheme(ThemeId themeId);
 
 	NTModule* getNTModule();
 };

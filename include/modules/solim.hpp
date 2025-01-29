@@ -28,25 +28,25 @@ struct SolimExpanders {
 
 
 struct SolimModule : NTModule, DrawListener {
-	enum ParamsIds {
+	enum ParamId {
 		PARAM_LOWER_LIMIT,
 		PARAM_UPPER_LIMIT,
 		PARAM_SORT,
 		NUM_PARAMS
 	};
-	enum InputsIds {
+	enum InputId {
 		ENUMS(IN_INPUTS, 8),
 		IN_LOWER_LIMIT,
 		IN_UPPER_LIMIT,
 		IN_SORT,
 		NUM_INPUTS
 	};
-	enum OutputsIds {
+	enum OutputId {
 		ENUMS(OUT_OUTPUTS, 8),
 		OUT_DEBUG_PROCESS_DURATION,
 		NUM_OUTPUTS
 	};
-	enum LightIds {
+	enum LightId {
 		OUT_POLYPHONIC_LIGHT,
 		ENUMS(OUT_LIGHTS, 8),
 		NUM_LIGHTS
@@ -107,7 +107,7 @@ struct SolimModule : NTModule, DrawListener {
 			AvgDuration<256> m_avgDuration;
 		#endif
 
-		float getCvOrParamVoltage(InputsIds inputId, ParamsIds paramId, int channel);
+		float getCvOrParamVoltage(InputId inputId, ParamId paramId, int channel);
 		void detectExpanders();
 		void readValues();
 		void writeValues();

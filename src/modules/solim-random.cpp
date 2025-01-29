@@ -24,16 +24,16 @@ SolimRandomModule::SolimRandomModule() {
 
 void SolimRandomModule::process(const ProcessArgs& args) {
 	lights[LIGHT_TRIG_MOVE].setBrightnessSmooth(
-		processTriggers(ParamsIds::PARAM_TRIG_MOVE, InputsIds::INPUT_TRIG_MOVE, TriggersIds::TRIG_MOVE, m_moveCounters),
+		processTriggers(ParamId::PARAM_TRIG_MOVE, InputId::INPUT_TRIG_MOVE, TriggerId::TRIG_MOVE, m_moveCounters),
 		args.sampleTime);
 	lights[PARAM_TRIG_ONE].setBrightnessSmooth(
-		processTriggers(ParamsIds::PARAM_TRIG_ONE, InputsIds::INPUT_TRIG_ONE, TriggersIds::TRIG_ONE, m_oneCounters),
+		processTriggers(ParamId::PARAM_TRIG_ONE, InputId::INPUT_TRIG_ONE, TriggerId::TRIG_ONE, m_oneCounters),
 		args.sampleTime);
 	lights[PARAM_TRIG_ALL].setBrightnessSmooth(
-		processTriggers(ParamsIds::PARAM_TRIG_ALL, InputsIds::INPUT_TRIG_ALL, TriggersIds::TRIG_ALL, m_allCounters),
+		processTriggers(ParamId::PARAM_TRIG_ALL, InputId::INPUT_TRIG_ALL, TriggerId::TRIG_ALL, m_allCounters),
 		args.sampleTime);
 	lights[PARAM_TRIG_RESET].setBrightnessSmooth(
-		processTriggers(ParamsIds::PARAM_TRIG_RESET, InputsIds::INPUT_TRIG_RESET, TriggersIds::TRIG_RESET, m_resetCounters),
+		processTriggers(ParamId::PARAM_TRIG_RESET, InputId::INPUT_TRIG_RESET, TriggerId::TRIG_RESET, m_resetCounters),
 		args.sampleTime);
 }
 
@@ -65,7 +65,7 @@ void SolimRandomModule::draw(const widget::Widget::DrawArgs& args) {
 	bool hasLeftSolimModule = false;
 	encounteredInputOctaver = false;
 	bool encounteredOutputOctaver = false;
-	expanderModule = &this->getLeftExpander();
+	expanderModule = &getLeftExpander();
 	while (expanderModule->module != nullptr) {
 		if (!hasLeftSolimModule) {
 			if (expanderModule->module->getModel() == modelSolim) {
@@ -113,7 +113,7 @@ void SolimRandomModule::draw(const widget::Widget::DrawArgs& args) {
 	}
 }
 
-bool SolimRandomModule::processTriggers(ParamsIds paramId, InputsIds inputId, TriggersIds triggerId, std::array<int, 8>& counters) {
+bool SolimRandomModule::processTriggers(ParamId paramId, InputId inputId, TriggerId triggerId, std::array<int, 8>& counters) {
 	bool result = false;
 	bool triggered = m_buttonTrigger[triggerId].process(params[paramId].getValue());
 	if (triggered) {
