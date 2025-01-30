@@ -109,7 +109,7 @@ void fillSolimValueSet(SolimValueSet& solimValueSet) {
 	for (int i = 0; i < 5; i++) {
 		solimValueSet.outputValues[i].value += i;
 	}
-	solimValueSet.resort = false;
+	solimValueSet.resortMode = SolimValueSet::ResortMode::RESORT_NONE;
 
 	solimValueSet.resultValueCount = 5;
 	for (int i = 0; i < 5; i++) {
@@ -241,7 +241,7 @@ TEST(SolimValueSetTest, TwoEmptySetsOutputsMatch) {
 	// Both sets have their input and output values count set to 0, so they should not compare any other output parameters
 	valueSet2.outputValues[0].value++;
 	valueSet2.outputReplaceOriginal[0] = !valueSet2.outputReplaceOriginal[0];
-	valueSet2.resort = valueSet2.resort;
+	valueSet2.resortMode = SolimValueSet::ResortMode::RESORT_CONNECTED;
 
 	EXPECT_TRUE(valueSet1.outputParametersMatch(valueSet2));
 }
@@ -320,15 +320,52 @@ TEST(SolimValueTest, NonEmptyValueSetsWithOnlyOneDifferentOutputReplaceOriginalA
 	EXPECT_FALSE(valueSet1.outputParametersMatch(valueSet2));
 }
 
-TEST(SolimValueTest, NonEmptyValueSetsWithOnlyOneDifferentResortAreDifferentForOutputsMatch) {
+TEST(SolimValueTest, NonEmptyValueSetsWithOnlyDifferentResortAreDifferentForOutputsMatch) {
 	SolimValueSet valueSet1 = getSolimValueSet();
 	SolimValueSet valueSet2 = getSolimValueSet();
 
 	fillSolimValueSet(valueSet1);
 	fillSolimValueSet(valueSet2);
-	valueSet2.resort = !valueSet2.resort;
+	valueSet2.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
 
 	EXPECT_FALSE(valueSet1.outputParametersMatch(valueSet2));
+}
+
+TEST(SolimValueTest, NonEmptyValueSetsWithConnectedResortModeAndDifferentConnectedOutputsAreDifferentForOutputsMatch) {
+	SolimValueSet valueSet1 = getSolimValueSet();
+	SolimValueSet valueSet2 = getSolimValueSet();
+	std::array<bool, 8> connected1 = { true };
+	std::array<bool, 8> connected2 = { true };
+	connected2[4] = false;
+
+	fillSolimValueSet(valueSet1);
+	fillSolimValueSet(valueSet2);
+	valueSet1.resortMode = SolimValueSet::ResortMode::RESORT_CONNECTED;
+	valueSet1.outputConnected = &connected1;
+	valueSet2.resortMode = SolimValueSet::ResortMode::RESORT_CONNECTED;
+	valueSet2.outputConnected = &connected2;
+
+	EXPECT_FALSE(valueSet1.outputParametersMatch(valueSet2));
+}
+
+TEST(SolimValueTest, NonEmptyValueSetsWithResortModeAllOrResortModeNoneShouldNotBeInfluencedByOutputConnectedForOutputsMatch) {
+	SolimValueSet valueSet1 = getSolimValueSet();
+	SolimValueSet valueSet2 = getSolimValueSet();
+	std::array<bool, 8> connected1 = { true };
+	std::array<bool, 8> connected2 = { true };
+	connected2[4] = false;
+
+	fillSolimValueSet(valueSet1);
+	fillSolimValueSet(valueSet2);
+	valueSet1.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
+	valueSet1.outputConnected = &connected1;
+	valueSet2.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
+	valueSet2.outputConnected = &connected2;
+	EXPECT_TRUE(valueSet1.outputParametersMatch(valueSet2));
+
+	valueSet1.resortMode = SolimValueSet::ResortMode::RESORT_NONE;
+	valueSet2.resortMode = SolimValueSet::ResortMode::RESORT_NONE;
+	EXPECT_TRUE(valueSet1.outputParametersMatch(valueSet2));
 }
 
 TEST(SolimValueTest, NonEmptyValueSetsWithOnlyOneDifferentIndicesAreDifferentForOutputsMatch) {

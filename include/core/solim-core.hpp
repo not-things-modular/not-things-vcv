@@ -33,6 +33,12 @@ struct SolimValue {
 };
 
 struct SolimValueSet {
+	enum ResortMode {
+		RESORT_NONE,
+		RESORT_ALL,
+		RESORT_CONNECTED
+	};
+
 	// There can be up to 8 input values, so create a fixed array for that to avoid having to re-alloc often
 	std::array<SolimValue, 8> inputValues;
 	int inputValueCount = 0;
@@ -52,7 +58,10 @@ struct SolimValueSet {
 	// Output octaving that is to be applied
 	std::array<SolimValue::AddOctave, 8> outputOctaves = {};
 	std::array<bool, 8> outputReplaceOriginal = {};
-	bool resort = false;
+
+	// Parameters for resorting the output
+	ResortMode resortMode = ResortMode::RESORT_NONE;
+	std::array<bool, 8>* outputConnected;
 
 	// The result values after randomization and output octaving is applied
 	std::array<float, 8> resultValues = {};

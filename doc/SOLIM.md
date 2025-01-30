@@ -158,6 +158,10 @@ If the number of output values changes over time (e.g., due to connected input p
 
 If an active SL-R module is removed from the Solim expander chain, any randomized outputs will revert to their original order.
 
+The randomization order is not persisted when saving a VCV Rack patch. When reopening thee patch, all outputs will return to their default order.
+
+> Note: When an SL-R expander is used together with an Output Octaver expander, the [Resort](#resort) function of the Output Octaver can override any randomization applied. This happens because resorting occurs after randomization. If you add randomization to your value sequence but don’t see any effect, check whether an Output Octaver expander is present with Resort enabled as it may be reordering the values after they were randomized.
+
 ### CV inputs
 Each randomization action button has a corresponding CV input for triggering it. A voltage trigger of at least 1V is required to activate an action. Unlike other Solim modules, the buttons on the SL-R remain functional even when CV inputs are connected.
 
@@ -187,4 +191,8 @@ Since the output values are already sorted prior to the Output Octaver, the octa
 In both cases, processing stops once a maximum of eight output values is reached. Additional values are discarded.
 
 ### Resort
-If the default sorting from [Output Sorting](#output-sorting) does not produce the desired order, the *Re-sort* button can be activated. When enabled, the final sequence (of up to eight values) is resorted according to the main Solim module's active resort order.
+If the default sorting from [Output Sorting](#output-sorting) does not produce the desired order, the *Re-sort* button can be activated. When pressed, the final sequence (of up to eight values) is reordered according to the active sort order set on the main Solim module.
+
+By default, resorting applies to all values in the sequence (i.e. all outputs with their LED turned on). However, in the right-click menu of the Output Octaver module, there is an option to *Sort only connected ports*. When this option is enabled, only the values of ports with an active cable connection will be resorted and reassigned to those ports. Ports without a connection will retain their original values and remain unchanged.
+
+> Note: if the main Solim module does not have sorting enabled, the *Resort* of the Output Octaver expander will also apply no additional sorting.
