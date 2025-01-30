@@ -72,12 +72,22 @@ void SolimOutputModule::draw(const widget::Widget::DrawArgs& args) {
 	}
 }
 
+void SolimOutputModule::onPortChange(const PortChangeEvent& event) {
+	for (int i = 0; i < 8; i++) {
+		m_connectedPorts[i] = outputs[i].isConnected();
+	}
+}
+
 SolimOutputMode SolimOutputModule::getOutputMode() {
 	return m_outputMode;
 }
 
 void SolimOutputModule::setOutputMode(SolimOutputMode outputMode) {
 	m_outputMode = outputMode;
+}
+
+std::array<bool, 8>& SolimOutputModule::getConnectedPorts() {
+	return m_connectedPorts;
 }
 
 

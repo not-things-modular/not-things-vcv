@@ -19,6 +19,26 @@ SolimOutputOctaverModule::SolimOutputOctaverModule() {
 	configSwitch(PARAM_RESORT, 0.f, 1.f, 0.f, "Resort end result", {"No", "Yes"});
 }
 
+json_t *SolimOutputOctaverModule::dataToJson() {
+	json_t *rootJ = NTModule::dataToJson();
+	json_object_set_new(rootJ, "ntSolimSortMode", json_integer(m_sortMode));
+	return rootJ;
+}
+
+void SolimOutputOctaverModule::dataFromJson(json_t *rootJ) {
+	NTModule::dataFromJson(rootJ);
+
+	json_t *ntSolimSortModeJson = json_object_get(rootJ, "ntSolimSortMode");
+	if (ntSolimSortModeJson) {
+		json_int_t sortModeNumber = json_integer_value(ntSolimSortModeJson);
+		if (sortModeNumber > 0 && sortModeNumber < SolimOutputOctaverModule::SortMode::NUM_SORT_MODES) {
+			setSortMode(static_cast<SolimOutputOctaverModule::SortMode>(sortModeNumber));
+		} else {
+			setSortMode(SolimOutputOctaverModule::SortMode::SORT_ALL);
+		}
+	}
+}
+
 void SolimOutputOctaverModule::draw(const widget::Widget::DrawArgs& args) {
 	for (int i = 0; i < 8; i++) {
 		bool lighted = false;
@@ -60,6 +80,15 @@ void SolimOutputOctaverModule::draw(const widget::Widget::DrawArgs& args) {
 	}
 }
 
+SolimOutputOctaverModule::SortMode SolimOutputOctaverModule::getSortMode() {
+	return m_sortMode;
+}
+
+void SolimOutputOctaverModule::setSortMode(SortMode sortMode) {
+	m_sortMode = sortMode;
+}
+
+
 SolimOutputOctaverWidget::SolimOutputOctaverWidget(SolimOutputOctaverModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "solim-output-octaver") {
 	float y = 54.5f;
 	float yDelta = 40;
@@ -76,6 +105,24 @@ SolimOutputOctaverWidget::SolimOutputOctaverWidget(SolimOutputOctaverModule* mod
 	addParam(createLightParamCentered<VCVLightLatch<SmallSimpleLight<GreenLight>>>(Vec(175.f, 360.f), module, SolimOutputOctaverModule::PARAM_RESORT, SolimOutputOctaverModule::LIGHT_RESORT));
 
 	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(5.f, 20.f), module, SolimOutputOctaverModule::LIGHT_CONNECTED));
+}
+
+void SolimOutputOctaverWidget::appendContextMenu(Menu* menu) {
+	NTModuleWidget::appendContextMenu(menu);
+
+	SolimOutputOctaverModule::SortMode sortMode = getModule() ? dynamic_cast<SolimOutputOctaverModule *>(getModule())->getSortMode() : SolimOutputOctaverModule::SortMode::SORT_ALL;
+	menu->addChild(createCheckMenuItem("Sort only connected ports", "", [sortMode]() { return sortMode == SolimOutputOctaverModule::SortMode::SORT_CONNECTED; }, [this]() { switchSortMode(); }));
+}
+
+void SolimOutputOctaverWidget::switchSortMode() {
+	SolimOutputOctaverModule* solimOutputOctaverModule = dynamic_cast<SolimOutputOctaverModule *>(getModule());
+	if (solimOutputOctaverModule != nullptr) {
+		if (solimOutputOctaverModule->getSortMode() == SolimOutputOctaverModule::SortMode::SORT_CONNECTED) {
+			solimOutputOctaverModule->setSortMode(SolimOutputOctaverModule::SortMode::SORT_ALL);
+		} else {
+			solimOutputOctaverModule->setSortMode(SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+		}
+	}
 }
 
 

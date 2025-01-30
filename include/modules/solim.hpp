@@ -19,6 +19,7 @@ struct SolimExpanders {
 	int outputCount;
 	std::array<std::vector<Input>::iterator, 8> inputIterators;
 	std::array<std::vector<Output>::iterator, 8> outputIterators;
+	std::array<std::array<bool, 8>*, 8> connectedOutputPorts;
 	std::array<SolimOutputMode, 8> outputModes;
 	std::array<std::vector<Light>::iterator, 8> lightIterators;
 	std::array<Light*, 8> polyphonicLights;
@@ -76,12 +77,15 @@ struct SolimModule : NTModule, DrawListener {
 	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 	void onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) override;
+	void onPortChange(const PortChangeEvent& event) override;
 
 	ProcessRate getProcessRate();
 	void setProcessRate(ProcessRate processRate);
 
 	SolimOutputMode getOutputMode();
 	void setOutputMode(SolimOutputMode outputMode);
+
+	std::array<bool, 8>& getConnectedPorts();
 
 	private:
 		dsp::ClockDivider clockDivider;
@@ -102,6 +106,7 @@ struct SolimModule : NTModule, DrawListener {
 		float m_lastLowerDisplayed = -1.f;
 
 		SolimOutputMode m_outputMode = OUTPUT_MODE_MONOPHONIC;
+		std::array<bool, 8> m_connectedPorts = { false };
 
 		#ifdef __NT_DEBUG__
 			AvgDuration<256> m_avgDuration;

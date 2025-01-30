@@ -103,8 +103,13 @@ bool SolimValueSet::outputParametersMatch(SolimValueSet& solimValueSet) {
 		(indices != solimValueSet.indices) ||
 		(outputOctaves != solimValueSet.outputOctaves) ||
 		(outputReplaceOriginal != solimValueSet.outputReplaceOriginal) ||
-		(resort != solimValueSet.resort)) {
+		(resortMode != solimValueSet.resortMode)) {
 			return false;
+	}
+
+	// If only connected outputs are to be resorted, a change in connections means the output params changed
+	if ((resortMode == ResortMode::RESORT_CONNECTED) && (outputConnected != solimValueSet.outputConnected)) {
+		return false;
 	}
 
 	// Only check those output values that are actually within outputValueCount
@@ -207,11 +212,38 @@ void SolimCoreProcessor::processResults(SolimValueSet& solimValuesSet) {
 	}
 
 	// Resort the result if so requested
-	if (solimValuesSet.resort && solimValuesSet.sort != 0) {
-		if (solimValuesSet.sort > 0) {
-			std::sort(solimValuesSet.resultValues.begin(), solimValuesSet.resultValues.begin() + solimValuesSet.resultValueCount);
+	if (solimValuesSet.resortMode != SolimValueSet::ResortMode::RESORT_NONE && solimValuesSet.sort != 0) {
+		if (solimValuesSet.resortMode == SolimValueSet::ResortMode::RESORT_ALL) {
+			// We're resorting all the results
+			if (solimValuesSet.sort > 0) {
+				std::sort(solimValuesSet.resultValues.begin(), solimValuesSet.resultValues.begin() + solimValuesSet.resultValueCount);
+			} else {
+				std::sort(solimValuesSet.resultValues.begin(), solimValuesSet.resultValues.begin() + solimValuesSet.resultValueCount, std::greater<float>{});
+			}
 		} else {
-			std::sort(solimValuesSet.resultValues.begin(), solimValuesSet.resultValues.begin() + solimValuesSet.resultValueCount, std::greater<float>{});
+			// We're only resorting those results that have active connections
+			int count = 0;
+			// First extract the list of results that are connected
+			for (int i = 0; i < 8; i++) {
+				if ((*solimValuesSet.outputConnected)[i]) {
+					m_floatBuffer[count] = solimValuesSet.resultValues[i];
+					count++;
+				}
+			}
+			// Sort those extracted results
+			if (solimValuesSet.sort > 0) {
+				std::sort(m_floatBuffer.begin(), m_floatBuffer.begin() + count);
+			} else {
+				std::sort(m_floatBuffer.begin(), m_floatBuffer.begin() + count, std::greater<float>{});
+			}
+			// Assign the sorted values back to the connected outputs
+			count = 0;
+			for (int i = 0; i < 8; i++) {
+				if ((*solimValuesSet.outputConnected)[i]) {
+					solimValuesSet.resultValues[i] = m_floatBuffer[count];
+					count++;
+				}
+			}
 		}
 	}
 }

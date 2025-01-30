@@ -26,13 +26,29 @@ struct SolimOutputOctaverModule : NTModule, DrawListener {
 		LIGHT_DONT_RESORT,
 		NUM_LIGHTS
 	};
+	enum SortMode {
+		SORT_ALL,
+		SORT_CONNECTED,
+		NUM_SORT_MODES
+	};
 
 	SolimOutputOctaverModule();
 
+	json_t *dataToJson() override;
+	void dataFromJson(json_t *rootJ) override;
+
 	void draw(const widget::Widget::DrawArgs& args) override;
 
+	SortMode getSortMode();
+	void setSortMode(SortMode sortMode);
+
+	private:
+		SortMode m_sortMode = SortMode::SORT_ALL;
 };
 
 struct SolimOutputOctaverWidget : NTModuleWidget {
 	SolimOutputOctaverWidget(SolimOutputOctaverModule* module);
+
+	virtual void appendContextMenu(Menu* menu) override;
+	void switchSortMode();
 };

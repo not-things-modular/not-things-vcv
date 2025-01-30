@@ -164,6 +164,12 @@ void SolimModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChan
 	clockDivider.setDivision(sampleRateChangeEvent.sampleRate / 6000);
 }
 
+void SolimModule::onPortChange(const PortChangeEvent& event) {
+	for (int i = 0; i < 8; i++) {
+		m_connectedPorts[i] = outputs[i].isConnected();
+	}
+}
+
 SolimModule::ProcessRate SolimModule::getProcessRate() {
 	return m_processRate;
 }
@@ -177,6 +183,10 @@ SolimOutputMode SolimModule::getOutputMode() {
 
 void SolimModule::setOutputMode(SolimOutputMode outputMode) {
 	m_outputMode = outputMode;
+}
+
+std::array<bool, 8>& SolimModule::getConnectedPorts() {
+	return m_connectedPorts;
 }
 
 float SolimModule::getCvOrParamVoltage(InputId inputId, ParamId paramId, int channel) {
@@ -221,6 +231,7 @@ void SolimModule::detectExpanders() {
 	m_solimExpanders.outputModes[0] = m_outputMode;
 	m_solimExpanders.lightIterators[0] = lights.begin() + OUT_LIGHTS;
 	m_solimExpanders.polyphonicLights[0] = &lights[LightId::OUT_POLYPHONIC_LIGHT];
+	m_solimExpanders.connectedOutputPorts[0] = &getConnectedPorts();
 	expanderModule = &getRightExpander();
 	while ((expanderModule->module) && ((m_solimExpanders.outputCount < 8) || (m_solimExpanders.solimRandom == nullptr))) {
 		if ((expanderModule->module->getModel() == modelSolimOutput) && (m_solimExpanders.outputCount < 8)) {
@@ -228,11 +239,12 @@ void SolimModule::detectExpanders() {
 			m_solimExpanders.outputModes[m_solimExpanders.outputCount] = reinterpret_cast<SolimOutputModule*>(expanderModule->module)->getOutputMode();
 			m_solimExpanders.lightIterators[m_solimExpanders.outputCount] = expanderModule->module->lights.begin() + SolimOutputModule::LightId::OUT_LIGHTS;
 			m_solimExpanders.polyphonicLights[m_solimExpanders.outputCount] = &expanderModule->module->lights[SolimOutputModule::LightId::OUT_POLYPHONIC_LIGHT];
+			m_solimExpanders.connectedOutputPorts[m_solimExpanders.outputCount] = &reinterpret_cast<SolimOutputModule*>(expanderModule->module)->getConnectedPorts();
 			m_solimExpanders.outputCount++;
 		} else if ((m_solimExpanders.solimRandom == nullptr) && (expanderModule->module->getModel() == modelSolimRandom)) {
 			m_solimExpanders.solimRandom = reinterpret_cast<SolimRandomModule*>(expanderModule->module);
 		} else if ((m_solimExpanders.solimOutputOctaver == nullptr) && (expanderModule->module->getModel() == modelSolimOutputOctaver)) {
-			m_solimExpanders.solimOutputOctaver = expanderModule->module;
+			m_solimExpanders.solimOutputOctaver  = expanderModule->module;
 		} else {
 			break;
 		}
@@ -253,7 +265,6 @@ void SolimModule::readValues() {
 		values.sort = (sortf > 0) - (sortf < 0);
 
 		std::vector<Input>::iterator inputIterator = m_solimExpanders.inputIterators[channelIndex];
-
 
 		int channelCount = 0;
 		values.inputValueCount = 0;
@@ -315,10 +326,22 @@ void SolimModule::readValues() {
 					m_solimExpanders.solimOutputOctaver->params, SolimOutputOctaverModule::PARAM_REPLACE_ORIGINAL + i,
 					channelIndex) > 0.f;
 			}
-			values.resort = m_solimExpanders.solimOutputOctaver->params[SolimOutputOctaverModule::PARAM_RESORT].getValue() > 0.f;
+			if (m_solimExpanders.solimOutputOctaver->params[SolimOutputOctaverModule::PARAM_RESORT].getValue() > 0.f) {
+				if (m_solimExpanders.outputModes[channelIndex] == SolimOutputMode::OUTPUT_MODE_MONOPHONIC) {
+					// Detect which resort mode should be used if the output is monophonic
+					values.resortMode = reinterpret_cast<SolimOutputOctaverModule *>(m_solimExpanders.solimOutputOctaver)->getSortMode() == SolimOutputOctaverModule::SortMode::SORT_ALL ? SolimValueSet::ResortMode::RESORT_ALL : SolimValueSet::ResortMode::RESORT_CONNECTED;
+				} else {
+					// Polyphonic output is always resorted across all channels
+					values.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
+				}
+			} else {
+				values.resortMode = SolimValueSet::ResortMode::RESORT_NONE;
+			}
+			// If the resort mode is based on the which outputs are connected, assign the connected output ports.
+			values.outputConnected = m_solimExpanders.connectedOutputPorts[channelIndex];
 		} else {
 			values.outputOctaves.fill(SolimValue::AddOctave::NONE);
-			values.resort = false;
+			values.resortMode = SolimValueSet::ResortMode::RESORT_NONE;
 		}
 	}
 }

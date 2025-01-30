@@ -28,13 +28,16 @@ struct SolimOutputModule : NTModule, DrawListener {
 	void dataFromJson(json_t *rootJ) override;
 
 	void draw(const widget::Widget::DrawArgs& args) override;
+	void onPortChange(const PortChangeEvent& event) override;
 
 	SolimOutputMode getOutputMode();
 	void setOutputMode(SolimOutputMode outputMode);
 
+	std::array<bool, 8>& getConnectedPorts();
+
 	private:
 		SolimOutputMode m_outputMode = OUTPUT_MODE_MONOPHONIC;
-		std::array<bool, 8> m_portConnected = { false };
+		std::array<bool, 8> m_connectedPorts = { false };
 };
 
 struct SolimOutputWidget : NTModuleWidget {

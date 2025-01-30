@@ -313,13 +313,12 @@ TEST(SolimOutputTest, WithSolimOutputExpanderAndSolimRandomAndSolimOutputOctaver
 	expectConnected(solimOutputModule, false);
 }
 
-
 TEST(SolimOutputTest, ShouldDefaultToMonophonicOutputMode) {
 	SolimOutputModule solimOutputModule;
 
 	EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 	json_t* jsonData = solimOutputModule.dataToJson();
-	checkJsonSolimOutputMode(solimOutputModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+	checkJsonSolimOutputMode(jsonData, SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 
 	delete jsonData;
 }
@@ -358,7 +357,7 @@ TEST(SolimOutputTest, ShouldPersistPolyphonicOutputMode) {
 	solimOutputModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
 	EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
 	json_t* jsonData = solimOutputModule.dataToJson();
-	checkJsonSolimOutputMode(solimOutputModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+	checkJsonSolimOutputMode(jsonData, SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
 
 	delete jsonData;
 }
@@ -370,7 +369,57 @@ TEST(SolimOutputTest, ShouldPersistMonophonicOutputMode) {
 	solimOutputModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 	EXPECT_EQ(solimOutputModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 	json_t* jsonData = solimOutputModule.dataToJson();
-	checkJsonSolimOutputMode(solimOutputModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+	checkJsonSolimOutputMode(jsonData, SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 
 	delete jsonData;
+}
+
+TEST(SolimOutputTest, ShouldUpdateConnectedPortsOnPortChangeEvent) {
+	SolimOutputModule solimOutputModule;
+	std::array<bool, 8> expectedConnectedPorts = { false };
+	Module::PortChangeEvent portChangeEvent;
+
+	// No ports should be connected initially
+	EXPECT_EQ(solimOutputModule.getConnectedPorts(), expectedConnectedPorts);
+
+	// Connect each port one by one and check if they are correctly detected
+	for (int i = 0; i < 8; i++) {
+		solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + i].channels = 1;
+		solimOutputModule.onPortChange(portChangeEvent);
+		expectedConnectedPorts[i] = true;
+
+		EXPECT_EQ(solimOutputModule.getConnectedPorts(), expectedConnectedPorts);
+
+		solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + i].channels = 0;
+		solimOutputModule.onPortChange(portChangeEvent);
+		expectedConnectedPorts[i] = false;
+
+		EXPECT_EQ(solimOutputModule.getConnectedPorts(), expectedConnectedPorts);
+	}
+
+	// Set a couple of ports to connected, and verify the event processing
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 2].channels = 1;
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 4].channels = 1;
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 5].channels = 1;
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 7].channels = 1;
+	expectedConnectedPorts[2] = true;
+	expectedConnectedPorts[4] = true;
+	expectedConnectedPorts[5] = true;
+	expectedConnectedPorts[7] = true;
+
+	solimOutputModule.onPortChange(portChangeEvent);
+	EXPECT_EQ(solimOutputModule.getConnectedPorts(), expectedConnectedPorts);
+
+	// Connect the other ports, and verify the event processing
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 0].channels = 1;
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 1].channels = 1;
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 3].channels = 1;
+	solimOutputModule.outputs[SolimOutputModule::OutputId::OUT_OUTPUTS + 6].channels = 1;
+	expectedConnectedPorts[0] = true;
+	expectedConnectedPorts[1] = true;
+	expectedConnectedPorts[3] = true;
+	expectedConnectedPorts[6] = true;
+
+	solimOutputModule.onPortChange(portChangeEvent);
+	EXPECT_EQ(solimOutputModule.getConnectedPorts(), expectedConnectedPorts);
 }

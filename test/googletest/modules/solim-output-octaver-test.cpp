@@ -353,3 +353,75 @@ TEST(SolimOutputOctaverTest, ShouldNotLightUpResortWhenNotPressed) {
 
 	EXPECT_NEAR(solimOutputOctaverModule.lights[SolimOutputOctaverModule::LightId::LIGHT_RESORT].getBrightness(), 0.f, 0.0001f);
 }
+
+
+
+void checkJsonSortMode(json_t* jsonData, SolimOutputOctaverModule::SortMode expectedSortMode) {
+	EXPECT_TRUE(json_is_object(jsonData));
+
+	json_t* jsonSolimSortMode = json_object_get(jsonData, "ntSolimSortMode");
+	EXPECT_TRUE(json_is_integer(jsonSolimSortMode));
+
+	EXPECT_EQ(json_integer_value(jsonSolimSortMode), static_cast<int>(expectedSortMode));
+}
+
+TEST(SolimOutputOctaverTest, ShouldDefaultToSortAllMode) {
+	SolimOutputOctaverModule solimOutputOctaverModule;
+
+	EXPECT_EQ(solimOutputOctaverModule.getSortMode(), SolimOutputOctaverModule::SortMode::SORT_ALL);
+	json_t* jsonData = solimOutputOctaverModule.dataToJson();
+	checkJsonSortMode(jsonData, SolimOutputOctaverModule::SortMode::SORT_ALL);
+
+	delete jsonData;
+}
+
+TEST(SolimOutputOctaverTest, ShouldSwitchToSortConnectedModeFromJsonData) {
+	SolimOutputOctaverModule solimOutputOctaverModule;
+
+	json_t *jsonData = json_object();
+	json_object_set_new(jsonData, "ntSolimSortMode", json_integer(static_cast<SolimOutputOctaverModule::SortMode>(SolimOutputOctaverModule::SortMode::SORT_CONNECTED)));
+	solimOutputOctaverModule.dataFromJson(jsonData);
+
+	EXPECT_EQ(solimOutputOctaverModule.getSortMode(), SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+
+	delete jsonData;
+}
+
+TEST(SolimOutputOctaverTest, ShouldSwitchToSortAllModeFromJsonData) {
+	SolimOutputOctaverModule solimOutputOctaverModule;
+
+	json_t *jsonData = json_object();
+	json_object_set_new(jsonData, "ntSolimSortMode", json_integer(static_cast<SolimOutputOctaverModule::SortMode>(SolimOutputOctaverModule::SortMode::SORT_ALL)));
+	solimOutputOctaverModule.dataFromJson(jsonData);
+	EXPECT_EQ(solimOutputOctaverModule.getSortMode(), SolimOutputOctaverModule::SortMode::SORT_ALL);
+
+	solimOutputOctaverModule.setSortMode(SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+
+	solimOutputOctaverModule.dataFromJson(jsonData);
+	EXPECT_EQ(solimOutputOctaverModule.getSortMode(), SolimOutputOctaverModule::SortMode::SORT_ALL);
+
+	delete jsonData;
+}
+
+TEST(SolimOutputOctaverTest, ShouldPersistSortConnectedMode) {
+	SolimOutputOctaverModule solimOutputOctaverModule;
+
+	solimOutputOctaverModule.setSortMode(SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+	EXPECT_EQ(solimOutputOctaverModule.getSortMode(), SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+	json_t* jsonData = solimOutputOctaverModule.dataToJson();
+	checkJsonSortMode(jsonData, SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+
+	delete jsonData;
+}
+
+TEST(SolimOutputOctaverTest, ShouldPersistSortAllMode) {
+	SolimOutputOctaverModule solimOutputOctaverModule;
+
+	solimOutputOctaverModule.setSortMode(SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+	solimOutputOctaverModule.setSortMode(SolimOutputOctaverModule::SortMode::SORT_ALL);
+	EXPECT_EQ(solimOutputOctaverModule.getSortMode(), SolimOutputOctaverModule::SortMode::SORT_ALL);
+	json_t* jsonData = solimOutputOctaverModule.dataToJson();
+	checkJsonSortMode(jsonData, SolimOutputOctaverModule::SortMode::SORT_ALL);
+
+	delete jsonData;
+}

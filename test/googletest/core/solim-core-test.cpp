@@ -341,26 +341,6 @@ TEST(SolimCoreTest, WhenProcessingAllColumnsShouldCallProcessorOnMismatchingInpu
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 TEST(SolimCoreTest, WhenProcessingAllColumnsShouldCallProcessorOnMismatchingOutputValueColumns) {
 	std::array<SolimValueSet, 8> valueSet;
 	MockSolimCoreProcessor* processor = new MockSolimCoreProcessor();
@@ -386,8 +366,8 @@ TEST(SolimCoreTest, WhenProcessingAllColumnsShouldCallProcessorOnMismatchingOutp
 		}
 	}
 	// Now make the second column and the fifth column have different resort values and result values
-	solimCore.getInactiveValues(1).resort = !solimCore.getInactiveValues(1).resort;
-	solimCore.getInactiveValues(4).resort = !solimCore.getInactiveValues(4).resort;
+	solimCore.getInactiveValues(1).resortMode = SolimValueSet::ResortMode::RESORT_ALL;
+	solimCore.getInactiveValues(4).resortMode = SolimValueSet::ResortMode::RESORT_ALL;
 	for (int i = 0; i < 4; i++) {
 		solimCore.getInactiveValues(1).resultValues[i] = -1000;
 		solimCore.getInactiveValues(4).resultValues[i] = -1000;
@@ -461,8 +441,8 @@ TEST(SolimCoreTest, WhenProcessingAllColumnsShouldCallProcessorOnMismatchingOutp
 		}
 	}
 	// Now make the second column and the fifth column have different resort values and result values
-	solimCore.getInactiveValues(1).resort = !solimCore.getInactiveValues(1).resort;
-	solimCore.getInactiveValues(4).resort = !solimCore.getInactiveValues(4).resort;
+	solimCore.getInactiveValues(1).resortMode = SolimValueSet::ResortMode::RESORT_ALL;
+	solimCore.getInactiveValues(4).resortMode = SolimValueSet::ResortMode::RESORT_ALL;
 	for (int i = 0; i < 4; i++) {
 		solimCore.getInactiveValues(1).resultValues[i] = -1000;
 	}

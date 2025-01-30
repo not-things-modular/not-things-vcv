@@ -445,7 +445,7 @@ TEST(SolimCoreProcessorTestForResultValues, WithNoMainSortAndWithOctavingGoingOu
 	valueSet.outputValueCount = 8;
 	valueSet.outputOctaves[1] = SolimValue::AddOctave::HIGHER;
 	valueSet.outputOctaves[3] = SolimValue::AddOctave::LOWER;
-	valueSet.resort = true;
+	valueSet.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
 	valueSet.resultValueCount = 69;
 
 	solimCoreProcessor.processResults(valueSet);
@@ -529,27 +529,52 @@ TEST(SolimCoreProcessorTestForResultValues, WithAscendingMainSortAndWithOctaving
 	EXPECT_NEAR(valueSet.resultValues[7], valueSet.outputValues[6].value, 0.00001f);
 }
 
-TEST(SolimCoreProcessorTestForResultValues, WithAscendingMainSortAndWithOctavingGoingOutOfBoundsShouldOnlyUseFirstEightItemsAndIgnoreResort) {
+TEST(SolimCoreProcessorTestForResultValues, WithAscendingMainSortAndWithOctavingGoingOutOfBoundsShouldOnlyUseFirstEightItemsAndSortAll) {
 	SolimValueSet valueSet = createOutputSet();
 	setUnsortedOutputValues(valueSet);
 	valueSet.sort = 1;
 	valueSet.outputValueCount = 8;
 	valueSet.outputOctaves[1] = SolimValue::AddOctave::HIGHER;
 	valueSet.outputOctaves[3] = SolimValue::AddOctave::LOWER;
-	valueSet.resort = true;
+	valueSet.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
 	valueSet.resultValueCount = 69;
 
 	solimCoreProcessor.processResults(valueSet);
 
 	EXPECT_EQ(valueSet.resultValueCount, 8);
-	EXPECT_NEAR(valueSet.resultValues[0], -2.f, 0.00001f); // The lowered octave of index 3
-	EXPECT_NEAR(valueSet.resultValues[1], -1.f, 0.00001f); // Followed by the remaining 7 original values that fit inside the list
+	EXPECT_NEAR(valueSet.resultValues[0], -2.f, 0.00001f);
+	EXPECT_NEAR(valueSet.resultValues[1], -1.f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[2], 0.f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[3], 1.23f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[4], 4.33f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[5], 5.43f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[6], 9.f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[7], 10.f, 0.00001f);
+}
+
+TEST(SolimCoreProcessorTestForResultValues, WithAscendingMainSortAndWithOctavingGoingOutOfBoundsShouldOnlyUseFirstEightItemsAndSortConnected) {
+	std::array<bool, 8> outputConnected = { true, false, true, true, false, false, true, false };
+	SolimValueSet valueSet = createOutputSet();
+	setUnsortedOutputValues(valueSet);
+	valueSet.sort = 1;
+	valueSet.outputValueCount = 8;
+	valueSet.outputOctaves[1] = SolimValue::AddOctave::HIGHER;
+	valueSet.outputOctaves[3] = SolimValue::AddOctave::LOWER;
+	valueSet.resortMode = SolimValueSet::ResortMode::RESORT_CONNECTED;
+	valueSet.outputConnected = &outputConnected;
+	valueSet.resultValueCount = 69;
+
+	solimCoreProcessor.processResults(valueSet);
+
+	EXPECT_EQ(valueSet.resultValueCount, 8);
+	EXPECT_NEAR(valueSet.resultValues[0], -2.f, 0.00001f); // Was item at position 5, resorted because connected
+	EXPECT_NEAR(valueSet.resultValues[1], 5.43f, 0.00001f); // Not connected, so not resorted, was item at position 0, but moved one down because of the lowered 3
+	EXPECT_NEAR(valueSet.resultValues[2], 1.23f, 0.00001f); // Was item at position 1, resorted because connected
+	EXPECT_NEAR(valueSet.resultValues[3], 4.33f, 0.00001f); // Was item at position 2, resorted because connected
+	EXPECT_NEAR(valueSet.resultValues[4], 10.f, 0.00001f); // Not connected, so not resorted, was item at position 3, but moved one down because of the lowered 3
+	EXPECT_NEAR(valueSet.resultValues[5], -1.f, 0.00001f); // Not connected, so not resorted, was item at position 4, but moved one down because of the lowered 3
+	EXPECT_NEAR(valueSet.resultValues[6], 9.f, 0.00001f); // Was item at position 0. resorted because connected, ended up on position 0 because it is the lowered 3
+	EXPECT_NEAR(valueSet.resultValues[7], 0.f, 0.00001f); // Not connected, so not resorted, was item at position 6, but moved one down because of the lowered 3
 }
 
 TEST(SolimCoreProcessorTestForResultValues, WithDescendingMainSortAndWithOctavingShouldAddOctaves) {
@@ -620,14 +645,14 @@ TEST(SolimCoreProcessorTestForResultValues, WithDescendingMainSortAndWithOctavin
 	EXPECT_NEAR(valueSet.resultValues[7], valueSet.outputValues[6].value, 0.00001f);
 }
 
-TEST(SolimCoreProcessorTestForResultValues, WithDescendingMainSortAndWithOctavingGoingOutOfBoundsShouldOnlyUseFirstEightItemsAndIgnoreResort) {
+TEST(SolimCoreProcessorTestForResultValues, WithDescendingMainSortAndWithOctavingGoingOutOfBoundsShouldOnlyUseFirstEightItemsAndSortAll) {
 	SolimValueSet valueSet = createOutputSet();
 	setUnsortedOutputValues(valueSet);
 	valueSet.sort = -1;
 	valueSet.outputValueCount = 8;
 	valueSet.outputOctaves[1] = SolimValue::AddOctave::HIGHER;
 	valueSet.outputOctaves[3] = SolimValue::AddOctave::LOWER;
-	valueSet.resort = true;
+	valueSet.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
 	valueSet.resultValueCount = 69;
 
 	solimCoreProcessor.processResults(valueSet);
@@ -641,4 +666,29 @@ TEST(SolimCoreProcessorTestForResultValues, WithDescendingMainSortAndWithOctavin
 	EXPECT_NEAR(valueSet.resultValues[5], 0.f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[6], -1.f, 0.00001f);
 	EXPECT_NEAR(valueSet.resultValues[7], -2.f, 0.00001f);
+}
+
+TEST(SolimCoreProcessorTestForResultValues, WithDescendingMainSortAndWithOctavingGoingOutOfBoundsShouldOnlyUseFirstEightItemsAndSortConnected) {
+	std::array<bool, 8> outputConnected = { true, false, true, true, false, false, true, false };
+	SolimValueSet valueSet = createOutputSet();
+	setUnsortedOutputValues(valueSet);
+	valueSet.sort = -1;
+	valueSet.outputValueCount = 8;
+	valueSet.outputOctaves[1] = SolimValue::AddOctave::HIGHER;
+	valueSet.outputOctaves[3] = SolimValue::AddOctave::LOWER;
+	valueSet.resortMode = SolimValueSet::ResortMode::RESORT_CONNECTED;
+	valueSet.outputConnected = &outputConnected;
+	valueSet.resultValueCount = 69;
+
+	solimCoreProcessor.processResults(valueSet);
+
+	EXPECT_EQ(valueSet.resultValueCount, 8);
+	EXPECT_NEAR(valueSet.resultValues[0], 4.33f, 0.00001f); // Was item at position 2, resorted because connected
+	EXPECT_NEAR(valueSet.resultValues[1], 5.43f, 0.00001f); // Not connected, so not resorted, was item at position 0, but moved one down because of the highered 1
+	EXPECT_NEAR(valueSet.resultValues[2], 2.23f, 0.00001f); // Was item at position 0. resorted because connected, ended up on position 0 because it is the highered 1
+	EXPECT_NEAR(valueSet.resultValues[3], 1.23f, 0.00001f); // Was item at position 1, resorted because connected
+	EXPECT_NEAR(valueSet.resultValues[4], 10.f, 0.00001f); // Not connected, so not resorted, was item at position 3, but moved one down because of the highered 1
+	EXPECT_NEAR(valueSet.resultValues[5], -1.f, 0.00001f); // Not connected, so not resorted, was item at position 4, but moved one down because of the highered 1
+	EXPECT_NEAR(valueSet.resultValues[6], -2.f, 0.00001f); // Was item at position 5, resorted because connected
+	EXPECT_NEAR(valueSet.resultValues[7], 0.f, 0.00001f); // Not connected, so not resorted, was item at position 6, but moved one down because of the highered 1
 }

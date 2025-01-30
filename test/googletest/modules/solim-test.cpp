@@ -735,7 +735,7 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpander) {
 		EXPECT_EQ(inactiveSolimValueSet.outputOctaves[i], i % 3 == 0 ? SolimValue::AddOctave::LOWER : i % 3 == 1 ? SolimValue::AddOctave::NONE : SolimValue::AddOctave::HIGHER);
 		EXPECT_EQ(inactiveSolimValueSet.outputReplaceOriginal[i], i % 2 == 1);
 	}
-	EXPECT_FALSE(inactiveSolimValueSet.resort);
+	EXPECT_EQ(inactiveSolimValueSet.resortMode, SolimValueSet::ResortMode::RESORT_NONE);
 }
 
 TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShouldUseExpander) {
@@ -781,7 +781,7 @@ TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShou
 			EXPECT_EQ(inactiveSolimValueSet[column].outputOctaves[i], i % 3 == 0 ? SolimValue::AddOctave::LOWER : i % 3 == 1 ? SolimValue::AddOctave::NONE : SolimValue::AddOctave::HIGHER);
 			EXPECT_EQ(inactiveSolimValueSet[column].outputReplaceOriginal[i], i % 2 == 1);
 		}
-		EXPECT_FALSE(inactiveSolimValueSet[column].resort);
+		EXPECT_EQ(inactiveSolimValueSet[column].resortMode, SolimValueSet::ResortMode::RESORT_NONE);
 	}
 }
 
@@ -864,11 +864,11 @@ TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShou
 				EXPECT_EQ(inactiveSolimValueSet[column].outputReplaceOriginal[i], i % 2 == 1) << "Failed on column " << column << " and i " << i;
 			}
 		}
-		EXPECT_FALSE(inactiveSolimValueSet[column].resort);
+		EXPECT_EQ(inactiveSolimValueSet[column].resortMode, SolimValueSet::ResortMode::RESORT_NONE);
 	}
 }
 
-TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWithResort) {
+TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWithResortAll) {
 	MockSolimCore* solimCore = new MockSolimCore();
 	SolimModule solimModule(solimCore);
 	SolimOutputOctaverModule solimOutputOctaverModule;
@@ -897,7 +897,132 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWith
 		EXPECT_EQ(inactiveSolimValueSet.outputOctaves[i], i % 3 == 0 ? SolimValue::AddOctave::LOWER : i % 3 == 1 ? SolimValue::AddOctave::NONE : SolimValue::AddOctave::HIGHER);
 		EXPECT_EQ(inactiveSolimValueSet.outputReplaceOriginal[i], i % 2 == 1);
 	}
-	EXPECT_TRUE(inactiveSolimValueSet.resort);
+	EXPECT_EQ(inactiveSolimValueSet.resortMode, SolimValueSet::ResortMode::RESORT_ALL);
+}
+
+TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWithAndUseResortAllInsteadOfResortConnectedOnPolyphonicOutput) {
+	MockSolimCore* solimCore = new MockSolimCore();
+	SolimModule solimModule(solimCore);
+	SolimOutputOctaverModule solimOutputOctaverModule;
+	initializeSolimModule(solimModule);
+
+	SolimValueSet activeSolimValueSet;
+	SolimValueSet inactiveSolimValueSet;
+	EXPECT_CALL(*solimCore, getActiveValues(0)).WillRepeatedly(testing::ReturnRef(activeSolimValueSet));
+	EXPECT_CALL(*solimCore, getInactiveValues(0)).Times(1).WillRepeatedly(testing::ReturnRef(inactiveSolimValueSet));
+	EXPECT_CALL(*solimCore, processAndActivateInactiveValues(1, nullptr)).Times(1);
+
+	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT));
+
+	for (int i = 0; i < 8; i++) {
+		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+
+		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
+		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
+	}
+	solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_RESORT].setValue(1.f);
+	solimOutputOctaverModule.setSortMode(SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+	solimModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+
+	solimModule.process(Module::ProcessArgs());
+
+	for (int i = 0; i < 8; i++) {
+		EXPECT_NEAR(inactiveSolimValueSet.inputValues[i].value, i + 1, 0.00001f);
+		EXPECT_EQ(inactiveSolimValueSet.outputOctaves[i], i % 3 == 0 ? SolimValue::AddOctave::LOWER : i % 3 == 1 ? SolimValue::AddOctave::NONE : SolimValue::AddOctave::HIGHER);
+		EXPECT_EQ(inactiveSolimValueSet.outputReplaceOriginal[i], i % 2 == 1);
+	}
+	EXPECT_EQ(inactiveSolimValueSet.resortMode, SolimValueSet::ResortMode::RESORT_ALL);
+}
+
+TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWithResortNoneAfterResortAll) {
+	MockSolimCore* solimCore = new MockSolimCore();
+	SolimModule solimModule(solimCore);
+	SolimOutputOctaverModule solimOutputOctaverModule;
+	initializeSolimModule(solimModule);
+
+	SolimValueSet activeSolimValueSet;
+	SolimValueSet inactiveSolimValueSet;
+	EXPECT_CALL(*solimCore, getActiveValues(0)).WillRepeatedly(testing::ReturnRef(activeSolimValueSet));
+	EXPECT_CALL(*solimCore, getInactiveValues(0)).Times(1).WillRepeatedly(testing::ReturnRef(inactiveSolimValueSet));
+	EXPECT_CALL(*solimCore, processAndActivateInactiveValues(1, nullptr)).Times(1);
+
+	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT));
+
+	for (int i = 0; i < 8; i++) {
+		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+
+		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
+		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
+	}
+	solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_RESORT].setValue(0.f);
+
+	// Seed the resortMode to ALL, so that we can check that it actually gets set back to NONE
+	inactiveSolimValueSet.resortMode = SolimValueSet::ResortMode::RESORT_ALL;
+
+	solimModule.process(Module::ProcessArgs());
+
+	for (int i = 0; i < 8; i++) {
+		EXPECT_NEAR(inactiveSolimValueSet.inputValues[i].value, i + 1, 0.00001f);
+		EXPECT_EQ(inactiveSolimValueSet.outputOctaves[i], i % 3 == 0 ? SolimValue::AddOctave::LOWER : i % 3 == 1 ? SolimValue::AddOctave::NONE : SolimValue::AddOctave::HIGHER);
+		EXPECT_EQ(inactiveSolimValueSet.outputReplaceOriginal[i], i % 2 == 1);
+	}
+	EXPECT_EQ(inactiveSolimValueSet.resortMode, SolimValueSet::ResortMode::RESORT_NONE);
+}
+
+TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShouldUseExpanderWithResortConnected) {
+	MockSolimCore* solimCore = new MockSolimCore();
+	SolimModule solimModule(solimCore);
+	SolimInputModule solimInputModule[3];
+	SolimOutputModule solimOutputModule[3];
+	SolimOutputOctaverModule solimOutputOctaverModule;
+	initializeSolimModule(solimModule);
+
+	SolimValueSet activeSolimValueSet[4];
+	SolimValueSet inactiveSolimValueSet[4];
+	for (int i = 0; i < 4; i++) {
+		EXPECT_CALL(*solimCore, getActiveValues(i)).WillRepeatedly(testing::ReturnRef(activeSolimValueSet[i]));
+		EXPECT_CALL(*solimCore, getInactiveValues(i)).Times(1).WillRepeatedly(testing::ReturnRef(inactiveSolimValueSet[i]));
+	}
+	EXPECT_CALL(*solimCore, processAndActivateInactiveValues(4, nullptr)).Times(1);
+
+	registerExpanderModules(solimModule, {
+		ExpanderData(solimInputModule[0], modelSolimInput, ExpanderSide::LEFT),
+		ExpanderData(solimInputModule[1], modelSolimInput, ExpanderSide::LEFT),
+		ExpanderData(solimInputModule[2], modelSolimInput, ExpanderSide::LEFT)
+	});
+
+	registerExpanderModules(solimModule, {
+		ExpanderData(solimOutputModule[0], modelSolimOutput, ExpanderSide::RIGHT),
+		ExpanderData(solimOutputModule[1], modelSolimOutput, ExpanderSide::RIGHT),
+		ExpanderData(solimOutputModule[2], modelSolimOutput, ExpanderSide::RIGHT),
+		ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT)
+	});
+
+	// Prepare the connected outputs on the output modules and on the main module
+	solimModule.outputs[0].channels = 1;
+	solimModule.onPortChange(Module::PortChangeEvent());
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j <= i + 1; j++) {
+			solimOutputModule[i].outputs[j].channels = 1;
+		}
+		solimOutputModule[i].onPortChange(Module::PortChangeEvent());
+	}
+
+	// Set the sort mode
+	solimOutputOctaverModule.setSortMode(SolimOutputOctaverModule::SortMode::SORT_CONNECTED);
+	solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_RESORT].setValue(1.f);
+
+	solimModule.process(Module::ProcessArgs());
+
+	for (int column = 0; column < 4; column++) {
+		EXPECT_EQ(inactiveSolimValueSet[column].resortMode, SolimValueSet::ResortMode::RESORT_CONNECTED);
+
+		std::array<bool, 8> expectedConnectedOutputs = { false };
+		for (int i = 0; i <= column; i++) {
+			expectedConnectedOutputs[i] = true;
+		}
+		EXPECT_EQ((*inactiveSolimValueSet[column].outputConnected), expectedConnectedOutputs);
+	}
 }
 
 TEST(SolimTest, ProcessSolimOutputOctaverExpanderInputsShouldOverwriteParams) {
@@ -2339,7 +2464,7 @@ TEST(SolimTest, ShouldDefaultToMonophonicOutputMode) {
 
 	EXPECT_EQ(solimModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 	json_t* jsonData = solimModule.dataToJson();
-	checkJsonSolimOutputMode(solimModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+	checkJsonSolimOutputMode(jsonData, SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 
 	delete jsonData;
 }
@@ -2378,7 +2503,7 @@ TEST(SolimTest, ShouldPersistPolyphonicOutputMode) {
 	solimModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
 	EXPECT_EQ(solimModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
 	json_t* jsonData = solimModule.dataToJson();
-	checkJsonSolimOutputMode(solimModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
+	checkJsonSolimOutputMode(jsonData, SolimOutputMode::OUTPUT_MODE_POLYPHONIC);
 
 	delete jsonData;
 }
@@ -2390,7 +2515,7 @@ TEST(SolimTest, ShouldPersistMonophonicOutputMode) {
 	solimModule.setOutputMode(SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 	EXPECT_EQ(solimModule.getOutputMode(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 	json_t* jsonData = solimModule.dataToJson();
-	checkJsonSolimOutputMode(solimModule.dataToJson(), SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
+	checkJsonSolimOutputMode(jsonData, SolimOutputMode::OUTPUT_MODE_MONOPHONIC);
 
 	delete jsonData;
 }
@@ -2409,7 +2534,7 @@ TEST(SolimTest, ShouldDefaultToAudioProcessRate) {
 
 	EXPECT_EQ(solimModule.getProcessRate(), SolimModule::ProcessRate::AUDIO);
 	json_t* jsonData = solimModule.dataToJson();
-	checkJsonSolimProcessRate(solimModule.dataToJson(), SolimModule::ProcessRate::AUDIO);
+	checkJsonSolimProcessRate(jsonData, SolimModule::ProcessRate::AUDIO);
 
 	delete jsonData;
 }
@@ -2448,7 +2573,7 @@ TEST(SolimTest, ShouldPersistDividedProcessRate) {
 	solimModule.setProcessRate(SolimModule::ProcessRate::DIVIDED);
 	EXPECT_EQ(solimModule.getProcessRate(), SolimModule::ProcessRate::DIVIDED);
 	json_t* jsonData = solimModule.dataToJson();
-	checkJsonSolimProcessRate(solimModule.dataToJson(), SolimModule::ProcessRate::DIVIDED);
+	checkJsonSolimProcessRate(jsonData, SolimModule::ProcessRate::DIVIDED);
 
 	delete jsonData;
 }
@@ -2460,7 +2585,57 @@ TEST(SolimTest, ShouldPersistAudioProcessRate) {
 	solimModule.setProcessRate(SolimModule::ProcessRate::AUDIO);
 	EXPECT_EQ(solimModule.getProcessRate(), SolimModule::ProcessRate::AUDIO);
 	json_t* jsonData = solimModule.dataToJson();
-	checkJsonSolimProcessRate(solimModule.dataToJson(), SolimModule::ProcessRate::AUDIO);
+	checkJsonSolimProcessRate(jsonData, SolimModule::ProcessRate::AUDIO);
 
 	delete jsonData;
+}
+
+TEST(SolimTest, ShouldUpdateConnectedPortsOnPortChangeEvent) {
+	SolimModule solimModule;
+	std::array<bool, 8> expectedConnectedPorts = { false };
+	Module::PortChangeEvent portChangeEvent;
+
+	// No ports should be connected initially
+	EXPECT_EQ(solimModule.getConnectedPorts(), expectedConnectedPorts);
+
+	// Connect each port one by one and check if they are correctly detected
+	for (int i = 0; i < 8; i++) {
+		solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + i].channels = 1;
+		solimModule.onPortChange(portChangeEvent);
+		expectedConnectedPorts[i] = true;
+
+		EXPECT_EQ(solimModule.getConnectedPorts(), expectedConnectedPorts);
+
+		solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + i].channels = 0;
+		solimModule.onPortChange(portChangeEvent);
+		expectedConnectedPorts[i] = false;
+
+		EXPECT_EQ(solimModule.getConnectedPorts(), expectedConnectedPorts);
+	}
+
+	// Set a couple of ports to connected, and verify the event processing
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 2].channels = 1;
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 4].channels = 1;
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 5].channels = 1;
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 7].channels = 1;
+	expectedConnectedPorts[2] = true;
+	expectedConnectedPorts[4] = true;
+	expectedConnectedPorts[5] = true;
+	expectedConnectedPorts[7] = true;
+
+	solimModule.onPortChange(portChangeEvent);
+	EXPECT_EQ(solimModule.getConnectedPorts(), expectedConnectedPorts);
+
+	// Connect the other ports, and verify the event processing
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 0].channels = 1;
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 1].channels = 1;
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 3].channels = 1;
+	solimModule.outputs[SolimModule::OutputId::OUT_OUTPUTS + 6].channels = 1;
+	expectedConnectedPorts[0] = true;
+	expectedConnectedPorts[1] = true;
+	expectedConnectedPorts[3] = true;
+	expectedConnectedPorts[6] = true;
+
+	solimModule.onPortChange(portChangeEvent);
+	EXPECT_EQ(solimModule.getConnectedPorts(), expectedConnectedPorts);
 }
