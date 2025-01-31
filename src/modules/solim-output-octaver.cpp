@@ -96,8 +96,8 @@ SolimOutputOctaverWidget::SolimOutputOctaverWidget(SolimOutputOctaverModule* mod
 		addParam(createParamCentered<BefacoSwitch>(Vec(39.5f, y), module, SolimOutputOctaverModule::PARAM_ADD_OCTAVE + i));
 		addInput(createInputCentered<NTPort>(Vec(72.5f, y), module, SolimOutputOctaverModule::IN_ADD_OCTAVE + i));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<RedLight>>>(Vec(39.5f + 82.5f, y), module, SolimOutputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimOutputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
-		addInput(createInputCentered<NTPort>(Vec(72.5f + 82.5f, y), module, SolimOutputOctaverModule::IN_REPLACE_ORIGINAL + i));
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<RedLight>>>(Vec(122.f, y), module, SolimOutputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimOutputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
+		addInput(createInputCentered<NTPort>(Vec(155.f, y), module, SolimOutputOctaverModule::IN_REPLACE_ORIGINAL + i));
 
 		y += yDelta;
 	}

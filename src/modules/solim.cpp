@@ -421,8 +421,8 @@ SolimWidget::SolimWidget(SolimModule* module): NTModuleWidget(dynamic_cast<NTMod
 	addParam(createParamCentered<CKSSThree>(Vec(57.5, 296), module, SolimModule::PARAM_SORT));
 	addInput(createInputCentered<NTPort>(Vec(75, 334.5), module, SolimModule::IN_SORT));
 
-	NoteDisplay* lowerDisplay = createWidget<NoteDisplay>(Vec(56+0.25, 44-1.25));
-	lowerDisplay->box.size = Vec(95.5-61, 60-42.5);
+	NoteDisplay* lowerDisplay = createWidget<NoteDisplay>(Vec(56.25f, 42.75f));
+	lowerDisplay->box.size = Vec(34.5f, 17.5f);
 	lowerDisplay->setScale(4);
 	lowerDisplay->setNote(0);
 	addChild(lowerDisplay);
@@ -430,8 +430,8 @@ SolimWidget::SolimWidget(SolimModule* module): NTModuleWidget(dynamic_cast<NTMod
 		module->m_lowerDisplay = lowerDisplay;
 	}
 
-	NoteDisplay* upperDisplay = createWidget<NoteDisplay>(Vec(56+0.25, 164-1.25));
-	upperDisplay->box.size = Vec(95.5-61, 60-42.5);
+	NoteDisplay* upperDisplay = createWidget<NoteDisplay>(Vec(56.25f, 162.75f));
+	upperDisplay->box.size = Vec(34.5f, 17.5f);
 	upperDisplay->setScale(5);
 	upperDisplay->setNote(0);
 	addChild(upperDisplay);
