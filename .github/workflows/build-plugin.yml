@@ -1,4 +1,6 @@
 name: Build VCV Rack Plugin
+permissions:
+  contents: write
 on: [push, pull_request]
 
 env:
