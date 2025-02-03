@@ -1,3 +1,126 @@
 {
-
+	"type": "not-things sequence",
+	"version": "0.1",
+	"timelines": [
+		{
+			"time-scale": {
+				"sample-rate": 48000,
+				"bpm": 120,
+				"bpb": 4
+			},
+			"loop-lock": true,
+			"lanes": [
+				{
+					"name": "a first lane",
+					"loop": true,
+					"segments": [
+						{
+							"segment-block-ref": "segment-block-1"
+						}
+					]
+				}
+			]
+		}
+	],
+	"segment-blocks": [
+		{
+			"id": "segment-block-1",
+			"name": "A first segment block",
+			"segments": [
+				{
+					"id": "segment-a",
+					"name": "Segment A",
+					"duration": {
+						"samples": 123,
+						"millis": 100,
+						"bars": 2,
+						"beats": 1.5
+					},
+					"actions": [
+						{
+							"timing": "start",
+							"set-value": {
+								"output": {
+									"index": 1,
+									"channel": 3
+								},
+								"output-ref:": "output1",
+								"value": {
+									"voltage": 1.2,
+									"note": "c4+",
+									"input": {
+										"index": 1,
+										"channel": 5
+									},
+									"output": {
+										"index": 1,
+										"channel": 5
+									},
+									"rand": {
+										"lower": { "const": 1.0 },
+										"upper": { "const": 1.0 }
+									},
+									"calc": [
+										{ "add": { "const": 1.0 } },
+										{ "sub": { "const": 1.0 } },
+										{ "div": { "const": 1.0 } },
+										{ "mult": { "const": 1.0 } }
+									]
+								},
+								"value-ref": "voltage1"
+							}
+						},
+						{
+							"timing": "end",
+							"set-polyphony": {
+								"index": 1,
+								"channels": 16
+							}
+						},
+						{
+							"timing": "glide",
+							"start-value": { },
+							"end-value": { }
+						}
+					]
+				},
+				{
+					"segment-ref": "segment-1"
+				},
+				{
+					"id": "segment-b",
+					"name": "Segment B"
+				}
+			]
+		}
+	],
+	"segments": [
+		{
+			"id": "segment-1",
+			"name": "A first segment"
+		}
+	],
+	"inputs": [
+		{
+			"id": "input1",
+			"index": 1,
+			"channel": 5
+		}
+	],
+	"outputs": [
+		{
+			"id": "output1",
+			"index": 1,
+			"channel": 5
+		}
+	],
+	"values": [
+		{
+			"id": "value1",
+			"voltage": 1.0
+		}
+	],
+	"actions": [
+		
+	]
 }
