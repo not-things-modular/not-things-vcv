@@ -1,5 +1,5 @@
 {
-	"type": "not-things sequence",
+	"type": "not-things_timeseq_script",
 	"version": "0.1",
 	"timelines": [
 		{
@@ -31,64 +31,69 @@
 			"id": "segment-block-1",
 			"segments": [
 				{
-					"id": "segment-a",
-					"duration": {
-						"samples": 123,
-						"millis": 100,
-						"bars": 2,
-						"beats": 1.5
-					},
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": {
-								"output": {
-									"index": 1,
-									"channel": 3
-								},
-								"output-ref:": "output1",
-								"value": {
-									"voltage": 1.2,
-									"note": "c4+",
-									"input": {
-										"index": 1,
-										"channel": 5
-									},
+					"segment": {
+						"id": "segment-a",
+						"duration": {
+							"samples": 123,
+							"millis": 100,
+							"bars": 2,
+							"beats": 1.5
+						},
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": {
 									"output": {
 										"index": 1,
-										"channel": 5
+										"channel": 3
 									},
-									"rand": {
-										"lower": { "const": 1.0 },
-										"upper": { "const": 1.0 }
+									"output-ref:": "output1",
+									"value": {
+										"voltage": 1.2,
+										"note": "c4+",
+										"input": {
+											"index": 1,
+											"channel": 5
+										},
+										"output": {
+											"index": 1,
+											"channel": 5
+										},
+										"rand": {
+											"lower": { "const": 1.0 },
+											"upper": { "const": 1.0 }
+										},
+										"calc": [
+											{ "add": { "const": 1.0 } },
+											{ "sub": { "const": 1.0 } },
+											{ "div": { "const": 1.0 } },
+											{ "mult": { "const": 1.0 } }
+										]
 									},
-									"calc": [
-										{ "add": { "const": 1.0 } },
-										{ "sub": { "const": 1.0 } },
-										{ "div": { "const": 1.0 } },
-										{ "mult": { "const": 1.0 } }
-									]
-								},
-								"value-ref": "voltage1"
+									"value-ref": "voltage1"
+								}
+							},
+							{
+								"timing": "end",
+								"set-polyphony": {
+									"index": 1,
+									"channels": 16
+								}
+							},
+							{
+								"timing": "glide",
+								"start-value": { },
+								"end-value": { }
+							},
+							{
+								"timing": "end",
+								"trigger": "trigger2"
 							}
-						},
-						{
-							"timing": "end",
-							"set-polyphony": {
-								"index": 1,
-								"channels": 16
-							}
-						},
-						{
-							"timing": "glide",
-							"start-value": { },
-							"end-value": { }
-						},
-						{
-							"timing": "end",
-							"trigger": "trigger2"
-						}
-					]
+						]
+					},
+					"segment-block": {
+						"segment-ref": "segment-1"
+					}
 				},
 				{
 					"segment-ref": "segment-1"

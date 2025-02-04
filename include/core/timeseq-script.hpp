@@ -126,11 +126,10 @@ struct ScriptAction : ScriptRefObject {
 	ActionTiming timing;
 	std::unique_ptr<ScriptSetValue> setValue;
 	std::unique_ptr<ScriptSetPolyphony> setPolyphony;
+	std::string trigger;
 
 	std::unique_ptr<ScriptValue> startValue;
 	std::unique_ptr<ScriptValue> endValue;
-
-	std::string trigger;
 };
 
 struct ScriptDuration {

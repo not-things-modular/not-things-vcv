@@ -1,0 +1,358 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "http://not-things.com/timeseq/0.0.1",
+	"definitions": {
+		"input": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"ref": {
+					"type": "string"
+				},
+				"index": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 8
+				},
+				"channel": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 8
+				}
+			},
+			"required": [ "index" ]
+		},
+		"output": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"ref": {
+					"type": "string"
+				},
+				"index": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 8
+				},
+				"channel": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 8
+				}
+			},
+			"required": [ "index" ]
+		},
+		"rand": {
+			"type": "object",
+			"properties": {
+				"lower": {
+					"$ref": "#/definitions/value"
+				},
+				"upper": {
+					"$ref": "#/definitions/value"
+				}
+			},
+			"required": [ "lower", "upper" ]
+		},
+		"calc": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"add": { "$ref": "#/definitions/value" },
+					"sub": { "$ref": "#/definitions/value" },
+					"div": { "$ref": "#/definitions/value" },
+					"mult": { "$ref": "#/definitions/value" }
+				},
+				"minProperties": 1,
+				"maxProperties": 1
+			},
+			"minItems": 1
+		},
+		"value": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"ref": {
+					"type": "string"
+				},
+				"voltage": {
+					"type": "number",
+					"minimum": -10,
+					"maximum": 10
+				},
+				"note": {
+					"type": "string",
+					"minLength": 2,
+					"maxLength": 3,
+					"pattern": "[a-zA-z][0-9][+-]?"
+				},
+				"input": { "$ref": "#/definitions/input" },
+				"output": { "$ref": "#/definitions/output" },
+				"rand": { "$ref": "#/definitions/rand" },
+				"calc": { "$ref": "#/definitions/calc" }
+			}
+		},
+		"set-value": {
+			"type": "object",
+			"properties": {
+				"output": { "$ref": "#/definitions/output" },
+				"value": { "$ref": "#/definitions/value" }
+			}
+		},
+		"set-polyphony": {
+			"type": "object",
+			"properties": {
+				"index": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 8
+				},
+				"channels": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 16
+				}
+			}
+		},
+		"action": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"ref": {
+					"type": "string"
+				},
+				"timing": {
+					"enum": [ "start", "end", "glide" ]
+				},
+				"set-value": { "$ref": "#/definitions/set-value" },
+				"set-polyphony": { "$ref": "#/definitions/set-polyphony" },
+				"trigger": {
+					"type": "string"
+				},
+				"start-value": { "$ref": "#/definitions/set-value" },
+				"end-value": { "$ref": "#/definitions/set-value" }
+			}
+		},
+		"duration": {
+			"type": "object",
+			"properties": {
+				"samples": {
+					"type": "integer",
+					"exclusiveMinimum": 0
+				},
+				"millis": {
+					"type": "number",
+					"exclusiveMinimum": 0
+				},
+				"bars": {
+					"type": "integer",
+					"exclusiveMinimum": 0
+				},
+				"beats": {
+					"exclusiveMinimum": 0
+				}
+			}
+		},
+		"segment": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"ref": {
+					"type": "string"
+				},
+				"duration": { "$ref": "#/definitions/duration" },
+				"actions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					},
+					"minItems": 1
+				}
+			}
+		},
+		"segment-block": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"ref": {
+					"type": "string"
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"segment": { "$ref": "#/definitions/segment" },
+							"segment-block": { "$ref": "#/definitions/segment-block" }
+						},
+						"minProperties": 1,
+						"maxProperties": 1
+					}
+				}
+			}
+		},
+		"lane": {
+			"type": "object",
+			"properties": {
+				"loop": {
+					"type": "boolean"
+				},
+				"repeat": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"start-trigger": {
+					"type": "string",
+					"minLength": 1
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"segment": { "$ref": "#/definitions/segment" },
+								"segment-block": { "$ref": "#/definitions/segment-block" }
+							},
+							"minProperties": 1,
+							"maxProperties": 1
+						}
+					}
+				}
+			},
+			"required": [ "segments" ]
+		},
+		"time-scale": {
+			"type": "object",
+			"properties": {
+				"sample-rate": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"bpm": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"bpb": {
+					"type": "integer",
+					"minimum": 1
+				}
+			},
+			"minProperties": 1
+		},
+		"timeline": {
+			"type": "object",
+			"properties": {
+				"time-scale": { "$ref": "#/definitions/time-scale" },
+				"loop-lock": {
+					"type": "boolean"
+				},
+				"lanes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/lane"
+					},
+					"minItems": 1
+				}
+			},
+			"required": [ "lanes" ]
+		},
+		"input-trigger": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string",
+					"minLength": 1
+				},
+				"input": { "$ref": "#/definitions/input" }
+			},
+			"required": [ "id", "input" ]
+		},
+		"script": {
+			"type": "object",
+			"properties": {
+				"type": {
+					"const": "not-things_timeseq_script"
+				},
+				"version": {
+					"const": "0.0.1"
+				},
+				"timelines": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/timeline"
+					},
+					"minItems": 1
+				},
+				"segment-blocks": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/segment-block"
+					},
+					"minItems": 1
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/segment"
+					},
+					"minItems": 1
+				},
+				"inputs": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/input"
+					},
+					"minItems": 1
+				},
+				"outputs": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/output"
+					},
+					"minItems": 1
+				},
+				"values": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/value"
+					},
+					"minItems": 1
+				},
+				"actions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					},
+					"minItems": 1
+				},
+				"input-triggers": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/input-trigger"
+					},
+					"minItems": 1
+				}
+			},
+			"required": [ "type", "version", "timelines" ]
+		}
+	},
+	"type": "object",
+	"properties": {
+		"script": { "$ref": "#/definitions/script" }
+	}
+}
