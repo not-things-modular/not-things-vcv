@@ -7,9 +7,21 @@
 namespace timeseq {
 
 struct ScriptValue;
+struct ScriptSegmentBlock;
 
 struct ScriptRefObject {
+	/**
+	 * @brief The id of this object
+	 * ids must be unique per object type, and can be used as ref value to reference this object
+	 * in other places, allow reuse of the same object definition.
+	 */
 	std::string id;
+	/**
+	 * @brief A reference (by id) to another object of this type
+	 * Instead of containing a full instance of this object, it contains a reference by id to
+	 * another instance of this object type that contains the actual values to use.
+	 */
+	std::string ref;
 };
 
 struct ScriptPort {
@@ -58,7 +70,6 @@ struct ScriptCalc {
 
 /**
  * @struct ScriptValue
- * @brief 
  */
 struct ScriptValue : ScriptRefObject {
 	/**
@@ -97,9 +108,7 @@ struct ScriptValue : ScriptRefObject {
 
 struct ScriptSetValue {
 	std::unique_ptr<ScriptOutput> output;
-	std::string outputRef;
 	ScriptValue value;
-	std::string valueRef;
 };
 
 struct ScriptSetPolyphony {
@@ -120,6 +129,67 @@ struct ScriptAction : ScriptRefObject {
 
 	std::unique_ptr<ScriptValue> startValue;
 	std::unique_ptr<ScriptValue> endValue;
+
+	std::string trigger;
+};
+
+struct ScriptDuration {
+	std::unique_ptr<int> samples;
+	std::unique_ptr<float> millis;
+	std::unique_ptr<int> bars;
+	std::unique_ptr<float> beats;
+};
+
+struct ScriptSegment : ScriptRefObject {
+	ScriptDuration duration;
+	std::vector<ScriptAction> actions;
+};
+
+struct ScriptSegmentEntity : ScriptRefObject {
+	std::unique_ptr<ScriptSegment> segment;
+	std::unique_ptr<ScriptSegmentBlock> segmentBlock;
+};
+
+struct ScriptSegmentBlock : ScriptRefObject {
+	std::vector<ScriptSegmentEntity> segments;
+};
+
+struct ScriptLane {
+	bool loop;
+	int repeat;
+	std::string startTrigger;
+	std::vector<ScriptSegmentEntity> segments;
+};
+
+struct ScriptTimeScale {
+	std::unique_ptr<int> sampleRate;
+	std::unique_ptr<int> bpm;
+	std::unique_ptr<int> bpb;
+};
+
+struct ScriptTimeline {
+	ScriptTimeScale timeScale;
+	bool loopLock;
+	std::vector<ScriptLane> lanes;
+};
+
+struct ScriptInputTrigger {
+	std::string id;
+	ScriptInput input;
+};
+
+struct Script {
+	std::string type;
+	std::string version;
+
+	std::vector<ScriptTimeline> timelines;
+	std::vector<ScriptSegmentBlock> segmentBlocks;
+	std::vector<ScriptSegment> segments;
+	std::vector<ScriptInput> inputs;
+	std::vector<ScriptOutput> outputs;
+	std::vector<ScriptValue> values;
+	std::vector<ScriptAction> actions;
+	std::vector<ScriptInputTrigger> inputTriggers;
 };
 
 }

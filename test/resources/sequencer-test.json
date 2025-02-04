@@ -13,9 +13,13 @@
 				{
 					"name": "a first lane",
 					"loop": true,
+					"repeat": 2,
+					"start-trigger": "trigger1",
 					"segments": [
 						{
-							"segment-block-ref": "segment-block-1"
+							"segment-block": {
+								"ref":  "segment-block-1"
+							}
 						}
 					]
 				}
@@ -25,11 +29,9 @@
 	"segment-blocks": [
 		{
 			"id": "segment-block-1",
-			"name": "A first segment block",
 			"segments": [
 				{
 					"id": "segment-a",
-					"name": "Segment A",
 					"duration": {
 						"samples": 123,
 						"millis": 100,
@@ -81,6 +83,10 @@
 							"timing": "glide",
 							"start-value": { },
 							"end-value": { }
+						},
+						{
+							"timing": "end",
+							"trigger": "trigger2"
 						}
 					]
 				},
@@ -121,6 +127,14 @@
 		}
 	],
 	"actions": [
-		
+
+	],
+	"input-triggers": [
+		{
+			"id": "trigger1",
+			"input": {
+				"ref": "input1"
+			}
+		}
 	]
 }
