@@ -157,6 +157,7 @@ struct ScriptLane {
 	bool loop;
 	int repeat;
 	std::string startTrigger;
+	std::string stopTrigger;
 	std::vector<ScriptSegmentEntity> segments;
 };
 
@@ -186,6 +187,7 @@ struct Script {
 	std::vector<ScriptSegment> segments;
 	std::vector<ScriptInput> inputs;
 	std::vector<ScriptOutput> outputs;
+	std::vector<ScriptCalc> calcs;
 	std::vector<ScriptValue> values;
 	std::vector<ScriptAction> actions;
 	std::vector<ScriptInputTrigger> inputTriggers;

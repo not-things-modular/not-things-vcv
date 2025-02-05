@@ -2,15 +2,29 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$id": "http://not-things.com/timeseq/0.0.1",
 	"definitions": {
-		"input": {
+		"id-base": {
 			"type": "object",
 			"properties": {
 				"id": {
-					"type": "string"
-				},
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"required": [ "id" ]
+		},
+		"ref-base": {
+			"type": "object",
+			"properties": {
 				"ref": {
-					"type": "string"
-				},
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"required": [ "ref" ]
+		},
+		"input": {
+			"type": "object",
+			"properties": {
 				"index": {
 					"type": "integer",
 					"minimum": 0,
@@ -27,12 +41,6 @@
 		"output": {
 			"type": "object",
 			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"ref": {
-					"type": "string"
-				},
 				"index": {
 					"type": "integer",
 					"minimum": 0,
@@ -50,10 +58,16 @@
 			"type": "object",
 			"properties": {
 				"lower": {
-					"$ref": "#/definitions/value"
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/valuse" }
+					]
 				},
 				"upper": {
-					"$ref": "#/definitions/value"
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/valuse" }
+					]
 				}
 			},
 			"required": [ "lower", "upper" ]
@@ -63,10 +77,30 @@
 			"items": {
 				"type": "object",
 				"properties": {
-					"add": { "$ref": "#/definitions/value" },
-					"sub": { "$ref": "#/definitions/value" },
-					"div": { "$ref": "#/definitions/value" },
-					"mult": { "$ref": "#/definitions/value" }
+					"add": {
+						"oneOf": [
+							{ "$ref": "#/definitions/ref-base" },
+							{ "$ref": "#/definitions/valuse" }
+						]
+					},
+					"sub": {
+						"oneOf": [
+							{ "$ref": "#/definitions/ref-base" },
+							{ "$ref": "#/definitions/valuse" }
+						]
+					},
+					"div": {
+						"oneOf": [
+							{ "$ref": "#/definitions/ref-base" },
+							{ "$ref": "#/definitions/valuse" }
+						]
+					},
+					"mult": {
+						"oneOf": [
+							{ "$ref": "#/definitions/ref-base" },
+							{ "$ref": "#/definitions/valuse" }
+						]
+					}
 				},
 				"minProperties": 1,
 				"maxProperties": 1
@@ -76,12 +110,6 @@
 		"value": {
 			"type": "object",
 			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"ref": {
-					"type": "string"
-				},
 				"voltage": {
 					"type": "number",
 					"minimum": -10,
@@ -93,17 +121,42 @@
 					"maxLength": 3,
 					"pattern": "[a-zA-z][0-9][+-]?"
 				},
-				"input": { "$ref": "#/definitions/input" },
-				"output": { "$ref": "#/definitions/output" },
+				"input": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/input" }
+					]
+				},
+				"output": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/output" }
+					]
+				},
 				"rand": { "$ref": "#/definitions/rand" },
-				"calc": { "$ref": "#/definitions/calc" }
+				"calc": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/calc" }
+					]
+				}
 			}
 		},
 		"set-value": {
 			"type": "object",
 			"properties": {
-				"output": { "$ref": "#/definitions/output" },
-				"value": { "$ref": "#/definitions/value" }
+				"output": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/output" }
+					]
+				},
+				"value": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/value" }
+					]
+				}
 			}
 		},
 		"set-polyphony": {
@@ -124,12 +177,6 @@
 		"action": {
 			"type": "object",
 			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"ref": {
-					"type": "string"
-				},
 				"timing": {
 					"enum": [ "start", "end", "glide" ]
 				},
@@ -138,8 +185,18 @@
 				"trigger": {
 					"type": "string"
 				},
-				"start-value": { "$ref": "#/definitions/set-value" },
-				"end-value": { "$ref": "#/definitions/set-value" }
+				"start-value": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/set-value" }
+					]
+				},
+				"end-value": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/set-value" }
+					]
+				}
 			}
 		},
 		"duration": {
@@ -165,17 +222,14 @@
 		"segment": {
 			"type": "object",
 			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"ref": {
-					"type": "string"
-				},
 				"duration": { "$ref": "#/definitions/duration" },
 				"actions": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/action"
+						"oneOf": [
+							{ "$ref": "#/definitions/ref-base" },
+							{ "$ref": "#/definitions/action" }
+						]
 					},
 					"minItems": 1
 				}
@@ -184,21 +238,25 @@
 		"segment-block": {
 			"type": "object",
 			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"ref": {
-					"type": "string"
-				},
 				"segments": {
 					"type": "array",
 					"items": {
 						"type": "object",
 						"properties": {
-							"segment": { "$ref": "#/definitions/segment" },
-							"segment-block": { "$ref": "#/definitions/segment-block" }
+							"segment": {
+								"oneOf": [
+									{ "$ref": "#/definitions/ref-base" },
+									{ "$ref": "#/definitions/segment" }
+								]
+							},
+							"segment-block": {
+								"oneOf": [
+									{ "$ref": "#/definitions/ref-base" },
+									{ "$ref": "#/definitions/segment-block" }
+								]
+							}
 						},
-						"minProperties": 1,
+					"minProperties": 1,
 						"maxProperties": 1
 					}
 				}
@@ -218,6 +276,10 @@
 					"type": "string",
 					"minLength": 1
 				},
+				"stop-trigger": {
+					"type": "string",
+					"minLength": 1
+				},
 				"segments": {
 					"type": "array",
 					"items": {
@@ -225,8 +287,18 @@
 						"items": {
 							"type": "object",
 							"properties": {
-								"segment": { "$ref": "#/definitions/segment" },
-								"segment-block": { "$ref": "#/definitions/segment-block" }
+								"segment": {
+									"oneOf": [
+										{ "$ref": "#/definitions/ref-base" },
+										{ "$ref": "#/definitions/segment" }
+									]
+								},
+								"segment-block": {
+									"oneOf": [
+										{ "$ref": "#/definitions/ref-base" },
+										{ "$ref": "#/definitions/segment-block" }
+									]
+								}
 							},
 							"minProperties": 1,
 							"maxProperties": 1
@@ -278,7 +350,12 @@
 					"type": "string",
 					"minLength": 1
 				},
-				"input": { "$ref": "#/definitions/input" }
+				"input": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/input" }
+					]
+				}
 			},
 			"required": [ "id", "input" ]
 		},
@@ -301,42 +378,70 @@
 				"segment-blocks": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/segment-block"
+						"allOf": [
+							{ "$ref": "#/definitions/id-base" },
+							{ "$ref": "#/definitions/segment-block" }
+						]
 					},
 					"minItems": 1
 				},
 				"segments": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/segment"
+						"allOf": [
+							{ "$ref": "#/definitions/id-base" },
+							{ "$ref": "#/definitions/segment" }
+						]
 					},
 					"minItems": 1
 				},
 				"inputs": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/input"
+						"allOf": [
+							{ "$ref": "#/definitions/id-base" },
+							{ "$ref": "#/definitions/input" }
+						]
 					},
 					"minItems": 1
 				},
 				"outputs": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/output"
+						"allOf": [
+							{ "$ref": "#/definitions/id-base" },
+							{ "$ref": "#/definitions/output" }
+						]
+					},
+					"minItems": 1
+				},
+				"calcs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/id-base" },
+							{ "$ref": "#/definitions/calc" }
+						]
 					},
 					"minItems": 1
 				},
 				"values": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/value"
+						"allOf": [
+							{ "$ref": "#/definitions/id-base" },
+							{ "$ref": "#/definitions/value" }
+						]
 					},
 					"minItems": 1
 				},
 				"actions": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/action"
+						"allOf": [
+							{ "$ref": "#/definitions/id-base" },
+							{ "$ref": "#/definitions/action" }
+						]
 					},
 					"minItems": 1
 				},
