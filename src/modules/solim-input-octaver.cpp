@@ -60,16 +60,16 @@ void SolimInputOctaverModule::draw(const widget::Widget::DrawArgs& args) {
 }
 
 SolimInputOctaverWidget::SolimInputOctaverWidget(SolimInputOctaverModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "solim-input-octaver") {
-	float y = 54.5f;
+	float y = 41.5f;
 	float yDelta = 40;
 	for (int i = 0; i < 8; i++) {
 		addParam(createParamCentered<BefacoSwitch>(Vec(39.5f, y), module, SolimInputOctaverModule::PARAM_ADD_OCTAVE + i));
-		addInput(createInputCentered<NTPort>(Vec(72.5f, y), module, SolimInputOctaverModule::IN_ADD_OCTAVE + i));
+		addInput(createInputCentered<NTPort>(Vec(73.5f, y), module, SolimInputOctaverModule::IN_ADD_OCTAVE + i));
 
-		addParam(createParamCentered<DualBefacoSwitch>(Vec(119.5f, y), module, SolimInputOctaverModule::PARAM_SORT_POSITION + i));
-		addInput(createInputCentered<NTPort>(Vec(152.5f, y), module, SolimInputOctaverModule::IN_SORT_POSITION + i));
+		addParam(createParamCentered<DualBefacoSwitch>(Vec(120.5f, y), module, SolimInputOctaverModule::PARAM_SORT_POSITION + i));
+		addInput(createInputCentered<NTPort>(Vec(154.5f, y), module, SolimInputOctaverModule::IN_SORT_POSITION + i));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<RedLight>>>(Vec(199.5f, y), module, SolimInputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimInputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<RedLight>>>(Vec(201.5f, y), module, SolimInputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimInputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
 		addInput(createInputCentered<NTPort>(Vec(232.5f, y), module, SolimInputOctaverModule::IN_REPLACE_ORIGINAL + i));
 
 		y += yDelta;
