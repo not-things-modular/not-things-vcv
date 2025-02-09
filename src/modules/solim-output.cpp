@@ -1,6 +1,6 @@
 #include "modules/solim-output.hpp"
 #include "components/ntport.hpp"
-#include "components/bluegreenlight.hpp"
+#include "components/lights.hpp"
 
 
 extern Model* modelSolimRandom;

@@ -8,6 +8,9 @@ extern Model* modelSolimOutput;
 extern Model* modelSolimOutputOctaver;
 extern Model* modelSolimRandom;
 
+extern Model* modelPipoOutput;
+extern Model* modelPipoInput;
+
 Plugin* pluginInstance;
 
 void init(Plugin* p) {
@@ -19,4 +22,6 @@ void init(Plugin* p) {
 	p->addModel(modelSolimOutput);
 	p->addModel(modelSolimOutputOctaver);
 	p->addModel(modelSolimRandom);
+	p->addModel(modelPipoInput);
+	p->addModel(modelPipoOutput);
 }

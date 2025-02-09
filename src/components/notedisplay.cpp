@@ -114,6 +114,7 @@ void NoteDisplay::drawLayer(const DrawArgs& args, int layer) {
 	}
 
 	// Fill the note dots
-	nvgFillColor(args.vg, nvgRGB(0xFF, 0, 0));
+	nvgFillColor(args.vg, nvgRGB(0xFF, 0x50, 0x50));
 	nvgFill(args.vg);
 }
+	

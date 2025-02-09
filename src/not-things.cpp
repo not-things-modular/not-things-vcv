@@ -72,6 +72,11 @@ void NTModuleWidget::addOutput(PortWidget* output) {
 	addThemeChangeListener(output);
 }
 
+void NTModuleWidget::addParam(ParamWidget* param) {
+	ModuleWidget::addParam(param);
+	addThemeChangeListener(param);
+}
+
 void NTModuleWidget::appendContextMenu(Menu* menu) {
 	ThemeId currentThemeId = getModule() ? getNTModule()->getTheme() : ThemeId::VCV;
 	menu->addChild(new MenuSeparator);
