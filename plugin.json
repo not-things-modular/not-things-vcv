@@ -10,7 +10,7 @@
   "pluginUrl": "https://github.com/not-things-modular/not-things-vcv",
   "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/README.md",
   "sourceUrl": "https://github.com/not-things-modular/not-things-vcv",
-  "donateUrl": "",
+  "donateUrl": "https://paypal.me/notthingsmodular",
   "changelogUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/CHANGELOG.md",
   "modules": [
     {
@@ -54,6 +54,20 @@
       "description": "Random expander for Solim",
       "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/SOLIM.md",
       "tags": [ "Utility", "Expander", "Random" ]
-    }
-  ]
+    },
+    {
+      "slug": "pipo-output",
+      "name": "P-O",
+      "description": "Polyphonic Output",
+      "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/PIPO.md",
+      "tags": [ "Utility", "Polyphonic" ]
+    },
+    {
+		"slug": "pipo-input",
+		"name": "P-I",
+		"description": "Polyphonic Input",
+		"manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/PIPO.md",
+		"tags": [ "Utility", "Polyphonic" ]
+	  }
+	]
 }

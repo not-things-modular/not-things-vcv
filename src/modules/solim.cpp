@@ -1,6 +1,6 @@
 #include "modules/solim.hpp"
 #include "components/ntport.hpp"
-#include "components/bluegreenlight.hpp"
+#include "components/lights.hpp"
 #include "modules/solim-input.hpp"
 #include "modules/solim-input-octaver.hpp"
 #include "modules/solim-output.hpp"

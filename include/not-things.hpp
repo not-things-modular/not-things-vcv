@@ -47,6 +47,7 @@ struct NTModuleWidget : ModuleWidget {
 	void addChild(Widget* child);
 	void addInput(PortWidget* input);
 	void addOutput(PortWidget* output);
+	void addParam(ParamWidget* output);
 
 	void appendContextMenu(Menu* menu) override;
 
