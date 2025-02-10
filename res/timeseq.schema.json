@@ -60,13 +60,13 @@
 				"lower": {
 					"oneOf": [
 						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/valuse" }
+						{ "$ref": "#/definitions/value" }
 					]
 				},
 				"upper": {
 					"oneOf": [
 						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/valuse" }
+						{ "$ref": "#/definitions/value" }
 					]
 				}
 			},
@@ -80,25 +80,25 @@
 					"add": {
 						"oneOf": [
 							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/valuse" }
+							{ "$ref": "#/definitions/value" }
 						]
 					},
 					"sub": {
 						"oneOf": [
 							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/valuse" }
+							{ "$ref": "#/definitions/value" }
 						]
 					},
 					"div": {
 						"oneOf": [
 							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/valuse" }
+							{ "$ref": "#/definitions/value" }
 						]
 					},
 					"mult": {
 						"oneOf": [
 							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/valuse" }
+							{ "$ref": "#/definitions/value" }
 						]
 					}
 				},
@@ -188,13 +188,13 @@
 				"start-value": {
 					"oneOf": [
 						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/set-value" }
+						{ "$ref": "#/definitions/value" }
 					]
 				},
 				"end-value": {
 					"oneOf": [
 						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/set-value" }
+						{ "$ref": "#/definitions/value" }
 					]
 				}
 			}
@@ -456,8 +456,5 @@
 			"required": [ "type", "version", "timelines" ]
 		}
 	},
-	"type": "object",
-	"properties": {
-		"script": { "$ref": "#/definitions/script" }
-	}
+	"$ref": "#/definitions/script"
 }

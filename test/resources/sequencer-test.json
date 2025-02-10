@@ -132,7 +132,10 @@
 		}
 	],
 	"actions": [
-
+		{
+			"id": "action-1",
+			"timing": "start"
+		}
 	],
 	"input-triggers": [
 		{

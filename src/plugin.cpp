@@ -13,8 +13,12 @@ extern Model* modelPipoInput;
 
 Plugin* pluginInstance;
 
+void testJsonValidation();
+
 void init(Plugin* p) {
 	pluginInstance = p;
+
+	testJsonValidation();
 
 	p->addModel(modelSolim);
 	p->addModel(modelSolimInput);

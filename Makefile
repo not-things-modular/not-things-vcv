@@ -2,7 +2,7 @@
 RACK_DIR ?= ../..
 
 # FLAGS will be passed to both the C and C++ compiler
-FLAGS += -I./include
+FLAGS += -I./include -I./dep/include
 CFLAGS +=
 CXXFLAGS +=
 
@@ -12,6 +12,9 @@ LDFLAGS +=
 
 # Add .cpp files to the build
 SOURCES += $(wildcard src/*.cpp) $(wildcard src/**/*.cpp)
+
+# Add json-schema-validator to the build
+SOURCES += $(wildcard dep/src/*.cpp)
 
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin and "plugin.json" are automatically added.
@@ -25,6 +28,10 @@ include $(RACK_DIR)/plugin.mk
 
 
 ### Dependencies ###
+dep:
+	$(MAKE) -C dep
+
+### Test dependencies ###
 dep_test:
 	$(MAKE) -C dep-test
 dep_test_clean:
