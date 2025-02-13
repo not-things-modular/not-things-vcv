@@ -196,3 +196,13 @@ If the default sorting from [Output Sorting](#output-sorting) does not produce t
 By default, resorting applies to all values in the sequence (i.e. all outputs with their LED turned on). However, in the right-click menu of the Output Octaver module, there is an option to *Sort only connected ports*. When this option is enabled, only the values of ports with an active cable connection will be resorted and reassigned to those ports. Ports without a connection will retain their original values and remain unchanged.
 
 > Note: if the main Solim module does not have sorting enabled, the *Resort* of the Output Octaver expander will also apply no additional sorting.
+
+
+## Full Solim flow
+With the full set of Solim modules, there are a number of steps that can be active depending on which expander modules are used and on certain certain values set on those modules. The order in which those steps get executed in the overall flow can influence the end result on the output ports. The flow diagram below shows which steps are performed in which order by the different (expander) modules.
+
+The diagram also shows arrows between the different steps. Although Solim accepts ***up to*** 8 inputs voltages and outputs ***up to*** 8 output voltages, the internal processing by Solim can turn into ***up to*** 16 voltages due to the duplication that can be performed with the *Input Octaver* expander. The diagram below shows this transition from 8 to 16 voltages, and the transition from 16 back to 8 voltages by using only the first 8 voltages after the (optional) randomization has been applied.
+
+![Solim Flow](./solim-flow.png)
+
+Note that although the *Output Octaver* expander also allows duplication of voltages, the internal processing of Solim remains in ***up to*** 8 voltages mode at this point. Once a count of 8 voltages has been reached, the remaining output octaving operations that would introduce additional voltages are ignored, and the next "*Re-sorting*" step is performed using only those first 8 voltages.
