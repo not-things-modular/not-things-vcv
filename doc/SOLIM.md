@@ -150,7 +150,7 @@ The SL-R expander module allows the order of the output values of a Solim (or SL
 
 The randomizer will always operate on the active output ports, identified by their lit LEDs. There are four randomization actions that can be performed by this expander. From top to bottom, these are:
 * Move One: Selects a randomactive output and swaps its position with the output directly above or below it (the direction is chosen randomly). If the selected output is the first or last active output, wrap-around behaviour ensures the swap can be completed.
-* Randomize One: Moves a randomly chosen active output to a different position, effectively swapping the positions of two randomly picked active outputs.
+* Switch Two: Moves a randomly chosen active output to a different position, effectively swapping the positions of two randomly picked active outputs.
 * Randomize 8/All: randomizes the order of all active outputs.
 * Reset: Restores all active outputs to their original positions.
 

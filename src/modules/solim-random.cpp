@@ -12,12 +12,12 @@ extern Model* modelSolimOutputOctaver;
 SolimRandomModule::SolimRandomModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	configInput(INPUT_TRIG_MOVE, "Move One Up or Down");
-	configInput(INPUT_TRIG_ONE, "Move One to Random Position");
+	configInput(INPUT_TRIG_ONE, "Switch Two at Random");
 	configInput(INPUT_TRIG_ALL, "Move All to Random Positions");
 	configInput(INPUT_TRIG_RESET, "Reset All");
 
 	configButton(PARAM_TRIG_MOVE, "Move One Up or Down");
-	configButton(PARAM_TRIG_ONE, "Move One to Random Position");
+	configButton(PARAM_TRIG_ONE, "Switch Two at Random");
 	configButton(PARAM_TRIG_ALL, "Move All to Random Positions");
 	configButton(PARAM_TRIG_RESET, "Reset All");
 }
