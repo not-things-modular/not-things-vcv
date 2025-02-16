@@ -324,7 +324,30 @@
 					"minimum": 1
 				}
 			},
-			"minProperties": 1
+			"oneOf": [
+				{
+					"required": [ "sample-rate" ],
+					"not": {
+						"anyOf": [
+							{ "required": [ "bpm" ] },
+							{ "required": [ "bpb" ] }
+						]
+					}
+				},
+				{
+					"required": [ "bpm" ],
+					"not": {
+						"anyOf": [
+							{ "required": [ "sample-rate" ] },
+							{ "required": [ "bpb" ] }
+						]
+					}
+				},
+				{
+					"required": [ "bpm", "bpb" ],
+					"not": { "required": [ "sample-rate" ] }
+				}
+			]
 		},
 		"timeline": {
 			"type": "object",
@@ -341,7 +364,7 @@
 					"minItems": 1
 				}
 			},
-			"required": [ "lanes" ]
+			"required": [ "time-scale", "lanes" ]
 		},
 		"input-trigger": {
 			"type": "object",

@@ -11,14 +11,12 @@ extern Model* modelSolimRandom;
 extern Model* modelPipoOutput;
 extern Model* modelPipoInput;
 
-Plugin* pluginInstance;
+extern Model* modelTimeSeq;
 
-void testJsonValidation();
+Plugin* pluginInstance;
 
 void init(Plugin* p) {
 	pluginInstance = p;
-
-	testJsonValidation();
 
 	p->addModel(modelSolim);
 	p->addModel(modelSolimInput);
@@ -28,4 +26,5 @@ void init(Plugin* p) {
 	p->addModel(modelSolimRandom);
 	p->addModel(modelPipoInput);
 	p->addModel(modelPipoOutput);
+	p->addModel(modelTimeSeq);
 }

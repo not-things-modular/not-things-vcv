@@ -68,6 +68,13 @@
 		"description": "Polyphonic Input",
 		"manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/PIPO.md",
 		"tags": [ "Utility", "Polyphonic" ]
-	  }
-	]
+	},
+    {
+		"slug": "timeseq",
+		"name": "TimeSeq",
+		"description": "Time Based Sequencer",
+		"manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/TIMESEQ.md",
+		"tags": [ "Utility", "Sequencer", "Polyphonic" ]
+	}
+  ]
 }
