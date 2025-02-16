@@ -37,9 +37,9 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 		for (const timeseq::JsonValidationError& error : errors) {
 			m_lastScriptLoadErrors.emplace_back(error.location + " : " + error.message);
 			if (m_lastScriptLoadErrors.size() == 1) {
-				errorMessage << "At least one error was encountered while loading the script:\n\n";
+				errorMessage << errors.size() << " error(s) were encountered while loading the script. The first error is:\n\n";
 				errorMessage << error.location << " : " << error.message;
-				errorMessage << "\n\nA full list of error messages can be copied to the clipboard in the right-click menu.";
+				errorMessage << "\n\nDo you want to copy all error details to the clipboard?.";
 			}
 		}
 
@@ -67,12 +67,9 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 void TimeSeqWidget::appendContextMenu(Menu* menu) {
 	NTModuleWidget::appendContextMenu(menu);
 
-	TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
-
 	menu->addChild(new MenuSeparator);
-	menu->addChild(createMenuItem("Load new script...", "", [this]() { this->loadScript(); }));
-	menu->addChild(createMenuItem("Save current script...", "", [this]() { this->saveScript(); }));
-	menu->addChild(createMenuItem("Copy last Load errors to clipboard", "", [this]() { this->copyLastLoadErrors(); }, timeSeqModule == nullptr || timeSeqModule->getLastScriptLoadErrors().size() == 0));
+	menu->addChild(createMenuItem("Load script...", "", [this]() { this->loadScript(); }));
+	menu->addChild(createMenuItem("Save script...", "", [this]() { this->saveScript(); }));
 }
 
 void TimeSeqWidget::loadScript() {
@@ -88,7 +85,9 @@ void TimeSeqWidget::loadScript() {
 		if (timeSeqModule != nullptr) {
 			std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
 			if (error.length() > 0) {
-				osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, error.c_str());
+				if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
+					copyLastLoadErrors();
+				}
 			}
 		}
 	}

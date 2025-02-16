@@ -107,7 +107,7 @@ struct ScriptValue : ScriptRefObject {
 };
 
 struct ScriptSetValue {
-	std::unique_ptr<ScriptOutput> output;
+	ScriptOutput output;
 	ScriptValue value;
 };
 
@@ -168,7 +168,7 @@ struct ScriptTimeScale {
 };
 
 struct ScriptTimeline {
-	ScriptTimeScale timeScale;
+	std::unique_ptr<ScriptTimeScale> timeScale;
 	bool loopLock;
 	std::vector<ScriptLane> lanes;
 };

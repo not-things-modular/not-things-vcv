@@ -157,14 +157,15 @@
 						{ "$ref": "#/definitions/value" }
 					]
 				}
-			}
+			},
+			"required": [ "output", "value" ]
 		},
 		"set-polyphony": {
 			"type": "object",
 			"properties": {
 				"index": {
 					"type": "integer",
-					"minimum": 1,
+					"minimum": 0,
 					"maximum": 8
 				},
 				"channels": {
@@ -172,7 +173,8 @@
 					"minimum": 1,
 					"maximum": 16
 				}
-			}
+			},
+			"required": [ "index", "channels" ]
 		},
 		"action": {
 			"type": "object",
@@ -197,6 +199,24 @@
 						{ "$ref": "#/definitions/value" }
 					]
 				}
+			},
+			"required": [ "timing" ],
+			"if": {
+				"properties": { "timing": { "const": "glide" } }
+			},
+			"then": {
+				"not": { "anyOf": [
+					{ "required": [ "timing" ] },
+					{ "required": [ "set-value" ] },
+					{ "required": [ "set-polyphony" ] },
+					{ "required": [ "trigger" ] }
+				] }
+			},
+			"else": {
+				"not": { "anyOf": [
+					{ "start-value": [ "timing" ] },
+					{ "end-value": [ "set-value" ] }
+				] }
 			}
 		},
 		"duration": {
@@ -215,9 +235,35 @@
 					"exclusiveMinimum": 0
 				},
 				"beats": {
+					"type": "number",
 					"exclusiveMinimum": 0
 				}
-			}
+			},
+			"oneOf": [
+				{
+					"required": [ "samples" ],
+					"not": { "anyOf": [
+						{ "required": [ "millis" ] },
+						{ "required": [ "bars" ] },
+						{ "required": [ "beats" ] }
+					]}
+				},
+				{
+					"required": [ "millis" ],
+					"not": { "anyOf": [
+						{ "required": [ "samples" ] },
+						{ "required": [ "bars" ] },
+						{ "required": [ "beats" ] }
+					]}
+				},
+				{
+					"required": [ "beats" ],
+					"not": { "anyOf": [
+						{ "required": [ "millis" ] },
+						{ "required": [ "samples" ] }
+					]}
+				}
+			]
 		},
 		"segment": {
 			"type": "object",
@@ -233,7 +279,8 @@
 					},
 					"minItems": 1
 				}
-			}
+			},
+			"required": [ "duration" ]
 		},
 		"segment-block": {
 			"type": "object",
@@ -256,11 +303,12 @@
 								]
 							}
 						},
-					"minProperties": 1,
+						"minProperties": 1,
 						"maxProperties": 1
 					}
 				}
-			}
+			},
+			"required": [ "segments" ]
 		},
 		"lane": {
 			"type": "object",
@@ -364,7 +412,7 @@
 					"minItems": 1
 				}
 			},
-			"required": [ "time-scale", "lanes" ]
+			"required": [ "lanes" ]
 		},
 		"input-trigger": {
 			"type": "object",
