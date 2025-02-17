@@ -1,0 +1,20 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "0.0.1",
+	"timelines": [
+		{
+			"time-scale": {
+				"xclerasample-rate": 48000,
+				"bpm": 120,
+				"bpb": 4
+			},
+			"loop-lock": true,
+			"lanes": [
+				{
+					"segments": [
+					]
+				}
+			]
+		}
+	]
+}

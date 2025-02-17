@@ -16,11 +16,12 @@ timeseq::TimeSeqCore::TimeSeqCore() {
 	m_jsonLoader.setSchema(schemaJson);
 }
 
-std::vector<timeseq::JsonValidationError> timeseq::TimeSeqCore::loadScript(std::string& script) {
-	std::istringstream scriptStream(script);
+std::vector<timeseq::JsonValidationError> timeseq::TimeSeqCore::loadScript(std::string& scriptData) {
+	std::istringstream scriptStream(scriptData);
 	std::vector<timeseq::JsonValidationError> errors;
 	
-	m_jsonLoader.loadJson(scriptStream, true, &errors);
+	// std::shared_ptr<json> json = m_jsonLoader.loadJson(scriptStream, true, &errors);
+	std::shared_ptr<Script> script = m_jsonLoader.loadScript(scriptStream, &errors);
 
 	return errors;
 }

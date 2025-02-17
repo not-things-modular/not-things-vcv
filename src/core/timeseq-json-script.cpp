@@ -73,25 +73,30 @@ bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
 }
 
 
-Script JsonScriptParser::parseScript(const json& scriptJson, vector<JsonValidationError> *validationErrors, vector<string> location) {
-	Script script;
+std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<JsonValidationError> *validationErrors, vector<string> location) {
+	Script* script = new Script();
 
 	json::const_iterator type = scriptJson.find("type");
 	if ((type == scriptJson.end()) || (!type->is_string())) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeMissing, "type is required and must be a string.");
-	}
-	else if ((*type) != "not-things_timeseq_script") {
-		std::string typeValue = (*type);
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeUnsupported, "type '", typeValue.c_str(), "' is not supported.");
+	} else {
+		script->type = *type;
+		if (script->type != "not-things_timeseq_script") {
+			std::string typeValue = (*type);
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeUnsupported, "type '", typeValue.c_str(), "' is not supported.");
+		}
 	}
 	
 	json::const_iterator version = scriptJson.find("version");
 	if ((version == scriptJson.end()) || (!version->is_string())) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionMissing, "version is required and must be a string.");
 	}
-	else if ((*version) != "0.0.1") {
-		std::string versionValue = (*version);
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "version '", versionValue.c_str(), "' is not supported.");
+	else {
+		script->version = *version;
+		if (script->version != "0.0.1") {
+			std::string versionValue = (*version);
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "version '", versionValue.c_str(), "' is not supported.");
+		}
 	}
 
 	json::const_iterator timelines = scriptJson.find("timelines");
@@ -102,7 +107,11 @@ Script JsonScriptParser::parseScript(const json& scriptJson, vector<JsonValidati
 		std::vector<json> timelineElements = (*timelines);
 		for (const json& timeline : timelineElements) {
 			location.push_back(std::to_string(count));
-			script.timelines.push_back(parseTimeline(timeline, validationErrors, location));
+			if (timeline.is_object()) {
+				script->timelines.push_back(parseTimeline(timeline, validationErrors, location));
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TimelineObject, "'timelines' elements must be objects.");
+			}
 			location.pop_back();
 			count++;
 		}
@@ -121,42 +130,214 @@ Script JsonScriptParser::parseScript(const json& scriptJson, vector<JsonValidati
 			std::vector<json> segmentBlockElements = (*segmentBlocks);
 			for (const json& segmentBlock : segmentBlockElements) {
 				location.push_back(std::to_string(count));
-				script.segmentBlocks.push_back(parseSegmentBlock(segmentBlock, false, validationErrors, location));
+				if (segmentBlock.is_array()) {
+					script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlockObject, "'segment-blocks' elements must be objects.");
+				}
 				location.pop_back();
 				count++;
 			}
 
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksItemRequired, "At least one segment-block item is required.");
-	
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksItemRequired, "At least one segment-block item is required.");
+			}
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksArray, "segment-blocks must be an array.");
 		}
 	}
 
-	json::const_iterator segment = scriptJson.find("segment");
-	if (segment != scriptJson.end()) {
-		if (segment->is_array()) {
-			location.push_back("segment");
+	json::const_iterator segments = scriptJson.find("segments");
+	if (segments != scriptJson.end()) {
+		if (segments->is_array()) {
+			location.push_back("segments");
 
 			int count = 0;
-			std::vector<json> segmentElements = (*segment);
+			std::vector<json> segmentElements = (*segments);
 			for (const json& segment : segmentElements) {
 				location.push_back(std::to_string(count));
-				script.segments.push_back(parseSegment(segment, false, validationErrors, location));
+				if (segment.is_object()) {
+					script->segments.push_back(parseSegment(segment, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentObject, "'segments' elements must be objects.");
+				}
 				location.pop_back();
 				count++;
 			}
 
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsItemRequired, "At least one segmen item is required.");
-	
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsItemRequired, "At least one segment item is required.");
+			}
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsArray, "segments must be an array.");
 		}
 	}
 
-	return script;
+	json::const_iterator inputs = scriptJson.find("inputs");
+	if (inputs != scriptJson.end()) {
+		if (inputs->is_array()) {
+			location.push_back("inputs");
+
+			int count = 0;
+			std::vector<json> inputElements = (*inputs);
+			for (const json& input : inputElements) {
+				location.push_back(std::to_string(count));
+				if (input.is_object()) {
+					script->inputs.push_back(parseInput(input, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputObject, "'inputs' elements must be objects.");
+				}
+				location.pop_back();
+				count++;
+			}
+
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputsItemRequired, "At least one input item is required.");
+			}
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputsArray, "inputs must be an array.");
+		}
+	}
+
+	json::const_iterator outputs = scriptJson.find("outputs");
+	if (outputs != scriptJson.end()) {
+		if (outputs->is_array()) {
+			location.push_back("outputs");
+
+			int count = 0;
+			std::vector<json> outputElements = (*outputs);
+			for (const json& output : outputElements) {
+				location.push_back(std::to_string(count));
+				if (output.is_object()) {
+					script->outputs.push_back(parseOutput(output, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputObject, "'outputs' elements must be objects.");
+				}
+				location.pop_back();
+				count++;
+			}
+
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputsItemRequired, "At least one output item is required.");
+			}
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputsArray, "outputs must be an array.");
+		}
+	}
+
+	json::const_iterator calcs = scriptJson.find("calcs");
+	if (calcs != scriptJson.end()) {
+		if (calcs->is_array()) {
+			location.push_back("calcs");
+
+			int count = 0;
+			std::vector<json> calcElements = (*calcs);
+			for (const json& calc : calcElements) {
+				location.push_back(std::to_string(count));
+				if (calc.is_object()) {
+					script->calcs.push_back(parseCalc(calc, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcObject, "'calcs' elements must be objects.");
+				}
+				location.pop_back();
+				count++;
+			}
+
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcsItemRequired, "At least one calc item is required.");
+			}
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcsArray, "'calcs' must be an array.");
+		}
+	}
+
+	json::const_iterator values = scriptJson.find("values");
+	if (values != scriptJson.end()) {
+		if (values->is_array()) {
+			location.push_back("values");
+
+			int count = 0;
+			std::vector<json> valueElements = (*values);
+			for (const json& value : valueElements) {
+				location.push_back(std::to_string(count));
+				if (value.is_object()) {
+					script->values.push_back(parseValue(value, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValueObject, "'values' elements must be objects.");
+				}
+				location.pop_back();
+				count++;
+			}
+
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValuesItemRequired, "At least one value item is required.");
+			}
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValuesArray, "'values' must be an array.");
+		}
+	}
+
+	json::const_iterator actions = scriptJson.find("actions");
+	if (actions != scriptJson.end()) {
+		if (actions->is_array()) {
+			location.push_back("actions");
+
+			int count = 0;
+			std::vector<json> actionElements = (*actions);
+			for (const json& action : actionElements) {
+				location.push_back(std::to_string(count));
+				if (action.is_object()) {
+					script->actions.push_back(parseAction(action, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionObject, "'actions' elements must be objects.");
+				}
+				location.pop_back();
+				count++;
+			}
+
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionsItemRequired, "At least one action item is required.");
+			}
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionsArray, "'actions' must be an array.");
+		}
+	}
+
+	json::const_iterator inputTriggers = scriptJson.find("input-triggers");
+	if (inputTriggers != scriptJson.end()) {
+		if (inputTriggers->is_array()) {
+			location.push_back("input-triggers");
+
+			int count = 0;
+			std::vector<json> inputTriggerElements = (*inputTriggers);
+			for (const json& inputTrigger : inputTriggerElements) {
+				location.push_back(std::to_string(count));
+				if (inputTrigger.is_object()) {
+					script->inputTriggers.push_back(parseInputTrigger(inputTrigger, false, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggerObject, "'input-triggers' elements must be objects.");
+				}
+				location.pop_back();
+				count++;
+			}
+
+			if (count == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersItemRequired, "At least one input-trigger item is required.");
+			}
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
+		}
+	}
+
+	return shared_ptr<Script>(script);
 }
 
 ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
@@ -183,7 +364,11 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::ve
 		std::vector<json> laneElements = (*lanes);
 		for (const json& lane : laneElements) {
 			location.push_back(std::to_string(count));
-			timeline.lanes.push_back(parseLane(lane, validationErrors, location));
+			if (lane.is_object()) {
+				timeline.lanes.push_back(parseLane(lane, validationErrors, location));
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Timeline_LaneObject, "'lanes' elements must be objects.");
+			}
 			location.pop_back();
 			count++;
 		}
@@ -301,7 +486,11 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<JsonVal
 		std::vector<json> segmentElements = (*segments);
 		for (const json& segment : segmentElements) {
 			location.push_back(std::to_string(count));
-			lane.segments.push_back(parseSegmentEntity(segment, validationErrors, location));
+			if (segment.is_object()) {
+				lane.segments.push_back(parseSegmentEntity(segment, validationErrors, location));
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_SegmentObject, "'segments' elements must be objects.");
+			}
 			location.pop_back();
 			count++;
 		}
@@ -377,7 +566,11 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				std::vector<json> actionElements = (*actions);
 				for (const json& action : actionElements) {
 					location.push_back(std::to_string(count));
-					segment.actions.push_back(parseAction(action, true, validationErrors, location));
+					if (action.is_object()) {
+						segment.actions.push_back(parseAction(action, true, validationErrors, location));
+					} else {
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
+					}
 					location.pop_back();
 					count++;
 				}
@@ -409,7 +602,11 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 			std::vector<json> segmentElements = (*segments);
 			for (const json& segment : segmentElements) {
 				location.push_back(std::to_string(count));
-				segmentBlock.segments.push_back(parseSegmentEntity(segment, validationErrors, location));
+				if (segment.is_object()) {
+					segmentBlock.segments.push_back(parseSegmentEntity(segment, validationErrors, location));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be objects.");
+				}
 				location.pop_back();
 				count++;
 			}
@@ -541,7 +738,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		if (startValue != actionJson.end()) {
 			if (startValue->is_object()) {
 				location.push_back("start-value");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*setPolyphony, true, validationErrors, location));
+				ScriptValue *scriptValue = new ScriptValue(parseValue(*startValue, true, validationErrors, location));
 				action.startValue.reset(scriptValue);
 				location.pop_back();
 			} else {
@@ -553,7 +750,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		if (endValue != actionJson.end()) {
 			if (endValue->is_object()) {
 				location.push_back("end-value");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*setPolyphony, true, validationErrors, location));
+				ScriptValue *scriptValue = new ScriptValue(parseValue(*endValue, true, validationErrors, location));
 				action.endValue.reset(scriptValue);
 				location.pop_back();
 			} else {
@@ -624,13 +821,311 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptValue value;
 
+	populateRef(value, valueJson, allowRefs, validationErrors, location);
+	if (value.ref.length() > 0) {
+		if (hasOneOf(valueJson, { "voltage", "note", "input", "output", "rand", "calc" })) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_RefOrInstance, "A ref value can not be combined other non-ref value properties.");
+		}
+	} else {
+		json::const_iterator voltage = valueJson.find("voltage");
+		if (voltage != valueJson.end()) {
+			if (voltage->is_number_float()) {
+				value.voltage.reset(new float(*voltage));
+				if ((*value.voltage < -10) || (*value.voltage > 10)) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageRange, "'voltage' must be a decimal number between -10 and 10.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
+			}
+		}
+
+		json::const_iterator note = valueJson.find("note");
+		if (note != valueJson.end()) {
+			if (note->is_string()) {
+				value.note.reset(new std::string(*note));
+				if ((value.note->size() < 2) || (value.note->size() > 3)) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+				} else {
+					char n = toupper((*value.note)[0]);
+					if (n < 'A' || n > 'Z') {
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must start with a valid note name (A-G).");
+					}
+					char s = (*value.note)[1];
+					if (s < '0' || s > '9') {
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must have a valid scale (0-9) as second character.");
+					}
+					if (value.note->size() == 3) {
+						char a = (*value.note)[2];
+						if (a != '+' && a != '-') {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "The third character of 'note' must be a valid accidental (+ for sharp, - for flat).");
+						}
+					}
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteString, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+			}
+		}
+
+		json::const_iterator input = valueJson.find("input");
+		if (input != valueJson.end()) {
+			if (input->is_object()) {
+				location.push_back("input");
+				ScriptInput* scriptInput = new ScriptInput(parseInput(*input, true, validationErrors, location));
+				value.input.reset(scriptInput);
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_InputObject, "'input' must be an object.");
+			}
+		}
+
+		json::const_iterator output = valueJson.find("output");
+		if (output != valueJson.end()) {
+			if (output->is_object()) {
+				location.push_back("output");
+				ScriptOutput* scriptOutput = new ScriptOutput(parseOutput(*output, true, validationErrors, location));
+				value.output.reset(scriptOutput);
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_OutputObject, "'output' must be an object.");
+			}
+		}
+		
+		json::const_iterator rand = valueJson.find("rand");
+		if (rand != valueJson.end()) {
+			if (rand->is_object()) {
+				location.push_back("rand");
+				ScriptRand* scriptRand = new ScriptRand(parseRand(*rand, validationErrors, location));
+				value.rand.reset(scriptRand);
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_RandObject, "'rand' must be an object.");
+			}
+		}
+
+		json::const_iterator calcs = valueJson.find("calc");
+		if (calcs != valueJson.end()) {
+			if (calcs->is_array()) {
+				location.push_back("calc");
+
+				int count = 0;
+				std::vector<json> calcElements = (*calcs);
+				for (const json& calc : calcElements) {
+					location.push_back(std::to_string(count));
+					if (calc.is_object()) {
+						value.calc.push_back(parseCalc(calc, true, validationErrors, location));
+					} else {
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_RandObject, "'calc' elements must be objects.");
+					}
+					location.pop_back();
+					count++;
+				}
+		
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");
+			}
+		}
+	}
+
 	return value;
 }
 
-ScriptOutput JsonScriptParser::parseOutput(const json& valueJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptOutput output;
 
+	populateRef(output, outputJson, allowRefs, validationErrors, location);
+	if (output.ref.length() > 0) {
+		if (hasOneOf(outputJson, { "index", "channel" })) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_RefOrInstance, "A ref output can not be combined other non-ref output properties.");
+		}
+	} else {
+		json::const_iterator index = outputJson.find("index");
+		if ((index != outputJson.end()) && (index->is_number_unsigned())) {
+			output.index = *index;
+			if ((output.index < 1) || (output.index > 8)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_IndexRange, "'index' must be a number between 1 and 8.");
+			}
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		}
+
+		json::const_iterator channel = outputJson.find("channel");
+		if (channel != outputJson.end()) {
+			if (channel->is_number_unsigned()) {
+				output.channel.reset(new int(*channel));
+				if ((*output.channel < 1) || (*output.channel > 16)) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_ChannelRange, "'channel' must be a number between 1 and 16.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetPolyphony_ChannelsNumber, "'channel' must be a number between 1 and 16.");
+			}
+		}
+	}
+
 	return output;
+}
+
+ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+	ScriptInput input;
+
+	populateRef(input, inputJson, allowRefs, validationErrors, location);
+	if (input.ref.length() > 0) {
+		if (hasOneOf(inputJson, { "index", "channel" })) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_RefOrInstance, "A ref input can not be combined other non-ref input properties.");
+		}
+	} else {
+		json::const_iterator index = inputJson.find("index");
+		if ((index != inputJson.end()) && (index->is_number_unsigned())) {
+			input.index = *index;
+			if ((input.index < 1) || (input.index > 8)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_IndexRange, "'index' must be a number between 1 and 8.");
+			}
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		}
+
+		json::const_iterator channel = inputJson.find("channel");
+		if (channel != inputJson.end()) {
+			if (channel->is_number_unsigned()) {
+				input.channel.reset(new int(*channel));
+				if ((*input.channel < 1) || (*input.channel > 16)) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_ChannelRange, "'channel' must be a number between 1 and 16.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetPolyphony_ChannelsNumber, "'channel' must be a number between 1 and 16.");
+			}
+		}
+	}
+
+	return input;
+}
+
+ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+	ScriptRand rand;
+
+	json::const_iterator lower = randJson.find("lower");
+	if ((lower != randJson.end()) && (lower->is_object())) {
+		location.push_back("lower");
+		ScriptValue *scriptValue = new ScriptValue(parseValue(*lower, true, validationErrors, location));
+		rand.lower.reset(scriptValue);
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be an object.");
+	}
+
+	json::const_iterator upper = randJson.find("upper");
+	if ((upper != randJson.end()) && (upper->is_object())) {
+		location.push_back("upper");
+		ScriptValue *scriptValue = new ScriptValue(parseValue(*upper, true, validationErrors, location));
+		rand.upper.reset(scriptValue);
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be an object.");
+	}
+
+	return rand;
+}
+
+ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+	ScriptCalc calc;
+
+	populateRef(calc, calcJson, allowRefs, validationErrors, location);
+	if (calc.ref.length() > 0) {
+		if (hasOneOf(calcJson, { "add", "sub", "div", "mult" })) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
+		}
+	} else {
+		int count = 0;
+
+		json::const_iterator add = calcJson.find("add");
+		if (add != calcJson.end()) {
+			if (add->is_object()) {
+				calc.operation = ScriptCalc::CalcOperation::ADD;
+				location.push_back("add");
+				ScriptValue *scriptValue = new ScriptValue(parseValue(*add, true, validationErrors, location));
+				calc.value.reset(scriptValue);
+				location.pop_back();
+				count++;
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_AddObject, "'add' must be an object.");
+			}
+		}
+
+		json::const_iterator sub = calcJson.find("sub");
+		if (sub != calcJson.end()) {
+			if (sub->is_object()) {
+				calc.operation = ScriptCalc::CalcOperation::SUB;
+				location.push_back("sub");
+				ScriptValue *scriptValue = new ScriptValue(parseValue(*sub, true, validationErrors, location));
+				calc.value.reset(scriptValue);
+				location.pop_back();
+				count++;
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_SubObject, "'sub' must be an object.");
+			}
+		}
+
+		json::const_iterator div = calcJson.find("div");
+		if (div != calcJson.end()) {
+			if (div->is_object()) {
+				calc.operation = ScriptCalc::CalcOperation::DIV;
+				location.push_back("div");
+				ScriptValue *scriptValue = new ScriptValue(parseValue(*div, true, validationErrors, location));
+				calc.value.reset(scriptValue);
+				location.pop_back();
+				count++;
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_DivObject, "'div' must be an object.");
+			}
+		}
+
+		json::const_iterator mult = calcJson.find("mult");
+		if (mult != calcJson.end()) {
+			if (mult->is_object()) {
+				calc.operation = ScriptCalc::CalcOperation::MULT;
+				location.push_back("mult");
+				ScriptValue *scriptValue = new ScriptValue(parseValue(*mult, true, validationErrors, location));
+				calc.value.reset(scriptValue);
+				location.pop_back();
+				count++;
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_MultObject, "'mult' must be an object.");
+			}
+		}
+
+		if (count == 0) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div' or 'mult' must be set.");
+		} else if (count > 1) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_MultpleOperations, "At most one of 'add', 'sub', 'div' or 'mult' may be set.");
+		}
+	}
+
+	return calc;
+}
+
+ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+	ScriptInputTrigger inputTrigger;
+
+	json::const_iterator id = inputTriggerJson.find("id");
+	if ((id != inputTriggerJson.end()) && (id->is_string())) {
+		inputTrigger.id = *id;
+		if (inputTrigger.id.length() == 0) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::InputTrigger_IdLength, "'id' can not be an empty string.");
+		}
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::InputTrigger_IdString, "'id' is required and must be a string.");
+	}
+
+	json::const_iterator input = inputTriggerJson.find("input");
+	if ((input != inputTriggerJson.end()) && (input->is_object())) {
+		location.push_back("input");
+		inputTrigger.input = parseInput(*input, true, validationErrors, location);
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an object.");
+	}
+
+	return inputTrigger;
 }
 
 void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {

@@ -32,13 +32,13 @@ struct ScriptPort {
 	/**
 	 * @brief The channel on the port on which to operate
 	 */
-	int channel;
+	std::unique_ptr<int> channel;
 };
 
-struct ScriptInput : ScriptRefObject {
+struct ScriptInput : ScriptRefObject, ScriptPort {
 };
 
-struct ScriptOutput : ScriptRefObject {
+struct ScriptOutput : ScriptRefObject, ScriptPort {
 };
 
 struct ScriptRand {
@@ -56,7 +56,7 @@ struct ScriptRand {
 	std::unique_ptr<ScriptValue> upper;
 };
 
-struct ScriptCalc {
+struct ScriptCalc : ScriptRefObject {
 	enum CalcOperation {
 		ADD,
 		SUB,

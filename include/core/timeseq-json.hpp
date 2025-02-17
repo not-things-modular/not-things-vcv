@@ -17,7 +17,7 @@ struct JsonValidationError {
 };
 
 struct JsonScriptParser {
-	Script parseScript(const json& timelineJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<Script> parseScript(const json& timelineJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptTimeline parseTimeline(const json& timelineJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptTimeScale parseTimeScale(const json& timeScaleJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptLane parseLane(const json& laneJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
@@ -30,6 +30,10 @@ struct JsonScriptParser {
 	ScriptSetPolyphony parseSetPolyphony(const json& setPolyphonyJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptValue parseValue(const json& valueJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptOutput parseOutput(const json& outputJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptInput parseInput(const json& inputJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptRand parseRand(const json& randJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptCalc parseCalc(const json& calcJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptInputTrigger parseInputTrigger(const json& inputTriggerJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
 
 	void populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location);
 };
@@ -41,6 +45,7 @@ struct JsonLoader {
 	void setSchema(std::shared_ptr<json> schema);
 
 	std::shared_ptr<json> loadJson(std::istream& inputStream, bool validate=true, std::vector<JsonValidationError> *validationErrors=nullptr);
+	std::shared_ptr<Script> loadScript(std::istream& inputStream, std::vector<JsonValidationError> *validationErrors);
 
 	private:
 		json_schema::json_validator *m_validator;
@@ -56,20 +61,41 @@ enum ValidationErrorCode {
 	Id_Length = 5,
 	Id_NotAllowed= 6,
 
-
 	Script_TypeMissing = 101,
 	Script_TypeUnsupported = 102,
 	Script_VersionMissing = 103,
 	Script_VersionUnsupported = 104,
 	Script_TimelinesMissing = 105,
-	Script_SegmentBlocksArray = 106,
-	Script_SegmentBlocksItemRequired = 107,
-	Script_SegmentsArray = 108,
-	Script_SegmentsItemRequired = 109,
+	Script_TimelineObject = 106,
+	Script_SegmentBlocksArray = 107,
+	Script_SegmentBlockObject = 108,
+	Script_SegmentBlocksItemRequired = 109,
+	Script_SegmentsArray = 110,
+	Script_SegmentObject = 111,
+	Script_SegmentsItemRequired = 112,
+	Script_InputsArray = 113,
+	Script_InputObject = 114,
+	Script_InputsItemRequired = 115,
+	Script_OutputsArray = 116,
+	Script_OutputObject = 117,
+	Script_OutputsItemRequired = 118,
+	Script_CalcsArray = 119,
+	Script_CalcObject = 120,
+	Script_CalcsItemRequired = 121,
+	Script_ValuesArray = 122,
+	Script_ValueObject = 123,
+	Script_ValuesItemRequired = 124,
+	Script_ActionsArray = 125,
+	Script_ActionObject = 126,
+	Script_ActionsItemRequired = 127,
+	Script_InputTriggersArray = 126,
+	Script_InputTriggerObject = 127,
+	Script_InputTriggersItemRequired = 128,
 
 	Timeline_TimeScaleObject = 200,
 	Timeline_LanesMissing = 201,
-	Timeline_LoopLockBoolean = 202,
+	Timeline_LaneObject = 202,
+	Timeline_LoopLockBoolean = 203,
 
 	TimeScale_SampleRateNumber = 303,
 	TimeScale_BpmNumber = 304,
@@ -84,6 +110,7 @@ enum ValidationErrorCode {
 	Lane_StopTriggerString = 304,
 	Lane_StopTriggerLength = 305,
 	Lane_SegmentsMissing = 305,
+	Lane_SegmentObject = 306,
 
 	SegmentEntity_SegmentObject = 400,
 	SegmentEntity_SegmentBlockObject = 401,
@@ -93,9 +120,11 @@ enum ValidationErrorCode {
 	Segment_RefOrInstance = 500,
 	Segment_DurationNumber = 501,
 	Segment_ActionsArray = 502,
+	Segment_ActionObject = 503,
 
 	SegmentBlock_RefOrInstance = 600,
 	SegmentBlock_SegmentsArray = 601,
+	SegmentBlock_SegmentObject = 602,
 
 	Duration_SamplesNumber = 700,
 	Duration_MillisNumber = 701,
@@ -119,10 +148,47 @@ enum ValidationErrorCode {
 	SetValue_OutputObject = 900,
 	SetValue_ValueObject = 901,
 
-	SetPolyphony_IndexNumber = 902,
-	SetPolyphony_IndexRange = 902,
-	SetPolyphony_ChannelsNumber = 903,
-	SetPolyphony_ChannelsRange = 904,
+	SetPolyphony_IndexNumber = 1000,
+	SetPolyphony_IndexRange = 1001,
+	SetPolyphony_ChannelsNumber = 1002,
+	SetPolyphony_ChannelsRange = 1003,
+
+	Value_RefOrInstance = 1100,
+	Value_VoltageFloat = 1101,
+	Value_VoltageRange = 1102,
+	Value_NoteString = 1103,
+	Value_NoteFormat = 1104,
+	Value_InputObject = 1105,
+	Value_OutputObject = 1106,
+	Value_RandObject = 1107,
+	Value_CalcArray = 1108,
+	Value_CalcObject = 1109,
+
+	Output_RefOrInstance = 1200,
+	Output_IndexNumber = 1201,
+	Output_IndexRange = 1202,
+	Output_ChannelNumber = 1203,
+	Output_ChannelRange = 1204,
+
+	Input_RefOrInstance = 1300,
+	Input_IndexNumber = 1301,
+	Input_IndexRange = 1302,
+	Input_ChannelNumber = 1303,
+	Input_ChannelRange = 1304,
+
+	Rand_LowerObject = 1400,
+	Rand_UpperObject = 1401,
+
+	Calc_NoOperation = 1500,
+	Calc_MultpleOperations = 1501,
+	Calc_AddObject = 1502,
+	Calc_SubObject = 1503,
+	Calc_DivObject = 1504,
+	Calc_MultObject = 1505,
+
+	InputTrigger_IdString = 1600,
+	InputTrigger_IdLength = 1601,
+	InputTrigger_InputObject = 1062
 };
 
 }

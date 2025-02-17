@@ -92,15 +92,19 @@
 						]
 					},
 					"segment-block": {
-						"segment-ref": "segment-1"
+						"ref": "segment-1"
 					}
 				},
 				{
-					"segment-ref": "segment-1"
+					"segment": {
+						"ref": "segment-1"
+					}
 				},
 				{
-					"id": "segment-b",
-					"name": "Segment B"
+					"segment": {
+						"id": "segment-b",
+						"name": "Segment B"
+					}
 				}
 			]
 		}

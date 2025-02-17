@@ -48,10 +48,6 @@ shared_ptr<json> JsonLoader::loadJson(istream& inputStream, bool validate, vecto
 			ValidationErrorHandler errorHandler(validationErrors);
 			m_validator->validate(*json, errorHandler);
 		}
-
-		if (validationErrors != nullptr) {
-			m_jsonScriptParser->parseScript(*json, validationErrors, vector<string>());
-		}
 	} catch (const json::parse_error& error) {
 		if (validationErrors != nullptr) {
 			string location = "/";
@@ -61,4 +57,15 @@ shared_ptr<json> JsonLoader::loadJson(istream& inputStream, bool validate, vecto
 	}
 
 	return json;
+}
+
+shared_ptr<Script> JsonLoader::loadScript(istream& inputStream, vector<JsonValidationError> *validationErrors) {
+	shared_ptr<Script> script;
+	
+	shared_ptr<json> json = loadJson(inputStream, true, validationErrors);
+	if (json) {
+		script = m_jsonScriptParser->parseScript(*json, validationErrors, vector<string>());
+	}
+
+	return script;
 }

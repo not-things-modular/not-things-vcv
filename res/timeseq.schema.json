@@ -119,7 +119,7 @@
 					"type": "string",
 					"minLength": 2,
 					"maxLength": 3,
-					"pattern": "[a-zA-z][0-9][+-]?"
+					"pattern": "[a-zA-Z][0-9][+-]?"
 				},
 				"input": {
 					"oneOf": [
@@ -140,7 +140,14 @@
 						{ "$ref": "#/definitions/calc" }
 					]
 				}
-			}
+			},
+			"oneOf": [
+				{ "required": [ "voltage" ] },
+				{ "required": [ "note" ] },
+				{ "required": [ "input" ] },
+				{ "required": [ "output" ] },
+				{ "required": [ "rand" ] }
+			]
 		},
 		"set-value": {
 			"type": "object",
