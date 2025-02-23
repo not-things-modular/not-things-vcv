@@ -130,7 +130,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			std::vector<json> segmentBlockElements = (*segmentBlocks);
 			for (const json& segmentBlock : segmentBlockElements) {
 				location.push_back(std::to_string(count));
-				if (segmentBlock.is_array()) {
+				if (segmentBlock.is_object()) {
 					script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, false, validationErrors, location));
 				} else {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlockObject, "'segment-blocks' elements must be objects.");
