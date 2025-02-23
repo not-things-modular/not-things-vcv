@@ -68,6 +68,13 @@
 		"description": "Polyphonic Input",
 		"manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/PIPO.md",
 		"tags": [ "Utility", "Polyphonic" ]
-	  }
-	]
+	},
+    {
+		"slug": "poly-same-diff",
+		"name": "P-SD",
+		"description": "Polyphonic Same and Different",
+		"manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/PSD.md",
+		"tags": [ "Utility", "Polyphonic" ]
+	}
+  ]
 }

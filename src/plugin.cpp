@@ -11,6 +11,8 @@ extern Model* modelSolimRandom;
 extern Model* modelPipoOutput;
 extern Model* modelPipoInput;
 
+extern Model* modelPolySameDiff;
+
 Plugin* pluginInstance;
 
 void init(Plugin* p) {
@@ -24,4 +26,5 @@ void init(Plugin* p) {
 	p->addModel(modelSolimRandom);
 	p->addModel(modelPipoInput);
 	p->addModel(modelPipoOutput);
+	p->addModel(modelPolySameDiff);
 }
