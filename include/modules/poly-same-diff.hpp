@@ -27,6 +27,11 @@ struct PolySameDiffModule : NTModule {
 	PolySameDiffModule();
 
 	void process(const ProcessArgs& args) override;
+
+	private:
+		bool m_outputDuplicates = false;
+		float m_floatBuffA[16];
+		float m_floatBuffB[16];
 };
 
 struct PolySameDiffWidget : NTModuleWidget {
