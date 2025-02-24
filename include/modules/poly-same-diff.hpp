@@ -26,7 +26,13 @@ struct PolySameDiffModule : NTModule {
 
 	PolySameDiffModule();
 
+	json_t *dataToJson() override;
+	void dataFromJson(json_t *rootJ) override;
+
 	void process(const ProcessArgs& args) override;
+
+	bool getOutputDuplicates();
+	void setOutputDuplicates(bool outputDuplicates);
 
 	private:
 		bool m_outputDuplicates = false;
@@ -36,4 +42,7 @@ struct PolySameDiffModule : NTModule {
 
 struct PolySameDiffWidget : NTModuleWidget {
 	PolySameDiffWidget(PolySameDiffModule* module);
+
+	virtual void appendContextMenu(Menu* menu) override;
+	void switchOutputDuplicates();
 };

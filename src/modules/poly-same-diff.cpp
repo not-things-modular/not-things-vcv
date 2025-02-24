@@ -7,7 +7,7 @@
 extern float limitValueIf(float value, float lowerLimit, float upperLimit);
 
 float normalizeNoteValue(float note);
-void assignOutput(Output& output, float* values, int valueCount, std::bitset<16>& bits, bool bitFlag, float delta, bool noteMode, bool outputDuplicates);
+int assignOutput(Output& output, float* values, int valueCount, std::bitset<16>& bits, bool bitFlag, float delta, bool noteMode, bool outputDuplicates, int offset = 0);
 
 
 PolySameDiffModule::PolySameDiffModule() {
@@ -23,6 +23,25 @@ PolySameDiffModule::PolySameDiffModule() {
 	configOutput(OUT_B, "B Only");
 
 
+}
+
+json_t *PolySameDiffModule::dataToJson() {
+	json_t *rootJ = NTModule::dataToJson();
+	json_object_set_new(rootJ, "ntPolySameDiffOutputDuplicates", json_boolean(m_outputDuplicates));
+	return rootJ;
+}
+
+void PolySameDiffModule::dataFromJson(json_t *rootJ) {
+	NTModule::dataFromJson(rootJ);
+
+	json_t *ntPolySameDiffOutputDuplicates = json_object_get(rootJ, "ntPolySameDiffOutputDuplicates");
+	if (ntPolySameDiffOutputDuplicates) {
+		if (json_is_boolean(ntPolySameDiffOutputDuplicates)) {
+			setOutputDuplicates(json_boolean_value(ntPolySameDiffOutputDuplicates));
+		} else {
+			setOutputDuplicates(false);
+		}
+	}
 }
 
 void PolySameDiffModule::process(const ProcessArgs& args) {
@@ -65,8 +84,20 @@ void PolySameDiffModule::process(const ProcessArgs& args) {
 
 	// Update the outputs (can't detect if they are connected, because we may have set them to 0 channels - and thus disconnected - ourselves)
 	assignOutput(outputs[OUT_A], as, aChannels, aBits, false, delta, noteMode, m_outputDuplicates);
-	assignOutput(outputs[OUT_AB], as, aChannels, aBits, true, delta, noteMode, m_outputDuplicates);
 	assignOutput(outputs[OUT_B], bs, bChannels, bBits, false, delta, noteMode, m_outputDuplicates);
+	int count = assignOutput(outputs[OUT_AB], as, aChannels, aBits, true, delta, noteMode, m_outputDuplicates);
+	if (m_outputDuplicates) {
+		// If duplicates have to be added to the output, also add the B channels that had a match to the output.
+		assignOutput(outputs[OUT_AB], bs, bChannels, bBits, true, delta, noteMode, m_outputDuplicates, count);
+	}
+}
+
+bool PolySameDiffModule::getOutputDuplicates() {
+	return m_outputDuplicates;
+}
+
+void PolySameDiffModule::setOutputDuplicates(bool outputDuplicates) {
+	m_outputDuplicates = outputDuplicates;
 }
 
 
@@ -85,6 +116,21 @@ PolySameDiffWidget::PolySameDiffWidget(PolySameDiffModule* module): NTModuleWidg
 	addOutput(createOutputCentered<NTPort>(Vec(x, y + (yDelta * 6)), module, PolySameDiffModule::OUT_AB));
 	addOutput(createOutputCentered<NTPort>(Vec(x, y + (yDelta * 7)), module, PolySameDiffModule::OUT_B));
 }
+
+void PolySameDiffWidget::appendContextMenu(Menu* menu) {
+	NTModuleWidget::appendContextMenu(menu);
+
+	bool outputDuplicates = getModule() ? dynamic_cast<PolySameDiffModule *>(getModule())->getOutputDuplicates() : false;
+	menu->addChild(createCheckMenuItem("Output duplicate voltages", "", [outputDuplicates]() { return outputDuplicates; }, [this]() { switchOutputDuplicates(); }));
+}
+
+void PolySameDiffWidget::switchOutputDuplicates() {
+	PolySameDiffModule* polySameDiffModule = dynamic_cast<PolySameDiffModule *>(getModule());
+	if (polySameDiffModule != nullptr) {
+		polySameDiffModule->setOutputDuplicates(!polySameDiffModule->getOutputDuplicates());
+	}
+}
+
 
 
 float normalizeNoteValue(float note) {
@@ -109,11 +155,11 @@ bool containsMatch(float* targets, int targetCount, float input, float delta, bo
 	return false;
 }
 
-void assignOutput(Output& output, float* values, int valueCount, std::bitset<16>& bits, bool bitFlag, float delta, bool noteMode, bool outputDuplicates) {
-	int outputCount = 0;
+int assignOutput(Output& output, float* values, int valueCount, std::bitset<16>& bits, bool bitFlag, float delta, bool noteMode, bool outputDuplicates, int offset) {
+	int outputCount = offset;
 	float* outputs = output.getVoltages();
 
-	for (int i = 0; i < valueCount; i++) {
+	for (int i = 0; i < valueCount && outputCount < 16; i++) {
 		if (bits[i] == bitFlag) {
 			if ((outputDuplicates) || (!containsMatch(outputs, outputCount, values[i], delta, noteMode))) {
 				outputs[outputCount] = values[i];
@@ -124,6 +170,8 @@ void assignOutput(Output& output, float* values, int valueCount, std::bitset<16>
 
 	// Assign the channels directly iso through setChannels because we may end up with 0 total channels
 	output.channels = outputCount;
+	
+	return outputCount;
 }
 
 
