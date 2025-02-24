@@ -154,6 +154,7 @@ struct ScriptSegmentBlock : ScriptRefObject {
 };
 
 struct ScriptLane {
+	bool autoStart;
 	bool loop;
 	int repeat;
 	std::string startTrigger;

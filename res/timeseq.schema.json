@@ -320,6 +320,9 @@
 		"lane": {
 			"type": "object",
 			"properties": {
+				"auto-start": {
+					"type": "boolean"
+				},
 				"loop": {
 					"type": "boolean"
 				},

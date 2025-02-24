@@ -434,6 +434,16 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptLane lane;
 
+	json::const_iterator autoStart = laneJson.find("auto-start");
+	lane.autoStart = true;
+	if (autoStart != laneJson.end()) {
+		if (autoStart->is_boolean()) {
+			lane.autoStart = *autoStart;
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_AutoStartBoolean, "auto-start must be an boolean.");
+		}
+	}
+
 	json::const_iterator loop = laneJson.find("loop");
 	lane.loop = false;
 	if (loop != laneJson.end()) {
