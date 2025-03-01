@@ -24,4 +24,4 @@ struct ExpanderData {
 void registerExpanderModule(Module& mainModule, ExpanderData expanderData);
 void registerExpanderModules(Module& mainModule, std::vector<ExpanderData> expanders);
 
-void setInputVoltages(Input& input, std::vector<float> voltages);
+void setPortVoltages(Port& port, std::vector<float> voltages);

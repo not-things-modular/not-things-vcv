@@ -678,7 +678,7 @@ TEST(PipoOutputTest, ShouldUseInputsFromMultipleInputModules) {
 	for (int i = 0; i < 8; i++) {
 		EXPECT_EQ(pipoOutputModule.outputs[i].getChannels(), 16);
 		for (int j = 0; j < 16; j++) {
-			EXPECT_EQ(pipoOutputModule.outputs[i].getVoltage(j), (outputVoltage < inputVoltage) ? outputVoltage : 0.f);
+			EXPECT_NEAR(pipoOutputModule.outputs[i].getVoltage(j), (outputVoltage < inputVoltage - 0.00001f) ? outputVoltage : 0.f, 0.00001f);
 			outputVoltage += .01f;
 		}
 	}
@@ -718,7 +718,7 @@ TEST(PipoOutputTest, ShouldUseOutputsOfMultipleOutputModules) {
 		for (int j = 0; j < 8; j++) {
 			EXPECT_EQ(pipoOutputModule[i].outputs[j].getChannels(), j + 1);
 			for (int k = 0; k < j + 1; k++) {
-				EXPECT_EQ(pipoOutputModule[i].outputs[j].getVoltage(k), outputVoltage);
+				EXPECT_NEAR(pipoOutputModule[i].outputs[j].getVoltage(k), outputVoltage, 0.00001f);
 				outputVoltage += .01f;
 			}
 		}

@@ -9,7 +9,7 @@ void registerExpanderModule(Module& mainModule, ExpanderData expanderData) {
 	} else {
 		mainModule.rightExpander.module = &expanderData.expanderModule;
 	}
-	
+
 	expanderData.expanderModule.model = expanderData.expanderModel;
 }
 
@@ -22,9 +22,9 @@ void registerExpanderModules(Module& mainModule, std::vector<ExpanderData> expan
 	}
 }
 
-void setInputVoltages(Input& input, std::vector<float> voltages) {
-	input.channels = voltages.size();
+void setPortVoltages(Port& port, std::vector<float> voltages) {
+	port.channels = voltages.size();
 	for (size_t i = 0; i < voltages.size(); i++) {
-		input.setVoltage(voltages[i], i);
+		port.setVoltage(voltages[i], i);
 	}
 }

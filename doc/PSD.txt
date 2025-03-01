@@ -1,0 +1,33 @@
+# Polyphonic Same and Different (P-SD)
+*Part of the set of [not-things VCV Rack](../README.md) modules.*
+
+![P-SD module](./p-sd-light.png)
+
+## Module Operation
+The P-SD module accepts two polyphonic input signals (A and B) and analyzes the voltages on their channels. It determines which voltages appear in both inputs and which appear in only one of them. Based on this analysis, the P-SD module generates three output signals:  
+- **A-B**: Voltages that appear only in the A input.  
+- **A&B**: Voltages that appear in both A and B inputs.  
+- **B-A**: Voltages that appear only in the B input.  
+
+## Comparison Tolerance (&#x00B1;&#x03B4;)
+When comparing input channels, P-SD considers two voltages equal if their difference is within a certain range. This range is set using the ***Delta Tolerance*** knob (labeled '**&#x00B1;&#x03B4;**'), adjustable from 0 to 1 volts.
+
+Setting a *Delta Tolerance* allows signals to be compared even if they contain slight variations or "wobble" in their values.
+
+> **Note:** Even when the *Delta Tolerance* is set to 0V, P-SD still applies a minimal tolerance of 0.00001V to account for minor inaccuracies inherent in voltage processing.
+
+## Voltage vs. Note Mode (v / &#x266A;)
+A toggle switch on P-SD allows selection between **Voltage Mode** (labeled '**v**') and **Note Mode** (labeled '**&#x266A;**').
+
+- **Voltage Mode:** Processes incoming voltages as they are.  
+- **Note Mode:** Interprets voltages as 1V/oct musical notes, ignoring octave information. The signals are rescaled to a range of 0–1V before comparison, but they are *not* quantized to the nearest note.  
+
+## Handling of Duplicate Values
+If the input signals contain multiple occurrences of the same voltage, P-SD, by default, removes duplicates from the outputs. A voltage will only be added if there isn’t already another voltage within the active *Delta Tolerance* range.
+
+The '**Output Duplicate Voltages**' option (available in the right-click menu) allows this behavior to be changed:
+- **Disabled (default):** Outputs do not contain duplicate values.  
+- **Enabled:**  
+  - **A-B & B-A outputs**: Contain all values from their respective inputs that were not present in the other input.  
+  - **A&B output**: Contains all values from both A and B inputs that matched, resulting in duplicates (up to 16 channels).  
+
