@@ -118,15 +118,15 @@ void PolySameDiffModule::process(const ProcessArgs& args) {
 }
 
 void PolySameDiffModule::onAdd(const AddEvent& e) {
-	updateConnectionStatus();
+	m_clockDivider.setDivision(0);
 }
 
 void PolySameDiffModule::onPortChange(const PortChangeEvent& event) {
-	updateConnectionStatus();
+	m_clockDivider.setDivision(0);
 }
 
 void PolySameDiffModule::onUnBypass(const UnBypassEvent& e) {
-	updateConnectionStatus();
+	m_clockDivider.setDivision(0);
 }
 
 bool PolySameDiffModule::getOutputDuplicates() {
@@ -139,7 +139,7 @@ void PolySameDiffModule::setOutputDuplicates(bool outputDuplicates) {
 
 void PolySameDiffModule::setModuleWidget(ModuleWidget *moduleWidget) {
 	m_moduleWidget = moduleWidget;
-	updateConnectionStatus();
+	m_clockDivider.setDivision(0);
 }
 
 void PolySameDiffModule::updateConnectionStatus() {
