@@ -12,10 +12,6 @@ int assignOutput(Output& output, float* values, int valueCount, std::bitset<16>&
 
 
 PolySameDiffModule::PolySameDiffModule() {
-	// Start with a 0 division so that the first process will trigger a redetect of the active connections:
-	// if the module is loaded as part of a saved patch, the detection during loading will work, so we want the first process to re-evaluate the connections
-	m_clockDivider.setDivision(0);
-
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	configInput(IN_A, "A");
 	configInput(IN_B, "B");
@@ -48,85 +44,50 @@ void PolySameDiffModule::dataFromJson(json_t *rootJ) {
 }
 
 void PolySameDiffModule::process(const ProcessArgs& args) {
-	if (m_clockDivider.process()) {
-		// Update connections once every second in case there are operations that changed them but our event processing didn't detect it.
-		updateConnectionStatus();
-		// Updating the sample rate each time the divider triggered will be enough, we don't need to listen on sample rate change events.
-		m_clockDivider.setDivision(args.sampleRate);
+	// Variable setup and external parameters
+	std::bitset<16> aBits;
+	std::bitset<16> bBits;
+	float* as = inputs[IN_A].getVoltages();
+	float* bs = inputs[IN_B].getVoltages();
+	int aChannels = inputs[IN_A].getChannels();
+	int bChannels = inputs[IN_B].getChannels();
+	bool noteMode = params[PARAM_MODE].getValue() == 1.f;
+	float delta = std::max(params[PARAM_DELTA].getValue(), 0.00001f);
+
+	// If requested, apply note normalization on the input voltages
+	float* nas;
+	float* nbs;
+	if (noteMode) {
+		nas = m_floatBuffA;
+		nbs = m_floatBuffB;
+		for (int i = 0; i < aChannels; i++) {
+			nas[i] = normalizeNoteValue(as[i]);
+		}
+		for (int i = 0; i < bChannels; i++) {
+			nbs[i] = normalizeNoteValue(bs[i]);
+		}
+	} else {
+		nas = as;
+		nbs = bs;
 	}
-	
-	// We can't detect the output connections through their channel count, since we might have set them to 0 ourselves if so required.
-	// Instead, check if there is a cable connected to the output.
-	if (m_aConnected || m_bConnected || m_abConnected) {
-		// Variable setup and external parameters
-		std::bitset<16> aBits;
-		std::bitset<16> bBits;
-		float* as = inputs[IN_A].getVoltages();
-		float* bs = inputs[IN_B].getVoltages();
-		int aChannels = inputs[IN_A].getChannels();
-		int bChannels = inputs[IN_B].getChannels();
-		bool noteMode = params[PARAM_MODE].getValue() == 1.f;
-		float delta = std::max(params[PARAM_DELTA].getValue(), 0.00001f);
 
-		// If requested, apply note normalization on the input voltages
-		float* nas;
-		float* nbs;
-		if (noteMode) {
-			nas = m_floatBuffA;
-			nbs = m_floatBuffB;
-			for (int i = 0; i < aChannels; i++) {
-				nas[i] = normalizeNoteValue(as[i]);
+	// Determine which voltages in the inputs also appear in the other input
+	for (int a = 0; a < aChannels; a++) {
+		for (int b = 0; b < bChannels; b++) {
+			if (isMatch(nas[a], nbs[b], delta, noteMode)) {
+				aBits.set(a);
+				bBits.set(b);
 			}
-			for (int i = 0; i < bChannels; i++) {
-				nbs[i] = normalizeNoteValue(bs[i]);
-			}
-		} else {
-			nas = as;
-			nbs = bs;
-		}
-
-		// Determine which voltages in the inputs also appear in the other input
-		for (int a = 0; a < aChannels; a++) {
-			for (int b = 0; b < bChannels; b++) {
-				if (isMatch(nas[a], nbs[b], delta, noteMode)) {
-					aBits.set(a);
-					bBits.set(b);
-				}
-			}
-		}
-
-		if (m_aConnected) {
-			assignOutput(outputs[OUT_A], as, aChannels, aBits, false, delta, noteMode, m_outputDuplicates);
-		} else {
-			outputs[OUT_A].channels = 0;
-		}
-		if (m_bConnected) {
-			assignOutput(outputs[OUT_B], bs, bChannels, bBits, false, delta, noteMode, m_outputDuplicates);
-		} else {
-			outputs[OUT_B].channels = 0;
-		}
-		if (m_abConnected) {
-			int count = assignOutput(outputs[OUT_AB], as, aChannels, aBits, true, delta, noteMode, m_outputDuplicates);
-			if (m_outputDuplicates) {
-				// If duplicates have to be added to the output, also add the B channels that had a match to the output.
-				assignOutput(outputs[OUT_AB], bs, bChannels, bBits, true, delta, noteMode, m_outputDuplicates, count);
-			}
-		} else {
-			outputs[OUT_AB].channels = 0;
 		}
 	}
-}
 
-void PolySameDiffModule::onAdd(const AddEvent& e) {
-	m_clockDivider.setDivision(0);
-}
-
-void PolySameDiffModule::onPortChange(const PortChangeEvent& event) {
-	m_clockDivider.setDivision(0);
-}
-
-void PolySameDiffModule::onUnBypass(const UnBypassEvent& e) {
-	m_clockDivider.setDivision(0);
+	assignOutput(outputs[OUT_A], as, aChannels, aBits, false, delta, noteMode, m_outputDuplicates);
+	assignOutput(outputs[OUT_B], bs, bChannels, bBits, false, delta, noteMode, m_outputDuplicates);
+	int count = assignOutput(outputs[OUT_AB], as, aChannels, aBits, true, delta, noteMode, m_outputDuplicates);
+	if (m_outputDuplicates) {
+		// If duplicates have to be added to the output, also add the B channels that had a match to the output.
+		assignOutput(outputs[OUT_AB], bs, bChannels, bBits, true, delta, noteMode, m_outputDuplicates, count);
+	}
 }
 
 bool PolySameDiffModule::getOutputDuplicates() {
@@ -135,23 +96,6 @@ bool PolySameDiffModule::getOutputDuplicates() {
 
 void PolySameDiffModule::setOutputDuplicates(bool outputDuplicates) {
 	m_outputDuplicates = outputDuplicates;
-}
-
-void PolySameDiffModule::setModuleWidget(ModuleWidget *moduleWidget) {
-	m_moduleWidget = moduleWidget;
-	m_clockDivider.setDivision(0);
-}
-
-void PolySameDiffModule::updateConnectionStatus() {
-	if (!m_moduleWidget) {
-		m_aConnected = true;
-		m_bConnected = true;
-		m_abConnected = true;
-	} else {
-		m_aConnected = APP->scene->rack->getTopCable(m_moduleWidget->getOutput(OutputId::OUT_A)) != nullptr;
-		m_bConnected = APP->scene->rack->getTopCable(m_moduleWidget->getOutput(OutputId::OUT_B)) != nullptr;
-		m_abConnected = APP->scene->rack->getTopCable(m_moduleWidget->getOutput(OutputId::OUT_AB)) != nullptr;
-	}
 }
 
 
@@ -169,10 +113,6 @@ PolySameDiffWidget::PolySameDiffWidget(PolySameDiffModule* module): NTModuleWidg
 	addOutput(createOutputCentered<NTPort>(Vec(x, y + (yDelta * 5)), module, PolySameDiffModule::OUT_A));
 	addOutput(createOutputCentered<NTPort>(Vec(x, y + (yDelta * 6)), module, PolySameDiffModule::OUT_AB));
 	addOutput(createOutputCentered<NTPort>(Vec(x, y + (yDelta * 7)), module, PolySameDiffModule::OUT_B));
-
-	if (module) {
-		module->setModuleWidget(this);
-	}
 }
 
 void PolySameDiffWidget::appendContextMenu(Menu* menu) {

@@ -31,27 +31,13 @@ struct PolySameDiffModule : NTModule {
 
 	void process(const ProcessArgs& args) override;
 
-	void onAdd(const AddEvent& e) override;
-	void onPortChange(const PortChangeEvent& event) override;
-	void onUnBypass(const UnBypassEvent& e) override;
-
 	bool getOutputDuplicates();
 	void setOutputDuplicates(bool outputDuplicates);
-
-	void setModuleWidget(ModuleWidget *moduleWidget);
 
 	private:
 		bool m_outputDuplicates = false;
 		float m_floatBuffA[16];
 		float m_floatBuffB[16];
-
-		ModuleWidget *m_moduleWidget = nullptr;
-		dsp::ClockDivider m_clockDivider;
-		bool m_aConnected = true;
-		bool m_bConnected = true;
-		bool m_abConnected = true;
-
-		void updateConnectionStatus();
 	};
 
 struct PolySameDiffWidget : NTModuleWidget {
