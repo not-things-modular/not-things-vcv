@@ -99,7 +99,7 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputAndEightInputsShouldReadVa
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 	}
 
 	solimModule.process(Module::ProcessArgs());
@@ -132,7 +132,7 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputAndFourInputsShouldReadVal
 
 	for (int i = 0; i < 4; i++) {
 		// Not-connected inputs should be ignored while reading the input values, so leave an unconnected on in between each one.
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + 1 + (i * 2)], { (float) i + 1});
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + 1 + (i * 2)], { (float) i + 1});
 	}
 
 	solimModule.process(Module::ProcessArgs());
@@ -163,7 +163,7 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputAndOnePolyphonicInputShoul
 	solimModule.params[SolimModule::PARAM_UPPER_LIMIT].setValue(4.62f);
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
-	setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + 3], { 1, 2, 3, 4});
+	setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + 3], { 1, 2, 3, 4});
 
 	solimModule.process(Module::ProcessArgs());
 
@@ -298,7 +298,7 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputShouldReadSortFromInput) {
 
 	// The param value should be ignored when an input is connected
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
-	setInputVoltages(solimModule.inputs[SolimModule::IN_SORT], { 1.2f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_SORT], { 1.2f });
 
 	solimModule.process(Module::ProcessArgs());
 
@@ -319,7 +319,7 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputShouldReadLowerLimitFromIn
 	// The param value for lower limit should be ignored when an input is connected for it
 	solimModule.params[SolimModule::PARAM_LOWER_LIMIT].setValue(-1.2f);
 	solimModule.params[SolimModule::PARAM_UPPER_LIMIT].setValue(3.2f);
-	setInputVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { 1.2f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { 1.2f });
 
 	solimModule.process(Module::ProcessArgs());
 
@@ -341,7 +341,7 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputShouldReadUpperLimitFromIn
 	// The param value for upper limit should be ignored when an input is connected for it
 	solimModule.params[SolimModule::PARAM_LOWER_LIMIT].setValue(-1.2f);
 	solimModule.params[SolimModule::PARAM_UPPER_LIMIT].setValue(3.2f);
-	setInputVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.2f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.2f });
 
 	solimModule.process(Module::ProcessArgs());
 
@@ -364,7 +364,7 @@ TEST(SolimTest, ProcessWithInputOctaverExpanderOnRightSideShouldNotUseExpander) 
 	registerExpanderModule(solimModule, ExpanderData(solimInputOctaverModule, modelSolimInputOctaver, ExpanderSide::RIGHT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1});
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1});
 
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_SORT_POSITION + i].setValue((i % 2) - 1);
@@ -399,7 +399,7 @@ TEST(SolimTest, ProcessWithInputOctaverExpanderOnLeftSideAndOutputOctaverExpande
 	});
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_SORT_POSITION + i].setValue((i % 2) - 1);
@@ -430,7 +430,7 @@ TEST(SolimTest, ProcessWithInputOctaverExpanderOnLeftSideShouldUseExpander) {
 	registerExpanderModule(solimModule, ExpanderData(solimInputOctaverModule, modelSolimInputOctaver, ExpanderSide::LEFT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_SORT_POSITION + i].setValue(i % 2);
@@ -477,9 +477,9 @@ TEST(SolimTest, ProcessWithInputOctaverExpanderOnLeftSideShouldUseExpanderWithMu
 	});
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 		for (int j = 0; j < 3; j++) {
-			setInputVoltages(solimInputModule[j].inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+			setPortVoltages(solimInputModule[j].inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 		}
 
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
@@ -528,9 +528,9 @@ TEST(SolimTest, ProcessWithInputOctaverExpanderOnLeftSideShouldUseExpanderWithMu
 	});
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 		for (int j = 0; j < 3; j++) {
-			setInputVoltages(solimInputModule[j].inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+			setPortVoltages(solimInputModule[j].inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 		}
 
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
@@ -596,25 +596,25 @@ TEST(SolimTest, ProcessSolimInputOctaverExpanderInputsShouldOverwriteParams) {
 	registerExpanderModule(solimModule, ExpanderData(solimInputOctaverModule, modelSolimInputOctaver, ExpanderSide::LEFT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue(1);
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_SORT_POSITION + i].setValue(1);
 		solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(1);
 	}
 
-	setInputVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_ADD_OCTAVE + 1], { -.5f });
-	setInputVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_ADD_OCTAVE + 3], { 0.f });
+	setPortVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_ADD_OCTAVE + 1], { -.5f });
+	setPortVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_ADD_OCTAVE + 3], { 0.f });
 	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_ADD_OCTAVE + 5].setValue(0.f);
-	setInputVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_ADD_OCTAVE + 5], { .5f });
+	setPortVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_ADD_OCTAVE + 5], { .5f });
 
-	setInputVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_SORT_POSITION + 2], { 0.f });
+	setPortVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_SORT_POSITION + 2], { 0.f });
 	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_SORT_POSITION + 4].setValue(0.f);
-	setInputVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_SORT_POSITION + 4], { 1.5f });
+	setPortVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_SORT_POSITION + 4], { 1.5f });
 
-	setInputVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 5], { 0.f });
+	setPortVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 5], { 0.f });
 	solimInputOctaverModule.params[SolimInputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 7].setValue(0.f);
-	setInputVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 7], { 1.5f });
+	setPortVoltages(solimInputOctaverModule.inputs[SolimInputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 7], { 1.5f });
 
 	solimModule.process(Module::ProcessArgs());
 
@@ -658,7 +658,7 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnLeftSideShouldNotUseExpander) 
 	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::LEFT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1});
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1});
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue((i % 2));
@@ -692,7 +692,7 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideAndInputOctaverExpand
 	});
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue((i % 2));
@@ -722,7 +722,7 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpander) {
 	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
@@ -768,7 +768,7 @@ TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShou
 	});
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
@@ -815,7 +815,7 @@ TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShou
 	});
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
@@ -883,7 +883,7 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWith
 	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
@@ -915,7 +915,7 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWith
 	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
@@ -949,7 +949,7 @@ TEST(SolimTest, ProcessWithOutputOctaverExpanderOnRightSideShouldUseExpanderWith
 	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue((i % 3) - 1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(i % 2);
@@ -1040,20 +1040,20 @@ TEST(SolimTest, ProcessSolimOutputOctaverExpanderInputsShouldOverwriteParams) {
 	registerExpanderModule(solimModule, ExpanderData(solimOutputOctaverModule, modelSolimOutputOctaver, ExpanderSide::RIGHT));
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
 
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + i].setValue(1);
 		solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + i].setValue(1);
 	}
 
-	setInputVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_ADD_OCTAVE + 1], { -.5f });
-	setInputVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_ADD_OCTAVE + 3], { 0.f });
+	setPortVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_ADD_OCTAVE + 1], { -.5f });
+	setPortVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_ADD_OCTAVE + 3], { 0.f });
 	solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_ADD_OCTAVE + 5].setValue(0.f);
-	setInputVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_ADD_OCTAVE + 5], { .5f });
+	setPortVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_ADD_OCTAVE + 5], { .5f });
 
-	setInputVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 5], { 0.f });
+	setPortVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 5], { 0.f });
 	solimOutputOctaverModule.params[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 7].setValue(0.f);
-	setInputVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 7], { 1.5f });
+	setPortVoltages(solimOutputOctaverModule.inputs[SolimOutputOctaverModule::InputId::IN_REPLACE_ORIGINAL + 7], { 1.5f });
 
 	solimModule.process(Module::ProcessArgs());
 
@@ -1535,10 +1535,10 @@ TEST(SolimTest, ProcessWithOneInputAndOutputExpanderShouldProcessExpanders) {
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + .1f });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + .1f });
 	}
 	for (int i = 0; i < 4; i++) {
-		setInputVoltages(solimInputModule.inputs[SolimInputModule::IN_INPUTS + i], { (float) i + .2f });
+		setPortVoltages(solimInputModule.inputs[SolimInputModule::IN_INPUTS + i], { (float) i + .2f });
 	}
 
 	solimModule.process(Module::ProcessArgs());
@@ -1603,11 +1603,11 @@ TEST(SolimTest, ProcessWithEightInputAndOutputExpanderShouldProcessExpanders) {
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + .1f });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + .1f });
 	}
 	for (int i = 0; i < 7; i++) {
 		for (int j = 0; j < i + 1; j++) {
-			setInputVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + (.1f * (j + 1)) });
+			setPortVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + (.1f * (j + 1)) });
 		}
 	}
 
@@ -1705,11 +1705,11 @@ TEST(SolimTest, ProcessWithMoreInputThenOutputExpandersShouldUseLowestCount) {
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
 	}
 	for (int i = 0; i < 6; i++) {
 		for (int j = 0; j < 4; j++) {
-			setInputVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
+			setPortVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
 		}
 	}
 
@@ -1772,11 +1772,11 @@ TEST(SolimTest, ProcessWithMoreOutputThenInputExpandersShouldUseLowestCount) {
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
 	}
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 4; j++) {
-			setInputVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
+			setPortVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
 		}
 	}
 
@@ -1843,16 +1843,16 @@ TEST(SolimTest, ProcessWithEightInputAndOutputExpanderShouldUseNonPolyphonicSoli
 	solimModule.params[SolimModule::PARAM_UPPER_LIMIT].setValue(4.62f);
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
-	setInputVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { -1.24f });
-	setInputVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.62f });
-	setInputVoltages(solimModule.inputs[SolimModule::IN_SORT], { 1.2f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { -1.24f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.62f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_SORT], { 1.2f });
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
 	}
 	for (int i = 0; i < 7; i++) {
 		for (int j = 0; j < i + 1; j++) {
-			setInputVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
+			setPortVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
 		}
 	}
 
@@ -1903,16 +1903,16 @@ TEST(SolimTest, ProcessWithEightInputAndOutputExpanderShouldUsePolyphonicSolimIn
 	solimModule.params[SolimModule::PARAM_UPPER_LIMIT].setValue(4.62f);
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
-	setInputVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { -1.1f, -1.2f, -1.3f, -1.4f, -1.5f, -1.6f, -1.7f, -1.8f });
-	setInputVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f });
-	setInputVoltages(solimModule.inputs[SolimModule::IN_SORT], { -1.1f, 0.f, 1.1f, -1.2f, 0, .5f, -.5f, 0 });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { -1.1f, -1.2f, -1.3f, -1.4f, -1.5f, -1.6f, -1.7f, -1.8f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_SORT], { -1.1f, 0.f, 1.1f, -1.2f, 0, .5f, -.5f, 0 });
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
 	}
 	for (int i = 0; i < 7; i++) {
 		for (int j = 0; j < i + 1; j++) {
-			setInputVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
+			setPortVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
 		}
 	}
 
@@ -1964,16 +1964,16 @@ TEST(SolimTest, ProcessWithEightInputAndOutputExpanderShouldUsePolyphonicSolimIn
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
 	// Only provision 4 channels on each input, causing the module to use the last value for the remaining inputs.
-	setInputVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { -1.1f, -1.2f, -1.3f, -1.4f });
-	setInputVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.1f, 1.2f, 1.3f, 1.4f });
-	setInputVoltages(solimModule.inputs[SolimModule::IN_SORT], { -1.1f, 0.f, 1.1f, -1.2f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_LOWER_LIMIT], { -1.1f, -1.2f, -1.3f, -1.4f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_UPPER_LIMIT], { 1.1f, 1.2f, 1.3f, 1.4f });
+	setPortVoltages(solimModule.inputs[SolimModule::IN_SORT], { -1.1f, 0.f, 1.1f, -1.2f });
 
 	for (int i = 0; i < 8; i++) {
-		setInputVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
+		setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i });
 	}
 	for (int i = 0; i < 7; i++) {
 		for (int j = 0; j < i + 1; j++) {
-			setInputVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
+			setPortVoltages(solimInputModule[i].inputs[SolimInputModule::IN_INPUTS + j], { (float) i + j });
 		}
 	}
 
