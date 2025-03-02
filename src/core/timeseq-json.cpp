@@ -7,7 +7,7 @@ using namespace timeseq;
 
 class ValidationErrorHandler : public json_schema::error_handler {
 	public:
-		ValidationErrorHandler(vector<JsonValidationError> *validationErrors) {
+		ValidationErrorHandler(vector<ValidationError> *validationErrors) {
 			m_validationErrors = validationErrors;
 		}
 
@@ -20,7 +20,7 @@ class ValidationErrorHandler : public json_schema::error_handler {
 		}
 
 	private:
-		vector<JsonValidationError> *m_validationErrors;
+		vector<ValidationError> *m_validationErrors;
 };
 
 
@@ -38,7 +38,7 @@ void JsonLoader::setSchema(shared_ptr<json> schema) {
 	m_validator->set_root_schema(*schema);
 }
 
-shared_ptr<json> JsonLoader::loadJson(istream& inputStream, bool validate, vector<JsonValidationError> *validationErrors) {
+shared_ptr<json> JsonLoader::loadJson(istream& inputStream, bool validate, vector<ValidationError> *validationErrors) {
 	shared_ptr<json> json;
 
 	try {
@@ -59,7 +59,7 @@ shared_ptr<json> JsonLoader::loadJson(istream& inputStream, bool validate, vecto
 	return json;
 }
 
-shared_ptr<Script> JsonLoader::loadScript(istream& inputStream, vector<JsonValidationError> *validationErrors) {
+shared_ptr<Script> JsonLoader::loadScript(istream& inputStream, vector<ValidationError> *validationErrors) {
 	shared_ptr<Script> script;
 	
 	shared_ptr<json> json = loadJson(inputStream, true, validationErrors);

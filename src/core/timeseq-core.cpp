@@ -8,22 +8,28 @@
 extern rack::Plugin* pluginInstance;
 
 
-timeseq::TimeSeqCore::TimeSeqCore() {
+timeseq::TimeSeqCore::TimeSeqCore(PortReader* portReader, PortWriter* portWriter) {
+	m_jsonLoader = new JsonLoader();
 	std::string schemaFile = rack::asset::plugin(pluginInstance, "res/timeseq.schema.json");
 	std::ifstream schemaStream(schemaFile);
-	std::shared_ptr<json> schemaJson = m_jsonLoader.loadJson(schemaStream, false);
+	std::shared_ptr<json> schemaJson = m_jsonLoader->loadJson(schemaStream, false);
 
-	m_jsonLoader.setSchema(schemaJson);
+	m_jsonLoader->setSchema(schemaJson);
+
+	m_processorLoader = new ProcessorLoader(portReader, portWriter);
 }
 
-std::vector<timeseq::JsonValidationError> timeseq::TimeSeqCore::loadScript(std::string& scriptData) {
-	std::istringstream scriptStream(scriptData);
-	std::vector<timeseq::JsonValidationError> errors;
-	
-	// std::shared_ptr<json> json = m_jsonLoader.loadJson(scriptStream, true, &errors);
-	std::shared_ptr<Script> script = m_jsonLoader.loadScript(scriptStream, &errors);
+timeseq::TimeSeqCore::~TimeSeqCore() {
+}
 
-	return errors;
+std::vector<timeseq::ValidationError> timeseq::TimeSeqCore::loadScript(std::string& scriptData) {
+	std::istringstream scriptStream(scriptData);
+	std::vector<timeseq::ValidationError> validationErrors;
+	
+	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, &validationErrors);
+	std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
+
+	return validationErrors;
 }
 
 // void testJsonValidation() {

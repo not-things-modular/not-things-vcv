@@ -5,7 +5,7 @@
 #include "core/timeseq-core.hpp"
 
 
-struct TimeSeqModule : NTModule {
+struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter {
 	enum ParamId {
 		PARAM_LOWER_LIMIT,
 		PARAM_UPPER_LIMIT,
@@ -45,6 +45,11 @@ struct TimeSeqModule : NTModule {
 	~TimeSeqModule();
 
 	void process(const ProcessArgs& args) override;
+
+	float getInputPortVoltage(int index, int channel) override;
+	float getOutputPortVoltage(int index, int channel) override;
+	void setOutputPortVoltage(int index, int channel, float voltage) override;
+	void setOutputPortChannels(int index, int channels) override;
 
 	std::shared_ptr<std::string> getScript();
 	std::string loadScript(std::shared_ptr<std::string> script);

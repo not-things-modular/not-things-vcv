@@ -3,16 +3,67 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
+#include "core/timeseq-validation.hpp"
 
 
 namespace timeseq {
 
+struct ScriptInputTrigger;
 struct ScriptTimeline;
 struct ScriptLane;
 struct ScriptSegment;
+struct ScriptCalc;
+struct Script;
+struct ValueProcessor;
+struct PortReader;
+struct PortWriter;
+
+struct CalcProcessor {
+	float calc(float value);
+
+	private:
+		ScriptCalc *m_scriptCalc;
+		std::unique_ptr<ValueProcessor> m_value;
+};
 
 struct ValueProcessor {
-	virtual float process();
+	float process();
+	virtual float processValue();
+
+	private:
+		std::vector<std::shared_ptr<CalcProcessor>> m_calcs;
+};
+
+struct StaticValueProcessor : ValueProcessor {
+	float processValue() override;
+
+	private:
+		float m_value;
+};
+
+struct InputValueProcessor : ValueProcessor {
+	float processValue() override;
+
+	private:
+		int m_inputPort;
+		int m_inputChannel;
+};
+
+struct OutputValueProcessor : ValueProcessor {
+	float processValue() override;
+
+	private:
+		int m_outputPort;
+		int m_outputChannel;
+};
+
+struct RandValueProcessor : ValueProcessor {
+	float processValue() override;
+
+	private:
+		ValueProcessor m_lowerValue;
+		ValueProcessor m_upperValue;
 };
 
 struct ActionProcessor {
@@ -74,31 +125,81 @@ struct SegmentProcessor {
 		ScriptSegment* m_scriptSegment;
 		DurationProcessor m_durationProcessor;
 
-		std::vector<ActionProcessor> m_startActions;
-		std::vector<ActionProcessor> m_endActions;
-		std::vector<ActionGlideProcessor> m_glideActions;
+		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
+		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
+		std::vector<std::shared_ptr<ActionGlideProcessor>> m_glideActions;
 };
 
 struct LaneProcessor {
+	LaneProcessor(ScriptLane* scriptLane);
+
 	void process();
 
 	private:
 		ScriptLane* m_scriptLane;
-		std::vector<SegmentProcessor> m_segments;
+		std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
 
 		bool m_active;
 		int m_repeatCount;
 };
 	
 struct TimelineProcessor {
+	TimelineProcessor(ScriptTimeline* scriptTimeline);
+
 	void process();
+	
+	std::vector<LaneProcessor>& getLaneProcessors();
 
 	private:
 		ScriptTimeline* m_scriptTimeline;
-		std::vector<LaneProcessor> m_laneProcessors;
+		std::vector<std::shared_ptr<LaneProcessor>> m_laneProcessors;
 
 		std::unordered_map<std::string, std::vector<LaneProcessor*>> m_startTriggers;
 		std::unordered_map<std::string, std::vector<LaneProcessor*>> m_stopTriggers;
+};
+
+struct TriggerProcessor {
+	TriggerProcessor(std::string id, int inputPort, int inputChannel, PortReader* portReader);
+
+	void process();
+
+	private:
+		PortReader* m_portReader;
+		std::string m_id;
+		int m_inputPort;
+		int m_inputChannel;
+};
+
+struct Processor {
+	Processor(std::vector<std::shared_ptr<TimelineProcessor>> m_timelines, std::vector<std::shared_ptr<TriggerProcessor>> m_triggers);
+
+	void process();
+
+	private:
+		std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
+		std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
+};
+
+struct ProcessorScriptParser {
+	ProcessorScriptParser(PortReader* portReader, PortWriter* portWriter);
+
+	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<TimelineProcessor> parseTimeline(ScriptTimeline* scriptTimeline, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<LaneProcessor> parseLane(ScriptLane* scriptLane, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<TriggerProcessor> parseInputTrigger(ScriptInputTrigger* ScriptInputTrigger, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+
+	private:
+		PortReader* m_portReader;
+		PortWriter* m_portWriter;
+};
+
+struct ProcessorLoader {
+	ProcessorLoader(PortReader* portReader, PortWriter* portWriter);
+	
+	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
+
+	private:
+		ProcessorScriptParser m_processorScriptParser;
 };
 
 }

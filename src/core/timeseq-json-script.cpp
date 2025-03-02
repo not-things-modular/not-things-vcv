@@ -1,21 +1,12 @@
 #include "core/timeseq-json.hpp"
-#include <sstream>
-#include <stdarg.h>
 
 using namespace std;
 using namespace timeseq;
 
 
-#define ADD_VALIDATION_ERROR(validationErrors, location, code, message...) \
-	if (validationErrors != nullptr) { \
-		string errorLocation = createValidationErrorLocation(location); \
-		string errorMessage = createValidationErrorMessage(code, message, ""); \
-		validationErrors->emplace_back(errorLocation, errorMessage); \
-	}
-
 class ValidationErrorHandler : public json_schema::error_handler {
 	public:
-		ValidationErrorHandler(vector<JsonValidationError> *validationErrors) {
+		ValidationErrorHandler(vector<ValidationError> *validationErrors) {
 			m_validationErrors = validationErrors;
 		}
 
@@ -28,39 +19,8 @@ class ValidationErrorHandler : public json_schema::error_handler {
 		}
 
 	private:
-		vector<JsonValidationError> *m_validationErrors;
+		vector<ValidationError> *m_validationErrors;
 };
-
-string createValidationErrorMessage(ValidationErrorCode code, ...) {
-	ostringstream errorMessage;
-
-	va_list args;
-	va_start(args, code);
-	char* message = va_arg(args, char*);
-	while (message[0] != 0) {
-		errorMessage << message;
-		message = va_arg(args, char*);
-	}
-	va_end(args);
-
-	errorMessage << " [" << code << "]";
-
-	return errorMessage.str();
-}
-
-string createValidationErrorLocation(vector<string> location) {
-	ostringstream errorLocation;
-	for (const string& entry : location) {
-		errorLocation << "/";
-		errorLocation << entry;
-	}
-
-	if (errorLocation.tellp() == 0) {
-		errorLocation << "/";
-	}
-
-	return errorLocation.str();
-}
 
 template<size_t N>
 bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
@@ -73,7 +33,7 @@ bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
 }
 
 
-std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<JsonValidationError> *validationErrors, vector<string> location) {
+std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError> *validationErrors, vector<string> location) {
 	Script* script = new Script();
 
 	json::const_iterator type = scriptJson.find("type");
@@ -340,7 +300,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 	return shared_ptr<Script>(script);
 }
 
-ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptTimeline timeline;
 
 	json::const_iterator timeScale = timelineJson.find("time-scale");
@@ -390,7 +350,7 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::ve
 	return timeline;
 }
 
-ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptTimeScale timeScale;
 
 	json::const_iterator sampleRate = timeScaleJson.find("sample-rate");
@@ -431,7 +391,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 	return timeScale;
 }
 
-ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptLane lane;
 
 	json::const_iterator autoStart = laneJson.find("auto-start");
@@ -513,7 +473,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<JsonVal
 	return lane;
 }
 
-ScriptSegmentEntity JsonScriptParser::parseSegmentEntity(const json& segmentEntityJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptSegmentEntity JsonScriptParser::parseSegmentEntity(const json& segmentEntityJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptSegmentEntity segmentEntity;
 
 	json::const_iterator segment = segmentEntityJson.find("segment");
@@ -549,7 +509,7 @@ ScriptSegmentEntity JsonScriptParser::parseSegmentEntity(const json& segmentEnti
 	return segmentEntity;
 }
 
-ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptSegment segment;
 
 	populateRef(segment, segmentJson, allowRefs, validationErrors, location);
@@ -595,7 +555,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 	return segment;
 }
 
-ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptSegmentBlock segmentBlock;
 
 	populateRef(segmentBlock, segmentBlockJson, allowRefs, validationErrors, location);
@@ -630,7 +590,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 	return segmentBlock;
 }
 
-ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptDuration duration;
 	int durationCount = 0;
 
@@ -684,7 +644,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 	return duration;
 }
 
-ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptAction action;
 
 	populateRef(action, actionJson, allowRefs, validationErrors, location);
@@ -778,7 +738,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 	return action;
 }
 
-ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptSetValue setValue;
 
 	json::const_iterator output = setValueJson.find("output");
@@ -802,7 +762,7 @@ ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, std::ve
 	return setValue;
 }
 
-ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptSetPolyphony setPolyphony;
 
 	json::const_iterator index = setPolyphonyJson.find("index");
@@ -828,7 +788,7 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 	return setPolyphony;
 }
 
-ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptValue value;
 
 	populateRef(value, valueJson, allowRefs, validationErrors, location);
@@ -940,7 +900,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 	return value;
 }
 
-ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptOutput output;
 
 	populateRef(output, outputJson, allowRefs, validationErrors, location);
@@ -975,7 +935,7 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 	return output;
 }
 
-ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptInput input;
 
 	populateRef(input, inputJson, allowRefs, validationErrors, location);
@@ -1010,7 +970,7 @@ ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, 
 	return input;
 }
 
-ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptRand rand;
 
 	json::const_iterator lower = randJson.find("lower");
@@ -1036,7 +996,7 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<JsonVal
 	return rand;
 }
 
-ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptCalc calc;
 
 	populateRef(calc, calcJson, allowRefs, validationErrors, location);
@@ -1113,7 +1073,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 	return calc;
 }
 
-ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptInputTrigger inputTrigger;
 
 	json::const_iterator id = inputTriggerJson.find("id");
@@ -1138,7 +1098,7 @@ ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJ
 	return inputTrigger;
 }
 
-void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, std::vector<JsonValidationError> *validationErrors, std::vector<std::string> location) {
+void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	json::const_iterator ref = refJson.find("ref");
 	json::const_iterator id = refJson.find("id");
 

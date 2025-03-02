@@ -4,7 +4,7 @@
 
 
 TimeSeqModule::TimeSeqModule() {
-	m_timeSeqCore = new timeseq::TimeSeqCore();
+	m_timeSeqCore = new timeseq::TimeSeqCore(this, this);
 
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {
@@ -20,12 +20,33 @@ TimeSeqModule::~TimeSeqModule() {
 void TimeSeqModule::process(const ProcessArgs& args) {
 }
 
+float TimeSeqModule::getInputPortVoltage(int index, int channel) {
+	return inputs[InputId::IN_INPUTS + index].getVoltage(channel);
+}
+
+float TimeSeqModule::getOutputPortVoltage(int index, int channel) {
+	return outputs[OutputId::OUT_OUTPUTS + index].getVoltage(channel);
+}
+
+void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) {
+	outputs[OutputId::OUT_OUTPUTS + index].setVoltage(voltage, channel);
+}
+
+void TimeSeqModule::setOutputPortChannels(int index, int channels) {
+	outputs[OutputId::OUT_OUTPUTS + index].setChannels(channels);
+	// The setChannels will not set a connected port to 0. So if the request is to set it to 0,
+	// assign the channels property again explicitly
+	if (channels == 0) {
+		outputs[OutputId::OUT_OUTPUTS + index].channels = 0;
+	}
+}
+
 std::shared_ptr<std::string> TimeSeqModule::getScript() {
 	return m_script;
 }
 
 std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
-	std::vector<timeseq::JsonValidationError> errors = m_timeSeqCore->loadScript(*script);
+	std::vector<timeseq::ValidationError> errors = m_timeSeqCore->loadScript(*script);
 
 	m_lastScriptLoadErrors.clear();
 	if (errors.size() == 0) {
@@ -34,7 +55,7 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 	} else {
 		std::ostringstream errorMessage;
 
-		for (const timeseq::JsonValidationError& error : errors) {
+		for (const timeseq::ValidationError& error : errors) {
 			m_lastScriptLoadErrors.emplace_back(error.location + " : " + error.message);
 			if (m_lastScriptLoadErrors.size() == 1) {
 				errorMessage << errors.size() << " error(s) were encountered while loading the script. The first error is:\n\n";

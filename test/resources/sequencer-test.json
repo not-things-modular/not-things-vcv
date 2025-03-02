@@ -1,12 +1,12 @@
 {
 	"type": "not-things_timeseq_script",
-	"version": "0.1",
+	"version": "0.0.1",
 	"timelines": [
 		{
 			"time-scale": {
 				"sample-rate": 48000,
-				"bpm": 120,
-				"bpb": 4
+				"bpmx": 120,
+				"bpbx": 4
 			},
 			"loop-lock": true,
 			"lanes": [
@@ -32,7 +32,7 @@
 			"segments": [
 				{
 					"segment": {
-						"id": "segment-a",
+						"idx": "segment-a",
 						"duration": {
 							"samples": 123,
 							"millis": 100,
