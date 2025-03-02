@@ -144,7 +144,7 @@ struct ScriptSegment : ScriptRefObject {
 	std::vector<ScriptAction> actions;
 };
 
-struct ScriptSegmentEntity : ScriptRefObject {
+struct ScriptSegmentEntity {
 	std::unique_ptr<ScriptSegment> segment;
 	std::unique_ptr<ScriptSegmentBlock> segmentBlock;
 };

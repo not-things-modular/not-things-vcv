@@ -9,10 +9,13 @@
 
 namespace timeseq {
 
+struct ScriptTimeScale;
 struct ScriptInputTrigger;
 struct ScriptTimeline;
 struct ScriptLane;
+struct ScriptSegmentEntity;
 struct ScriptSegment;
+struct ScriptSegmentBlock;
 struct ScriptCalc;
 struct Script;
 struct ValueProcessor;
@@ -131,7 +134,7 @@ struct SegmentProcessor {
 };
 
 struct LaneProcessor {
-	LaneProcessor(ScriptLane* scriptLane);
+	LaneProcessor(ScriptLane* scriptLane, std::vector<std::shared_ptr<SegmentProcessor>> segments);
 
 	void process();
 
@@ -139,12 +142,17 @@ struct LaneProcessor {
 		ScriptLane* m_scriptLane;
 		std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
 
-		bool m_active;
-		int m_repeatCount;
+		bool m_active = false;
+		int m_repeatCount = 0;
 };
 	
 struct TimelineProcessor {
-	TimelineProcessor(ScriptTimeline* scriptTimeline);
+	TimelineProcessor(
+		ScriptTimeline* scriptTimeline,
+		std::vector<std::shared_ptr<LaneProcessor>> laneProcessors,
+		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> startTriggers,
+		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> stopTriggers
+	);
 
 	void process();
 	
@@ -154,8 +162,8 @@ struct TimelineProcessor {
 		ScriptTimeline* m_scriptTimeline;
 		std::vector<std::shared_ptr<LaneProcessor>> m_laneProcessors;
 
-		std::unordered_map<std::string, std::vector<LaneProcessor*>> m_startTriggers;
-		std::unordered_map<std::string, std::vector<LaneProcessor*>> m_stopTriggers;
+		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_startTriggers;
+		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_stopTriggers;
 };
 
 struct TriggerProcessor {
@@ -185,8 +193,11 @@ struct ProcessorScriptParser {
 
 	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::shared_ptr<TimelineProcessor> parseTimeline(ScriptTimeline* scriptTimeline, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	std::shared_ptr<LaneProcessor> parseLane(ScriptLane* scriptLane, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::shared_ptr<TriggerProcessor> parseInputTrigger(ScriptInputTrigger* ScriptInputTrigger, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<LaneProcessor> parseLane(ScriptLane* scriptLane, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentEntities(std::vector<ScriptSegmentEntity>* scriptSegmentEntities, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<SegmentProcessor> parseSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 
 	private:
 		PortReader* m_portReader;
