@@ -16,8 +16,12 @@ struct PortWriter {
 	virtual void setOutputPortChannels(int index, int channels);
 };
 
+struct SampleRateReader {
+	virtual float getSampleRate();
+};
+
 struct TimeSeqCore {
-	TimeSeqCore(PortReader* portReader, PortWriter* portWriter);
+	TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter);
 	~TimeSeqCore();
 
 	std::vector<timeseq::ValidationError> loadScript(std::string& scriptData);

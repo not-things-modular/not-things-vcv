@@ -597,7 +597,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 	json::const_iterator samples = durationJson.find("samples");
 	if (samples != durationJson.end()) {
 		if ((samples->is_number_unsigned()) && ((*samples) > 0)) {
-			duration.samples.reset(new int(*samples));
+			duration.samples.reset(new uint64_t(*samples));
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_SamplesNumber, "samples must be a positive integer number.");
@@ -617,7 +617,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 	json::const_iterator bars = durationJson.find("bars");
 	if (bars != durationJson.end()) {
 		if ((bars->is_number_unsigned()) && ((*bars) > 0)) {
-			duration.bars.reset(new int(*bars));
+			duration.bars.reset(new uint64_t(*bars));
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsNumber, "bars must be a positive integer number.");

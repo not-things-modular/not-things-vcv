@@ -4,7 +4,7 @@
 
 
 TimeSeqModule::TimeSeqModule() {
-	m_timeSeqCore = new timeseq::TimeSeqCore(this, this);
+	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this);
 
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {
@@ -26,6 +26,10 @@ float TimeSeqModule::getInputPortVoltage(int index, int channel) {
 
 float TimeSeqModule::getOutputPortVoltage(int index, int channel) {
 	return outputs[OutputId::OUT_OUTPUTS + index].getVoltage(channel);
+}
+
+float TimeSeqModule::getSampleRate() {
+	return APP->engine->getSampleRate();
 }
 
 void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) {

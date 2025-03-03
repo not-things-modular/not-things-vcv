@@ -5,7 +5,7 @@
 #include "core/timeseq-core.hpp"
 
 
-struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter {
+struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter, timeseq::SampleRateReader {
 	enum ParamId {
 		PARAM_LOWER_LIMIT,
 		PARAM_UPPER_LIMIT,
@@ -48,6 +48,7 @@ struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter {
 
 	float getInputPortVoltage(int index, int channel) override;
 	float getOutputPortVoltage(int index, int channel) override;
+	float getSampleRate() override;
 	void setOutputPortVoltage(int index, int channel, float voltage) override;
 	void setOutputPortChannels(int index, int channels) override;
 

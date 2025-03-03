@@ -11,6 +11,15 @@ float ValueProcessor::processValue() {
 	return 0.f;
 }
 
+DurationProcessor::DurationProcessor(uint64_t duration) : m_duration(duration) {}
+
+SegmentProcessor::SegmentProcessor(
+	ScriptSegment* scriptSegment,
+	DurationProcessor durationProcessor,
+	std::vector<std::shared_ptr<ActionProcessor>> startActions,
+	std::vector<std::shared_ptr<ActionProcessor>> endActions,
+	std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions) :
+		m_scriptSegment(scriptSegment), m_durationProcessor(durationProcessor), m_startActions(startActions), m_endActions(endActions), m_glideActions(glideActions) {}
 
 LaneProcessor::LaneProcessor(ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments) : m_scriptLane(scriptLane), m_segments(segments) {}
 
@@ -29,7 +38,7 @@ void Processor::process() {
 
 }
 
-ProcessorLoader::ProcessorLoader(PortReader* portReader, PortWriter* portWriter) : m_processorScriptParser(portReader, portWriter) {
+ProcessorLoader::ProcessorLoader(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter) : m_processorScriptParser(portReader, sampleRateReader, portWriter) {
 }
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {

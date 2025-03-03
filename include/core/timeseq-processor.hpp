@@ -21,6 +21,7 @@ struct Script;
 struct ValueProcessor;
 struct PortReader;
 struct PortWriter;
+struct SampleRateReader;
 
 struct CalcProcessor {
 	float calc(float value);
@@ -114,14 +115,25 @@ struct ActionGlideProcessor {
 struct DurationProcessor {
 	enum State { STATE_IDLE, STATE_START, STATE_PROGRESS, STATE_STOP };
 
+	DurationProcessor(uint64_t duration);
+
 	State process();
 
 	private:
-		long m_duration;
-		long m_position;
+		uint64_t m_duration;
+		double m_drift;
+		uint64_t m_position;
 };
 
 struct SegmentProcessor {
+	SegmentProcessor(
+		ScriptSegment* scriptSegment,
+		DurationProcessor durationProcessor,
+		std::vector<std::shared_ptr<ActionProcessor>> startActions,
+		std::vector<std::shared_ptr<ActionProcessor>> endActions,
+		std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions
+	);
+
 	void process();
 
 	private:
@@ -188,24 +200,31 @@ struct Processor {
 		std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
 };
 
+struct ProcessorScriptParseContext {
+	float sampleRate;
+	Script* script;
+	std::vector<ValidationError> *validationErrors;
+};
+
 struct ProcessorScriptParser {
-	ProcessorScriptParser(PortReader* portReader, PortWriter* portWriter);
+	ProcessorScriptParser(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter);
 
 	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	std::shared_ptr<TimelineProcessor> parseTimeline(ScriptTimeline* scriptTimeline, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	std::shared_ptr<TriggerProcessor> parseInputTrigger(ScriptInputTrigger* ScriptInputTrigger, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	std::shared_ptr<LaneProcessor> parseLane(ScriptLane* scriptLane, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentEntities(std::vector<ScriptSegmentEntity>* scriptSegmentEntities, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	std::shared_ptr<SegmentProcessor> parseSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<TimelineProcessor> parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, std::vector<std::string> location);
+	std::shared_ptr<TriggerProcessor> parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* ScriptInputTrigger, std::vector<std::string> location);
+	std::shared_ptr<LaneProcessor> parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, std::vector<std::string> location);
+	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentEntities(ProcessorScriptParseContext* context, std::vector<ScriptSegmentEntity>* scriptSegmentEntities, ScriptTimeScale* timeScale, std::vector<std::string> location);
+	std::shared_ptr<SegmentProcessor> parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location);
+	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<std::string> location);
 
 	private:
 		PortReader* m_portReader;
 		PortWriter* m_portWriter;
+		SampleRateReader* m_sampleRateReader;
 };
 
 struct ProcessorLoader {
-	ProcessorLoader(PortReader* portReader, PortWriter* portWriter);
+	ProcessorLoader(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter);
 	
 	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 

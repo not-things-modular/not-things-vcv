@@ -133,9 +133,9 @@ struct ScriptAction : ScriptRefObject {
 };
 
 struct ScriptDuration {
-	std::unique_ptr<int> samples;
+	std::unique_ptr<uint64_t> samples;
 	std::unique_ptr<float> millis;
-	std::unique_ptr<int> bars;
+	std::unique_ptr<uint64_t> bars;
 	std::unique_ptr<float> beats;
 };
 
