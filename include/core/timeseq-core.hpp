@@ -7,17 +7,17 @@
 namespace timeseq {
 
 struct PortReader {
-	virtual float getInputPortVoltage(int index, int channel);
-	virtual float getOutputPortVoltage(int index, int channel);
+	virtual float getInputPortVoltage(int index, int channel) = 0;
+	virtual float getOutputPortVoltage(int index, int channel) = 0;
 };
 
 struct PortWriter {
-	virtual void setOutputPortVoltage(int index, int channel, float voltage);
-	virtual void setOutputPortChannels(int index, int channels);
+	virtual void setOutputPortVoltage(int index, int channel, float voltage) = 0;
+	virtual void setOutputPortChannels(int index, int channels) = 0;
 };
 
 struct SampleRateReader {
-	virtual float getSampleRate();
+	virtual float getSampleRate() = 0;
 };
 
 struct TimeSeqCore {

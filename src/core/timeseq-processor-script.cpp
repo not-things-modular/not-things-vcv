@@ -89,7 +89,7 @@ shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorS
 		return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, scriptInputTrigger->input.index, ((bool) scriptInputTrigger->input.channel) ? *scriptInputTrigger->input.channel.get() : 0, m_portReader));
 	} else {
 		for (vector<ScriptInput>::iterator it = context->script->inputs.begin(); it != context->script->inputs.end(); it++) {
-			if (scriptInputTrigger->input.ref.compare(it->id)) {
+			if (scriptInputTrigger->input.ref.compare(it->id) == 0) {
 				return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, it->index, ((bool) it->channel) ? *it->channel.get() : 0, m_portReader));
 			}
 		}
@@ -144,7 +144,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 	} else {
 		int count = 0;
 		for (vector<ScriptSegmentBlock>::iterator it = context->script->segmentBlocks.begin(); it != context->script->segmentBlocks.end(); it++) {
-			if (scriptSegmentBlock->ref.compare(it->id)) {
+			if (scriptSegmentBlock->ref.compare(it->id) == 0) {
 				vector<string> refLocation = { "script",  "segment-blocks", to_string(count) };
 				return parseSegmentBlock(context, &(*it), timeScale, refLocation);
 			}
@@ -188,7 +188,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScript
 	} else {
 		int count = 0;
 		for (vector<ScriptSegment>::iterator it = context->script->segments.begin(); it != context->script->segments.end(); it++) {
-			if (scriptSegment->ref.compare(it->id)) {
+			if (scriptSegment->ref.compare(it->id) == 0) {
 				vector<string> refLocation = { "script",  "segments", to_string(count) };
 				return parseSegment(context, &(*it), timeScale, refLocation);
 			}
@@ -257,7 +257,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptPa
 	} else {
 		int count = 0;
 		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
-			if (scriptAction->ref.compare(it->id)) {
+			if (scriptAction->ref.compare(it->id) == 0) {
 				vector<string> refLocation = { "script",  "actions", to_string(count) };
 				return parseAction(context, &(*it), refLocation);
 			}
@@ -312,7 +312,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 		if (find(valueStack.begin(), valueStack.end(), scriptValue->ref) == valueStack.end()) {
 			int count = 0;
 			for (vector<ScriptValue>::iterator it = context->script->values.begin(); it != context->script->values.end(); it++) {
-				if (scriptValue->ref.compare(it->id)) {
+				if (scriptValue->ref.compare(it->id) == 0) {
 					vector<string> refLocation = { "script",  "values", to_string(count) };
 					valueStack.push_back(scriptValue->ref);
 					return parseValue(context, &(*it), refLocation, valueStack);
@@ -409,7 +409,7 @@ pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* co
 	} else {
 		int count = 0;
 		for (vector<ScriptInput>::iterator it = context->script->inputs.begin(); it != context->script->inputs.end(); it++) {
-			if (scriptInput->ref.compare(it->id)) {
+			if (scriptInput->ref.compare(it->id) == 0) {
 				vector<string> refLocation = { "script",  "inputs", to_string(count) };
 				return parseInput(context, &(*it), refLocation);
 			}
@@ -430,7 +430,7 @@ pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* c
 	} else {
 		int count = 0;
 		for (vector<ScriptOutput>::iterator it = context->script->outputs.begin(); it != context->script->outputs.end(); it++) {
-			if (scriptOutput->ref.compare(it->id)) {
+			if (scriptOutput->ref.compare(it->id) == 0) {
 				vector<string> refLocation = { "script",  "outputs", to_string(count) };
 				return parseOutput(context, &(*it), refLocation);
 			}
