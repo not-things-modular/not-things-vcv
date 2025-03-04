@@ -10,9 +10,10 @@ enum ValidationErrorCode {
 	Ref_Length = 2,
 	Ref_NotAllowed = 3,
 	Ref_NotFound = 4,
-	Id_String = 5,
-	Id_Length = 6,
-	Id_NotAllowed= 7,
+	Ref_CircularFound = 5,
+	Id_String = 6,
+	Id_Length = 7,
+	Id_NotAllowed= 8,
 
 	Script_TypeMissing = 101,
 	Script_TypeUnsupported = 102,

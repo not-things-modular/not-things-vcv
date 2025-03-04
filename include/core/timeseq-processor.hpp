@@ -4,11 +4,15 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <utility>
 #include "core/timeseq-validation.hpp"
 
 
 namespace timeseq {
 
+struct ScriptInput;
+struct ScriptOutput;
+struct ScriptValue;
 struct ScriptAction;
 struct ScriptGlideAction;
 struct ScriptDuration;
@@ -27,22 +31,28 @@ struct PortWriter;
 struct SampleRateReader;
 
 struct CalcProcessor {
+	CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value);
+
 	float calc(float value);
 
 	private:
 		ScriptCalc *m_scriptCalc;
-		std::unique_ptr<ValueProcessor> m_value;
+		std::shared_ptr<ValueProcessor> m_value;
 };
 
 struct ValueProcessor {
+	ValueProcessor(std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+
 	float process();
-	virtual float processValue();
+	virtual float processValue() = 0;
 
 	private:
-		std::vector<std::shared_ptr<CalcProcessor>> m_calcs;
+		std::vector<std::shared_ptr<CalcProcessor>> m_calcProcessors;
 };
 
 struct StaticValueProcessor : ValueProcessor {
+	StaticValueProcessor(float value, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+
 	float processValue() override;
 
 	private:
@@ -50,6 +60,8 @@ struct StaticValueProcessor : ValueProcessor {
 };
 
 struct InputValueProcessor : ValueProcessor {
+	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+
 	float processValue() override;
 
 	private:
@@ -58,6 +70,8 @@ struct InputValueProcessor : ValueProcessor {
 };
 
 struct OutputValueProcessor : ValueProcessor {
+	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+
 	float processValue() override;
 
 	private:
@@ -66,28 +80,34 @@ struct OutputValueProcessor : ValueProcessor {
 };
 
 struct RandValueProcessor : ValueProcessor {
+	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+
 	float processValue() override;
 
 	private:
-		ValueProcessor m_lowerValue;
-		ValueProcessor m_upperValue;
+		std::shared_ptr<ValueProcessor> m_lowerValue;
+		std::shared_ptr<ValueProcessor> m_upperValue;
 };
 
 struct ActionProcessor {
-	virtual void process();
+	virtual void process() = 0;
 };
 
 struct ActionSetValueProcessor : ActionProcessor {
+	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel);
+
 	void process() override;
 
 	private:
-		ValueProcessor m_valueProcessor;
+		std::shared_ptr<ValueProcessor> m_value;
 		int m_outputPort;
 		int m_outputChannel;
 
 };
 
 struct ActionSetPolyphonyProcessor : ActionProcessor {
+	ActionSetPolyphonyProcessor(int outputPort, int channelCount);
+
 	void process() override;
 
 	private:
@@ -97,20 +117,25 @@ struct ActionSetPolyphonyProcessor : ActionProcessor {
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
+	ActionTriggerProcessor(std::string trigger);
+
 	void process() override;
 
 	private:
-		std::string trigger;
+		std::string m_trigger;
 
 };
 
 struct ActionGlideProcessor {
+	ActionGlideProcessor(std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue);
+
 	void start();
 	void process(long glidePosition, long glideLength);
 
 	private:
-		ValueProcessor m_startValueProcessor;
-		ValueProcessor m_endValueProcessor;
+		std::shared_ptr<ValueProcessor> m_startValueProcessor;
+		std::shared_ptr<ValueProcessor> m_endValueProcessor;
+
 		float m_startValue;
 		float m_endValue;
 };
@@ -141,7 +166,7 @@ struct SegmentProcessor {
 
 	private:
 		ScriptSegment* m_scriptSegment;
-		std::shared_ptr<DurationProcessor> m_durationProcessor;
+		std::shared_ptr<DurationProcessor> m_duration;
 
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
 		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
@@ -221,6 +246,18 @@ struct ProcessorScriptParser {
 	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionGlideProcessor> parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ValueProcessor> parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::string> location, std::vector<std::string> valueStack);
+	std::shared_ptr<ValueProcessor> parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
+	std::shared_ptr<ValueProcessor> parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
+	std::shared_ptr<ValueProcessor> parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
+	std::shared_ptr<ValueProcessor> parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location, std::vector<std::string> valueStack);
+	std::shared_ptr<CalcProcessor> parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, std::vector<std::string> location, std::vector<std::string> valueStack);
+
+	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string> location);
+	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);
 
 	private:
 		PortReader* m_portReader;
