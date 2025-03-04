@@ -6,7 +6,7 @@
 
 using namespace std;
 using namespace timeseq;
-	
+
 
 ProcessorScriptParser::ProcessorScriptParser(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter) {
 	m_portReader = portReader;
@@ -61,7 +61,7 @@ shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScri
 		laneProcessors.push_back(laneProcessor);
 		location.pop_back();
 		count++;
-		
+
 		laneProcessors.push_back(laneProcessor);
 		if (scriptLane.startTrigger.length() > 0) {
 			if (startTriggers.find(scriptLane.startTrigger) == startTriggers.end()) {
@@ -133,55 +133,6 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentEntities
 	return segmentProcessors;
 }
 
-shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location) {
-	// Check if it's a ref segment object or a full one
-	if (scriptSegment->ref.length() == 0) {
-		location.push_back("duration");
-		uint64_t duration = -1;
-		if (scriptSegment->duration.samples) {
-			duration = *scriptSegment->duration.samples.get();
-		} else if (scriptSegment->duration.millis) {
-			duration = m_sampleRateReader->getSampleRate() / 1000 * (*scriptSegment->duration.millis.get());
-		} else if (scriptSegment->duration.beats) {
-			if (timeScale->bpm) {
-				int bpm = *timeScale->bpm.get();
-				int beats = *scriptSegment->duration.beats.get();
-				if (scriptSegment->duration.bars) {
-					if (timeScale->bpb) {
-						beats += ((*scriptSegment->duration.bars.get()) * (*timeScale->bpb.get()));
-					} else {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
-						beats = -1;
-					}
-				}
-
-				if (beats != -1) {
-					duration = m_sampleRateReader->getSampleRate() * beats / bpm * 60;
-				}
-			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
-			}
-		}
-		location.pop_back();
-		// vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegmentEntities(context, &scriptSegmentBlock->segments, timeScale, location);
-		// location.pop_back();
-		// return segmentProcessors;
-	} else {
-		int count = 0;
-		for (vector<ScriptSegment>::iterator it = context->script->segments.begin(); it != context->script->segments.end(); it++) {
-			if (scriptSegment->ref.compare(it->id)) {
-				vector<string> refLocation = { "script",  "segments", to_string(count) };
-				return parseSegment(context, &(*it), timeScale, refLocation);
-			}
-			count++;
-		}
-
-		// Couldn't find the referenced input...
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
-		return shared_ptr<SegmentProcessor>();
-	}
-}
-
 vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<string> location) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
@@ -203,4 +154,106 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
 		return vector<shared_ptr<SegmentProcessor>>();
 	}
+}
+
+shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location) {
+	// Check if it's a ref segment object or a full one
+	if (scriptSegment->ref.length() == 0) {
+		location.push_back("duration");
+		shared_ptr<DurationProcessor> durationProcessor = parseDuration(context, &scriptSegment->duration, timeScale, location);
+		location.pop_back();
+
+		int count = 0;
+		vector<shared_ptr<ActionProcessor>> startActions;
+		vector<shared_ptr<ActionProcessor>> endActions;
+		vector<shared_ptr<ActionGlideProcessor>> glideActions;
+		location.push_back("actions");
+		for (vector<ScriptAction>::iterator it = scriptSegment->actions.begin(); it != scriptSegment->actions.end(); it++) {
+			ScriptAction& scriptAction = *it;
+			location.push_back(to_string(count));
+			if (scriptAction.timing == ScriptAction::ActionTiming::START) {
+				startActions.push_back(parseAction(context, &(*it), location));
+			} else if (scriptAction.timing == ScriptAction::ActionTiming::END) {
+				endActions.push_back(parseAction(context, &(*it), location));
+			} else if (scriptAction.timing == ScriptAction::ActionTiming::GLIDE) {
+				glideActions.push_back(parseGlideAction(context, &(*it), location));
+			}
+			location.pop_back();
+			count++;
+		}
+		location.pop_back();
+
+		return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, glideActions));
+	} else {
+		int count = 0;
+		for (vector<ScriptSegment>::iterator it = context->script->segments.begin(); it != context->script->segments.end(); it++) {
+			if (scriptSegment->ref.compare(it->id)) {
+				vector<string> refLocation = { "script",  "segments", to_string(count) };
+				return parseSegment(context, &(*it), timeScale, refLocation);
+			}
+			count++;
+		}
+
+		// Couldn't find the referenced input...
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
+		return shared_ptr<SegmentProcessor>();
+	}
+}
+
+shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, vector<string> location) {
+	bool hasError = false;
+	uint64_t duration = 0;
+	double drift = 0;
+
+	if (scriptDuration->samples) {
+		float activeSampleRate = m_sampleRateReader->getSampleRate();
+		if ((timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
+			double refactoredDuration = (double) (*scriptDuration->samples.get()) * activeSampleRate / (*timeScale->sampleRate.get());
+			duration = round(refactoredDuration);
+			drift = refactoredDuration - duration;
+		} else{
+			duration = *scriptDuration->samples.get();
+		}
+	} else if (scriptDuration->millis) {
+		double refactoredDuration = (double) (*scriptDuration->millis.get()) * m_sampleRateReader->getSampleRate() / 1000;
+		duration = round(refactoredDuration);
+		drift = refactoredDuration - duration;
+	} else if (scriptDuration->beats) {
+		if (timeScale->bpm) {
+			int bpm = *timeScale->bpm.get();
+			int beats = *scriptDuration->beats.get();
+			if (scriptDuration->bars) {
+				if (timeScale->bpb) {
+					beats += ((*scriptDuration->bars.get()) * (*timeScale->bpb.get()));
+				} else {
+					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
+					hasError = true;
+					beats = -1;
+				}
+			}
+
+			if (beats != -1) {
+				double refactoredDuration = m_sampleRateReader->getSampleRate() * beats * 60 / bpm;
+				duration = round(refactoredDuration);
+				drift = refactoredDuration - duration;
+			}
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
+			hasError = true;
+		}
+	}
+
+	if (!hasError) {
+		return shared_ptr<DurationProcessor>(new DurationProcessor(duration, drift));
+	} else {
+		return shared_ptr<DurationProcessor>();
+	}
+}
+
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+	return shared_ptr<ActionProcessor>();
+}
+
+shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+	return shared_ptr<ActionGlideProcessor>();
 }

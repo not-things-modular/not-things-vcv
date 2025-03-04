@@ -5,20 +5,20 @@
 
 using namespace std;
 using namespace timeseq;
-	
+
 
 float ValueProcessor::processValue() {
 	return 0.f;
 }
 
-DurationProcessor::DurationProcessor(uint64_t duration) : m_duration(duration) {}
+DurationProcessor::DurationProcessor(uint64_t duration, double drift) : m_duration(duration), m_drift(drift) {}
 
 SegmentProcessor::SegmentProcessor(
 	ScriptSegment* scriptSegment,
-	DurationProcessor durationProcessor,
-	std::vector<std::shared_ptr<ActionProcessor>> startActions,
-	std::vector<std::shared_ptr<ActionProcessor>> endActions,
-	std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions) :
+	shared_ptr<DurationProcessor> durationProcessor,
+	vector<shared_ptr<ActionProcessor>> startActions,
+	vector<shared_ptr<ActionProcessor>> endActions,
+	vector<shared_ptr<ActionGlideProcessor>> glideActions) :
 		m_scriptSegment(scriptSegment), m_durationProcessor(durationProcessor), m_startActions(startActions), m_endActions(endActions), m_glideActions(glideActions) {}
 
 LaneProcessor::LaneProcessor(ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments) : m_scriptLane(scriptLane), m_segments(segments) {}

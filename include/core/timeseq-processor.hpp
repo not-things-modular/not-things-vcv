@@ -9,6 +9,9 @@
 
 namespace timeseq {
 
+struct ScriptAction;
+struct ScriptGlideAction;
+struct ScriptDuration;
 struct ScriptTimeScale;
 struct ScriptInputTrigger;
 struct ScriptTimeline;
@@ -115,7 +118,7 @@ struct ActionGlideProcessor {
 struct DurationProcessor {
 	enum State { STATE_IDLE, STATE_START, STATE_PROGRESS, STATE_STOP };
 
-	DurationProcessor(uint64_t duration);
+	DurationProcessor(uint64_t duration, double drift);
 
 	State process();
 
@@ -128,7 +131,7 @@ struct DurationProcessor {
 struct SegmentProcessor {
 	SegmentProcessor(
 		ScriptSegment* scriptSegment,
-		DurationProcessor durationProcessor,
+		std::shared_ptr<DurationProcessor> durationProcessor,
 		std::vector<std::shared_ptr<ActionProcessor>> startActions,
 		std::vector<std::shared_ptr<ActionProcessor>> endActions,
 		std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions
@@ -138,7 +141,7 @@ struct SegmentProcessor {
 
 	private:
 		ScriptSegment* m_scriptSegment;
-		DurationProcessor m_durationProcessor;
+		std::shared_ptr<DurationProcessor> m_durationProcessor;
 
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
 		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
@@ -157,7 +160,7 @@ struct LaneProcessor {
 		bool m_active = false;
 		int m_repeatCount = 0;
 };
-	
+
 struct TimelineProcessor {
 	TimelineProcessor(
 		ScriptTimeline* scriptTimeline,
@@ -167,7 +170,7 @@ struct TimelineProcessor {
 	);
 
 	void process();
-	
+
 	std::vector<LaneProcessor>& getLaneProcessors();
 
 	private:
@@ -201,7 +204,6 @@ struct Processor {
 };
 
 struct ProcessorScriptParseContext {
-	float sampleRate;
 	Script* script;
 	std::vector<ValidationError> *validationErrors;
 };
@@ -214,8 +216,11 @@ struct ProcessorScriptParser {
 	std::shared_ptr<TriggerProcessor> parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* ScriptInputTrigger, std::vector<std::string> location);
 	std::shared_ptr<LaneProcessor> parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentEntities(ProcessorScriptParseContext* context, std::vector<ScriptSegmentEntity>* scriptSegmentEntities, ScriptTimeScale* timeScale, std::vector<std::string> location);
-	std::shared_ptr<SegmentProcessor> parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<std::string> location);
+	std::shared_ptr<SegmentProcessor> parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location);
+	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionGlideProcessor> parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 
 	private:
 		PortReader* m_portReader;
@@ -225,7 +230,7 @@ struct ProcessorScriptParser {
 
 struct ProcessorLoader {
 	ProcessorLoader(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter);
-	
+
 	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 
 	private:
