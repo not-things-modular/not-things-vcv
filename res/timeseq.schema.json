@@ -121,6 +121,10 @@
 					"maxLength": 3,
 					"pattern": "[a-zA-Z][0-9][+-]?"
 				},
+				"variable": {
+					"type": "string",
+					"minLength": 1
+				},
 				"input": {
 					"oneOf": [
 						{ "$ref": "#/definitions/ref-base" },
@@ -144,6 +148,7 @@
 			"oneOf": [
 				{ "required": [ "voltage" ] },
 				{ "required": [ "note" ] },
+				{ "required": [ "variable" ] },
 				{ "required": [ "input" ] },
 				{ "required": [ "output" ] },
 				{ "required": [ "rand" ] }
@@ -166,6 +171,22 @@
 				}
 			},
 			"required": [ "output", "value" ]
+		},
+		"set-variable": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"minLength": 1
+				},
+				"value": {
+					"oneOf": [
+						{ "$ref": "#/definitions/ref-base" },
+						{ "$ref": "#/definitions/value" }
+					]
+				}
+			},
+			"required:": [ "name", "value" ]
 		},
 		"set-polyphony": {
 			"type": "object",
@@ -190,6 +211,7 @@
 					"enum": [ "start", "end", "glide" ]
 				},
 				"set-value": { "$ref": "#/definitions/set-value" },
+				"set-variable": { "$ref": "#/definitions/set-variable" },
 				"set-polyphony": { "$ref": "#/definitions/set-polyphony" },
 				"trigger": {
 					"type": "string"
@@ -214,6 +236,7 @@
 			"then": {
 				"not": { "anyOf": [
 					{ "required": [ "timing" ] },
+					{ "required": [ "set-variable" ] },
 					{ "required": [ "set-value" ] },
 					{ "required": [ "set-polyphony" ] },
 					{ "required": [ "trigger" ] }
@@ -448,6 +471,18 @@
 				},
 				"version": {
 					"const": "0.0.1"
+				},
+				"on-start": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					}
+				},
+				"on-stop": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					}
 				},
 				"timelines": {
 					"type": "array",

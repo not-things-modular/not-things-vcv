@@ -86,6 +86,10 @@ struct ScriptValue : ScriptRefObject {
 	 */
 	std::unique_ptr<std::string> note;
 	/**
+	 * @brief Uses a variable as value
+	 */
+	std::unique_ptr<std::string> variable;
+	/**
 	 * @brief Uses the current voltage of an input as value
 	 */
 	std::unique_ptr<ScriptInput> input;
@@ -111,6 +115,11 @@ struct ScriptSetValue {
 	ScriptValue value;
 };
 
+struct ScriptSetVariable {
+	std::string name;
+	ScriptValue value;
+};
+
 struct ScriptSetPolyphony {
 	int index;
 	int channels;
@@ -125,6 +134,7 @@ struct ScriptAction : ScriptRefObject {
 
 	ActionTiming timing;
 	std::unique_ptr<ScriptSetValue> setValue;
+	std::unique_ptr<ScriptSetVariable> setVariable;
 	std::unique_ptr<ScriptSetPolyphony> setPolyphony;
 	std::string trigger;
 
