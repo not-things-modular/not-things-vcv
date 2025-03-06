@@ -30,7 +30,7 @@ On the Solim main module and expanders, the different settings that configure ho
 ## Solim (Main module)
 ![Solim main module](./solim-light.png)
 
-This module provides the core Solim functionality. It takes up to eight input voltages, limits them according to the values set for *Lower Lim* and *Upper Lim* and sorts them according to the selected *Sort* mode.
+This module provides the core Solim functionality. It takes up to eight input voltages, limits them according to the values set for *Lower Lim* and *Upper Lim* and sorts them according to the selected *Sort* mode. The limiting is done by adding or subtracting 1V (i.e. shifting by octaves) from the voltage until it falls within the specified range. In practice, this means that the note doesn't change (e.g. a C remains a C, and an E remains an E, etc.), only the octave adjusted.
 
 Solim does not quantize voltages during processing. While the limiting values are displayed on the module as quantized note values for ease of use, the limiting process itself only works on octave (i.e. 1V) ranges and does not quantize the values to specific scales or exact note voltages.
 
