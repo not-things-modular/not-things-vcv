@@ -1,0 +1,69 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "0.0.1",
+	"global-actions": [
+		{
+			"timing": "start",
+			"set-polyphony": {
+				"index": 1,
+				"channels": 2
+			}
+		},
+		{
+			"timing": "start",
+			"set-polyphony": {
+				"index": 2,
+				"channels": 2
+			}
+		},
+		{
+			"timing": "start",
+			"set-value": {
+				"output": {
+					"index": 1
+				},
+				"value": {
+					"voltage": 1.01
+				}
+			}
+		},
+		{
+			"timing": "start",
+			"set-value": {
+				"output": {
+					"index": 2
+				},
+				"value": {
+					"note": "E3+"
+				}
+			}
+		},
+		{
+			"timing": "end",
+			"set-value": {
+				"output": {
+					"index": 1
+				},
+				"value": {
+					"voltage": -1.01
+				}
+			}
+		},
+		{
+			"timing": "start",
+			"set-value": {
+				"output": {
+					"index": 2
+				},
+				"value": {
+					"note": "F5-"
+				}
+			}
+		}
+	],
+	"timelines": [
+		{
+			"lanes": [
+			]
+		}
+	]}

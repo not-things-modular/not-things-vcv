@@ -1,5 +1,6 @@
 #include "core/timeseq-processor.hpp"
 #include "core/timeseq-script.hpp"
+#include "core/timeseq-core.hpp"
 #include <sstream>
 #include <stdarg.h>
 
@@ -7,47 +8,78 @@ using namespace std;
 using namespace timeseq;
 
 
-float ValueProcessor::processValue() {
-	return 0.f;
+CalcProcessor::CalcProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_scriptCalc(scriptCalc), m_value(value) {}
+
+double CalcProcessor::calc(double value) {
+	double calcValue = m_value->process();
+
+	switch (m_scriptCalc->operation) {
+		case ScriptCalc::ADD:
+			return value + calcValue;
+		case ScriptCalc::SUB:
+			return value - calcValue;
+		case ScriptCalc::MULT:
+			return value * calcValue;
+		case ScriptCalc::DIV:
+			if (calcValue != 0.) {
+				return value / calcValue;
+			} else {
+				return 0.;
+			}
+		default:
+			// Shouldn't occur due to script parsing, but just to be sure...
+			return value;
+	}
 }
 
-CalcProcessor::CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value) : m_scriptCalc(scriptCalc), m_value(value) {}
 
 ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors) : m_calcProcessors(calcProcessors) {}
 
+double ValueProcessor::process() {
+	double value = processValue();
+
+	for (vector<shared_ptr<CalcProcessor>>::iterator it = m_calcProcessors.begin(); it != m_calcProcessors.end(); it++) {
+		value = (*it)->calc(value);
+	}
+
+	return value;
+}
+
 StaticValueProcessor::StaticValueProcessor(float value, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_value(value) {}
 
-float StaticValueProcessor::processValue() {
+double StaticValueProcessor::processValue() {
 	return m_value;
 }
 
-InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_inputPort(inputPort), m_inputChannel(inputChannel) {}
+InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader) : ValueProcessor(calcProcessors), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portReader(portReader) {}
 
-float InputValueProcessor::processValue() {
-	return 0.f;
+double InputValueProcessor::processValue() {
+	return m_portReader->getInputPortVoltage(m_inputPort, m_inputChannel);
 }
 
-OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_outputPort(outputPort), m_outputChannel(outputChannel) {}
+OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader) : ValueProcessor(calcProcessors), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portReader(portReader) {}
 
-float OutputValueProcessor::processValue() {
-	return 0.f;
+double OutputValueProcessor::processValue() {
+	return m_portReader->getOutputPortVoltage(m_outputPort, m_outputChannel);
 }
 
 RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_lowerValue(lowerValue), m_upperValue(upperValue) {}
 
-float RandValueProcessor::processValue() {
+double RandValueProcessor::processValue() {
 	return 0.f;
 }
 
-ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel) : m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel) {}
+ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortWriter* portWriter) : m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portWriter(portWriter) {}
 
 void ActionSetValueProcessor::process() {
+	float value = m_value->process();
+	m_portWriter->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
 }
 
-ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount) : m_outputPort(outputPort), m_channelCount(channelCount) {}
+ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortWriter* portWriter) : m_outputPort(outputPort), m_channelCount(channelCount), m_portWriter(portWriter) {}
 
 void ActionSetPolyphonyProcessor::process() {
-
+	m_portWriter->setOutputPortChannels(m_outputPort, m_channelCount);
 }
 
 ActionTriggerProcessor::ActionTriggerProcessor(string trigger) : m_trigger(trigger) {}
@@ -77,9 +109,15 @@ TimelineProcessor::TimelineProcessor(
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers) :
 		m_scriptTimeline(scriptTimeline), m_laneProcessors(laneProcessors), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers) {}
 
-TriggerProcessor::TriggerProcessor(string id, int inputPort, int inputChannel, PortReader* portReader) : m_portReader(portReader), m_id(id), m_inputPort(inputPort), m_inputChannel(inputChannel) {}
+TriggerProcessor::TriggerProcessor(string id, int inputPort, int inputChannel, PortReader* portReader) : m_id(id), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portReader(portReader) {}
 
-Processor::Processor(vector<shared_ptr<TimelineProcessor>> timelines, vector<shared_ptr<TriggerProcessor>> triggers) : m_timelines(timelines), m_triggers(triggers) {}
+Processor::Processor(vector<shared_ptr<TimelineProcessor>> timelines, vector<shared_ptr<TriggerProcessor>> triggers, vector<shared_ptr<ActionProcessor>> startActions, vector<shared_ptr<ActionProcessor>> endActions) : m_timelines(timelines), m_triggers(triggers), m_startActions(startActions), m_endActions(endActions) {}
+
+void Processor::reset() {
+	for (std::vector<std::shared_ptr<ActionProcessor>>::iterator it = m_startActions.begin(); it != m_startActions.end(); it++) {
+		(*it)->process();
+	}
+}
 
 void Processor::process() {
 

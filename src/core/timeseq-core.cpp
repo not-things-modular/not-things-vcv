@@ -7,8 +7,10 @@
 
 extern rack::Plugin* pluginInstance;
 
+using namespace timeseq;
 
-timeseq::TimeSeqCore::TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter) {
+
+TimeSeqCore::TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter) {
 	m_jsonLoader = new JsonLoader();
 	std::string schemaFile = rack::asset::plugin(pluginInstance, "res/timeseq.schema.json");
 	std::ifstream schemaStream(schemaFile);
@@ -19,17 +21,37 @@ timeseq::TimeSeqCore::TimeSeqCore(PortReader* portReader, SampleRateReader* samp
 	m_processorLoader = new ProcessorLoader(portReader, sampleRateReader, portWriter);
 }
 
-timeseq::TimeSeqCore::~TimeSeqCore() {
+TimeSeqCore::~TimeSeqCore() {
 }
 
-std::vector<timeseq::ValidationError> timeseq::TimeSeqCore::loadScript(std::string& scriptData) {
+std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 	std::istringstream scriptStream(scriptData);
-	std::vector<timeseq::ValidationError> validationErrors;
+	std::vector<ValidationError> validationErrors;
 	
 	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, &validationErrors);
 	std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
 
+	if (validationErrors.size() == 0) {
+		m_script = script;
+		m_processor = processor;
+		
+		m_processor->reset();
+		m_status = Status::IDLE;
+	}
+
 	return validationErrors;
+}
+
+TimeSeqCore::Status TimeSeqCore::getStatus() {
+	return m_status;
+}
+
+bool TimeSeqCore::canProcess() {
+	return (bool) m_processor;
+}
+
+void TimeSeqCore::process() {
+	m_processor->process();
 }
 
 // void testJsonValidation() {
@@ -50,7 +72,7 @@ std::vector<timeseq::ValidationError> timeseq::TimeSeqCore::loadScript(std::stri
 // 	x = rack::asset::plugin(pluginInstance, "test/resources/sequencer-test.json");
 // 	std::ifstream f2(x);
 // 	try {
-// 		timeseq::JsonLoader jsonLoader;
+// 		JsonLoader jsonLoader;
 
 // 		std::shared_ptr<json> json = jsonLoader.loadJson(f1, false);
 // 		jsonLoader.setSchema(json);

@@ -194,6 +194,7 @@ struct Script {
 	std::string version;
 
 	std::vector<ScriptTimeline> timelines;
+	std::vector<ScriptAction> globalActions;
 	std::vector<ScriptSegmentBlock> segmentBlocks;
 	std::vector<ScriptSegment> segments;
 	std::vector<ScriptInput> inputs;

@@ -33,7 +33,7 @@ struct SampleRateReader;
 struct CalcProcessor {
 	CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value);
 
-	float calc(float value);
+	double calc(double value);
 
 	private:
 		ScriptCalc *m_scriptCalc;
@@ -43,8 +43,8 @@ struct CalcProcessor {
 struct ValueProcessor {
 	ValueProcessor(std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
 
-	float process();
-	virtual float processValue() = 0;
+	double process();
+	virtual double processValue() = 0;
 
 	private:
 		std::vector<std::shared_ptr<CalcProcessor>> m_calcProcessors;
@@ -53,36 +53,38 @@ struct ValueProcessor {
 struct StaticValueProcessor : ValueProcessor {
 	StaticValueProcessor(float value, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
 
-	float processValue() override;
+	double processValue() override;
 
 	private:
 		float m_value;
 };
 
 struct InputValueProcessor : ValueProcessor {
-	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader);
 
-	float processValue() override;
+	double processValue() override;
 
 	private:
 		int m_inputPort;
 		int m_inputChannel;
+		PortReader* m_portReader;
 };
 
 struct OutputValueProcessor : ValueProcessor {
-	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader);
 
-	float processValue() override;
+	double processValue() override;
 
 	private:
 		int m_outputPort;
 		int m_outputChannel;
+		PortReader* m_portReader;
 };
 
 struct RandValueProcessor : ValueProcessor {
 	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
 
-	float processValue() override;
+	double processValue() override;
 
 	private:
 		std::shared_ptr<ValueProcessor> m_lowerValue;
@@ -94,7 +96,7 @@ struct ActionProcessor {
 };
 
 struct ActionSetValueProcessor : ActionProcessor {
-	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel);
+	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortWriter* portWriter);
 
 	void process() override;
 
@@ -102,18 +104,18 @@ struct ActionSetValueProcessor : ActionProcessor {
 		std::shared_ptr<ValueProcessor> m_value;
 		int m_outputPort;
 		int m_outputChannel;
-
+		PortWriter* m_portWriter;
 };
 
 struct ActionSetPolyphonyProcessor : ActionProcessor {
-	ActionSetPolyphonyProcessor(int outputPort, int channelCount);
+	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortWriter* portWriter);
 
 	void process() override;
 
 	private:
 		int m_outputPort;
 		int m_channelCount;
-
+		PortWriter* m_portWriter;
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
@@ -212,20 +214,23 @@ struct TriggerProcessor {
 	void process();
 
 	private:
-		PortReader* m_portReader;
 		std::string m_id;
 		int m_inputPort;
 		int m_inputChannel;
+		PortReader* m_portReader;
 };
 
 struct Processor {
-	Processor(std::vector<std::shared_ptr<TimelineProcessor>> m_timelines, std::vector<std::shared_ptr<TriggerProcessor>> m_triggers);
+	Processor(std::vector<std::shared_ptr<TimelineProcessor>> m_timelines, std::vector<std::shared_ptr<TriggerProcessor>> m_triggers, std::vector<std::shared_ptr<ActionProcessor>> startActions, std::vector<std::shared_ptr<ActionProcessor>> endActions);
 
+	void reset();
 	void process();
 
 	private:
 		std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
 		std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
+		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
+		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
 };
 
 struct ProcessorScriptParseContext {

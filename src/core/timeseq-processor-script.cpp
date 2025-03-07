@@ -43,7 +43,25 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 	}
 	location.pop_back();
 
-	return shared_ptr<Processor>(new Processor(timelineProcessors, triggerProcessors));
+	count = 0;
+	location.push_back("global-actions");
+	vector<shared_ptr<ActionProcessor>> startActionProcessors;
+	vector<shared_ptr<ActionProcessor>> endActionProcessors;
+	for (vector<ScriptAction>::iterator it = script->globalActions.begin(); it != script->globalActions.end(); it++) {
+		location.push_back(to_string(count));
+		if (it->timing == ScriptAction::ActionTiming::START) {
+			startActionProcessors.push_back(parseAction(&context, &(*it), location));
+		} else if (it->timing == ScriptAction::ActionTiming::END) {
+			endActionProcessors.push_back(parseAction(&context, &(*it), location));
+		} else {
+			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have 'start' or 'end' timings.");			
+		}
+		location.pop_back();
+		count++;
+	}
+	location.pop_back();
+
+	return shared_ptr<Processor>(new Processor(timelineProcessors, triggerProcessors, startActionProcessors, endActionProcessors));
 }
 
 shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, vector<string> location) {
@@ -283,12 +301,12 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(Processor
 	pair<int, int> output = parseOutput(context, &scriptAction->setValue.get()->output, location);
 	location.pop_back();
 
-	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second));
+	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portWriter));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {	
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
-	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index, scriptSetPolyphony->channels));
+	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index, scriptSetPolyphony->channels, m_portWriter));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
@@ -308,6 +326,21 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 			count++;
 		}
 		location.pop_back();
+
+		if ((scriptValue->voltage) || (scriptValue->note)) {
+			return parseStaticValue(context, scriptValue, calcProcessors, location);
+		} else if (scriptValue->variable) {
+
+		} else if (scriptValue->input) {
+			return parseInputValue(context, scriptValue, calcProcessors, location);
+		} else if (scriptValue->output) {
+			return parseOutputValue(context, scriptValue, calcProcessors, location);
+		} else if (scriptValue->rand) {
+			return parseRandValue(context, scriptValue, calcProcessors, location, valueStack);
+		} else {
+
+		}
+
 	} else {
 		if (find(valueStack.begin(), valueStack.end(), scriptValue->ref) == valueStack.end()) {
 			int count = 0;
@@ -342,14 +375,15 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScri
 	} else if (scriptValue->note) {
 		string note = *scriptValue->note.get();
 		char x = tolower(note[0]);
-		value = note[1] - 4 + (note_to_index[(x - 'a')] / 12);
+		int noteIndex = note_to_index[(x - 'a')];
 		if (note.length() > 2) {
 			if (note[2] == '-') {
-				value -= (1 / 24);
+				noteIndex -= 1;
 			} else if (note[2] == '+') {
-				value += (1 / 24);
+				noteIndex += 1;
 			}
 		}
+		value = note[1] - '0' - 4 + ((float) noteIndex / 12);
 	}
 	return shared_ptr<ValueProcessor>(new StaticValueProcessor(value, calcProcessors));
 }
@@ -359,7 +393,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScrip
 	pair<int, int> input = parseInput(context, scriptValue->input.get(), location);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors));
+	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors, m_portReader));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
@@ -367,7 +401,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScri
 	pair<int, int> output = parseOutput(context, scriptValue->output.get(), location);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors));
+	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors, m_portReader));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location, vector<string> valueStack) {

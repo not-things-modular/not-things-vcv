@@ -11,6 +11,12 @@ TimeSeqModule::TimeSeqModule() {
 		configInput(IN_INPUTS + i, string::f("Input %d", i + 1));
 		configOutput(OUT_OUTPUTS + i, string::f("Output %d", i + 1));
 	}
+
+	configInput(IN_TRIG_RUN, "Run Input");
+	configInput(IN_TRIG_RESET, "Reset Input");
+
+	configButton(PARAM_TRIG_RUN, "Run");
+	configButton(PARAM_TRIG_RESET, "Reset");
 }
 
 TimeSeqModule::~TimeSeqModule() {
@@ -18,6 +24,9 @@ TimeSeqModule::~TimeSeqModule() {
 }
 
 void TimeSeqModule::process(const ProcessArgs& args) {
+	if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+		m_timeSeqCore->process();
+	}
 }
 
 float TimeSeqModule::getInputPortVoltage(int index, int channel) {
@@ -87,6 +96,10 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 		addOutput(createOutputCentered<NTPort>(Vec(xOut, y), module, TimeSeqModule::OUT_OUTPUTS + i));
 		y += yDelta;
 	}
+
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(22.5f + 40.f, 49.5f), module, TimeSeqModule::PARAM_TRIG_RUN, TimeSeqModule::LIGHT_TRIG_RUN));
+	addInput(createInputCentered<NTPort>(Vec(22.5f + 40.f, 82.5f), module, TimeSeqModule::IN_TRIG_RUN));
+
 }
 
 void TimeSeqWidget::appendContextMenu(Menu* menu) {

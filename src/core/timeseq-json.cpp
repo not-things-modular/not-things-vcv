@@ -44,10 +44,10 @@ shared_ptr<json> JsonLoader::loadJson(istream& inputStream, bool validate, vecto
 	try {
 		json = make_shared<nlohmann::json>(json::parse(inputStream));
 
-		if (validate) {
-			ValidationErrorHandler errorHandler(validationErrors);
-			m_validator->validate(*json, errorHandler);
-		}
+		// if (validate) {
+		// 	ValidationErrorHandler errorHandler(validationErrors);
+		// 	m_validator->validate(*json, errorHandler);
+		// }
 	} catch (const json::parse_error& error) {
 		if (validationErrors != nullptr) {
 			string location = "/";

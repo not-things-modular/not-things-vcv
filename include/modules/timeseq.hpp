@@ -7,26 +7,25 @@
 
 struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter, timeseq::SampleRateReader {
 	enum ParamId {
-		PARAM_LOWER_LIMIT,
-		PARAM_UPPER_LIMIT,
-		PARAM_SORT,
+		PARAM_TRIG_RUN,
+		PARAM_TRIG_RESET,
 		NUM_PARAMS
 	};
 	enum InputId {
 		ENUMS(IN_INPUTS, 8),
-		IN_LOWER_LIMIT,
-		IN_UPPER_LIMIT,
-		IN_SORT,
+		IN_TRIG_RUN,
+		IN_TRIG_RESET,
 		NUM_INPUTS
 	};
 	enum OutputId {
 		ENUMS(OUT_OUTPUTS, 8),
-		OUT_DEBUG_PROCESS_DURATION,
+		OUT_RUN,
+		OUT_RESET,
 		NUM_OUTPUTS
 	};
 	enum LightId {
-		OUT_POLYPHONIC_LIGHT,
-		ENUMS(OUT_LIGHTS, 8),
+		LIGHT_TRIG_RUN,
+		LIGHT_TRIG_RESET,
 		NUM_LIGHTS
 	};
 

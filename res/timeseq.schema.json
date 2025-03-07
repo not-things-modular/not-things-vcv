@@ -472,13 +472,7 @@
 				"version": {
 					"const": "0.0.1"
 				},
-				"on-start": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/action"
-					}
-				},
-				"on-stop": {
+				"global-actions": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/action"
