@@ -18,7 +18,7 @@ TimeSeqCore::TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateRea
 
 	m_jsonLoader->setSchema(schemaJson);
 
-	m_processorLoader = new ProcessorLoader(portReader, sampleRateReader, portWriter);
+	m_processorLoader = new ProcessorLoader(portReader, sampleRateReader, portWriter, this);
 }
 
 TimeSeqCore::~TimeSeqCore() {
@@ -53,6 +53,20 @@ bool TimeSeqCore::canProcess() {
 void TimeSeqCore::process() {
 	m_processor->process();
 }
+
+float TimeSeqCore::getVariable(std::string name) {
+	std::unordered_map<std::string, float>::iterator it = m_variables.find(name);
+	if (it != m_variables.end()) {
+		return it->second;
+	} else {
+		return 0.f;
+	}
+}
+
+void TimeSeqCore::setVariable(std::string name, float value) {
+	m_variables[name] = value;
+}
+
 
 // void testJsonValidation() {
 // 	// nlohmann::json schema;

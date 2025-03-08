@@ -133,6 +133,7 @@ struct ScriptAction : ScriptRefObject {
 	};
 
 	ActionTiming timing;
+
 	std::unique_ptr<ScriptSetValue> setValue;
 	std::unique_ptr<ScriptSetVariable> setVariable;
 	std::unique_ptr<ScriptSetPolyphony> setPolyphony;
@@ -140,6 +141,8 @@ struct ScriptAction : ScriptRefObject {
 
 	std::unique_ptr<ScriptValue> startValue;
 	std::unique_ptr<ScriptValue> endValue;
+	std::unique_ptr<ScriptOutput> output;
+	std::string variable;
 };
 
 struct ScriptDuration {
@@ -180,7 +183,6 @@ struct ScriptTimeScale {
 
 struct ScriptTimeline {
 	std::unique_ptr<ScriptTimeScale> timeScale;
-	bool loopLock;
 	std::vector<ScriptLane> lanes;
 };
 

@@ -331,7 +331,6 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::ve
 	ScriptTimeline timeline;
 
 	json::const_iterator timeScale = timelineJson.find("time-scale");
-	timeline.loopLock = false;
 	if (timeScale != timelineJson.end()) {
 		if (timeScale->is_object()) {
 			location.push_back("time-scale");
@@ -363,15 +362,6 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::ve
 		location.pop_back();
 	} else {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Timeline_LanesMissing, "lanes is required and must be an array.");
-	}
-
-	json::const_iterator loopLock = timelineJson.find("loop-lock");
-	if (loopLock != timelineJson.end()) {
-		if (!loopLock->is_boolean()) {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Timeline_LoopLockBoolean, "looplock must be a boolean.");
-		} else {
-			timeline.loopLock = (*loopLock);
-		}
 	}
 
 	return timeline;
@@ -767,16 +757,51 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			}
 		}
 
+		json::const_iterator output = actionJson.find("output");
+		if (output != actionJson.end()) {
+			if (output->is_object()) {
+				location.push_back("output");
+				ScriptOutput *scriptOutput = new ScriptOutput(parseOutput(*output, true, validationErrors, location));
+				action.output.reset(scriptOutput);
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_OutputObject, "'output' must be an object.");
+			}
+		}
+
+		json::const_iterator variable = actionJson.find("variable");
+		if (variable != actionJson.end()) {
+			if (variable->is_string()) {
+				action.variable = *variable;
+				if (action.variable.size() == 0) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_VariableLength, "'variable' can not be an empty string.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_VariableString, "'variable' must be a string.");
+			}
+		}
+
 		if (action.timing == ScriptAction::ActionTiming::GLIDE) {
 			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.trigger.size() > 0)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "set-value, set-variable, set-polyphony and trigger can not be used in combination with 'GLIDE' timing.");
-			} else if ((!action.startValue) || (!action.endValue)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideProperties, "'start-value' and 'end-variable'must be present when for 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony' and 'trigger' can not be used in combination with 'GLIDE' timing.");
+			}
+			if ((!action.startValue) || (!action.endValue)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when for 'GLIDE' timing.");
+			}
+			if ((!action.output) && (action.variable.length() == 0)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideActions, "Either 'output' or 'variable' must be present when for 'GLIDE' timing.");
+			}
+			if ((action.output) && (action.variable.length() > 0)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when for 'GLIDE' timing.");
 			}
 		} else {
 			if ((action.startValue) || (action.endValue)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_OnlyGlideProperties, "start-value and end-value can only be used in combination with 'GLIDE' timing.");
-			} else if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (action.trigger.size() == 0)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_OnlyGlideProperties, "'start-value' and 'end-value' can only be used in combination with 'GLIDE' timing.");
+			}
+			if ((action.output) || (action.variable.length() > 0)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideActions, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
+			}
+			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (action.trigger.size() == 0)) {
 				std::string timingStr = *timing;
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony' or 'trigger' must be present for '", timingStr.c_str(), "' timing.");
 			}

@@ -16,15 +16,20 @@ struct PortWriter {
 	virtual void setOutputPortChannels(int index, int channels) = 0;
 };
 
+struct VariableHandler {
+	virtual float getVariable(std::string name) = 0;
+	virtual void setVariable(std::string name, float value) = 0;
+};
+
 struct SampleRateReader {
 	virtual float getSampleRate() = 0;
 };
 
-struct TimeSeqCore {
+struct TimeSeqCore : VariableHandler {
 	enum Status { EMPTY, IDLE, RUNNING, PAUSED };
 
 	TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter);
-	~TimeSeqCore();
+	virtual ~TimeSeqCore();
 
 	std::vector<timeseq::ValidationError> loadScript(std::string& scriptData);
 
@@ -32,6 +37,10 @@ struct TimeSeqCore {
 	bool canProcess();
 
 	void process();
+
+	float getVariable(std::string name) override;
+	void setVariable(std::string name, float value) override;
+
 
 	private:
 		Status m_status = Status::EMPTY;
@@ -41,6 +50,8 @@ struct TimeSeqCore {
 
 		std::shared_ptr<Script> m_script;
 		std::shared_ptr<Processor> m_processor;
+
+		std::unordered_map<std::string, float> m_variables;
 };
 
 }

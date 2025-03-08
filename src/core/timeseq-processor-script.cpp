@@ -9,10 +9,11 @@ using namespace std;
 using namespace timeseq;
 
 
-ProcessorScriptParser::ProcessorScriptParser(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter) {
+ProcessorScriptParser::ProcessorScriptParser(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter, VariableHandler* variableHandler) {
 	m_portReader = portReader;
 	m_sampleRateReader = sampleRateReader;
 	m_portWriter = portWriter;
+	m_variableHandler = variableHandler;
 }
 
 shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<ValidationError> *validationErrors, vector<string> location) {
@@ -266,6 +267,8 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptPa
 	if (scriptAction->ref.length() == 0) {
 		if (scriptAction->setValue) {
 			return parseSetValueAction(context, scriptAction, location);
+		} else if (scriptAction->setVariable) {
+			return parseSetVariableAction(context, scriptAction, location);
 		} else if (scriptAction->setPolyphony) {
 			return parseSetPolyphonyAction(context, scriptAction, location);
 		} else if (scriptAction->trigger.length() > 0) {
@@ -289,7 +292,24 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptPa
 }
 
 shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
-	return shared_ptr<ActionGlideProcessor>();
+	location.push_back("start-value");
+	shared_ptr<ValueProcessor> startValueProcessor = parseValue(context, &(*scriptAction->startValue.get()), location, vector<string>());
+	location.pop_back();
+	location.push_back("end-value");
+	shared_ptr<ValueProcessor> endValueProcessor = parseValue(context, &(*scriptAction->endValue.get()), location, vector<string>());
+	location.pop_back();
+
+	int outputPort = -1;
+	int outputChannel = -1;
+	if (scriptAction->output) {
+		location.push_back("output");
+		pair<int, int> output = parseOutput(context, &(*scriptAction->output), location);
+		location.pop_back();
+		outputPort = output.first;
+		outputChannel = output.second;
+	}
+
+	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(startValueProcessor, endValueProcessor, outputPort, outputChannel, scriptAction->variable, m_portWriter, m_variableHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
@@ -302,6 +322,14 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(Processor
 	location.pop_back();
 
 	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portWriter));
+}
+
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+	location.push_back("value");
+	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setVariable.get()->value, location, vector<string>());
+	location.pop_back();
+
+	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {	
@@ -330,7 +358,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 		if ((scriptValue->voltage) || (scriptValue->note)) {
 			return parseStaticValue(context, scriptValue, calcProcessors, location);
 		} else if (scriptValue->variable) {
-
+			return parseVariableValue(context, scriptValue, calcProcessors, location);
 		} else if (scriptValue->input) {
 			return parseInputValue(context, scriptValue, calcProcessors, location);
 		} else if (scriptValue->output) {
@@ -386,6 +414,10 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScri
 		value = note[1] - '0' - 4 + ((float) noteIndex / 12);
 	}
 	return shared_ptr<ValueProcessor>(new StaticValueProcessor(value, calcProcessors));
+}
+
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
+	return shared_ptr<ValueProcessor>(new VariableValueProcessor(*scriptValue->variable.get(), calcProcessors, m_variableHandler));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {

@@ -7,14 +7,14 @@
 
 struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter, timeseq::SampleRateReader {
 	enum ParamId {
-		PARAM_TRIG_RUN,
-		PARAM_TRIG_RESET,
+		PARAM_RUN,
+		PARAM_RESET,
 		NUM_PARAMS
 	};
 	enum InputId {
 		ENUMS(IN_INPUTS, 8),
-		IN_TRIG_RUN,
-		IN_TRIG_RESET,
+		IN_RUN,
+		IN_RESET,
 		NUM_INPUTS
 	};
 	enum OutputId {
@@ -24,20 +24,14 @@ struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter, times
 		NUM_OUTPUTS
 	};
 	enum LightId {
-		LIGHT_TRIG_RUN,
-		LIGHT_TRIG_RESET,
+		LIGHT_RUN,
+		LIGHT_RESET,
 		NUM_LIGHTS
 	};
-
-	enum Limits {
-		LIMIT_UPPER,
-		LIMIT_LOWER
-	};
-
-	enum ProcessRate {
-		DIVIDED,
-		AUDIO,
-		RATE_COUNT
+	enum TriggerId {
+		TRIG_RUN,
+		TRIG_RESET,
+		NUM_TRIGGERS
 	};
 
 	TimeSeqModule();
@@ -59,6 +53,9 @@ struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter, times
 		timeseq::TimeSeqCore *m_timeSeqCore;
 		std::shared_ptr<std::string> m_script;
 		std::list<std::string> m_lastScriptLoadErrors;
+
+		dsp::BooleanTrigger m_buttonTrigger[TriggerId::NUM_TRIGGERS];
+		dsp::TSchmittTrigger<float> m_trigTriggers[TriggerId::NUM_TRIGGERS];
 };
 
 struct TimeSeqWidget : NTModuleWidget {
