@@ -6,12 +6,10 @@
 
 namespace timeseq {
 
-struct PortReader {
+struct PortHandler {
 	virtual float getInputPortVoltage(int index, int channel) = 0;
 	virtual float getOutputPortVoltage(int index, int channel) = 0;
-};
 
-struct PortWriter {
 	virtual void setOutputPortVoltage(int index, int channel, float voltage) = 0;
 	virtual void setOutputPortChannels(int index, int channels) = 0;
 };
@@ -21,14 +19,19 @@ struct VariableHandler {
 	virtual void setVariable(std::string name, float value) = 0;
 };
 
+struct TriggerHandler {
+	virtual void setTrigger(std::string name) = 0;
+	virtual std::vector<std::string>& getTriggers() = 0;
+};
+
 struct SampleRateReader {
 	virtual float getSampleRate() = 0;
 };
 
-struct TimeSeqCore : VariableHandler {
+struct TimeSeqCore : VariableHandler, TriggerHandler {
 	enum Status { EMPTY, IDLE, RUNNING, PAUSED };
 
-	TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter);
+	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader);
 	virtual ~TimeSeqCore();
 
 	std::vector<timeseq::ValidationError> loadScript(std::string& scriptData);
@@ -45,6 +48,8 @@ struct TimeSeqCore : VariableHandler {
 	float getVariable(std::string name) override;
 	void setVariable(std::string name, float value) override;
 
+	void setTrigger(std::string name) override;
+	std::vector<std::string>& getTriggers() override;
 
 	private:
 		Status m_status = Status::EMPTY;
@@ -56,6 +61,8 @@ struct TimeSeqCore : VariableHandler {
 		std::shared_ptr<Processor> m_processor;
 
 		std::unordered_map<std::string, float> m_variables;
+		std::vector<std::string> m_triggers[2];
+		bool m_triggerIdx = false;
 };
 
 }

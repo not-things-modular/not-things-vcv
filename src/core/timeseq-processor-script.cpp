@@ -9,11 +9,11 @@ using namespace std;
 using namespace timeseq;
 
 
-ProcessorScriptParser::ProcessorScriptParser(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter, VariableHandler* variableHandler) {
-	m_portReader = portReader;
-	m_sampleRateReader = sampleRateReader;
-	m_portWriter = portWriter;
+ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader) {
+	m_portHandler = portHandler;
 	m_variableHandler = variableHandler;
+	m_triggerHandler = triggerHandler;
+	m_sampleRateReader = sampleRateReader;
 }
 
 shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<ValidationError> *validationErrors, vector<string> location) {
@@ -99,17 +99,17 @@ shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScri
 	}
 	location.pop_back();
 
-	return shared_ptr<TimelineProcessor>(new TimelineProcessor(scriptTimeline, laneProcessors, startTriggers, stopTriggers));
+	return shared_ptr<TimelineProcessor>(new TimelineProcessor(scriptTimeline, laneProcessors, startTriggers, stopTriggers, m_triggerHandler));
 }
 
 shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* scriptInputTrigger, vector<string> location) {
 	// Check if it's a ref input trigger object or a full one
 	if (scriptInputTrigger->input.ref.length() == 0) {
-		return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, scriptInputTrigger->input.index, ((bool) scriptInputTrigger->input.channel) ? *scriptInputTrigger->input.channel.get() : 0, m_portReader));
+		return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, scriptInputTrigger->input.index - 1, ((bool) scriptInputTrigger->input.channel) ? *scriptInputTrigger->input.channel.get() - 1 : 0, m_portHandler, m_triggerHandler));
 	} else {
 		for (vector<ScriptInput>::iterator it = context->script->inputs.begin(); it != context->script->inputs.end(); it++) {
 			if (scriptInputTrigger->input.ref.compare(it->id) == 0) {
-				return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, it->index, ((bool) it->channel) ? *it->channel.get() : 0, m_portReader));
+				return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, it->index - 1, ((bool) it->channel) ? *it->channel.get() - 1 : 0, m_portHandler, m_triggerHandler));
 			}
 		}
 
@@ -309,7 +309,7 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(Process
 		outputChannel = output.second;
 	}
 
-	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(startValueProcessor, endValueProcessor, outputPort, outputChannel, scriptAction->variable, m_portWriter, m_variableHandler));
+	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(startValueProcessor, endValueProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
@@ -321,7 +321,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(Processor
 	pair<int, int> output = parseOutput(context, &scriptAction->setValue.get()->output, location);
 	location.pop_back();
 
-	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portWriter));
+	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
@@ -334,11 +334,11 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Proces
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {	
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
-	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index, scriptSetPolyphony->channels, m_portWriter));
+	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index, scriptSetPolyphony->channels, m_portHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
-	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger));
+	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<string> location, vector<string> valueStack) {
@@ -425,7 +425,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScrip
 	pair<int, int> input = parseInput(context, scriptValue->input.get(), location);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors, m_portReader));
+	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors, m_portHandler));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
@@ -433,7 +433,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScri
 	pair<int, int> output = parseOutput(context, scriptValue->output.get(), location);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors, m_portReader));
+	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors, m_portHandler));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location, vector<string> valueStack) {

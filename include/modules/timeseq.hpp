@@ -5,7 +5,7 @@
 #include "core/timeseq-core.hpp"
 
 
-struct TimeSeqModule : NTModule, timeseq::PortReader, timeseq::PortWriter, timeseq::SampleRateReader {
+struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader {
 	enum ParamId {
 		PARAM_RUN,
 		PARAM_RESET,

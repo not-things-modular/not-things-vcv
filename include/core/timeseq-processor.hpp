@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <memory>
 #include <utility>
+#include <random>
+#include <rack.hpp>
 #include "core/timeseq-validation.hpp"
 
 
@@ -26,10 +28,10 @@ struct ScriptSegmentBlock;
 struct ScriptCalc;
 struct Script;
 struct ValueProcessor;
-struct PortReader;
-struct PortWriter;
-struct SampleRateReader;
+struct PortHandler;
 struct VariableHandler;
+struct TriggerHandler;
+struct SampleRateReader;
 
 struct CalcProcessor {
 	CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value);
@@ -71,25 +73,25 @@ struct VariableValueProcessor : ValueProcessor {
 };
 
 struct InputValueProcessor : ValueProcessor {
-	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader);
+	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler);
 
 	double processValue() override;
 
 	private:
 		int m_inputPort;
 		int m_inputChannel;
-		PortReader* m_portReader;
+		PortHandler* m_portHandler;
 };
 
 struct OutputValueProcessor : ValueProcessor {
-	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader);
+	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler);
 
 	double processValue() override;
 
 	private:
 		int m_outputPort;
 		int m_outputChannel;
-		PortReader* m_portReader;
+		PortHandler* m_portHandler;
 };
 
 struct RandValueProcessor : ValueProcessor {
@@ -100,6 +102,8 @@ struct RandValueProcessor : ValueProcessor {
 	private:
 		std::shared_ptr<ValueProcessor> m_lowerValue;
 		std::shared_ptr<ValueProcessor> m_upperValue;
+
+		std::minstd_rand m_generator;
 };
 
 struct ActionProcessor {
@@ -107,7 +111,7 @@ struct ActionProcessor {
 };
 
 struct ActionSetValueProcessor : ActionProcessor {
-	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortWriter* portWriter);
+	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler);
 
 	void process() override;
 
@@ -115,7 +119,7 @@ struct ActionSetValueProcessor : ActionProcessor {
 		std::shared_ptr<ValueProcessor> m_value;
 		int m_outputPort;
 		int m_outputChannel;
-		PortWriter* m_portWriter;
+		PortHandler* m_portHandler;
 };
 
 struct ActionSetVariableProcessor : ActionProcessor {
@@ -130,28 +134,28 @@ struct ActionSetVariableProcessor : ActionProcessor {
 };
 
 struct ActionSetPolyphonyProcessor : ActionProcessor {
-	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortWriter* portWriter);
+	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler);
 
 	void process() override;
 
 	private:
 		int m_outputPort;
 		int m_channelCount;
-		PortWriter* m_portWriter;
+		PortHandler* m_portHandler;
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
-	ActionTriggerProcessor(std::string trigger);
+	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler);
 
 	void process() override;
 
 	private:
 		std::string m_trigger;
-
+		TriggerHandler* m_triggerHandler;
 };
 
 struct ActionGlideProcessor {
-	ActionGlideProcessor(std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, int outputPort, int outputChannel, std::string variable, PortWriter* portWriter, VariableHandler* variableHandler);
+	ActionGlideProcessor(std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, int outputPort, int outputChannel, std::string variable, PortHandler* portHandler, VariableHandler* variableHandler);
 
 	void start(uint64_t glideLength);
 	void process(uint64_t glidePosition);
@@ -160,7 +164,7 @@ struct ActionGlideProcessor {
 		std::shared_ptr<ValueProcessor> m_startValueProcessor;
 		std::shared_ptr<ValueProcessor> m_endValueProcessor;
 		
-		PortWriter* m_portWriter;
+		PortHandler* m_portHandler;
 		VariableHandler* m_variableHandler;
 
 		int m_outputPort;
@@ -231,7 +235,9 @@ struct LaneProcessor {
 	bool process();
 	void loop();
 	void reset();
-	
+
+	void processTriggers(std::vector<std::string>& triggers);
+
 	private:
 		ScriptLane* m_scriptLane;
 		std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
@@ -248,7 +254,8 @@ struct TimelineProcessor {
 		ScriptTimeline* scriptTimeline,
 		std::vector<std::shared_ptr<LaneProcessor>> lanes,
 		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> startTriggers,
-		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> stopTriggers
+		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> stopTriggers,
+		TriggerHandler* triggerHandler
 	);
 
 	void process();
@@ -260,10 +267,12 @@ struct TimelineProcessor {
 
 		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_startTriggers;
 		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_stopTriggers;
+
+		TriggerHandler* m_triggerHandler;
 };
 
 struct TriggerProcessor {
-	TriggerProcessor(std::string id, int inputPort, int inputChannel, PortReader* portReader);
+	TriggerProcessor(std::string id, int inputPort, int inputChannel, PortHandler* portHandler, TriggerHandler* triggerHandler);
 
 	void process();
 
@@ -271,7 +280,10 @@ struct TriggerProcessor {
 		std::string m_id;
 		int m_inputPort;
 		int m_inputChannel;
-		PortReader* m_portReader;
+		PortHandler* m_portHandler;
+		TriggerHandler* m_triggerHandler;
+
+		rack::dsp::TSchmittTrigger<float> m_trigger;
 };
 
 struct Processor {
@@ -293,7 +305,7 @@ struct ProcessorScriptParseContext {
 };
 
 struct ProcessorScriptParser {
-	ProcessorScriptParser(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter, VariableHandler* variableHandler);
+	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader);
 
 	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::shared_ptr<TimelineProcessor> parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, std::vector<std::string> location);
@@ -321,14 +333,14 @@ struct ProcessorScriptParser {
 	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);
 
 	private:
-		PortReader* m_portReader;
-		PortWriter* m_portWriter;
-		VariableHandler *m_variableHandler;
+		PortHandler* m_portHandler;
+		VariableHandler* m_variableHandler;
+		TriggerHandler* m_triggerHandler;
 		SampleRateReader* m_sampleRateReader;
 };
 
 struct ProcessorLoader {
-	ProcessorLoader(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter, VariableHandler* variableHandler);
+	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader);
 
 	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 

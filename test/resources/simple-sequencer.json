@@ -71,7 +71,7 @@
 						{
 							"segment": {
 								"duration": {
-									"samples": 183
+									"millis": 7.644500164356754
 								},
 								"actions": [
 									{
@@ -90,7 +90,61 @@
 							}
 						}
 					]
+				},
+				{
+					"auto-start": false,
+					"loop": false,
+					"start-trigger": "do-it",
+					"stop-trigger": "stop-it",
+					"segments": [
+						{
+							"segment": {
+								"duration": {
+									"samples": 1
+								},
+								"actions": [
+									{
+										"timing": "start",
+										"set-value": {
+											"value": {
+												"rand": {
+													"lower": {
+														"input": {
+															"index": 1
+														}
+													},
+													"upper": {
+														"input": {
+															"index": 2
+														}
+													}
+												}
+											},
+											"output": {
+												"index": 6
+											}
+										}
+									}
+								]
+							}
+						}
+					]
 				}
 			]
 		}
-	]}
+	],
+	"input-triggers": [
+		{
+			"id": "do-it",
+			"input": {
+				"index": 8
+			}
+		},
+		{
+			"id": "stop-it",
+			"input": {
+				"index": 7
+			}
+		}
+	]
+}

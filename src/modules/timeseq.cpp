@@ -4,7 +4,7 @@
 
 
 TimeSeqModule::TimeSeqModule() {
-	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this);
+	m_timeSeqCore = new timeseq::TimeSeqCore(this, this);
 
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {

@@ -3,6 +3,7 @@
 #include "core/timeseq-core.hpp"
 #include <sstream>
 #include <stdarg.h>
+#include <chrono>
 
 using namespace std;
 using namespace timeseq;
@@ -57,29 +58,34 @@ double VariableValueProcessor::processValue() {
 	return m_variableHandler->getVariable(m_name);
 }
 
-InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader) : ValueProcessor(calcProcessors), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portReader(portReader) {}
+InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler) : ValueProcessor(calcProcessors), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler) {}
 
 double InputValueProcessor::processValue() {
-	return m_portReader->getInputPortVoltage(m_inputPort, m_inputChannel);
+	return m_portHandler->getInputPortVoltage(m_inputPort, m_inputChannel);
 }
 
-OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortReader* portReader) : ValueProcessor(calcProcessors), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portReader(portReader) {}
+OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler) : ValueProcessor(calcProcessors), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
 
 double OutputValueProcessor::processValue() {
-	return m_portReader->getOutputPortVoltage(m_outputPort, m_outputChannel);
+	return m_portHandler->getOutputPortVoltage(m_outputPort, m_outputChannel);
 }
 
-RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_lowerValue(lowerValue), m_upperValue(upperValue) {}
+RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_lowerValue(lowerValue), m_upperValue(upperValue), m_generator(chrono::steady_clock::now().time_since_epoch().count()) {}
 
 double RandValueProcessor::processValue() {
-	return 0.f;
+	float lower = m_lowerValue->process();
+	float upper = m_upperValue->process();
+
+	uniform_real_distribution<float> distribution(lower, upper);
+
+	return distribution(m_generator);
 }
 
-ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortWriter* portWriter) : m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portWriter(portWriter) {}
+ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler) : m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
 
 void ActionSetValueProcessor::process() {
 	float value = m_value->process();
-	m_portWriter->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
+	m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
 }
 
 ActionSetVariableProcessor::ActionSetVariableProcessor(shared_ptr<ValueProcessor> value, string name, VariableHandler* variableHandler) : m_value(value), m_name(name), m_variableHandler(variableHandler) {}
@@ -89,16 +95,16 @@ void ActionSetVariableProcessor::process() {
 	m_variableHandler->setVariable(m_name, value);
 }
 
-ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortWriter* portWriter) : m_outputPort(outputPort), m_channelCount(channelCount), m_portWriter(portWriter) {}
+ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler) : m_outputPort(outputPort), m_channelCount(channelCount), m_portHandler(portHandler) {}
 
 void ActionSetPolyphonyProcessor::process() {
-	m_portWriter->setOutputPortChannels(m_outputPort, m_channelCount);
+	m_portHandler->setOutputPortChannels(m_outputPort, m_channelCount);
 }
 
-ActionTriggerProcessor::ActionTriggerProcessor(string trigger) : m_trigger(trigger) {}
+ActionTriggerProcessor::ActionTriggerProcessor(string trigger, TriggerHandler* triggerHandler) : m_trigger(trigger), m_triggerHandler(triggerHandler) {}
 
 void ActionTriggerProcessor::process() {
-
+	m_triggerHandler->setTrigger(m_trigger);
 }
 
 ActionGlideProcessor::ActionGlideProcessor(
@@ -107,9 +113,9 @@ ActionGlideProcessor::ActionGlideProcessor(
 	int outputPort,
 	int outputChannel,
 	string variable,
-	PortWriter* portWriter,
+	PortHandler* portHandler,
 	VariableHandler* variableHandler) :
-		m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_portWriter(portWriter), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
+		m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
 
 void ActionGlideProcessor::start(uint64_t glideLength) {
 	m_startValue = m_startValueProcessor->process();
@@ -124,7 +130,7 @@ void ActionGlideProcessor::process(uint64_t glidePosition) {
 	if (m_variable.length() > 0) {
 
 	} else {
-		m_portWriter->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
+		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
 	}
 }
 
@@ -243,7 +249,7 @@ bool LaneProcessor::process() {
 	bool stopped = false;
 
 	if ((m_state == LaneState::STATE_PROCESSING) && (m_segments.size() > 0)) {
-		std::vector<std::shared_ptr<SegmentProcessor>>::iterator segment = m_segments.begin() + m_activeSegment;
+		vector<shared_ptr<SegmentProcessor>>::iterator segment = m_segments.begin() + m_activeSegment;
 		DurationProcessor::DurationState state = (*segment)->getState();
 		switch (state) {
 			case DurationProcessor::DurationState::STATE_IDLE:
@@ -304,16 +310,38 @@ void LaneProcessor::reset() {
 	}
 }
 
+void LaneProcessor::processTriggers(vector<string>& triggers) {
+	if ((m_scriptLane->startTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->startTrigger) != triggers.end()) && (m_segments.size() > 0)) {
+		reset();
+		m_state = LaneState::STATE_PROCESSING;
+	}
+
+	if ((m_state != LaneState::STATE_IDLE) && (m_scriptLane->stopTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->stopTrigger) != triggers.end())) {
+		m_state = LaneState::STATE_IDLE;
+	}
+
+}
+
 TimelineProcessor::TimelineProcessor(
 	ScriptTimeline* scriptTimeline,
 	vector<shared_ptr<LaneProcessor>> lanes,
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers,
-	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers) :
-		m_scriptTimeline(scriptTimeline), m_lanes(lanes), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers) {}
+	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers,
+	TriggerHandler* triggerHandler) :
+		m_scriptTimeline(scriptTimeline), m_lanes(lanes), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers), m_triggerHandler(triggerHandler) {}
 
 void TimelineProcessor::process() {
 	bool checkLoop = false;
 
+	// Check if any lane start or stop triggers were fired
+	std::vector<std::string>& triggers = m_triggerHandler->getTriggers();
+	if (triggers.size() > 0) {
+		for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
+			it->get()->processTriggers(triggers);
+		}
+	}
+
+	// Call process on all lanes
 	for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
 		bool stopped = (*it)->process();
 		if (stopped) {
@@ -352,7 +380,13 @@ void TimelineProcessor::reset() {
 	}
 }
 
-TriggerProcessor::TriggerProcessor(string id, int inputPort, int inputChannel, PortReader* portReader) : m_id(id), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portReader(portReader) {}
+TriggerProcessor::TriggerProcessor(string id, int inputPort, int inputChannel, PortHandler* portHandler, TriggerHandler* triggerHandler) : m_id(id), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler), m_triggerHandler(triggerHandler) {}
+
+void TriggerProcessor::process() {
+	if (m_trigger.process(m_portHandler->getInputPortVoltage(m_inputPort, m_inputChannel), 0.f, 1.f)) {
+		m_triggerHandler->setTrigger(m_id);
+	}
+}
 
 Processor::Processor(vector<shared_ptr<TimelineProcessor>> timelines, vector<shared_ptr<TriggerProcessor>> triggers, vector<shared_ptr<ActionProcessor>> startActions, vector<shared_ptr<ActionProcessor>> endActions) : m_timelines(timelines), m_triggers(triggers), m_startActions(startActions), m_endActions(endActions) {}
 
@@ -370,9 +404,13 @@ void Processor::process() {
 	for (vector<shared_ptr<TimelineProcessor>>::iterator it = m_timelines.begin(); it != m_timelines.end(); it++) {
 		(*it)->process();
 	}
+
+	for (vector<shared_ptr<TriggerProcessor>>::iterator it = m_triggers.begin(); it != m_triggers.end(); it++) {
+		(*it)->process();
+	}
 }
 
-ProcessorLoader::ProcessorLoader(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter, VariableHandler* variableHandler) : m_processorScriptParser(portReader, sampleRateReader, portWriter, variableHandler) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader) {}
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
 	return m_processorScriptParser.parseScript(script.get(), validationErrors, vector<string>());

@@ -10,7 +10,7 @@ extern rack::Plugin* pluginInstance;
 using namespace timeseq;
 
 
-TimeSeqCore::TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateReader, PortWriter* portWriter) {
+TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader) {
 	m_jsonLoader = new JsonLoader();
 	std::string schemaFile = rack::asset::plugin(pluginInstance, "res/timeseq.schema.json");
 	std::ifstream schemaStream(schemaFile);
@@ -18,7 +18,7 @@ TimeSeqCore::TimeSeqCore(PortReader* portReader, SampleRateReader* sampleRateRea
 
 	m_jsonLoader->setSchema(schemaJson);
 
-	m_processorLoader = new ProcessorLoader(portReader, sampleRateReader, portWriter, this);
+	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader);
 }
 
 TimeSeqCore::~TimeSeqCore() {
@@ -53,6 +53,8 @@ bool TimeSeqCore::canProcess() {
 void TimeSeqCore::start() {
 	if (m_processor) {
 		m_status = Status::RUNNING;
+		m_triggers[0].clear();
+		m_triggers[1].clear();
 	} else {
 		m_status = Status::EMPTY;
 	}
@@ -70,10 +72,14 @@ void TimeSeqCore::reset() {
 	if (m_processor) {
 		m_processor->reset();
 	}
+	m_triggers[0].clear();
+	m_triggers[1].clear();
 }
 
 void TimeSeqCore::process() {
 	if (m_processor) {
+		m_triggerIdx = !m_triggerIdx; // Triggers that were set in the previous process become the active triggers now
+		m_triggers[!m_triggerIdx].clear();
 		m_processor->process();
 	}
 }
@@ -90,6 +96,15 @@ float TimeSeqCore::getVariable(std::string name) {
 void TimeSeqCore::setVariable(std::string name, float value) {
 	m_variables[name] = value;
 }
+
+void TimeSeqCore::setTrigger(std::string name) {
+	m_triggers[!m_triggerIdx].push_back(name);
+}
+
+std::vector<std::string>& TimeSeqCore::getTriggers() {
+	return m_triggers[m_triggerIdx];
+}
+
 
 
 // void testJsonValidation() {
