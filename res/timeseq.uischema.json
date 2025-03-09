@@ -1,0 +1,51 @@
+{
+	"ui:title": "not-things TimeSeq script",
+	"type": {
+		"ui:readonly": true
+	},
+	"version": {
+		"ui:readonly": true
+	},
+	"global-actions": {
+		"xui:title": "Global script actions",
+		"items": {
+			"start-value": {
+				"oneOf": [
+					{
+						
+					},
+					{
+						"ui:title": "inline"
+					}
+				]
+			},
+			"end-value": {
+				"oneOf": [
+					{
+						
+					},
+					{
+						"ui:title": "inline"
+					}
+				]
+			},
+			"set-value": {
+				"output": {
+					"oneOf": [
+						{
+							
+						},
+						{
+							"ui:title": "by ref"
+						}
+					]
+				}
+			}
+		}
+	},
+	"timelines": {
+		"items": {
+			"ui:title": "koekoek"
+		}
+	}
+}

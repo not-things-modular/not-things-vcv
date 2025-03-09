@@ -14,6 +14,7 @@
 		},
 		"ref-base": {
 			"type": "object",
+			"title": "by ref",
 			"properties": {
 				"ref": {
 					"type": "string",
@@ -24,6 +25,7 @@
 		},
 		"input": {
 			"type": "object",
+			"title": "input",
 			"properties": {
 				"index": {
 					"type": "integer",
@@ -40,6 +42,7 @@
 		},
 		"output": {
 			"type": "object",
+			"title": "output",
 			"properties": {
 				"index": {
 					"type": "integer",
@@ -56,6 +59,7 @@
 		},
 		"rand": {
 			"type": "object",
+			"title": "rand",
 			"properties": {
 				"lower": {
 					"oneOf": [
@@ -74,88 +78,147 @@
 		},
 		"calc": {
 			"type": "array",
+			"title": "calc",
 			"items": {
 				"type": "object",
-				"properties": {
-					"add": {
-						"oneOf": [
-							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/value" }
-						]
+				"oneOf": [
+					{
+						"title": "add",
+						"properties": {
+							"add": {
+								"oneOf": [
+									{ "$ref": "#/definitions/ref-base" },
+									{ "$ref": "#/definitions/value" }
+								]
+							}
+						},
+						"required": [ "add" ]
 					},
-					"sub": {
-						"oneOf": [
-							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/value" }
-						]
+					{
+						"title": "sub",
+						"properties": {
+							"sub": {
+								"oneOf": [
+									{ "$ref": "#/definitions/ref-base" },
+									{ "$ref": "#/definitions/value" }
+								]
+							}
+						},
+						"required": [ "sub" ]
 					},
-					"div": {
-						"oneOf": [
-							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/value" }
-						]
+					{
+						"title": "div",
+						"properties": {
+							"div": {
+								"oneOf": [
+									{ "$ref": "#/definitions/ref-base" },
+									{ "$ref": "#/definitions/value" }
+								]
+							}
+						},
+						"required": [ "div" ]
 					},
-					"mult": {
-						"oneOf": [
-							{ "$ref": "#/definitions/ref-base" },
-							{ "$ref": "#/definitions/value" }
-						]
+					{
+						"title": "mult",
+						"properties": {
+							"mult": {
+								"oneOf": [
+									{ "$ref": "#/definitions/ref-base" },
+									{ "$ref": "#/definitions/value" }
+								]
+							}
+						},
+						"required": [ "mult" ]
 					}
-				},
-				"minProperties": 1,
-				"maxProperties": 1
+				]
 			},
 			"minItems": 1
 		},
 		"value": {
 			"type": "object",
-			"properties": {
-				"voltage": {
-					"type": "number",
-					"minimum": -10,
-					"maximum": 10
-				},
-				"note": {
-					"type": "string",
-					"minLength": 2,
-					"maxLength": 3,
-					"pattern": "[a-zA-Z][0-9][+-]?"
-				},
-				"variable": {
-					"type": "string",
-					"minLength": 1
-				},
-				"input": {
-					"oneOf": [
-						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/input" }
-					]
-				},
-				"output": {
-					"oneOf": [
-						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/output" }
-					]
-				},
-				"rand": { "$ref": "#/definitions/rand" },
-				"calc": {
-					"oneOf": [
-						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/calc" }
-					]
-				}
-			},
+			"title": "value",
 			"oneOf": [
-				{ "required": [ "voltage" ] },
-				{ "required": [ "note" ] },
-				{ "required": [ "variable" ] },
-				{ "required": [ "input" ] },
-				{ "required": [ "output" ] },
-				{ "required": [ "rand" ] }
+				{
+					"title": "voltage",
+					"properties": {
+						"voltage": {
+							"type": "number",
+							"minimum": -10,
+							"maximum": 10
+						}
+					},
+					"required": [ "voltage" ]
+				},
+				{
+					"title": "note",
+					"properties": {
+						"note": {
+							"type": "string",
+							"minLength": 2,
+							"maxLength": 3,
+							"pattern": "[a-zA-Z][0-9][+-]?"
+						}
+					},
+					"required": [ "note" ]
+				},
+				{
+					"title": "variable",
+					"properties": {
+						"variable": {
+							"type": "string",
+							"minLength": 1
+						}
+					},
+					"required": [ "variable" ]
+				},
+				{
+					"title": "input",
+					"properties": {
+						"input": {
+							"oneOf": [
+								{ "$ref": "#/definitions/ref-base" },
+								{ "$ref": "#/definitions/input" }
+							]
+						}
+					},
+					"required": [ "input" ]
+				},
+				{
+					"title": "output",
+					"properties": {
+						"output": {
+							"oneOf": [
+								{ "$ref": "#/definitions/ref-base" },
+								{ "$ref": "#/definitions/output" }
+							]
+						}
+					},
+					"required": [ "output" ]
+				},
+				{
+					"title": "rand",
+					"properties": {
+						"rand": { "$ref": "#/definitions/rand" }
+					},
+					"required": [ "rand" ]
+				},
+				{
+					"title": "calc",
+					"properties": {
+						"calc": {
+							"oneOf": [
+								{ "$ref": "#/definitions/ref-base" },
+								{ "$ref": "#/definitions/calc" }
+							]
+						}
+					},
+					"required": [ "calc" ]
+				}
 			]
 		},
 		"set-value": {
 			"type": "object",
+			"title": "set-value",
 			"properties": {
 				"output": {
 					"oneOf": [
@@ -174,6 +237,7 @@
 		},
 		"set-variable": {
 			"type": "object",
+			"title": "set-variable",
 			"properties": {
 				"name": {
 					"type": "string",
@@ -190,6 +254,7 @@
 		},
 		"set-polyphony": {
 			"type": "object",
+			"title": "set-polyphony",
 			"properties": {
 				"index": {
 					"type": "integer",
@@ -206,51 +271,94 @@
 		},
 		"action": {
 			"type": "object",
+			"title": "action",
 			"properties": {
 				"timing": {
 					"enum": [ "start", "end", "glide" ]
-				},
-				"set-value": { "$ref": "#/definitions/set-value" },
-				"set-variable": { "$ref": "#/definitions/set-variable" },
-				"set-polyphony": { "$ref": "#/definitions/set-polyphony" },
-				"trigger": {
-					"type": "string"
-				},
-				"start-value": {
-					"oneOf": [
-						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/value" }
-					]
-				},
-				"end-value": {
-					"oneOf": [
-						{ "$ref": "#/definitions/ref-base" },
-						{ "$ref": "#/definitions/value" }
-					]
 				}
 			},
-			"required": [ "timing" ],
 			"if": {
 				"properties": { "timing": { "const": "glide" } }
 			},
 			"then": {
-				"not": { "anyOf": [
-					{ "required": [ "timing" ] },
-					{ "required": [ "set-variable" ] },
-					{ "required": [ "set-value" ] },
-					{ "required": [ "set-polyphony" ] },
-					{ "required": [ "trigger" ] }
-				] }
+				"properties": {
+					"start-value": {
+						"oneOf": [
+							{ "$ref": "#/definitions/ref-base" },
+							{ "$ref": "#/definitions/value" }
+						]
+					},
+					"end-value": {
+						"oneOf": [
+							{ "$ref": "#/definitions/ref-base" },
+							{ "$ref": "#/definitions/value" }
+						]
+					}
+				},
+				"oneOf": [
+					{
+						"title": "output",
+						"properties": {
+							"output": {
+								"oneOf": [
+									{ "$ref": "#/definitions/ref-base" },
+									{ "$ref": "#/definitions/output" }
+								]
+							}
+						},
+						"required": [ "output" ]
+					},
+					{
+						"title": "variable",
+						"properties": {
+							"variable": {
+								"type": "string"
+							}
+						},
+						"required": [ "variable" ]
+					}
+				],
+				"required": [ "start-value", "end-value" ]
 			},
 			"else": {
-				"not": { "anyOf": [
-					{ "start-value": [ "timing" ] },
-					{ "end-value": [ "set-value" ] }
-				] }
+				"oneOf": [
+					{
+						"title": "set-value",
+						"properties": {
+							"set-value": { "$ref": "#/definitions/set-value" }
+						},
+						"required": [ "set-value" ]
+					},
+					{
+						"title": "set-variable",
+						"properties": {
+							"set-variable": { "$ref": "#/definitions/set-variable" }
+						},
+						"required": [ "set-variable" ]
+					},
+					{
+						"title": "set-polyphony",
+						"properties": {
+							"set-polyphony": { "$ref": "#/definitions/set-polyphony" }
+						},
+						"required": [ "set-polyphony" ]
+					},
+					{
+						"title": "trigger",
+						"properties": {
+							"trigger": {
+								"type": "string",
+								"minLenght": 1
+							}
+						},
+						"required": [ "trigger" ]
+					}
+				]
 			}
 		},
 		"duration": {
 			"type": "object",
+			"title": "duration",
 			"properties": {
 				"samples": {
 					"type": "integer",
@@ -297,6 +405,7 @@
 		},
 		"segment": {
 			"type": "object",
+			"title": "segment",
 			"properties": {
 				"duration": { "$ref": "#/definitions/duration" },
 				"actions": {
@@ -314,6 +423,7 @@
 		},
 		"segment-block": {
 			"type": "object",
+			"title": "segment-block",
 			"properties": {
 				"segments": {
 					"type": "array",
@@ -342,6 +452,7 @@
 		},
 		"lane": {
 			"type": "object",
+			"title": "lane",
 			"properties": {
 				"auto-start": {
 					"type": "boolean"
@@ -391,54 +502,37 @@
 		},
 		"time-scale": {
 			"type": "object",
+			"title": "time-scale",
 			"properties": {
 				"sample-rate": {
 					"type": "integer",
+					"title": "Reference sample rate",
 					"minimum": 1
 				},
 				"bpm": {
 					"type": "integer",
+					"title": "Beats per minute",
 					"minimum": 1
 				},
-				"bpb": {
+				"bpp": {
 					"type": "integer",
+					"title": "Beats per bar",
 					"minimum": 1
 				}
-			},
-			"oneOf": [
-				{
-					"required": [ "sample-rate" ],
-					"not": {
-						"anyOf": [
-							{ "required": [ "bpm" ] },
-							{ "required": [ "bpb" ] }
-						]
-					}
-				},
-				{
-					"required": [ "bpm" ],
-					"not": {
-						"anyOf": [
-							{ "required": [ "sample-rate" ] },
-							{ "required": [ "bpb" ] }
-						]
-					}
-				},
-				{
-					"required": [ "bpm", "bpb" ],
-					"not": { "required": [ "sample-rate" ] }
-				}
-			]
+			}
 		},
 		"timeline": {
 			"type": "object",
+			"title": "timeline",
 			"properties": {
 				"time-scale": { "$ref": "#/definitions/time-scale" },
 				"loop-lock": {
-					"type": "boolean"
+					"type": "boolean",
+					"title": "Lock lanes for looping"
 				},
 				"lanes": {
 					"type": "array",
+					"title": "Timelanes",
 					"items": {
 						"$ref": "#/definitions/lane"
 					},
@@ -449,6 +543,7 @@
 		},
 		"input-trigger": {
 			"type": "object",
+			"title": "input-trigger",
 			"properties": {
 				"id": {
 					"type": "string",
@@ -465,6 +560,7 @@
 		},
 		"script": {
 			"type": "object",
+			"title": "script",
 			"properties": {
 				"type": {
 					"const": "not-things_timeseq_script"
@@ -480,6 +576,7 @@
 				},
 				"timelines": {
 					"type": "array",
+					"title": "Timelines",
 					"items": {
 						"$ref": "#/definitions/timeline"
 					},
