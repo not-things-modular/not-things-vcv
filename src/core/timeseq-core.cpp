@@ -50,8 +50,32 @@ bool TimeSeqCore::canProcess() {
 	return (bool) m_processor;
 }
 
+void TimeSeqCore::start() {
+	if (m_processor) {
+		m_status = Status::RUNNING;
+	} else {
+		m_status = Status::EMPTY;
+	}
+}
+
+void TimeSeqCore::pause() {
+	if (m_processor) {
+		m_status = Status::PAUSED;
+	} else {
+		m_status = Status::EMPTY;
+	}
+}
+
+void TimeSeqCore::reset() {
+	if (m_processor) {
+		m_processor->reset();
+	}
+}
+
 void TimeSeqCore::process() {
-	m_processor->process();
+	if (m_processor) {
+		m_processor->process();
+	}
 }
 
 float TimeSeqCore::getVariable(std::string name) {

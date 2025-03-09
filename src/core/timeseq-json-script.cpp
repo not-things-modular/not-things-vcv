@@ -364,6 +364,16 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::ve
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Timeline_LanesMissing, "lanes is required and must be an array.");
 	}
 
+	timeline.loopLock = false;
+	json::const_iterator loopLock = timelineJson.find("loop-lock");
+ 	if (loopLock != timelineJson.end()) {
+ 		if (!loopLock->is_boolean()) {
+ 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Timeline_LoopLockBoolean, "looplock must be a boolean.");
+ 		} else {
+ 			timeline.loopLock = (*loopLock);
+ 		}
+ 	}
+	
 	return timeline;
 }
 
@@ -373,7 +383,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 	json::const_iterator sampleRate = timeScaleJson.find("sample-rate");
 	if (sampleRate != timeScaleJson.end()) {
 		if (sampleRate->is_number_unsigned()) {
-			timeScale.sampleRate.reset(new int(*sampleRate));
+			timeScale.sampleRate.reset(new int(sampleRate->get<int>()));
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_SampleRateNumber, "sample-rate must be an unsigned number.");
 		}
@@ -382,7 +392,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 	json::const_iterator bpm = timeScaleJson.find("bpm");
 	if (bpm != timeScaleJson.end()) {
 		if (bpm->is_number_unsigned()) {
-			timeScale.bpm.reset(new int(*bpm));
+			timeScale.bpm.reset(new int(bpm->get<int>()));
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpmNumber, "bpm must be an unsigned number.");
 		}
@@ -391,7 +401,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 	json::const_iterator bpb = timeScaleJson.find("bpb");
 	if (bpb != timeScaleJson.end()) {
 		if (bpb->is_number_unsigned()) {
-			timeScale.bpb.reset(new int(*bpb));
+			timeScale.bpb.reset(new int(bpb->get<int>()));
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbNumber, "bpb must be an unsigned number.");
 		}
@@ -435,7 +445,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 	lane.repeat = 0;
 	if (repeat != laneJson.end()) {
 		if (repeat->is_number_unsigned()) {
-			lane.repeat = *repeat;
+			lane.repeat = repeat->get<int>();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_RepeatNumber, "repeat must be an unsigned number.");
 		}
@@ -613,8 +623,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 
 	json::const_iterator samples = durationJson.find("samples");
 	if (samples != durationJson.end()) {
-		if ((samples->is_number_unsigned()) && ((*samples) > 0)) {
-			duration.samples.reset(new uint64_t(*samples));
+		if ((samples->is_number_unsigned()) && (samples->get<uint64_t>() > 0)) {
+			duration.samples.reset(new uint64_t(samples->get<uint64_t>()));
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_SamplesNumber, "samples must be a positive integer number.");
@@ -623,8 +633,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 
 	json::const_iterator millis = durationJson.find("millis");
 	if (millis != durationJson.end()) {
-		if ((millis->is_number_float()) && ((*millis) > 0)) {
-			duration.millis.reset(new float(*millis));
+		if ((millis->is_number()) && (millis->get<float>() > 0)) {
+			duration.millis.reset(new float(millis->get<float>()));
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_MillisNumber, "millis must be a positive decimal number.");
@@ -633,8 +643,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 
 	json::const_iterator bars = durationJson.find("bars");
 	if (bars != durationJson.end()) {
-		if ((bars->is_number_unsigned()) && ((*bars) > 0)) {
-			duration.bars.reset(new uint64_t(*bars));
+		if ((bars->is_number_unsigned()) && (bars->get<uint64_t>() > 0)) {
+			duration.bars.reset(new uint64_t(bars->get<uint64_t>()));
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsNumber, "bars must be a positive integer number.");
@@ -643,8 +653,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 
 	json::const_iterator beats = durationJson.find("beats");
 	if (beats != durationJson.end()) {
-		if ((beats->is_number_float()) && ((*beats) > 0)) {
-			duration.beats.reset(new float(*beats));
+		if ((beats->is_number()) && (beats->get<float>() > 0)) {
+			duration.beats.reset(new float(beats->get<float>()));
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BeatsNumber, "beats must be a positive decimal number.");
 		}
@@ -862,7 +872,7 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 
 	json::const_iterator index = setPolyphonyJson.find("index");
 	if ((index != setPolyphonyJson.end()) && (index->is_number_unsigned())) {
-		setPolyphony.index = *index;
+		setPolyphony.index = index->get<int>();
 		if ((setPolyphony.index < 1) || (setPolyphony.index > 8)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 8.");
 		}
@@ -872,7 +882,7 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 
 	json::const_iterator channels = setPolyphonyJson.find("channels");
 	if ((channels != setPolyphonyJson.end()) && (channels->is_number_unsigned())) {
-		setPolyphony.channels = *channels;
+		setPolyphony.channels = channels->get<int>();
 		if ((setPolyphony.channels < 1) || (setPolyphony.channels > 16)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetPolyphony_ChannelsRange, "'channels' must be a number between 1 and 16.");
 		}
@@ -896,9 +906,9 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 		json::const_iterator voltage = valueJson.find("voltage");
 		if (voltage != valueJson.end()) {
-			if (voltage->is_number_float()) {
+			if (voltage->is_number()) {
 				valueTypes++;
-				value.voltage.reset(new float(*voltage));
+				value.voltage.reset(new float(voltage->get<float>()));
 				if ((*value.voltage < -10) || (*value.voltage > 10)) {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageRange, "'voltage' must be a decimal number between -10 and 10.");
 				}
@@ -1032,7 +1042,7 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 	} else {
 		json::const_iterator index = outputJson.find("index");
 		if ((index != outputJson.end()) && (index->is_number_unsigned())) {
-			output.index = *index;
+			output.index = index->get<int>();
 			if ((output.index < 1) || (output.index > 8)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_IndexRange, "'index' must be a number between 1 and 8.");
 			}
@@ -1043,7 +1053,7 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 		json::const_iterator channel = outputJson.find("channel");
 		if (channel != outputJson.end()) {
 			if (channel->is_number_unsigned()) {
-				output.channel.reset(new int(*channel));
+				output.channel.reset(new int(channel->get<int>()));
 				if ((*output.channel < 1) || (*output.channel > 16)) {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_ChannelRange, "'channel' must be a number between 1 and 16.");
 				}
@@ -1067,7 +1077,7 @@ ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, 
 	} else {
 		json::const_iterator index = inputJson.find("index");
 		if ((index != inputJson.end()) && (index->is_number_unsigned())) {
-			input.index = *index;
+			input.index = index->get<int>();
 			if ((input.index < 1) || (input.index > 8)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_IndexRange, "'index' must be a number between 1 and 8.");
 			}
@@ -1078,7 +1088,7 @@ ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, 
 		json::const_iterator channel = inputJson.find("channel");
 		if (channel != inputJson.end()) {
 			if (channel->is_number_unsigned()) {
-				input.channel.reset(new int(*channel));
+				input.channel.reset(new int(channel->get<int>()));
 				if ((*input.channel < 1) || (*input.channel > 16)) {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_ChannelRange, "'channel' must be a number between 1 and 16.");
 				}

@@ -53,6 +53,7 @@ enum ValidationErrorCode {
 	Timeline_TimeScaleObject = 200,
 	Timeline_LanesMissing = 201,
 	Timeline_LaneObject = 202,
+	Timeline_LoopLockBoolean = 203,
 
 	TimeScale_SampleRateNumber = 303,
 	TimeScale_BpmNumber = 304,

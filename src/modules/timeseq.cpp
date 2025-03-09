@@ -24,6 +24,25 @@ TimeSeqModule::~TimeSeqModule() {
 }
 
 void TimeSeqModule::process(const ProcessArgs& args) {
+	bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
+	bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
+
+	if (runTriggered) {
+		switch (m_timeSeqCore->getStatus()) {
+			case timeseq::TimeSeqCore::Status::IDLE:
+			case timeseq::TimeSeqCore::Status::PAUSED:
+				m_timeSeqCore->start();
+				break;
+			case timeseq::TimeSeqCore::Status::RUNNING:
+				m_timeSeqCore->pause();
+				break;
+			case timeseq::TimeSeqCore::Status::EMPTY:
+				break;
+		}
+	}
+	if (resetTriggered) {
+		m_timeSeqCore->reset();
+	}
 	if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
 		m_timeSeqCore->process();
 	}

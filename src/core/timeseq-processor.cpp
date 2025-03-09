@@ -111,13 +111,16 @@ ActionGlideProcessor::ActionGlideProcessor(
 	VariableHandler* variableHandler) :
 		m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_portWriter(portWriter), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
 
-void ActionGlideProcessor::start() {
+void ActionGlideProcessor::start(uint64_t glideLength) {
 	m_startValue = m_startValueProcessor->process();
 	m_endValue = m_endValueProcessor->process();
+
+	m_valueDelta = m_endValue - m_startValue;
+	m_durationInverse = 1. / glideLength;
 }
 
-void ActionGlideProcessor::process(uint64_t glidePosition, uint64_t glideLength) {
-	double value = m_startValue + ((m_endValue - m_startValue) * glidePosition / glideLength);
+void ActionGlideProcessor::process(uint64_t glidePosition) {
+	double value = m_startValue + (m_valueDelta * glidePosition * m_durationInverse);
 	if (m_variable.length() > 0) {
 
 	} else {
@@ -127,7 +130,7 @@ void ActionGlideProcessor::process(uint64_t glidePosition, uint64_t glideLength)
 
 DurationProcessor::DurationProcessor(uint64_t duration, double drift) : m_duration(duration), m_drift(drift) {}
 
-DurationProcessor::State DurationProcessor::getState() {
+DurationProcessor::DurationState DurationProcessor::getState() {
 	return m_state;
 }
 
@@ -140,16 +143,16 @@ uint64_t DurationProcessor::getDuration() {
 }
 
 double DurationProcessor::process(double drift) {
-	if (m_state == State::STATE_IDLE) {
+	if (m_state == DurationState::STATE_IDLE) {
 		// The segment is being started.
-		m_state = State::STATE_START;
+		m_state = DurationState::STATE_START;
 		// Reset the position
 		m_position = 0;
 		// Add the drift at the start of the segment, so that the end of the segment will wait if we went over 1 total drift
 		return drift + m_drift;
 	} else if (m_position < m_duration - 1) {
 		// The segment isn't done yet, move to the next position
-		m_state = State::STATE_PROGRESS;
+		m_state = DurationState::STATE_PROGRESS;
 		m_position++;
 		return drift;
 	} else if (drift >= 1.) {
@@ -157,14 +160,14 @@ double DurationProcessor::process(double drift) {
 		return drift - 1;
 	} else {
 		// The segment is done, and the drift is below a step. Move to the final position and change to the end state
-		m_state = State::STATE_END;
+		m_state = DurationState::STATE_END;
 		m_position++;
 		return drift;
 	}
 }
 
 void DurationProcessor::reset() {
-	m_state = State::STATE_IDLE;
+	m_state = DurationState::STATE_IDLE;
 	m_position = 0;
 }
 
@@ -176,7 +179,7 @@ SegmentProcessor::SegmentProcessor(
 	vector<shared_ptr<ActionGlideProcessor>> glideActions) :
 		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_glideActions(glideActions) {}
 
-DurationProcessor::State SegmentProcessor::getState() {
+DurationProcessor::DurationState SegmentProcessor::getState() {
 	return m_duration->getState();
 }
 
@@ -184,18 +187,18 @@ double SegmentProcessor::process(double drift) {
 	drift = m_duration->process(drift);
 	
 	switch (m_duration->getState()) {
-		case DurationProcessor::State::STATE_START:
+		case DurationProcessor::DurationState::STATE_START:
 			processStartActions();
 			processGlideActions(true);
 			break;
-		case DurationProcessor::State::STATE_PROGRESS:
+		case DurationProcessor::DurationState::STATE_PROGRESS:
 			processGlideActions(false);
 			break;
-		case DurationProcessor::State::STATE_END:
+		case DurationProcessor::DurationState::STATE_END:
 			processGlideActions(false);
 			processEndActions();
 			break;
-		case DurationProcessor::State::STATE_IDLE:
+		case DurationProcessor::DurationState::STATE_IDLE:
 			// Shouldn't occur: the m_duration::process call will always move away from the idle state
 			break;
 	}
@@ -222,33 +225,35 @@ void SegmentProcessor::processEndActions() {
 void SegmentProcessor::processGlideActions(bool start) {
 	for (vector<shared_ptr<ActionGlideProcessor>>::iterator it = m_glideActions.begin(); it != m_glideActions.end(); it++) {
 		if (start) {
-			(*it)->start();
+			(*it)->start(m_duration->getDuration());
 		}
-		(*it)->process(m_duration->getPosition(), m_duration->getDuration());
+		(*it)->process(m_duration->getPosition());
 	}
 }
 
 LaneProcessor::LaneProcessor(ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments) : m_scriptLane(scriptLane), m_segments(segments) {
-	if ((m_scriptLane->autoStart) && (m_segments.size() > 0)) {
-		m_active = true;
-	}
+	reset();
+}
+
+LaneProcessor::LaneState LaneProcessor::getState() {
+	return m_state;
 }
 
 bool LaneProcessor::process() {
 	bool stopped = false;
 
-	if ((m_active) && (m_segments.size() > 0)) {
+	if ((m_state == LaneState::STATE_PROCESSING) && (m_segments.size() > 0)) {
 		std::vector<std::shared_ptr<SegmentProcessor>>::iterator segment = m_segments.begin() + m_activeSegment;
-		DurationProcessor::State state = (*segment)->getState();
+		DurationProcessor::DurationState state = (*segment)->getState();
 		switch (state) {
-			case DurationProcessor::State::STATE_IDLE:
-			case DurationProcessor::State::STATE_START:
-			case DurationProcessor::State::STATE_PROGRESS: {
+			case DurationProcessor::DurationState::STATE_IDLE:
+			case DurationProcessor::DurationState::STATE_START:
+			case DurationProcessor::DurationState::STATE_PROGRESS: {
 				// The active segment can do further processing
 				m_drift = (*segment)->process(m_drift);
 				break;
 			}
-			case DurationProcessor::State::STATE_END: {
+			case DurationProcessor::DurationState::STATE_END: {
 				// The active segment is finished, so reset it and move to the next segment
 				(*segment)->reset();
 				m_activeSegment++;
@@ -259,21 +264,9 @@ bool LaneProcessor::process() {
 					// Invoke process on the newly activated segment.
 					m_drift = (*segment)->process(m_drift);
 				} else {
-					// If we reached the end of the segment list, see if we need to loop.
-					if ((m_scriptLane->loop) || (m_scriptLane->repeat > 1 && m_activeRepeats < m_scriptLane->repeat)) {
-						// Loop to the start of the segment list and increase the repeat count
-						if (segment == m_segments.end()) {
-							segment = m_segments.begin();
-						}
-						m_activeRepeats++;
-					} else {
-						// We've reached the end of this lane, so reset everything and de-active the lane.
-						m_activeSegment = 0;
-						m_activeRepeats = 0;
-						m_drift = 0.;
-						m_active = false;
-						stopped = true;
-					}
+					// We reached the end, so stop this lane and wait for the timeline processor to trigger looping if needed
+					m_state = LaneState::STATE_PENDING_LOOP;
+					stopped = true;
 				}
 				break;
 			}
@@ -281,6 +274,34 @@ bool LaneProcessor::process() {
 	}
 
 	return stopped;
+}
+
+void LaneProcessor::loop() {
+	if (m_state == LaneState::STATE_PENDING_LOOP) {
+		// Check if we need to loop or repeat
+		if ((m_scriptLane->loop) || (m_scriptLane->repeat > 1 && m_repeatCount < m_scriptLane->repeat)) {
+			m_repeatCount++;
+			m_activeSegment = 0;
+			m_state = LaneState::STATE_PROCESSING;
+			process();
+		}
+	}
+}
+
+void LaneProcessor::reset() {
+	m_repeatCount = 0;
+	m_activeSegment = 0;
+	m_drift = 0.;
+
+	if (m_segments.size() > 0) {
+		m_segments[0]->reset();
+	}
+
+	if ((m_scriptLane->autoStart) && (m_segments.size() > 0)) {
+		m_state = LaneState::STATE_PROCESSING;
+	} else {
+		m_state = LaneState::STATE_IDLE;
+	}
 }
 
 TimelineProcessor::TimelineProcessor(
@@ -291,8 +312,43 @@ TimelineProcessor::TimelineProcessor(
 		m_scriptTimeline(scriptTimeline), m_lanes(lanes), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers) {}
 
 void TimelineProcessor::process() {
+	bool checkLoop = false;
+
 	for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
-		(*it)->process();
+		bool stopped = (*it)->process();
+		if (stopped) {
+			if (m_scriptTimeline->loopLock) {
+				// There is a loop-lock, so check looping for all lanes after we processed them all
+				checkLoop = true;
+			} else {
+				// There is no loop-lock, so the lane should immediately check if it needs to loop
+				(*it)->loop();
+			}
+		}
+	}
+
+	if (checkLoop) {
+		// Check if all lanes are either idle or pending a loop
+		bool loop = true;
+		for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
+			if ((*it)->getState() == LaneProcessor::LaneState::STATE_PROCESSING) {
+				// There is one still processing, so don't loop yet
+				loop = false;
+				break;
+			}
+		}
+
+		if (loop) {
+			for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
+				(*it)->loop();
+			}
+		}
+	}
+}
+
+void TimelineProcessor::reset() {
+	for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
+		(*it)->reset();
 	}
 }
 
@@ -303,6 +359,10 @@ Processor::Processor(vector<shared_ptr<TimelineProcessor>> timelines, vector<sha
 void Processor::reset() {
 	for (vector<shared_ptr<ActionProcessor>>::iterator it = m_startActions.begin(); it != m_startActions.end(); it++) {
 		(*it)->process();
+	}
+
+	for (vector<shared_ptr<TimelineProcessor>>::iterator it = m_timelines.begin(); it != m_timelines.end(); it++) {
+		(*it)->reset();
 	}
 }
 

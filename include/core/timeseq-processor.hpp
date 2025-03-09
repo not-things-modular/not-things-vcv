@@ -153,8 +153,8 @@ struct ActionTriggerProcessor : ActionProcessor {
 struct ActionGlideProcessor {
 	ActionGlideProcessor(std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, int outputPort, int outputChannel, std::string variable, PortWriter* portWriter, VariableHandler* variableHandler);
 
-	void start();
-	void process(uint64_t glidePosition, uint64_t glideLength);
+	void start(uint64_t glideLength);
+	void process(uint64_t glidePosition);
 
 	private:
 		std::shared_ptr<ValueProcessor> m_startValueProcessor;
@@ -167,16 +167,20 @@ struct ActionGlideProcessor {
 		int m_outputChannel;
 		std::string m_variable;
 
+		// The start and end values that were captured when the glide action was started
 		double m_startValue;
 		double m_endValue;
+		// Pre-calculated for runtime performance: the difference between start and end, and "1.0 / duration"
+		double m_valueDelta;
+		double m_durationInverse;
 };
 
 struct DurationProcessor {
-	enum State { STATE_IDLE, STATE_START, STATE_PROGRESS, STATE_END };
+	enum DurationState { STATE_IDLE, STATE_START, STATE_PROGRESS, STATE_END };
 
 	DurationProcessor(uint64_t duration, double drift);
 
-	State getState();
+	DurationState getState();
 	uint64_t getPosition();
 	uint64_t getDuration();
 
@@ -184,7 +188,7 @@ struct DurationProcessor {
 	void reset();
 
 	private:
-		State m_state = STATE_IDLE;
+		DurationState m_state = STATE_IDLE;
 		uint64_t m_duration;
 		double m_drift;
 		uint64_t m_position;
@@ -199,7 +203,7 @@ struct SegmentProcessor {
 		std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions
 	);
 
-	DurationProcessor::State getState();
+	DurationProcessor::DurationState getState();
 
 	double process(double drift);
 	void reset();
@@ -218,19 +222,24 @@ struct SegmentProcessor {
 };
 
 struct LaneProcessor {
+	enum LaneState { STATE_IDLE, STATE_PROCESSING, STATE_PENDING_LOOP };
+
 	LaneProcessor(ScriptLane* scriptLane, std::vector<std::shared_ptr<SegmentProcessor>> segments);
 
+	LaneState getState();
+
 	bool process();
+	void loop();
+	void reset();
 	
 	private:
 		ScriptLane* m_scriptLane;
 		std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
 
-		bool m_active = false;
+		LaneState m_state = LaneState::STATE_IDLE;
 		int m_repeatCount = 0;
 
 		int m_activeSegment = 0;
-		int m_activeRepeats = 0;
 		double m_drift = 0.;
 };
 
@@ -243,6 +252,7 @@ struct TimelineProcessor {
 	);
 
 	void process();
+	void reset();
 
 	private:
 		ScriptTimeline* m_scriptTimeline;

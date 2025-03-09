@@ -226,7 +226,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 
 	if (scriptDuration->samples) {
 		float activeSampleRate = m_sampleRateReader->getSampleRate();
-		if ((timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
+		if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
 			double refactoredDuration = (double) (*scriptDuration->samples.get()) * activeSampleRate / (*timeScale->sampleRate.get());
 			duration = round(refactoredDuration);
 			drift = refactoredDuration - duration;
@@ -471,7 +471,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, vector<string> location) {
 	// Check if it's a ref input or a full one
 	if (scriptInput->ref.length() == 0) {
-		return pair<int, int>(scriptInput->index, scriptInput->channel ? *scriptInput->channel.get() : 1);
+		return pair<int, int>(scriptInput->index - 1, scriptInput->channel ? *scriptInput->channel.get() - 1 : 0);
 	} else {
 		int count = 0;
 		for (vector<ScriptInput>::iterator it = context->script->inputs.begin(); it != context->script->inputs.end(); it++) {
@@ -492,7 +492,7 @@ pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* co
 pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, vector<string> location) {
 	// Check if it's a ref output or a full one
 	if (scriptOutput->ref.length() == 0) {
-		return pair<int, int>(scriptOutput->index, scriptOutput->channel ? *scriptOutput->channel.get() : 1);
+		return pair<int, int>(scriptOutput->index - 1, scriptOutput->channel ? *scriptOutput->channel.get() - 1 : 0);
 	} else {
 		int count = 0;
 		for (vector<ScriptOutput>::iterator it = context->script->outputs.begin(); it != context->script->outputs.end(); it++) {

@@ -64,6 +64,33 @@
 	"timelines": [
 		{
 			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"segment": {
+								"duration": {
+									"samples": 183
+								},
+								"actions": [
+									{
+										"timing": "glide",
+										"start-value": {
+											"voltage": -5.0
+										},
+										"end-value": {
+											"voltage": 5.0
+										},
+										"output": {
+											"index": 7
+										}
+									}
+								]
+							}
+						}
+					]
+				}
 			]
 		}
 	]}

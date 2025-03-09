@@ -36,6 +36,10 @@ struct TimeSeqCore : VariableHandler {
 	Status getStatus();
 	bool canProcess();
 
+	void start();
+	void pause();
+	void reset();
+
 	void process();
 
 	float getVariable(std::string name) override;

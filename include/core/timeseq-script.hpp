@@ -183,6 +183,7 @@ struct ScriptTimeScale {
 
 struct ScriptTimeline {
 	std::unique_ptr<ScriptTimeScale> timeScale;
+	bool loopLock;
 	std::vector<ScriptLane> lanes;
 };
 
