@@ -71,15 +71,13 @@ enum ValidationErrorCode {
 	Lane_SegmentsMissing = 307,
 	Lane_SegmentObject = 308,
 
-	SegmentEntity_SegmentObject = 400,
-	SegmentEntity_SegmentBlockObject = 401,
-	SegmentEntity_NoSegmentOrSegmentBlock = 402,
-	SegmentEntity_EitherSegmentOrSegmentBlock = 403,
-
 	Segment_RefOrInstance = 500,
-	Segment_DurationNumber = 501,
+	Segment_DurationObject = 501,
 	Segment_ActionsArray = 502,
 	Segment_ActionObject = 503,
+	Segment_SegmentBlockString = 504,
+	Segment_SegmentBlockLength = 505,
+	Segment_BlockOrSegment = 506,
 
 	SegmentBlock_RefOrInstance = 600,
 	SegmentBlock_SegmentsArray = 601,

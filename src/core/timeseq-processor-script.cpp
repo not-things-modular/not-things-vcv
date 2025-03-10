@@ -123,26 +123,26 @@ shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorS
 
 shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, vector<string> location) {
 	location.push_back("segments");
-	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegmentEntities(context, &scriptLane->segments, timeScale, location);
+	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(context, &scriptLane->segments, timeScale, location, vector<string>());
 	location.pop_back();
 
 	return shared_ptr<LaneProcessor>(new LaneProcessor(scriptLane, segmentProcessors));
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentEntities(ProcessorScriptParseContext* context, vector<ScriptSegmentEntity>* scriptSegmentEntities, ScriptTimeScale* timeScale, vector<string> location) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(ProcessorScriptParseContext* context, vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
 	int count = 0;
 	vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 
-	for (vector<ScriptSegmentEntity>::iterator it = scriptSegmentEntities->begin(); it != scriptSegmentEntities->end(); it++) {
+	for (vector<ScriptSegment>::iterator it = scriptSegments->begin(); it != scriptSegments->end(); it++) {
 		location.push_back(to_string(count));
-		ScriptSegmentEntity& entity = *it;
-		if (entity.segment) {
+		ScriptSegment& segment = *it;
+		if (!segment.segmentBlock) {
 			location.push_back("segment");
-			segmentProcessors.push_back(parseSegment(context, entity.segment.get(), timeScale, location));
+			segmentProcessors.push_back(parseSegment(context, &segment, timeScale, location, segmentStack));
 			location.pop_back();
-		} else if (entity.segmentBlock) {
+		} else {
 			location.push_back("segment-block");
-			vector<shared_ptr<SegmentProcessor>> blockSegmentProcessors = parseSegmentBlock(context, entity.segmentBlock.get(), timeScale, location);
+			vector<shared_ptr<SegmentProcessor>> blockSegmentProcessors = parseSegmentBlock(context, segment.segmentBlock.get(), timeScale, location, segmentStack);
 			segmentProcessors.insert(segmentProcessors.end(), blockSegmentProcessors.begin(), blockSegmentProcessors.end());
 			location.pop_back();
 		}
@@ -153,30 +153,37 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentEntities
 	return segmentProcessors;
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<string> location) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
 		location.push_back("segments");
-		vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegmentEntities(context, &scriptSegmentBlock->segments, timeScale, location);
+		vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(context, &scriptSegmentBlock->segments, timeScale, location, segmentStack);
 		location.pop_back();
 		return segmentProcessors;
 	} else {
-		int count = 0;
-		for (vector<ScriptSegmentBlock>::iterator it = context->script->segmentBlocks.begin(); it != context->script->segmentBlocks.end(); it++) {
-			if (scriptSegmentBlock->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "script",  "segment-blocks", to_string(count) };
-				return parseSegmentBlock(context, &(*it), timeScale, refLocation);
+		if (find(segmentStack.begin(), segmentStack.end(), string("sb-") + scriptSegmentBlock->ref) == segmentStack.end()) {
+			int count = 0;
+			for (vector<ScriptSegmentBlock>::iterator it = context->script->segmentBlocks.begin(); it != context->script->segmentBlocks.end(); it++) {
+				if (scriptSegmentBlock->ref.compare(it->id) == 0) {
+					vector<string> refLocation = { "script",  "segment-blocks", to_string(count) };
+					segmentStack.push_back(string("sb-") + scriptSegmentBlock->ref);
+					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(context, &(*it), timeScale, refLocation, segmentStack);
+					segmentStack.pop_back();
+					return segments;
+				}
+				count++;
 			}
-			count++;
-		}
 
-		// Couldn't find the referenced input...
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
+			// Couldn't find the referenced input...
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment-block with the id '", scriptSegmentBlock->ref.c_str(), "'. Circular references can not be resolved.");
+		}
 		return vector<shared_ptr<SegmentProcessor>>();
 	}
 }
 
-shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location) {
+shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
 	// Check if it's a ref segment object or a full one
 	if (scriptSegment->ref.length() == 0) {
 		location.push_back("duration");
@@ -205,17 +212,24 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScript
 
 		return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, glideActions));
 	} else {
-		int count = 0;
-		for (vector<ScriptSegment>::iterator it = context->script->segments.begin(); it != context->script->segments.end(); it++) {
-			if (scriptSegment->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "script",  "segments", to_string(count) };
-				return parseSegment(context, &(*it), timeScale, refLocation);
+		if (find(segmentStack.begin(), segmentStack.end(), string("s-") + scriptSegment->ref) == segmentStack.end()) {
+			int count = 0;
+			for (vector<ScriptSegment>::iterator it = context->script->segments.begin(); it != context->script->segments.end(); it++) {
+				if (scriptSegment->ref.compare(it->id) == 0) {
+					vector<string> refLocation = { "script",  "segments", to_string(count) };
+					segmentStack.push_back(string("s-") + scriptSegment->ref);
+					shared_ptr<SegmentProcessor> segment = parseSegment(context, &(*it), timeScale, refLocation, segmentStack);
+					segmentStack.pop_back();
+					return segment;
+				}
+				count++;
 			}
-			count++;
-		}
 
-		// Couldn't find the referenced input...
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
+			// Couldn't find the referenced input...
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment with the id '", scriptSegment->ref.c_str(), "'. Circular references can not be resolved.");
+		}
 		return shared_ptr<SegmentProcessor>();
 	}
 }

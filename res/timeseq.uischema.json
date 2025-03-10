@@ -7,45 +7,19 @@
 		"ui:readonly": true
 	},
 	"global-actions": {
-		"xui:title": "Global script actions",
 		"items": {
-			"start-value": {
-				"oneOf": [
-					{
-						
-					},
-					{
-						"ui:title": "inline"
-					}
-				]
-			},
-			"end-value": {
-				"oneOf": [
-					{
-						
-					},
-					{
-						"ui:title": "inline"
-					}
-				]
-			},
 			"set-value": {
-				"output": {
-					"oneOf": [
-						{
-							
-						},
-						{
-							"ui:title": "by ref"
-						}
-					]
-				}
+				"ui:label": false
+			},
+			"set-variable": {
+				"ui:label": false
+			},
+			"set-polyphony": {
+				"ui:label": false
+			},
+			"trigger": {
+				"ui:label": false
 			}
-		}
-	},
-	"timelines": {
-		"items": {
-			"ui:title": "koekoek"
 		}
 	}
 }

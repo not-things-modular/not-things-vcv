@@ -69,25 +69,23 @@
 					"loop": true,
 					"segments": [
 						{
-							"segment": {
-								"duration": {
-									"millis": 7.644500164356754
-								},
-								"actions": [
-									{
-										"timing": "glide",
-										"start-value": {
-											"voltage": -5.0
-										},
-										"end-value": {
-											"voltage": 5.0
-										},
-										"output": {
-											"index": 7
-										}
+							"duration": {
+								"millis": 7.644500164356754
+							},
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": {
+										"voltage": -5.0
+									},
+									"end-value": {
+										"voltage": 5.0
+									},
+									"output": {
+										"index": 7
 									}
-								]
-							}
+								}
+							]
 						}
 					]
 				},
@@ -98,35 +96,33 @@
 					"stop-trigger": "stop-it",
 					"segments": [
 						{
-							"segment": {
-								"duration": {
-									"samples": 1
-								},
-								"actions": [
-									{
-										"timing": "start",
-										"set-value": {
-											"value": {
-												"rand": {
-													"lower": {
-														"input": {
-															"index": 1
-														}
-													},
-													"upper": {
-														"input": {
-															"index": 2
-														}
+							"duration": {
+								"samples": 1
+							},
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"value": {
+											"rand": {
+												"lower": {
+													"input": {
+														"index": 1
+													}
+												},
+												"upper": {
+													"input": {
+														"index": 2
 													}
 												}
-											},
-											"output": {
-												"index": 6
 											}
+										},
+										"output": {
+											"index": 6
 										}
 									}
-								]
-							}
+								}
+							]
 						}
 					]
 				}

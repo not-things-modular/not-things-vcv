@@ -15,7 +15,6 @@ struct JsonScriptParser {
 	ScriptTimeline parseTimeline(const json& timelineJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptTimeScale parseTimeScale(const json& timeScaleJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptLane parseLane(const json& laneJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	ScriptSegmentEntity parseSegmentEntity(const json& segmentEntityJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptSegment parseSegment(const json& segmentJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptSegmentBlock parseSegmentBlock(const json& segmentBlockJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptDuration parseDuration(const json& durationJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);

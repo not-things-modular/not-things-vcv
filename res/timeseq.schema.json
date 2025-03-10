@@ -219,6 +219,7 @@
 		"set-value": {
 			"type": "object",
 			"title": "set-value",
+			"ui:label": "false",
 			"properties": {
 				"output": {
 					"oneOf": [
@@ -359,47 +360,40 @@
 		"duration": {
 			"type": "object",
 			"title": "duration",
-			"properties": {
-				"samples": {
-					"type": "integer",
-					"exclusiveMinimum": 0
-				},
-				"millis": {
-					"type": "number",
-					"exclusiveMinimum": 0
-				},
-				"bars": {
-					"type": "integer",
-					"exclusiveMinimum": 0
-				},
-				"beats": {
-					"type": "number",
-					"exclusiveMinimum": 0
-				}
-			},
 			"oneOf": [
 				{
-					"required": [ "samples" ],
-					"not": { "anyOf": [
-						{ "required": [ "millis" ] },
-						{ "required": [ "bars" ] },
-						{ "required": [ "beats" ] }
-					]}
+					"title": "samples",
+					"properties": {
+						"samples": {
+							"type": "integer",
+							"exclusiveMinimum": 0
+						}
+					},
+					"required": [ "samples" ]
 				},
 				{
-					"required": [ "millis" ],
-					"not": { "anyOf": [
-						{ "required": [ "samples" ] },
-						{ "required": [ "bars" ] },
-						{ "required": [ "beats" ] }
-					]}
+					"title": "millis",
+					"properties": {
+						"millis": {
+							"type": "number",
+							"exclusiveMinimum": 0
+						}
+					},
+					"required": [ "millis" ]
 				},
 				{
-					"required": [ "beats" ],
-					"not": { "anyOf": [
-						{ "required": [ "millis" ] },
-						{ "required": [ "samples" ] }
-					]}
+					"title": "beats",
+					"properties": {
+						"bars": {
+							"type": "integer",
+							"exclusiveMinimum": 0
+						},
+						"beats": {
+							"type": "number",
+							"exclusiveMinimum": 0
+						}
+					},
+					"required": [ "beats" ]
 				}
 			]
 		},
@@ -429,22 +423,32 @@
 					"type": "array",
 					"items": {
 						"type": "object",
-						"properties": {
-							"segment": {
-								"oneOf": [
-									{ "$ref": "#/definitions/ref-base" },
-									{ "$ref": "#/definitions/segment" }
-								]
+						"oneOf": [
+							{
+								"title": "segment",
+								"properties": {
+									"segment": {
+										"oneOf": [
+											{ "$ref": "#/definitions/ref-base" },
+											{ "$ref": "#/definitions/segment" }
+										]
+									}
+								},
+								"required": [ "segment" ]
 							},
-							"segment-block": {
-								"oneOf": [
-									{ "$ref": "#/definitions/ref-base" },
-									{ "$ref": "#/definitions/segment-block" }
-								]
+							{
+								"title": "segment-block",
+								"properties": {
+									"segment-block": {
+										"oneOf": [
+											{ "$ref": "#/definitions/ref-base" },
+											{ "$ref": "#/definitions/segment-block" }
+										]
+									}
+								},
+								"required": [ "segment-block" ]
 							}
-						},
-						"minProperties": 1,
-						"maxProperties": 1
+						]
 					}
 				}
 			},
@@ -475,26 +479,33 @@
 				"segments": {
 					"type": "array",
 					"items": {
-						"type": "array",
-						"items": {
-							"type": "object",
-							"properties": {
-								"segment": {
-									"oneOf": [
-										{ "$ref": "#/definitions/ref-base" },
-										{ "$ref": "#/definitions/segment" }
-									]
+						"type": "object",
+						"oneOf": [
+							{
+								"title": "segment",
+								"properties": {
+									"segment": {
+										"oneOf": [
+											{ "$ref": "#/definitions/ref-base" },
+											{ "$ref": "#/definitions/segment" }
+										]
+									}
 								},
-								"segment-block": {
-									"oneOf": [
-										{ "$ref": "#/definitions/ref-base" },
-										{ "$ref": "#/definitions/segment-block" }
-									]
-								}
+								"required": [ "segment" ]
 							},
-							"minProperties": 1,
-							"maxProperties": 1
-						}
+							{
+								"title": "segment-block",
+								"properties": {
+									"segment-block": {
+										"oneOf": [
+											{ "$ref": "#/definitions/ref-base" },
+											{ "$ref": "#/definitions/segment-block" }
+										]
+									}
+								},
+								"required": [ "segment-block" ]
+							}
+						]
 					}
 				}
 			},

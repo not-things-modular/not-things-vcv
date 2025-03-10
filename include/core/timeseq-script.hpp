@@ -155,15 +155,11 @@ struct ScriptDuration {
 struct ScriptSegment : ScriptRefObject {
 	ScriptDuration duration;
 	std::vector<ScriptAction> actions;
-};
-
-struct ScriptSegmentEntity {
-	std::unique_ptr<ScriptSegment> segment;
 	std::unique_ptr<ScriptSegmentBlock> segmentBlock;
 };
 
 struct ScriptSegmentBlock : ScriptRefObject {
-	std::vector<ScriptSegmentEntity> segments;
+	std::vector<ScriptSegment> segments;
 };
 
 struct ScriptLane {
@@ -172,7 +168,7 @@ struct ScriptLane {
 	int repeat;
 	std::string startTrigger;
 	std::string stopTrigger;
-	std::vector<ScriptSegmentEntity> segments;
+	std::vector<ScriptSegment> segments;
 };
 
 struct ScriptTimeScale {
