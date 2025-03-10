@@ -4,60 +4,38 @@
 	"global-actions": [
 		{
 			"timing": "start",
-			"set-polyphony": {
-				"index": 1,
-				"channels": 2
-			}
+			"set-polyphony": { "index": 1, "channels": 2 }
 		},
 		{
 			"timing": "start",
-			"set-polyphony": {
-				"index": 2,
-				"channels": 2
+			"set-polyphony": { "index": 2, "channels": 2 }
+		},
+		{
+			"timing": "start",
+			"set-value": {
+				"output": { "index": 1 },
+				"value": { "voltage": 1.01 }
 			}
 		},
 		{
 			"timing": "start",
 			"set-value": {
-				"output": {
-					"index": 1
-				},
-				"value": {
-					"voltage": 1.01
-				}
-			}
-		},
-		{
-			"timing": "start",
-			"set-value": {
-				"output": {
-					"index": 2
-				},
-				"value": {
-					"note": "E3+"
-				}
+				"output": { "index": 2 },
+				"value": { "note": "E3+" }
 			}
 		},
 		{
 			"timing": "end",
 			"set-value": {
-				"output": {
-					"index": 1
-				},
-				"value": {
-					"voltage": -1.01
-				}
+				"output": { "index": 1 },
+				"value": { "voltage": -1.01 }
 			}
 		},
 		{
 			"timing": "start",
 			"set-value": {
-				"output": {
-					"index": 2
-				},
-				"value": {
-					"note": "F5-"
-				}
+				"output": { "index": 2 },
+				"value": { "note": "F5-" }
 			}
 		}
 	],
@@ -69,21 +47,13 @@
 					"loop": true,
 					"segments": [
 						{
-							"duration": {
-								"millis": 7.644500164356754
-							},
+							"duration": { "millis": 7.644500164356754 },
 							"actions": [
 								{
 									"timing": "glide",
-									"start-value": {
-										"voltage": -5.0
-									},
-									"end-value": {
-										"voltage": 5.0
-									},
-									"output": {
-										"index": 7
-									}
+									"start-value": { "voltage": -5.0 },
+									"end-value": { "voltage": 5.0 },
+									"output": { "index": 7 }
 								}
 							]
 						}
@@ -96,30 +66,18 @@
 					"stop-trigger": "stop-it",
 					"segments": [
 						{
-							"duration": {
-								"samples": 1
-							},
+							"duration": { "samples": 1 },
 							"actions": [
 								{
 									"timing": "start",
 									"set-value": {
 										"value": {
 											"rand": {
-												"lower": {
-													"input": {
-														"index": 1
-													}
-												},
-												"upper": {
-													"input": {
-														"index": 2
-													}
-												}
+												"lower": { "input": { "index": 1 } },
+												"upper": { "input": { "index": 2 } }
 											}
 										},
-										"output": {
-											"index": 6
-										}
+										"output": { "index": 6 }
 									}
 								}
 							]
@@ -132,15 +90,11 @@
 	"input-triggers": [
 		{
 			"id": "do-it",
-			"input": {
-				"index": 8
-			}
+			"input": { "index": 8 }
 		},
 		{
 			"id": "stop-it",
-			"input": {
-				"index": 7
-			}
+			"input": { "index": 7 }
 		}
 	]
 }
