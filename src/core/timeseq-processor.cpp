@@ -81,29 +81,76 @@ double RandValueProcessor::processValue() {
 	return distribution(m_generator);
 }
 
-ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler) : m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
+IfProcessor::IfProcessor(ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
 
-void ActionSetValueProcessor::process() {
+bool IfProcessor::process() {
+	switch (m_scriptIf->ifOperator) {
+		case ScriptIf::IfOperator::EQ: {
+			double value1 = m_values.first->process();
+			double value2 = m_values.first->process();
+			if (m_scriptIf->tolerance) {
+				return std::fabs(value1 - value2) <= *m_scriptIf->tolerance.get();
+			} else {
+				return value1 == value2;
+			}
+		}
+		case ScriptIf::IfOperator::NE: {
+			double value1 = m_values.first->process();
+			double value2 = m_values.first->process();
+			if (m_scriptIf->tolerance) {
+				return std::fabs(value1 - value2) > *m_scriptIf->tolerance.get();
+			} else {
+				return value1 != value2;
+			}
+		}
+		case ScriptIf::IfOperator::LT:
+			return m_values.first->process() < m_values.second->process();
+		case ScriptIf::IfOperator::LTE:
+			return m_values.first->process() <= m_values.second->process();
+		case ScriptIf::IfOperator::GT:
+			return m_values.first->process() > m_values.second->process();
+		case ScriptIf::IfOperator::GTE:
+			return m_values.first->process() >= m_values.second->process();
+		case ScriptIf::IfOperator::AND:
+			return m_ifs.first->process() && m_ifs.second->process();
+		case ScriptIf::IfOperator::OR:
+			return m_ifs.first->process() || m_ifs.second->process();
+	}
+
+	return false;
+}
+
+ActionProcessor::ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
+
+void ActionProcessor::process() {
+	if ((!m_ifProcessor) || (m_ifProcessor->process())) {
+		processAction();
+	}
+}
+
+ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
+
+void ActionSetValueProcessor::processAction() {
 	float value = m_value->process();
 	m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
 }
 
-ActionSetVariableProcessor::ActionSetVariableProcessor(shared_ptr<ValueProcessor> value, string name, VariableHandler* variableHandler) : m_value(value), m_name(name), m_variableHandler(variableHandler) {}
+ActionSetVariableProcessor::ActionSetVariableProcessor(shared_ptr<ValueProcessor> value, string name, VariableHandler* variableHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_name(name), m_variableHandler(variableHandler) {}
 
-void ActionSetVariableProcessor::process() {
+void ActionSetVariableProcessor::processAction() {
 	float value = m_value->process();
 	m_variableHandler->setVariable(m_name, value);
 }
 
-ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler) : m_outputPort(outputPort), m_channelCount(channelCount), m_portHandler(portHandler) {}
+ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_outputPort(outputPort), m_channelCount(channelCount), m_portHandler(portHandler) {}
 
-void ActionSetPolyphonyProcessor::process() {
+void ActionSetPolyphonyProcessor::processAction() {
 	m_portHandler->setOutputPortChannels(m_outputPort, m_channelCount);
 }
 
-ActionTriggerProcessor::ActionTriggerProcessor(string trigger, TriggerHandler* triggerHandler) : m_trigger(trigger), m_triggerHandler(triggerHandler) {}
+ActionTriggerProcessor::ActionTriggerProcessor(string trigger, TriggerHandler* triggerHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_trigger(trigger), m_triggerHandler(triggerHandler) {}
 
-void ActionTriggerProcessor::process() {
+void ActionTriggerProcessor::processAction() {
 	m_triggerHandler->setTrigger(m_trigger);
 }
 
@@ -334,7 +381,7 @@ void TimelineProcessor::process() {
 	bool checkLoop = false;
 
 	// Check if any lane start or stop triggers were fired
-	std::vector<std::string>& triggers = m_triggerHandler->getTriggers();
+	vector<string>& triggers = m_triggerHandler->getTriggers();
 	if (triggers.size() > 0) {
 		for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
 			it->get()->processTriggers(triggers);

@@ -31,6 +31,7 @@ struct PortHandler;
 struct VariableHandler;
 struct TriggerHandler;
 struct SampleRateReader;
+struct ScriptIf;
 
 struct CalcProcessor {
 	CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value);
@@ -105,14 +106,31 @@ struct RandValueProcessor : ValueProcessor {
 		std::minstd_rand m_generator;
 };
 
+struct IfProcessor {
+	IfProcessor(ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> ifs);
+
+	bool process();
+
+	private:
+		ScriptIf* m_scriptIf;
+		std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> m_values;
+		std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> m_ifs;
+};
+
 struct ActionProcessor {
-	virtual void process() = 0;
+	ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor);
+
+	void process();
+	virtual void processAction() = 0;
+
+	private:
+		std::shared_ptr<IfProcessor> m_ifProcessor;
 };
 
 struct ActionSetValueProcessor : ActionProcessor {
-	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler);
+	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
-	void process() override;
+	void processAction() override;
 
 	private:
 		std::shared_ptr<ValueProcessor> m_value;
@@ -122,9 +140,9 @@ struct ActionSetValueProcessor : ActionProcessor {
 };
 
 struct ActionSetVariableProcessor : ActionProcessor {
-	ActionSetVariableProcessor(std::shared_ptr<ValueProcessor> value, std::string name, VariableHandler* variableHandler);
+	ActionSetVariableProcessor(std::shared_ptr<ValueProcessor> value, std::string name, VariableHandler* variableHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
-	void process() override;
+	void processAction() override;
 
 	private:
 		std::shared_ptr<ValueProcessor> m_value;
@@ -133,9 +151,9 @@ struct ActionSetVariableProcessor : ActionProcessor {
 };
 
 struct ActionSetPolyphonyProcessor : ActionProcessor {
-	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler);
+	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
-	void process() override;
+	void processAction() override;
 
 	private:
 		int m_outputPort;
@@ -144,9 +162,9 @@ struct ActionSetPolyphonyProcessor : ActionProcessor {
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
-	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler);
+	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
-	void process() override;
+	void processAction() override;
 
 	private:
 		std::string m_trigger;
@@ -316,10 +334,10 @@ struct ProcessorScriptParser {
 	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionGlideProcessor> parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
-	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
-	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
-	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
-	std::shared_ptr<ActionProcessor> parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::string> location, std::vector<std::string> valueStack);
 	std::shared_ptr<ValueProcessor> parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
@@ -327,6 +345,7 @@ struct ProcessorScriptParser {
 	std::shared_ptr<ValueProcessor> parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location, std::vector<std::string> valueStack);
 	std::shared_ptr<CalcProcessor> parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, std::vector<std::string> location, std::vector<std::string> valueStack);
+	std::shared_ptr<IfProcessor> parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, std::vector<std::string> location);
 
 	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string> location);
 	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);

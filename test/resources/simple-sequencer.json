@@ -12,6 +12,10 @@
 		},
 		{
 			"timing": "start",
+			"set-polyphony": { "index": 3, "channels": 3 }
+		},
+		{
+			"timing": "start",
 			"set-value": {
 				"output": { "index": 1 },
 				"value": { "voltage": 1.01 }
@@ -83,6 +87,108 @@
 							]
 						}
 					]
+				},
+				{
+					"auto-start": false,
+					"loop": false,
+					"start-trigger": "bernoulli",
+					"segments": [
+						{
+							"duration": { "millis": 500 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-variable": {
+										"name": "bernoulli-gate",
+										"value": {
+											"rand": {
+												"lower": { "voltage": -1.0 },
+												"upper": { "voltage": 1.0 }
+											}
+										}
+									}
+								},
+								{
+									"timing": "start",
+									"if": {
+										"lt": [
+											{ "variable": "bernoulli-gate" },
+											{ "voltage": 0.0 }
+										]
+									},
+									"set-value": {
+										"output": { "index": 3, "channel": 1 },
+										"value": { "voltage": 10 }
+									}
+								},
+								{
+									"timing": "start",
+									"if": {
+										"lt": [
+											{ "variable": "bernoulli-gate" },
+											{ "voltage": 0.0 }
+										]
+									},
+									"set-value": {
+										"output": { "index": 3, "channel": 2 },
+										"value": { "voltage": 0 }
+									}
+								},
+								{
+									"timing": "start",
+									"if": {
+										"gte": [
+											{ "variable": "bernoulli-gate" },
+											{ "voltage": 0.0 }
+										]
+									},
+									"set-value": {
+										"output": { "index": 3, "channel": 1 },
+										"value": { "voltage": 0 }
+									}
+								},
+								{
+									"timing": "start",
+									"if": {
+										"gte": [
+											{ "variable": "bernoulli-gate" },
+											{ "voltage": 0.0 }
+										]
+									},
+									"set-value": {
+										"output": { "index": 3, "channel": 2 },
+										"value": { "voltage": 10 }
+									}
+								},
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 3, "channel": 3 },
+										"value": { "variable": "bernoulli-gate" }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "millis": 500 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 3, "channel": 1 },
+										"value": { "voltage": 0 }
+									}
+								},
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 3, "channel": 2 },
+										"value": { "voltage": 0 }
+									}
+								}
+							]
+						}
+					]
 				}
 			]
 		}
@@ -95,6 +201,10 @@
 		{
 			"id": "stop-it",
 			"input": { "index": 7 }
+		},
+		{
+			"id": "bernoulli",
+			"input": { "index": 6 }
 		}
 	]
 }

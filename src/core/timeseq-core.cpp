@@ -29,14 +29,16 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 	std::vector<ValidationError> validationErrors;
 	
 	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, &validationErrors);
-	std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
+	if (script) {
+		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
 
-	if (validationErrors.size() == 0) {
-		m_script = script;
-		m_processor = processor;
-		
-		m_processor->reset();
-		m_status = Status::IDLE;
+		if (validationErrors.size() == 0) {
+			m_script = script;
+			m_processor = processor;
+			
+			m_processor->reset();
+			m_status = Status::IDLE;
+		}
 	}
 
 	return validationErrors;

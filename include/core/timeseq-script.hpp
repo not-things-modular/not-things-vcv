@@ -57,12 +57,7 @@ struct ScriptRand {
 };
 
 struct ScriptCalc : ScriptRefObject {
-	enum CalcOperation {
-		ADD,
-		SUB,
-		DIV,
-		MULT
-	};
+	enum CalcOperation { ADD, SUB, DIV, MULT };
 
 	CalcOperation operation;
 	std::unique_ptr<ScriptValue> value;
@@ -126,23 +121,18 @@ struct ScriptSetPolyphony {
 };
 
 struct ScriptIf {
-	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> eq;
-	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> ne;
-	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> lt;
-	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> lte;
-	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> gt;
-	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> gte;
+	enum IfOperator {EQ, NE, LT, LTE, GT, GTE, AND, OR };
 
-	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> andIf;
-	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> orIf;
+	IfOperator ifOperator;
+	
+	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> values;
+	std::unique_ptr<float> tolerance;
+
+	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> ifs;
 };
 
 struct ScriptAction : ScriptRefObject {
-	enum ActionTiming {
-		START,
-		END,
-		GLIDE
-	};
+	enum ActionTiming { START, END, GLIDE };
 
 	ActionTiming timing;
 	std::unique_ptr<ScriptIf> condition;

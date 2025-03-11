@@ -671,7 +671,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 	populateRef(action, actionJson, allowRefs, validationErrors, location);
 	if (action.ref.length() > 0) {
-		if (hasOneOf(actionJson, { "timing", "set-value", "set-variable", "set-polyphony", "trigger", "start-value", "end-value" })) {
+		if (hasOneOf(actionJson, { "timing", "set-value", "set-variable", "set-polyphony", "trigger", "start-value", "end-value", "if" })) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
 		}
 	} else {
@@ -786,6 +786,18 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			}
 		}
 
+		json::const_iterator ifCondition = actionJson.find("if");
+		if (ifCondition != actionJson.end()) {
+			if (ifCondition->is_object()) {
+				location.push_back("if");
+				ScriptIf *scriptIf = new ScriptIf(parseIf(*ifCondition, validationErrors, location));
+				action.condition.reset(scriptIf);
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_IfObject, "'if' must be an object.");
+			}
+		}
+
 		if (action.timing == ScriptAction::ActionTiming::GLIDE) {
 			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.trigger.size() > 0)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony' and 'trigger' can not be used in combination with 'GLIDE' timing.");
@@ -814,6 +826,172 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 	}
 
 	return action;
+}
+
+ScriptIf JsonScriptParser::parseIf(const json& ifJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	ScriptIf scriptIf;
+	int operatorCount = 0;
+	
+	json::const_iterator eqValue = ifJson.find("eq");
+	if (eqValue != ifJson.end()) {
+		operatorCount++;
+		if (eqValue->is_array()) {
+			location.push_back("eq");
+			scriptIf.ifOperator = ScriptIf::IfOperator::EQ;
+			scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("eq", *eqValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_EqArray, "'eq' must be an array.");
+		}
+	}
+
+	json::const_iterator neValue = ifJson.find("ne");
+	if (neValue != ifJson.end()) {
+		operatorCount++;
+		if (neValue->is_array()) {
+			location.push_back("ne");
+			scriptIf.ifOperator = ScriptIf::IfOperator::NE;
+			scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("ne", *neValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_NeArray, "'ne' must be an array.");
+		}
+	}
+
+	json::const_iterator ltValue = ifJson.find("lt");
+	if (ltValue != ifJson.end()) {
+		operatorCount++;
+		if (ltValue->is_array()) {
+			location.push_back("lt");
+			scriptIf.ifOperator = ScriptIf::IfOperator::LT;
+			scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("lt", *ltValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_LtArray, "'lt' must be an array.");
+		}
+	}
+
+	json::const_iterator lteValue = ifJson.find("lte");
+	if (lteValue != ifJson.end()) {
+		operatorCount++;
+		if (lteValue->is_array()) {
+			location.push_back("lte");
+			scriptIf.ifOperator = ScriptIf::IfOperator::LTE;
+			scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("lte", *lteValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_LteArray, "'lte' must be an array.");
+		}
+	}
+
+	json::const_iterator gtValue = ifJson.find("gt");
+	if (gtValue != ifJson.end()) {
+		operatorCount++;
+		if (gtValue->is_array()) {
+			location.push_back("gt");
+			scriptIf.ifOperator = ScriptIf::IfOperator::GT;
+			scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("gt", *gtValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_GtArray, "'gt' must be an array.");
+		}
+	}
+
+	json::const_iterator gteValue = ifJson.find("gte");
+	if (gteValue != ifJson.end()) {
+		operatorCount++;
+		if (gteValue->is_array()) {
+			location.push_back("gte");
+			scriptIf.ifOperator = ScriptIf::IfOperator::GTE;
+			scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("gte", *gteValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_GteArray, "'gte' must be an array.");
+		}
+	}
+
+	json::const_iterator andValue = ifJson.find("and");
+	if (andValue != ifJson.end()) {
+		operatorCount++;
+		if (andValue->is_array()) {
+			location.push_back("and");
+			scriptIf.ifOperator = ScriptIf::IfOperator::AND;
+			scriptIf.ifs.reset(new std::pair<ScriptIf, ScriptIf>(parseIfIfs("and", *andValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_AndArray, "'and' must be an array.");
+		}
+	}
+
+	json::const_iterator orValue = ifJson.find("or");
+	if (orValue != ifJson.end()) {
+		operatorCount++;
+		if (orValue->is_array()) {
+			location.push_back("or");
+			scriptIf.ifOperator = ScriptIf::IfOperator::OR;
+			scriptIf.ifs.reset(new std::pair<ScriptIf, ScriptIf>(parseIfIfs("or", *orValue, validationErrors, location)));
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_OrArray, "'or' must be an array.");
+		}
+	}
+
+	json::const_iterator toleranceValue = ifJson.find("tolerance");
+	if (toleranceValue != ifJson.end()) {
+		if (toleranceValue->is_number()) {
+			if (toleranceValue->get<float>() >= 0.f) {
+				scriptIf.tolerance.reset(new float(toleranceValue->get<float>()));
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
+			}
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
+		}
+	}
+
+	if (operatorCount == 0) {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_NoOperation, "One of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is required.");
+	} else if (operatorCount > 1) {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_NoOperation, "Only one of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is allowed.");
+	}
+
+	return scriptIf;
+}
+
+std::pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(std::string ifOperator, const json& valuesJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	std::pair<ScriptValue, ScriptValue> valuePair;
+
+	std::vector<json> valueElements = valuesJson.get<std::vector<json>>();
+	if (valueElements.size() == 2) {
+		location.push_back("0");
+		valuePair.first = parseValue(valueElements[0], true, validationErrors, location);
+		location.pop_back();
+		location.push_back("1");
+		valuePair.second = parseValue(valueElements[1], true, validationErrors, location);
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator, "' array");
+	}
+
+	return valuePair;
+}
+
+std::pair<ScriptIf, ScriptIf> JsonScriptParser::parseIfIfs(std::string ifOperator, const json& ifsJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	std::pair<ScriptIf, ScriptIf> ifPair;
+
+	std::vector<json> ifElements = ifsJson.get<std::vector<json>>();
+	if (ifElements.size() == 2) {
+		location.push_back("0");
+		ifPair.first = parseIf(ifElements[0], validationErrors, location);
+		location.pop_back();
+		location.push_back("1");
+		ifPair.second = parseIf(ifElements[1], validationErrors, location);
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two if items are expected in the '", ifOperator, "' array");
+	}
+
+	return ifPair;
 }
 
 ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
