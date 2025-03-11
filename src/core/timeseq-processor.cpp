@@ -157,27 +157,31 @@ void ActionTriggerProcessor::processAction() {
 ActionGlideProcessor::ActionGlideProcessor(
 	shared_ptr<ValueProcessor> startValue,
 	shared_ptr<ValueProcessor> endValue,
+	shared_ptr<IfProcessor> ifProcessor,
 	int outputPort,
 	int outputChannel,
 	string variable,
 	PortHandler* portHandler,
 	VariableHandler* variableHandler) :
-		m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
+		m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_ifProcessor(ifProcessor), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
 
 void ActionGlideProcessor::start(uint64_t glideLength) {
 	m_startValue = m_startValueProcessor->process();
 	m_endValue = m_endValueProcessor->process();
+	m_if = (!m_ifProcessor) || m_ifProcessor->process();
 
 	m_valueDelta = m_endValue - m_startValue;
 	m_durationInverse = 1. / glideLength;
 }
 
 void ActionGlideProcessor::process(uint64_t glidePosition) {
-	double value = m_startValue + (m_valueDelta * glidePosition * m_durationInverse);
-	if (m_variable.length() > 0) {
+	if (m_if) {
+		double value = m_startValue + (m_valueDelta * glidePosition * m_durationInverse);
+		if (m_variable.length() > 0) {
 
-	} else {
-		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
+		} else {
+			m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
+		}
 	}
 }
 

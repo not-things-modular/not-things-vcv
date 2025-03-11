@@ -322,6 +322,14 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptPa
 }
 
 shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+	shared_ptr<IfProcessor> ifProcessor;
+
+	if (scriptAction->condition) {
+		location.push_back("if");
+		ifProcessor = parseIf(context, scriptAction->condition.get(), location);
+		location.pop_back();
+	}
+
 	location.push_back("start-value");
 	shared_ptr<ValueProcessor> startValueProcessor = parseValue(context, &(*scriptAction->startValue.get()), location, vector<string>());
 	location.pop_back();
@@ -339,7 +347,7 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(Process
 		outputChannel = output.second;
 	}
 
-	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(startValueProcessor, endValueProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
+	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {

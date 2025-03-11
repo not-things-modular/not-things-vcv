@@ -54,10 +54,27 @@
 							"duration": { "hz": 130.815 },
 							"actions": [
 								{
+									"if": {
+										"gte": [
+											{ "variable": "bernoulli-gate" },
+											{ "voltage": 0 }
+										]
+									},
 									"timing": "glide",
 									"start-value": { "voltage": -5.0 },
 									"end-value": { "voltage": 5.0 },
 									"output": { "index": 7 }
+								},
+								{
+									"if": {
+										"lt": [
+											{ "variable": "bernoulli-gate" },
+											{ "voltage": 0 }
+										]
+									},
+									"timing": "start",
+									"set-value": { "value": { "voltage": 0 }, "output": { "index": 7 } }
+									
 								}
 							]
 						}

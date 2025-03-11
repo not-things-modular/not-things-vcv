@@ -172,7 +172,7 @@ struct ActionTriggerProcessor : ActionProcessor {
 };
 
 struct ActionGlideProcessor {
-	ActionGlideProcessor(std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, int outputPort, int outputChannel, std::string variable, PortHandler* portHandler, VariableHandler* variableHandler);
+	ActionGlideProcessor(std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, std::string variable, PortHandler* portHandler, VariableHandler* variableHandler);
 
 	void start(uint64_t glideLength);
 	void process(uint64_t glidePosition);
@@ -180,6 +180,7 @@ struct ActionGlideProcessor {
 	private:
 		std::shared_ptr<ValueProcessor> m_startValueProcessor;
 		std::shared_ptr<ValueProcessor> m_endValueProcessor;
+		std::shared_ptr<IfProcessor> m_ifProcessor;
 		
 		PortHandler* m_portHandler;
 		VariableHandler* m_variableHandler;
@@ -188,6 +189,8 @@ struct ActionGlideProcessor {
 		int m_outputChannel;
 		std::string m_variable;
 
+		// The result of the "if" validation as captured when the glide action was started
+		bool m_if;
 		// The start and end values that were captured when the glide action was started
 		double m_startValue;
 		double m_endValue;
