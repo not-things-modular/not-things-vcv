@@ -46,7 +46,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeUnsupported, "type '", typeValue.c_str(), "' is not supported.");
 		}
 	}
-	
+
 	json::const_iterator version = scriptJson.find("version");
 	if ((version == scriptJson.end()) || (!version->is_string())) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionMissing, "version is required and must be a string.");
@@ -373,7 +373,7 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::ve
  			timeline.loopLock = (*loopLock);
  		}
  	}
-	
+
 	return timeline;
 }
 
@@ -645,10 +645,20 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 		}
 	}
 
+	json::const_iterator hz = durationJson.find("hz");
+	if (hz != durationJson.end()) {
+		if ((hz->is_number()) && (hz->get<float>() > 0)) {
+			duration.hz.reset(new float(hz->get<float>()));
+			durationCount++;
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_HzNumber, "'hz' must be a positive decimal number.");
+		}
+	}
+
 	if (durationCount == 0) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBars, "either samples, millis or beats must be used.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBars, "either samples, millis, beats or hz must be used.");
 	} else if (durationCount > 1) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBars, "only one of samples, millis or beats can be used at a time.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBars, "only one of samples, millis, beats or hz can be used at a time.");
 	} else if (duration.bars && !duration.beats) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "bars can not be used without beats.");
 	}
@@ -968,7 +978,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_OutputObject, "'output' must be an object.");
 			}
 		}
-		
+
 		json::const_iterator rand = valueJson.find("rand");
 		if (rand != valueJson.end()) {
 			if (rand->is_object()) {
@@ -1005,7 +1015,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 					location.pop_back();
 					count++;
 				}
-		
+
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");

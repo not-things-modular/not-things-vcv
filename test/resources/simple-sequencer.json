@@ -47,7 +47,7 @@
 					"loop": true,
 					"segments": [
 						{
-							"duration": { "millis": 7.644500164356754 },
+							"duration": { "hz": 130.815 },
 							"actions": [
 								{
 									"timing": "glide",

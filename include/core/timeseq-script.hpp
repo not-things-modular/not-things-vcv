@@ -125,6 +125,18 @@ struct ScriptSetPolyphony {
 	int channels;
 };
 
+struct ScriptIf {
+	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> eq;
+	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> ne;
+	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> lt;
+	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> lte;
+	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> gt;
+	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> gte;
+
+	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> andIf;
+	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> orIf;
+};
+
 struct ScriptAction : ScriptRefObject {
 	enum ActionTiming {
 		START,
@@ -133,6 +145,7 @@ struct ScriptAction : ScriptRefObject {
 	};
 
 	ActionTiming timing;
+	std::unique_ptr<ScriptIf> condition;
 
 	std::unique_ptr<ScriptSetValue> setValue;
 	std::unique_ptr<ScriptSetVariable> setVariable;
@@ -150,6 +163,7 @@ struct ScriptDuration {
 	std::unique_ptr<float> millis;
 	std::unique_ptr<uint64_t> bars;
 	std::unique_ptr<float> beats;
+	std::unique_ptr<float> hz;
 };
 
 struct ScriptSegment : ScriptRefObject {

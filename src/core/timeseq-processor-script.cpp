@@ -55,7 +55,7 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 		} else if (it->timing == ScriptAction::ActionTiming::END) {
 			endActionProcessors.push_back(parseAction(&context, &(*it), location));
 		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have 'start' or 'end' timings.");			
+			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have 'start' or 'end' timings.");
 		}
 		location.pop_back();
 		count++;
@@ -271,7 +271,11 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
 			return shared_ptr<DurationProcessor>();
 		}
-	}
+	} else if (scriptDuration->hz) {
+		double refactoredDuration = (double) m_sampleRateReader->getSampleRate() / (*scriptDuration->hz.get());
+		duration = round(refactoredDuration);
+		drift = refactoredDuration - duration;
+}
 
 	return shared_ptr<DurationProcessor>(new DurationProcessor(duration, drift));
 }
@@ -330,7 +334,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(Processor
 	location.push_back("value");
 	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setValue.get()->value, location, vector<string>());
 	location.pop_back();
-	
+
 	location.push_back("output");
 	pair<int, int> output = parseOutput(context, &scriptAction->setValue.get()->output, location);
 	location.pop_back();
@@ -346,7 +350,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Proces
 	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {	
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
 	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index, scriptSetPolyphony->channels, m_portHandler));
 }
@@ -402,7 +406,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the value with the id '", scriptValue->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 	}
-	
+
 	return shared_ptr<ValueProcessor>();
 }
 
