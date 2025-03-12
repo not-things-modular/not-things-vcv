@@ -178,9 +178,19 @@ void ActionGlideProcessor::process(uint64_t glidePosition) {
 	if (m_if) {
 		double value = m_startValue + (m_valueDelta * glidePosition * m_durationInverse);
 		if (m_variable.length() > 0) {
-
+			m_variableHandler->setVariable(m_variable, value);
 		} else {
 			m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
+		}
+	}
+}
+
+void ActionGlideProcessor::end() {
+	if (m_if) {
+		if (m_variable.length() > 0) {
+			m_variableHandler->setVariable(m_variable, m_endValue);
+		} else {
+			m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, m_endValue);
 		}
 	}
 }
@@ -242,17 +252,17 @@ DurationProcessor::DurationState SegmentProcessor::getState() {
 
 double SegmentProcessor::process(double drift) {
 	drift = m_duration->process(drift);
-	
+
 	switch (m_duration->getState()) {
 		case DurationProcessor::DurationState::STATE_START:
 			processStartActions();
-			processGlideActions(true);
+			processGlideActions(true, false);
 			break;
 		case DurationProcessor::DurationState::STATE_PROGRESS:
-			processGlideActions(false);
+			processGlideActions(false, false);
 			break;
 		case DurationProcessor::DurationState::STATE_END:
-			processGlideActions(false);
+			processGlideActions(false, true);
 			processEndActions();
 			break;
 		case DurationProcessor::DurationState::STATE_IDLE:
@@ -279,12 +289,17 @@ void SegmentProcessor::processEndActions() {
 	}
 }
 
-void SegmentProcessor::processGlideActions(bool start) {
+void SegmentProcessor::processGlideActions(bool start, bool end) {
 	for (vector<shared_ptr<ActionGlideProcessor>>::iterator it = m_glideActions.begin(); it != m_glideActions.end(); it++) {
 		if (start) {
 			(*it)->start(m_duration->getDuration());
 		}
-		(*it)->process(m_duration->getPosition());
+
+		if (end) {
+			(*it)->end();
+		} else {
+			(*it)->process(m_duration->getPosition());
+		}
 	}
 }
 

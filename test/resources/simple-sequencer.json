@@ -74,7 +74,7 @@
 									},
 									"timing": "start",
 									"set-value": { "value": { "voltage": 0 }, "output": { "index": 7 } }
-									
+
 								}
 							]
 						}
@@ -82,7 +82,7 @@
 				},
 				{
 					"auto-start": false,
-					"loop": false,
+					"loop": true,
 					"start-trigger": "do-it",
 					"stop-trigger": "stop-it",
 					"segments": [

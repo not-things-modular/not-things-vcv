@@ -27,7 +27,7 @@ TimeSeqCore::~TimeSeqCore() {
 std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 	std::istringstream scriptStream(scriptData);
 	std::vector<ValidationError> validationErrors;
-	
+
 	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, &validationErrors);
 	if (script) {
 		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
@@ -35,7 +35,7 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 		if (validationErrors.size() == 0) {
 			m_script = script;
 			m_processor = processor;
-			
+
 			m_processor->reset();
 			m_status = Status::IDLE;
 		}
@@ -57,6 +57,7 @@ void TimeSeqCore::start() {
 		m_status = Status::RUNNING;
 		m_triggers[0].clear();
 		m_triggers[1].clear();
+		m_variables.clear();
 	} else {
 		m_status = Status::EMPTY;
 	}
@@ -76,6 +77,7 @@ void TimeSeqCore::reset() {
 	}
 	m_triggers[0].clear();
 	m_triggers[1].clear();
+	m_variables.clear();
 }
 
 void TimeSeqCore::process() {
@@ -96,7 +98,14 @@ float TimeSeqCore::getVariable(std::string name) {
 }
 
 void TimeSeqCore::setVariable(std::string name, float value) {
-	m_variables[name] = value;
+	if (value == 0.f) {
+		std::unordered_map<std::string, float>::iterator it = m_variables.find(name);
+		if (it != m_variables.end()) {
+			m_variables.erase(it);
+		}
+	} else {
+		m_variables[name] = value;
+	}
 }
 
 void TimeSeqCore::setTrigger(std::string name) {

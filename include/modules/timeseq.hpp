@@ -38,6 +38,7 @@ struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader
 	~TimeSeqModule();
 
 	void process(const ProcessArgs& args) override;
+	void onPortChange(const PortChangeEvent& e) override;
 
 	float getInputPortVoltage(int index, int channel) override;
 	float getOutputPortVoltage(int index, int channel) override;
@@ -56,6 +57,12 @@ struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader
 
 		dsp::BooleanTrigger m_buttonTrigger[TriggerId::NUM_TRIGGERS];
 		dsp::TSchmittTrigger<float> m_trigTriggers[TriggerId::NUM_TRIGGERS];
+
+		std::array<std::array<float, 16>, 8> m_outputVoltages;
+		std::array<int, 8> m_outputChannels;
+
+		void resetOutputs();
+		void updateOutputs();
 };
 
 struct TimeSeqWidget : NTModuleWidget {

@@ -17,6 +17,8 @@ TimeSeqModule::TimeSeqModule() {
 
 	configButton(PARAM_RUN, "Run");
 	configButton(PARAM_RESET, "Reset");
+
+	resetOutputs();
 }
 
 TimeSeqModule::~TimeSeqModule() {
@@ -41,6 +43,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		}
 	}
 	if (resetTriggered) {
+		resetOutputs();
 		m_timeSeqCore->reset();
 	}
 	if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
@@ -48,12 +51,16 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 	}
 }
 
+void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
+	updateOutputs();
+}
+
 float TimeSeqModule::getInputPortVoltage(int index, int channel) {
 	return inputs[InputId::IN_INPUTS + index].getVoltage(channel);
 }
 
 float TimeSeqModule::getOutputPortVoltage(int index, int channel) {
-	return outputs[OutputId::OUT_OUTPUTS + index].getVoltage(channel);
+	return m_outputVoltages[index][channel];
 }
 
 float TimeSeqModule::getSampleRate() {
@@ -61,16 +68,13 @@ float TimeSeqModule::getSampleRate() {
 }
 
 void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) {
+	m_outputVoltages[index][channel] = voltage;
 	outputs[OutputId::OUT_OUTPUTS + index].setVoltage(voltage, channel);
 }
 
 void TimeSeqModule::setOutputPortChannels(int index, int channels) {
+	m_outputChannels[index] = channels;
 	outputs[OutputId::OUT_OUTPUTS + index].setChannels(channels);
-	// The setChannels will not set a connected port to 0. So if the request is to set it to 0,
-	// assign the channels property again explicitly
-	if (channels == 0) {
-		outputs[OutputId::OUT_OUTPUTS + index].channels = 0;
-	}
 }
 
 std::shared_ptr<std::string> TimeSeqModule::getScript() {
@@ -97,6 +101,24 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 		}
 
 		return errorMessage.str();
+	}
+}
+
+void TimeSeqModule::resetOutputs() {
+	m_outputVoltages.fill({ 1.f });
+	for (std::array<std::array<float, 16>, 8>::iterator it = m_outputVoltages.begin(); it != m_outputVoltages.end(); it++) {
+		it->fill(0.f);
+	}
+	m_outputChannels.fill(1);
+	updateOutputs();
+}
+
+void TimeSeqModule::updateOutputs() {
+	for (int i = 0; i < 8; i++) {
+		outputs[OutputId::OUT_OUTPUTS + i].setChannels(m_outputChannels[i]);
+		for (int j = 0; j < m_outputChannels[i]; j++) {
+			outputs[OutputId::OUT_OUTPUTS + i].setVoltage(m_outputVoltages[i][j], j);
+		}
 	}
 }
 

@@ -176,12 +176,13 @@ struct ActionGlideProcessor {
 
 	void start(uint64_t glideLength);
 	void process(uint64_t glidePosition);
+	void end();
 
 	private:
 		std::shared_ptr<ValueProcessor> m_startValueProcessor;
 		std::shared_ptr<ValueProcessor> m_endValueProcessor;
 		std::shared_ptr<IfProcessor> m_ifProcessor;
-		
+
 		PortHandler* m_portHandler;
 		VariableHandler* m_variableHandler;
 
@@ -242,7 +243,7 @@ struct SegmentProcessor {
 
 		void processStartActions();
 		void processEndActions();
-		void processGlideActions(bool start);
+		void processGlideActions(bool start, bool end);
 };
 
 struct LaneProcessor {
