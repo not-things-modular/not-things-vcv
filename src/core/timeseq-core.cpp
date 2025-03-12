@@ -10,7 +10,7 @@ extern rack::Plugin* pluginInstance;
 using namespace timeseq;
 
 
-TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader) {
+TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener) {
 	m_jsonLoader = new JsonLoader();
 	std::string schemaFile = rack::asset::plugin(pluginInstance, "res/timeseq.schema.json");
 	std::ifstream schemaStream(schemaFile);
@@ -18,7 +18,8 @@ TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateR
 
 	m_jsonLoader->setSchema(schemaJson);
 
-	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader);
+	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener);
+	m_eventListener = eventListener;
 }
 
 TimeSeqCore::~TimeSeqCore() {
@@ -42,6 +43,21 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 	}
 
 	return validationErrors;
+}
+
+void TimeSeqCore::reloadScript() {
+	if (m_script) {
+		m_processor = m_processorLoader->loadScript(m_script, nullptr);
+
+		m_processor->reset();
+		m_status = Status::IDLE;
+	}
+}
+
+void TimeSeqCore::clearScript() {
+	m_status = Status::EMPTY;
+	m_processor.reset();
+	m_script.reset();
 }
 
 TimeSeqCore::Status TimeSeqCore::getStatus() {
@@ -110,6 +126,7 @@ void TimeSeqCore::setVariable(std::string name, float value) {
 
 void TimeSeqCore::setTrigger(std::string name) {
 	m_triggers[!m_triggerIdx].push_back(name);
+	m_eventListener->triggerTriggered();
 }
 
 std::vector<std::string>& TimeSeqCore::getTriggers() {

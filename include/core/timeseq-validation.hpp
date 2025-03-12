@@ -91,6 +91,7 @@ enum ValidationErrorCode {
 	Segment_SegmentBlockString = 504,
 	Segment_SegmentBlockLength = 505,
 	Segment_BlockOrSegment = 506,
+	Segment_DisableUiBoolean = 507,
 
 	SegmentBlock_RefOrInstance = 600,
 	SegmentBlock_SegmentsArray = 601,

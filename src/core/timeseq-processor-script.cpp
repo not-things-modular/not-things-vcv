@@ -9,11 +9,12 @@ using namespace std;
 using namespace timeseq;
 
 
-ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader) {
+ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener) {
 	m_portHandler = portHandler;
 	m_variableHandler = variableHandler;
 	m_triggerHandler = triggerHandler;
 	m_sampleRateReader = sampleRateReader;
+	m_eventListener = eventListener;
 }
 
 shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<ValidationError> *validationErrors, vector<string> location) {
@@ -210,7 +211,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScript
 		}
 		location.pop_back();
 
-		return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, glideActions));
+		return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, glideActions, m_eventListener));
 	} else {
 		if (find(segmentStack.begin(), segmentStack.end(), string("s-") + scriptSegment->ref) == segmentStack.end()) {
 			int count = 0;

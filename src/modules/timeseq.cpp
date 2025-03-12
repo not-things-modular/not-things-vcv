@@ -4,7 +4,7 @@
 
 
 TimeSeqModule::TimeSeqModule() {
-	m_timeSeqCore = new timeseq::TimeSeqCore(this, this);
+	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this);
 
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {
@@ -14,9 +14,14 @@ TimeSeqModule::TimeSeqModule() {
 
 	configInput(IN_RUN, "Run Input");
 	configInput(IN_RESET, "Reset Input");
+	configInput(IN_RATE, "Rate Input");
 
 	configButton(PARAM_RUN, "Run");
 	configButton(PARAM_RESET, "Reset");
+
+	ParamQuantity* pq = configParam(PARAM_RATE, -10.f, 10.f, 1.f, "Rate");
+	pq->snapEnabled = true;
+	pq->smoothEnabled = false;
 
 	resetOutputs();
 }
@@ -25,35 +30,91 @@ TimeSeqModule::~TimeSeqModule() {
 	delete m_timeSeqCore;
 }
 
-void TimeSeqModule::process(const ProcessArgs& args) {
-	bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
-	bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
+json_t *TimeSeqModule::dataToJson() {
+	json_t *rootJ = NTModule::dataToJson();
+	if (m_script) {
+		json_object_set_new(rootJ, "ntTimeSeqScript", json_string(m_script->c_str()));
+	}
+	return rootJ;
+}
 
-	if (runTriggered) {
-		switch (m_timeSeqCore->getStatus()) {
-			case timeseq::TimeSeqCore::Status::IDLE:
-			case timeseq::TimeSeqCore::Status::PAUSED:
-				m_timeSeqCore->start();
-				break;
-			case timeseq::TimeSeqCore::Status::RUNNING:
-				m_timeSeqCore->pause();
-				break;
-			case timeseq::TimeSeqCore::Status::EMPTY:
-				break;
+void TimeSeqModule::dataFromJson(json_t *rootJ) {
+	NTModule::dataFromJson(rootJ);
+
+	json_t *ntTimeSeqScript = json_object_get(rootJ, "ntTimeSeqScript");
+	if (ntTimeSeqScript) {
+		if (json_is_string(ntTimeSeqScript)) {
+			loadScript(std::make_shared<std::string>(json_string_value(ntTimeSeqScript)));
 		}
 	}
-	if (resetTriggered) {
-		resetOutputs();
-		m_timeSeqCore->reset();
+}
+
+void TimeSeqModule::process(const ProcessArgs& args) {
+	if (m_timeSeqCore->getStatus() != timeseq::TimeSeqCore::Status::EMPTY) {
+		bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
+		bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
+
+		if (runTriggered) {
+			switch (m_timeSeqCore->getStatus()) {
+				case timeseq::TimeSeqCore::Status::IDLE:
+				case timeseq::TimeSeqCore::Status::PAUSED:
+					m_timeSeqCore->start();
+					break;
+				case timeseq::TimeSeqCore::Status::RUNNING:
+					m_timeSeqCore->pause();
+					break;
+				case timeseq::TimeSeqCore::Status::EMPTY:
+					break;
+			}
+		}
+
+		if (resetTriggered) {
+			lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
+			resetOutputs();
+			m_timeSeqCore->reset();
+		}
+
+		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+			int rate = params[TimeSeqModule::ParamId::PARAM_RATE].getValue();
+			if (rate < -1) {
+				m_rateDivision++;
+				if (m_rateDivision >= -rate) {
+					m_rateDivision = 0;
+					m_timeSeqCore->process();
+				}
+			} else if (rate > 1) {
+				m_rateDivision = 0;
+				for (int i = 0; i < rate; i++) {
+					m_timeSeqCore->process();
+				}
+			} else {
+				m_rateDivision = 0;
+				m_timeSeqCore->process();
+			}
+		}
 	}
-	if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
-		m_timeSeqCore->process();
-	}
+}
+
+void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
+	lights[LightId::LIGHT_SEGMENT_STARTED].setBrightnessSmooth(m_segmentStarted, .01f);
+	m_segmentStarted = false;
+	lights[LightId::LIGHT_TRIGGER_TRIGGERED].setBrightnessSmooth(m_triggerTriggered, .01f);
+	m_triggerTriggered = false;
+
+	lights[LightId::LIGHT_READY].setBrightnessSmooth((bool) m_script, .01f);
+	lights[LightId::LIGHT_NOT_READY].setBrightnessSmooth(!(bool) m_script, .01f);
+	lights[LightId::LIGHT_RUN].setBrightnessSmooth((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::RUNNING), .01f);
+	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f);
 }
 
 void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
 	updateOutputs();
 }
+
+void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
+	m_timeSeqCore->reloadScript();
+}
+
 
 float TimeSeqModule::getInputPortVoltage(int index, int channel) {
 	return inputs[InputId::IN_INPUTS + index].getVoltage(channel);
@@ -75,6 +136,14 @@ void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) 
 void TimeSeqModule::setOutputPortChannels(int index, int channels) {
 	m_outputChannels[index] = channels;
 	outputs[OutputId::OUT_OUTPUTS + index].setChannels(channels);
+}
+
+void TimeSeqModule::segmentStarted() {
+	m_segmentStarted = true;
+}
+
+void TimeSeqModule::triggerTriggered() {
+	m_triggerTriggered = true;
 }
 
 std::shared_ptr<std::string> TimeSeqModule::getScript() {
@@ -122,6 +191,11 @@ void TimeSeqModule::updateOutputs() {
 	}
 }
 
+void TimeSeqModule::clearScript() {
+	m_timeSeqCore->clearScript();
+	m_script.reset();
+}
+
 std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
 	return m_lastScriptLoadErrors;
 }
@@ -129,7 +203,7 @@ std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
 
 TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "timeseq") {
 	float xIn = 24;
-	float xOut = 126;
+	float xOut = 126+60;
 	float y = 41.5;
 	float yDelta = 40;
 	for (int i = 0; i < 8; i++) {
@@ -138,35 +212,48 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 		y += yDelta;
 	}
 
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(xIn + 34.f, 49.5f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
-	addInput(createInputCentered<NTPort>(Vec(xIn + 34.f, 82.5f), module, TimeSeqModule::IN_RUN));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(xIn + (34.f * 2), 49.5f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
-	addInput(createInputCentered<NTPort>(Vec(xIn + (34.f * 2), 82.5f), module, TimeSeqModule::IN_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(64.5f, 88.f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
+	addInput(createInputCentered<NTPort>(Vec(64.5f, 41.5f), module, TimeSeqModule::IN_RUN));
+	addOutput(createOutputCentered<NTPort>(Vec(64.5f, 121.5f), module, TimeSeqModule::OUT_RUN));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(105.f, 88.f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
+	addInput(createInputCentered<NTPort>(Vec(105.f, 41.5f), module, TimeSeqModule::IN_RESET));
+	addOutput(createOutputCentered<NTPort>(Vec(105.f, 121.5f), module, TimeSeqModule::OUT_RESET));
+	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(145.5f, 88.f), module, TimeSeqModule::PARAM_RATE));
+	addInput(createInputCentered<NTPort>(Vec(145.5f, 41.5f), module, TimeSeqModule::IN_RATE));
+
+	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(49.5f, 64.5f), module, TimeSeqModule::LightId::LIGHT_READY));
+	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xIn + 34.f, 322.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
+	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xIn + (34.f * 2), 322.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
 }
 
 void TimeSeqWidget::appendContextMenu(Menu* menu) {
 	NTModuleWidget::appendContextMenu(menu);
 
+	bool disabled = !hasScript();
 	menu->addChild(new MenuSeparator);
 	menu->addChild(createMenuItem("Load script...", "", [this]() { this->loadScript(); }));
-	menu->addChild(createMenuItem("Save script...", "", [this]() { this->saveScript(); }));
+	menu->addChild(createMenuItem("Save script...", "", [this]() { this->saveScript(); }, disabled));
+	menu->addChild(createMenuItem("Clear script...", "", [this]() { this->clearScript(); }, disabled));
 }
 
 void TimeSeqWidget::loadScript() {
-	osdialog_filters* filters = osdialog_filters_parse("JSON Files (*.json):json;All Files (*.*):*");
-	char* path = osdialog_file(OSDIALOG_OPEN, "", "", filters);
-	osdialog_filters_free(filters);
-	if (path) {
-		std::vector<uint8_t> data = system::readFile(path);
-		free(path);
-		std::string json = std::string(data.begin(), data.end());
+	// If a script is already loaded, first confirm if it should be replaced.
+	if ((!hasScript()) || (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, "A script is already loaded. Are you sure you want to load a new script?") == 1)) {
+		osdialog_filters* filters = osdialog_filters_parse("JSON Files (*.json):json;All Files (*.*):*");
+		char* path = osdialog_file(OSDIALOG_OPEN, "", "", filters);
+		osdialog_filters_free(filters);
+		if (path) {
+			std::vector<uint8_t> data = system::readFile(path);
+			free(path);
+			std::string json = std::string(data.begin(), data.end());
 
-		TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
-		if (timeSeqModule != nullptr) {
-			std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
-			if (error.length() > 0) {
-				if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
-					copyLastLoadErrors();
+			TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
+			if (timeSeqModule != nullptr) {
+				std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
+				if (error.length() > 0) {
+					if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
+						copyLastLoadErrors();
+					}
 				}
 			}
 		}
@@ -174,6 +261,12 @@ void TimeSeqWidget::loadScript() {
 }
 
 void TimeSeqWidget::saveScript() {
+}
+
+void TimeSeqWidget::clearScript() {
+	if (osdialog_message(OSDIALOG_WARNING, OSDIALOG_YES_NO, "Are you sure you want to clear the currently loaded script?") == 1) {
+		dynamic_cast<TimeSeqModule *>(getModule())->clearScript();
+	}
 }
 
 void TimeSeqWidget::copyLastLoadErrors() {
@@ -191,6 +284,10 @@ void TimeSeqWidget::copyLastLoadErrors() {
 			glfwSetClipboardString(APP->window->win, errorMessage.str().c_str());
 		}
 	}
+}
+
+bool TimeSeqWidget::hasScript() {
+	return getModule() ? (bool) dynamic_cast<TimeSeqModule *>(getModule())->getScript() : false;
 }
 
 

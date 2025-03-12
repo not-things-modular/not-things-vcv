@@ -5,16 +5,18 @@
 #include "core/timeseq-core.hpp"
 
 
-struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader {
+struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::SampleRateReader, timeseq::EventListener {
 	enum ParamId {
 		PARAM_RUN,
 		PARAM_RESET,
+		PARAM_RATE,
 		NUM_PARAMS
 	};
 	enum InputId {
 		ENUMS(IN_INPUTS, 8),
 		IN_RUN,
 		IN_RESET,
+		IN_RATE,
 		NUM_INPUTS
 	};
 	enum OutputId {
@@ -24,8 +26,12 @@ struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader
 		NUM_OUTPUTS
 	};
 	enum LightId {
+		LIGHT_READY,
+		LIGHT_NOT_READY,
 		LIGHT_RUN,
 		LIGHT_RESET,
+		LIGHT_SEGMENT_STARTED,
+		LIGHT_TRIGGER_TRIGGERED,
 		NUM_LIGHTS
 	};
 	enum TriggerId {
@@ -37,8 +43,13 @@ struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader
 	TimeSeqModule();
 	~TimeSeqModule();
 
+	json_t *dataToJson() override;
+	void dataFromJson(json_t *rootJ) override;
+
 	void process(const ProcessArgs& args) override;
+	void draw(const widget::Widget::DrawArgs& args) override;
 	void onPortChange(const PortChangeEvent& e) override;
+	void onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) override;
 
 	float getInputPortVoltage(int index, int channel) override;
 	float getOutputPortVoltage(int index, int channel) override;
@@ -46,8 +57,13 @@ struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader
 	void setOutputPortVoltage(int index, int channel, float voltage) override;
 	void setOutputPortChannels(int index, int channels) override;
 
+	void segmentStarted() override;
+	void triggerTriggered() override;
+
+
 	std::shared_ptr<std::string> getScript();
 	std::string loadScript(std::shared_ptr<std::string> script);
+	void clearScript();
 	std::list<std::string>& getLastScriptLoadErrors();
 
 	private:
@@ -61,6 +77,10 @@ struct TimeSeqModule : NTModule, timeseq::PortHandler, timeseq::SampleRateReader
 		std::array<std::array<float, 16>, 8> m_outputVoltages;
 		std::array<int, 8> m_outputChannels;
 
+		bool m_segmentStarted = false;
+		bool m_triggerTriggered = false;
+		int m_rateDivision = 0;
+
 		void resetOutputs();
 		void updateOutputs();
 };
@@ -73,5 +93,8 @@ struct TimeSeqWidget : NTModuleWidget {
 	private:
 		void loadScript();
 		void saveScript();
+		void clearScript();
 		void copyLastLoadErrors();
+
+		bool hasScript();
 };

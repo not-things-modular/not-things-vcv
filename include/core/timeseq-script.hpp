@@ -160,6 +160,8 @@ struct ScriptSegment : ScriptRefObject {
 	ScriptDuration duration;
 	std::vector<ScriptAction> actions;
 	std::unique_ptr<ScriptSegmentBlock> segmentBlock;
+
+	bool disableUi;
 };
 
 struct ScriptSegmentBlock : ScriptRefObject {

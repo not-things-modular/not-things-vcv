@@ -243,8 +243,9 @@ SegmentProcessor::SegmentProcessor(
 	shared_ptr<DurationProcessor> duration,
 	vector<shared_ptr<ActionProcessor>> startActions,
 	vector<shared_ptr<ActionProcessor>> endActions,
-	vector<shared_ptr<ActionGlideProcessor>> glideActions) :
-		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_glideActions(glideActions) {}
+	vector<shared_ptr<ActionGlideProcessor>> glideActions,
+	EventListener* eventListener) :
+		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_glideActions(glideActions), m_eventListener(eventListener) {}
 
 DurationProcessor::DurationState SegmentProcessor::getState() {
 	return m_duration->getState();
@@ -255,6 +256,9 @@ double SegmentProcessor::process(double drift) {
 
 	switch (m_duration->getState()) {
 		case DurationProcessor::DurationState::STATE_START:
+			if (!m_scriptSegment->disableUi) {
+				m_eventListener->segmentStarted();
+			}
 			processStartActions();
 			processGlideActions(true, false);
 			break;
@@ -476,7 +480,7 @@ void Processor::process() {
 	}
 }
 
-ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener) {}
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
 	return m_processorScriptParser.parseScript(script.get(), validationErrors, vector<string>());

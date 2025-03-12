@@ -12,6 +12,7 @@
 
 namespace timeseq {
 
+struct ScriptIf;
 struct ScriptInput;
 struct ScriptOutput;
 struct ScriptValue;
@@ -31,7 +32,8 @@ struct PortHandler;
 struct VariableHandler;
 struct TriggerHandler;
 struct SampleRateReader;
-struct ScriptIf;
+struct EventListener;
+
 
 struct CalcProcessor {
 	CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value);
@@ -225,7 +227,8 @@ struct SegmentProcessor {
 		std::shared_ptr<DurationProcessor> durationProcessor,
 		std::vector<std::shared_ptr<ActionProcessor>> startActions,
 		std::vector<std::shared_ptr<ActionProcessor>> endActions,
-		std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions
+		std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions,
+		EventListener* eventListener
 	);
 
 	DurationProcessor::DurationState getState();
@@ -240,6 +243,8 @@ struct SegmentProcessor {
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
 		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
 		std::vector<std::shared_ptr<ActionGlideProcessor>> m_glideActions;
+
+		EventListener* m_eventListener;
 
 		void processStartActions();
 		void processEndActions();
@@ -326,7 +331,7 @@ struct ProcessorScriptParseContext {
 };
 
 struct ProcessorScriptParser {
-	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader);
+	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener);
 
 	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::shared_ptr<TimelineProcessor> parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, std::vector<std::string> location);
@@ -359,10 +364,11 @@ struct ProcessorScriptParser {
 		VariableHandler* m_variableHandler;
 		TriggerHandler* m_triggerHandler;
 		SampleRateReader* m_sampleRateReader;
+		EventListener* m_eventListener;
 };
 
 struct ProcessorLoader {
-	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader);
+	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener);
 
 	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 

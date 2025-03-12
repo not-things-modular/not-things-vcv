@@ -28,13 +28,20 @@ struct SampleRateReader {
 	virtual float getSampleRate() = 0;
 };
 
+struct EventListener {
+	virtual void segmentStarted() = 0;
+	virtual void triggerTriggered() = 0;
+};
+
 struct TimeSeqCore : VariableHandler, TriggerHandler {
 	enum Status { EMPTY, IDLE, RUNNING, PAUSED };
 
-	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader);
+	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener);
 	virtual ~TimeSeqCore();
 
 	std::vector<timeseq::ValidationError> loadScript(std::string& scriptData);
+	void reloadScript();
+	void clearScript();
 
 	Status getStatus();
 	bool canProcess();
@@ -63,6 +70,8 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 		std::unordered_map<std::string, float> m_variables;
 		std::vector<std::string> m_triggers[2];
 		bool m_triggerIdx = false;
+
+		EventListener* m_eventListener;
 };
 
 }

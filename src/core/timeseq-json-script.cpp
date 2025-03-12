@@ -542,6 +542,17 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_ActionsArray, "actions must be an array.");
 				}
 			}
+
+			segment.disableUi = false;
+			json::const_iterator disableUi = segmentJson.find("disable-ui");
+			if (disableUi != segmentJson.end()) {
+				location.push_back("disable-ui");
+				if (disableUi->is_boolean()) {
+					segment.disableUi = disableUi->get<bool>();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_DisableUiBoolean, "'disable-ui' must be a boolean.");
+				}
+			}
 		} else if (!hasOneOf(segmentJson, { "duration", "actions" })) {
 			json::const_iterator segmentBlock = segmentJson.find("segment-block");
 			if (segmentBlock != segmentJson.end()) {
