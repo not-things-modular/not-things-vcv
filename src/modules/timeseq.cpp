@@ -2,6 +2,10 @@
 #include "components/ntport.hpp"
 #include <osdialog.h>
 
+#define TO_CHANNEL_PORT_IDENTIFIER(channel, port) ((channel << 5) + port)
+#define CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier >> 5)
+#define PORT_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier & 0xF)
+
 
 TimeSeqModule::TimeSeqModule() {
 	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this);
@@ -22,6 +26,8 @@ TimeSeqModule::TimeSeqModule() {
 	ParamQuantity* pq = configParam(PARAM_RATE, -10.f, 10.f, 1.f, "Rate");
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
+
+	m_PortChannelChangeClockDivider.setDivision(48000 / 30);
 
 	resetOutputs();
 }
@@ -72,6 +78,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
 			resetOutputs();
 			m_timeSeqCore->reset();
+			m_timeSeqDisplay->m_voltagePoints.clear();
 		}
 
 		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
@@ -92,6 +99,60 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 				m_timeSeqCore->process();
 			}
 		}
+	}
+
+	if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_PortChannelChangeClockDivider.process())) {
+		// Remove voltage points that haven't changed recently, and update & age those that are recent enough
+		for (int i = m_timeSeqDisplay->m_voltagePoints.size() - 1; i >= 0; i--) {
+			if (m_timeSeqDisplay->m_voltagePoints[i].age >= TIMESEQ_SAMPLE_COUNT * 2) {
+				m_timeSeqDisplay->m_voltagePoints.erase(m_timeSeqDisplay->m_voltagePoints.begin() + i);
+			} else {
+				m_timeSeqDisplay->m_voltagePoints[i].points[m_timeSeqDisplay->m_currentVoltagePointIndex] = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)];
+				m_timeSeqDisplay->m_voltagePoints[i].age++;
+			}
+		}
+
+		// Update/add the voltage points for the recently changed ports
+		if (m_changedPortChannelVoltages.size() > 0) {
+			for (std::vector<int>::iterator it = m_changedPortChannelVoltages.begin(); it != m_changedPortChannelVoltages.end(); it++) {
+				bool found = false;
+				// See if the port&channel combination is already in the current list of voltage points
+				for (std::vector<TimeSeqVoltagePoints>::iterator vpIt = m_timeSeqDisplay->m_voltagePoints.begin(); vpIt != m_timeSeqDisplay->m_voltagePoints.end(); vpIt++) {
+					if (vpIt->id == *it) {
+						// The voltage point is already in there, so it was already captured. Just reset its age.
+						found = true;
+						vpIt->age = 0;
+						break;
+					}
+				}
+				// It's a new voltage point
+				if (!found)
+				{
+					if (m_timeSeqDisplay->m_voltagePoints.size() < 16) {
+						// We haven't reached the limit of trackable voltages yet, so just add a new one to the list.
+						m_timeSeqDisplay->m_voltagePoints.emplace_back(*it);
+						TimeSeqVoltagePoints& voltagePoints = m_timeSeqDisplay->m_voltagePoints.back();
+						std::fill(voltagePoints.points, voltagePoints.points + TIMESEQ_SAMPLE_COUNT, 0xFFFF);
+						voltagePoints.points[m_timeSeqDisplay->m_currentVoltagePointIndex] = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)];
+					} else {
+						// We have reached the limit of trackable voltages. See if there is one that hasn't updated in the last cycle (start from the end, i.e. the most recent changing one)
+						for (std::vector<TimeSeqVoltagePoints>::reverse_iterator vpIt = m_timeSeqDisplay->m_voltagePoints.rbegin(); vpIt != m_timeSeqDisplay->m_voltagePoints.rend(); vpIt++) {
+							if (vpIt->age > TIMESEQ_SAMPLE_COUNT) {
+								// Replace this tracked output with the newly changed one
+								vpIt->id = *it;
+								vpIt->age = 0;
+								std::fill(vpIt->points, vpIt->points + TIMESEQ_SAMPLE_COUNT, 0xFFFF);
+								vpIt->points[m_timeSeqDisplay->m_currentVoltagePointIndex] = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)];
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		m_changedPortChannelVoltages.clear();
+
+		m_timeSeqDisplay->m_currentVoltagePointIndex = (m_timeSeqDisplay->m_currentVoltagePointIndex + 1) % TIMESEQ_SAMPLE_COUNT;
 	}
 }
 
@@ -131,6 +192,11 @@ float TimeSeqModule::getSampleRate() {
 void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) {
 	m_outputVoltages[index][channel] = voltage;
 	outputs[OutputId::OUT_OUTPUTS + index].setVoltage(voltage, channel);
+	
+	int id = TO_CHANNEL_PORT_IDENTIFIER(index, channel);
+	if (std::find(m_changedPortChannelVoltages.begin(), m_changedPortChannelVoltages.end(), id) == m_changedPortChannelVoltages.end()) {
+		m_changedPortChannelVoltages.push_back(id);
+	}
 }
 
 void TimeSeqModule::setOutputPortChannels(int index, int channels) {
@@ -203,7 +269,7 @@ std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
 
 TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "timeseq") {
 	float xIn = 24;
-	float xOut = 126+60;
+	float xOut = 126.f+60.f+15.f;
 	float y = 41.5;
 	float yDelta = 40;
 	for (int i = 0; i < 8; i++) {
@@ -212,18 +278,26 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 		y += yDelta;
 	}
 
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(64.5f, 88.f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
-	addInput(createInputCentered<NTPort>(Vec(64.5f, 41.5f), module, TimeSeqModule::IN_RUN));
-	addOutput(createOutputCentered<NTPort>(Vec(64.5f, 121.5f), module, TimeSeqModule::OUT_RUN));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(105.f, 88.f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
-	addInput(createInputCentered<NTPort>(Vec(105.f, 41.5f), module, TimeSeqModule::IN_RESET));
-	addOutput(createOutputCentered<NTPort>(Vec(105.f, 121.5f), module, TimeSeqModule::OUT_RESET));
-	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(145.5f, 88.f), module, TimeSeqModule::PARAM_RATE));
-	addInput(createInputCentered<NTPort>(Vec(145.5f, 41.5f), module, TimeSeqModule::IN_RATE));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(64.5f+7.5f, 88.f+11.5f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
+	addInput(createInputCentered<NTPort>(Vec(64.5f+7.5f, 41.5f+11.5f), module, TimeSeqModule::IN_RUN));
+	addOutput(createOutputCentered<NTPort>(Vec(64.5f+7.5f, 121.5f+11.5f), module, TimeSeqModule::OUT_RUN));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(105.f+7.5f, 88.f+11.5f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
+	addInput(createInputCentered<NTPort>(Vec(105.f+7.5f, 41.5f+11.5f), module, TimeSeqModule::IN_RESET));
+	addOutput(createOutputCentered<NTPort>(Vec(105.f+7.5f, 121.5f+11.5f), module, TimeSeqModule::OUT_RESET));
+	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(145.5f+7.5f, 88.f+11.5f), module, TimeSeqModule::PARAM_RATE));
+	addInput(createInputCentered<NTPort>(Vec(145.5f+7.5f, 41.5f+11.5f), module, TimeSeqModule::IN_RATE));
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(49.5f, 64.5f), module, TimeSeqModule::LightId::LIGHT_READY));
+	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(49.5f+7.5f, 64.5f+11.5f), module, TimeSeqModule::LightId::LIGHT_READY));
 	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xIn + 34.f, 322.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
 	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xIn + (34.f * 2), 322.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
+
+	TimeSeqDisplay* timeSeqDisplay = createWidget<TimeSeqDisplay>(Vec(53.5f, 156.f));
+	timeSeqDisplay->box.size = Vec(118.f, 195.f);
+	addChild(timeSeqDisplay);
+	if (module != nullptr) {
+		module->m_timeSeqDisplay = timeSeqDisplay;
+	}
+
 }
 
 void TimeSeqWidget::appendContextMenu(Menu* menu) {

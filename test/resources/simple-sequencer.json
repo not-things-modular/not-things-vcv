@@ -51,7 +51,7 @@
 					"loop": true,
 					"segments": [
 						{
-							"duration": { "hz": 130.815 },
+							"duration": { "xhz": 130.815, "millis": 1500 },
 							"actions": [
 								{
 									"if": {

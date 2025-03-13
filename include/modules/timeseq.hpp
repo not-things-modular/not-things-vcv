@@ -3,6 +3,7 @@
 #include "not-things.hpp"
 
 #include "core/timeseq-core.hpp"
+#include "components/timeseq-display.hpp"
 
 
 struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::SampleRateReader, timeseq::EventListener {
@@ -66,6 +67,8 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void clearScript();
 	std::list<std::string>& getLastScriptLoadErrors();
 
+	TimeSeqDisplay* m_timeSeqDisplay;
+
 	private:
 		timeseq::TimeSeqCore *m_timeSeqCore;
 		std::shared_ptr<std::string> m_script;
@@ -80,6 +83,9 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		bool m_segmentStarted = false;
 		bool m_triggerTriggered = false;
 		int m_rateDivision = 0;
+
+		std::vector<int> m_changedPortChannelVoltages;
+		dsp::ClockDivider m_PortChannelChangeClockDivider;
 
 		void resetOutputs();
 		void updateOutputs();
