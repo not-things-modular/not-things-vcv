@@ -15,11 +15,9 @@ struct TimeSeqVoltagePoints {
 struct BufferedDisplay;
 
 struct TimeSeqDisplay : widget::Widget {
-	TimeSeqDisplay();
-	~TimeSeqDisplay();
-	
 	void drawLayer(const DrawArgs& args, int layer) override;
 
+	std::string m_time = "04:20";
 	std::vector<TimeSeqVoltagePoints> m_voltagePoints;
 	int m_currentVoltagePointIndex = 0;
 

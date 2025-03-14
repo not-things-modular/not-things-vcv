@@ -101,6 +101,11 @@ void TimeSeqCore::process() {
 		m_triggerIdx = !m_triggerIdx; // Triggers that were set in the previous process become the active triggers now
 		m_triggers[!m_triggerIdx].clear();
 		m_processor->process();
+
+		m_elapsedSamples++;
+		if (m_elapsedSamples >= m_samplesPerHour) {
+			m_elapsedSamples = 0;
+		}
 	}
 }
 
@@ -131,6 +136,10 @@ void TimeSeqCore::setTrigger(std::string name) {
 
 std::vector<std::string>& TimeSeqCore::getTriggers() {
 	return m_triggers[m_triggerIdx];
+}
+
+uint32_t TimeSeqCore::getElapsedSamples() {
+	return m_elapsedSamples;
 }
 
 

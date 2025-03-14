@@ -20,14 +20,14 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 		nvgText(args.vg, 2, box.size.y - 2, "88:88", NULL);
 
 		nvgFillColor(args.vg, nvgRGB(0xFF, 0x50, 0x50));
-		nvgText(args.vg, 2, box.size.y - 2, "12:34", NULL);
+		nvgText(args.vg, 2, box.size.y - 2, m_time.c_str(), NULL);
 	}
 
 	nvgStrokeColor(args.vg, nvgRGBA(0xff, 0x00, 0x00, 0xFF));
 	nvgGlobalAlpha(args.vg, 0.35f);
 	Rect b = Rect(Vec(0, 0), box.size);
 	nvgScissor(args.vg, b.pos.x, b.pos.y, b.size.x, b.size.y);
-	
+
 	nvgBeginPath(args.vg);
 	for (std::vector<TimeSeqVoltagePoints>::iterator it = m_voltagePoints.begin(); it != m_voltagePoints.end(); it++) {
 		bool drawing = false;
@@ -45,7 +45,7 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 			}
 		}
 	}
-	
+
 	nvgLineCap(args.vg, NVG_ROUND);
 	nvgMiterLimit(args.vg, 2.0);
 	nvgStrokeWidth(args.vg, 1.5);

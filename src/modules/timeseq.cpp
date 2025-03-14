@@ -166,6 +166,13 @@ void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
 	lights[LightId::LIGHT_NOT_READY].setBrightnessSmooth(!(bool) m_script, .01f);
 	lights[LightId::LIGHT_RUN].setBrightnessSmooth((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::RUNNING), .01f);
 	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f);
+
+	int sampleRate = getSampleRate();
+	uint32_t elapsedSamples = m_timeSeqCore->getElapsedSamples();
+	int seconds = elapsedSamples / sampleRate;
+	int minutes = seconds / 60;
+	seconds -= minutes * 60;
+	m_timeSeqDisplay->m_time = string::f("%02d:%02d", minutes, seconds);
 }
 
 void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
@@ -192,7 +199,7 @@ float TimeSeqModule::getSampleRate() {
 void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) {
 	m_outputVoltages[index][channel] = voltage;
 	outputs[OutputId::OUT_OUTPUTS + index].setVoltage(voltage, channel);
-	
+
 	int id = TO_CHANNEL_PORT_IDENTIFIER(index, channel);
 	if (std::find(m_changedPortChannelVoltages.begin(), m_changedPortChannelVoltages.end(), id) == m_changedPortChannelVoltages.end()) {
 		m_changedPortChannelVoltages.push_back(id);

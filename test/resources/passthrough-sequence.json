@@ -1,0 +1,53 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "0.0.1",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 1 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 1} }
+								},
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 2 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 2 } }
+								},
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 3 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 3 } }
+								},
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 4 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 4 } }
+								},
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 5 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 5 } }
+								},
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 6 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 6 } }
+								},
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 7 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 7 } }
+								},
+								{
+									"timing": "start",
+									"set-value": { "value": { "input": { "index": 8 }, "calc": [ { "mult": { "voltage": 2 }}] }, "output": { "index": 8 } }
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
