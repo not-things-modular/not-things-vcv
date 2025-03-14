@@ -104,10 +104,10 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 	if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_PortChannelChangeClockDivider.process())) {
 		// Remove voltage points that haven't changed recently, and update & age those that are recent enough
 		for (int i = m_timeSeqDisplay->m_voltagePoints.size() - 1; i >= 0; i--) {
-			if (m_timeSeqDisplay->m_voltagePoints[i].age >= TIMESEQ_SAMPLE_COUNT * 2) {
+			if (m_timeSeqDisplay->m_voltagePoints[i].age >= TIMESEQ_DISPLAY_WINDOW_SIZE * 2) {
 				m_timeSeqDisplay->m_voltagePoints.erase(m_timeSeqDisplay->m_voltagePoints.begin() + i);
 			} else {
-				m_timeSeqDisplay->m_voltagePoints[i].points[m_timeSeqDisplay->m_currentVoltagePointIndex] = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)];
+				m_timeSeqDisplay->m_voltagePoints[i].voltage = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)];
 				m_timeSeqDisplay->m_voltagePoints[i].age++;
 			}
 		}
@@ -132,17 +132,15 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 						// We haven't reached the limit of trackable voltages yet, so just add a new one to the list.
 						m_timeSeqDisplay->m_voltagePoints.emplace_back(*it);
 						TimeSeqVoltagePoints& voltagePoints = m_timeSeqDisplay->m_voltagePoints.back();
-						std::fill(voltagePoints.points, voltagePoints.points + TIMESEQ_SAMPLE_COUNT, 0xFFFF);
-						voltagePoints.points[m_timeSeqDisplay->m_currentVoltagePointIndex] = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)];
+						voltagePoints.voltage = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)];
 					} else {
 						// We have reached the limit of trackable voltages. See if there is one that hasn't updated in the last cycle (start from the end, i.e. the most recent changing one)
 						for (std::vector<TimeSeqVoltagePoints>::reverse_iterator vpIt = m_timeSeqDisplay->m_voltagePoints.rbegin(); vpIt != m_timeSeqDisplay->m_voltagePoints.rend(); vpIt++) {
-							if (vpIt->age > TIMESEQ_SAMPLE_COUNT) {
+							if (vpIt->age > TIMESEQ_DISPLAY_WINDOW_SIZE) {
 								// Replace this tracked output with the newly changed one
 								vpIt->id = *it;
 								vpIt->age = 0;
-								std::fill(vpIt->points, vpIt->points + TIMESEQ_SAMPLE_COUNT, 0xFFFF);
-								vpIt->points[m_timeSeqDisplay->m_currentVoltagePointIndex] = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)];
+								vpIt->voltage = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)];
 								break;
 							}
 						}
@@ -151,8 +149,6 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			}
 		}
 		m_changedPortChannelVoltages.clear();
-
-		m_timeSeqDisplay->m_currentVoltagePointIndex = (m_timeSeqDisplay->m_currentVoltagePointIndex + 1) % TIMESEQ_SAMPLE_COUNT;
 	}
 }
 

@@ -3,24 +3,19 @@
 using namespace rack;
 
 
-#define TIMESEQ_SAMPLE_COUNT 236
+const int TIMESEQ_DISPLAY_WINDOW_SIZE = 256;
+
 
 struct TimeSeqVoltagePoints {
-	TimeSeqVoltagePoints(int id): id(id), age(0) {}
+	TimeSeqVoltagePoints(int id): id(id), age(0), voltage(0.f) {}
 	int id;
 	int age;
-	float points[TIMESEQ_SAMPLE_COUNT];
+	float voltage;
 };
-
-struct BufferedDisplay;
 
 struct TimeSeqDisplay : widget::Widget {
 	void drawLayer(const DrawArgs& args, int layer) override;
 
 	std::string m_time = "04:20";
 	std::vector<TimeSeqVoltagePoints> m_voltagePoints;
-	int m_currentVoltagePointIndex = 0;
-
-	private:
-		BufferedDisplay* m_bufferedDisplay;
 };
