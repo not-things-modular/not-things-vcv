@@ -107,6 +107,7 @@ enum ValidationErrorCode {
 	Duration_BarsRequiresBeats = 707,
 	Duration_BeatsButNoBmp = 708,
 	Duration_BarsButNoBpb = 709,
+	Duration_BeatsNotZero = 710,
 
 	Action_RefOrInstance = 800,
 	Action_TimingEnum = 801,

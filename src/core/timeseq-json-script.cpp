@@ -641,7 +641,6 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 	if (bars != durationJson.end()) {
 		if ((bars->is_number_unsigned()) && (bars->get<uint64_t>() > 0)) {
 			duration.bars.reset(new uint64_t(bars->get<uint64_t>()));
-			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsNumber, "bars must be a positive integer number.");
 		}
@@ -649,8 +648,9 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 
 	json::const_iterator beats = durationJson.find("beats");
 	if (beats != durationJson.end()) {
-		if ((beats->is_number()) && (beats->get<float>() > 0)) {
+		if ((beats->is_number()) && (beats->get<float>() >= 0)) {
 			duration.beats.reset(new float(beats->get<float>()));
+			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BeatsNumber, "beats must be a positive decimal number.");
 		}
@@ -667,11 +667,13 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 	}
 
 	if (durationCount == 0) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBars, "either samples, millis, beats or hz must be used.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBars, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
 	} else if (durationCount > 1) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBars, "only one of samples, millis, beats or hz can be used at a time.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBars, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
 	} else if (duration.bars && !duration.beats) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "bars can not be used without beats.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
+	} else if ((!duration.bars) && (duration.beats) && (duration.beats.get() == 0)) {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BeatsNotZero, "'beats' can not be 0 unless 'bars' is also used.");
 	}
 
 	return duration;
