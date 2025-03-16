@@ -1,5 +1,7 @@
 #include "modules/timeseq.hpp"
 #include "components/ntport.hpp"
+#include "components/timeseq-display.hpp"
+#include "components/leddisplay.hpp"
 #include <osdialog.h>
 
 #define TO_CHANNEL_PORT_IDENTIFIER(channel, port) ((channel << 5) + port)
@@ -16,12 +18,21 @@ TimeSeqModule::TimeSeqModule() {
 		configOutput(OUT_OUTPUTS + i, string::f("Output %d", i + 1));
 	}
 
-	configInput(IN_RUN, "Run Input");
-	configInput(IN_RESET, "Reset Input");
-	configInput(IN_RATE, "Rate Input");
+	configInput(IN_RUN, "Run");
+	configInput(IN_RESET, "Reset");
+	configInput(IN_RATE, "Rate");
 
 	configButton(PARAM_RUN, "Run");
 	configButton(PARAM_RESET, "Reset");
+	configButton(PARAM_RESET_CLOCK, "Reset Clock");
+
+	configOutput(OUT_RUN, "Run");
+	configOutput(OUT_RESET, "Reset");
+
+	configLight(LIGHT_READY, "Ready status");
+	configLight(LIGHT_LANE_LOOPED, "Lane loop");
+	configLight(LIGHT_SEGMENT_STARTED, "Segment start");
+	configLight(LIGHT_TRIGGER_TRIGGERED, "Trigger triggered");
 
 	ParamQuantity* pq = configParam(PARAM_RATE, -10.f, 10.f, 1.f, "Rate");
 	pq->snapEnabled = true;
@@ -56,6 +67,10 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 }
 
 void TimeSeqModule::process(const ProcessArgs& args) {
+	if (m_buttonTrigger[TriggerId::TRIG_RESET_CLOCK].process(params[ParamId::PARAM_RESET_CLOCK].getValue())) {
+		m_timeSeqCore->resetElapsedSamples();
+	}
+
 	if (m_timeSeqCore->getStatus() != timeseq::TimeSeqCore::Status::EMPTY) {
 		bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
 		bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
@@ -65,9 +80,11 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 				case timeseq::TimeSeqCore::Status::IDLE:
 				case timeseq::TimeSeqCore::Status::PAUSED:
 					m_timeSeqCore->start();
+					m_runPulse.trigger(0.001f);
 					break;
 				case timeseq::TimeSeqCore::Status::RUNNING:
 					m_timeSeqCore->pause();
+					m_runPulse.trigger(0.001f);
 					break;
 				case timeseq::TimeSeqCore::Status::EMPTY:
 					break;
@@ -79,6 +96,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			resetOutputs();
 			m_timeSeqCore->reset();
 			m_timeSeqDisplay->m_voltagePoints.clear();
+			m_resetPulse.trigger(0.001f);
 		}
 
 		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
@@ -150,9 +168,15 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		}
 		m_changedPortChannelVoltages.clear();
 	}
+
+	// Update the Run and Reset outputs
+	outputs[OutputId::OUT_RUN].setVoltage((m_runPulse.process(args.sampleTime) ? 10.0f : 0.0f));
+	outputs[OutputId::OUT_RESET].setVoltage((m_resetPulse.process(args.sampleTime) ? 10.0f : 0.0f));
 }
 
 void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
+	lights[LightId::LIGHT_LANE_LOOPED].setBrightnessSmooth(m_laneLooped, .01f);
+	m_laneLooped = false;
 	lights[LightId::LIGHT_SEGMENT_STARTED].setBrightnessSmooth(m_segmentStarted, .01f);
 	m_segmentStarted = false;
 	lights[LightId::LIGHT_TRIGGER_TRIGGERED].setBrightnessSmooth(m_triggerTriggered, .01f);
@@ -168,7 +192,7 @@ void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
 	int seconds = elapsedSamples / sampleRate;
 	int minutes = seconds / 60;
 	seconds -= minutes * 60;
-	m_timeSeqDisplay->m_time = string::f("%02d:%02d", minutes, seconds);
+	m_ledDisplay->setForegroundText(string::f("%02d:%02d", minutes, seconds));
 }
 
 void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
@@ -176,7 +200,11 @@ void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
 }
 
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
+	if (m_timeSeqDisplay) {
+		m_timeSeqDisplay->m_voltagePoints.clear();
+	}
 	m_timeSeqCore->reloadScript();
+	resetOutputs();
 }
 
 
@@ -207,6 +235,10 @@ void TimeSeqModule::setOutputPortChannels(int index, int channels) {
 	outputs[OutputId::OUT_OUTPUTS + index].setChannels(channels);
 }
 
+void TimeSeqModule::laneLooped() {
+	m_laneLooped = true;
+}
+
 void TimeSeqModule::segmentStarted() {
 	m_segmentStarted = true;
 }
@@ -225,6 +257,10 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 	m_lastScriptLoadErrors.clear();
 	if (errors.size() == 0) {
 		m_script = script;
+		if (m_timeSeqDisplay) {
+			m_timeSeqDisplay->m_voltagePoints.clear();
+		}
+		resetOutputs();
 		return std::string();
 	} else {
 		std::ostringstream errorMessage;
@@ -263,6 +299,7 @@ void TimeSeqModule::updateOutputs() {
 void TimeSeqModule::clearScript() {
 	m_timeSeqCore->clearScript();
 	m_script.reset();
+	resetOutputs();
 }
 
 std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
@@ -272,7 +309,7 @@ std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
 
 TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "timeseq") {
 	float xIn = 24;
-	float xOut = 126.f+60.f+15.f;
+	float xOut = 126.f+60.f+15.f-45.f+15.f;
 	float y = 41.5;
 	float yDelta = 40;
 	for (int i = 0; i < 8; i++) {
@@ -281,26 +318,36 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 		y += yDelta;
 	}
 
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(64.5f+7.5f, 88.f+11.5f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
-	addInput(createInputCentered<NTPort>(Vec(64.5f+7.5f, 41.5f+11.5f), module, TimeSeqModule::IN_RUN));
-	addOutput(createOutputCentered<NTPort>(Vec(64.5f+7.5f, 121.5f+11.5f), module, TimeSeqModule::OUT_RUN));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(105.f+7.5f, 88.f+11.5f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
-	addInput(createInputCentered<NTPort>(Vec(105.f+7.5f, 41.5f+11.5f), module, TimeSeqModule::IN_RESET));
-	addOutput(createOutputCentered<NTPort>(Vec(105.f+7.5f, 121.5f+11.5f), module, TimeSeqModule::OUT_RESET));
-	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(145.5f+7.5f, 88.f+11.5f), module, TimeSeqModule::PARAM_RATE));
-	addInput(createInputCentered<NTPort>(Vec(145.5f+7.5f, 41.5f+11.5f), module, TimeSeqModule::IN_RATE));
+	addInput(createInputCentered<NTPort>(Vec(68.f+7.5f, 66.5f), module, TimeSeqModule::IN_RUN));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(68.f+7.5f, 113.f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
+	addOutput(createOutputCentered<NTPort>(Vec(68.f+7.5f, 146.5f), module, TimeSeqModule::OUT_RUN));
+	addInput(createInputCentered<NTPort>(Vec(112.f+7.5f, 206.5f-140.f), module, TimeSeqModule::IN_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(112.f+7.5f, 253.f-140.f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
+	addOutput(createOutputCentered<NTPort>(Vec(112.f+7.5f, 286.5f-140.f), module, TimeSeqModule::OUT_RESET));
+	addInput(createInputCentered<NTPort>(Vec(68.f+7.5f, 66.5f+135.f), module, TimeSeqModule::IN_RATE));
+	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(68.f+7.5f, 112.f+135.f), module, TimeSeqModule::PARAM_RATE));
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(49.5f+7.5f, 64.5f+11.5f), module, TimeSeqModule::LightId::LIGHT_READY));
-	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xIn + 34.f, 322.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
-	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xIn + (34.f * 2), 322.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
+	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(53.5f+7.5f, 90.f), module, TimeSeqModule::LightId::LIGHT_READY));
+	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(53.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_LANE_LOOPED));
+	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(68.f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
+	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(82.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
 
-	TimeSeqDisplay* timeSeqDisplay = createWidget<TimeSeqDisplay>(Vec(53.5f, 156.f));
-	timeSeqDisplay->box.size = Vec(118.f, 195.f);
+	addChild(createParamCentered<VCVButton>(Vec(92.5f + 10.f -2.f + 23.f - 44.f + 7.5f, 315.f), module, TimeSeqModule::PARAM_RESET_CLOCK));
+
+	TimeSeqDisplay* timeSeqDisplay = createWidget<TimeSeqDisplay>(Vec(92.5f+7.5f, 174.f));
+	timeSeqDisplay->setSize(Vec(39.f, 178.f));
 	addChild(timeSeqDisplay);
 	if (module != nullptr) {
 		module->m_timeSeqDisplay = timeSeqDisplay;
 	}
 
+	LEDDisplay* ledDisplay = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "88:88", 10, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, true);
+	ledDisplay->setPosition(Vec(47.5f+7.5f+.25, 284.f+.25));
+	ledDisplay->setSize(Vec(41.f, 18.f));
+	addChild(ledDisplay);
+	if (module != nullptr) {
+		module->m_ledDisplay = ledDisplay;
+	}
 }
 
 void TimeSeqWidget::appendContextMenu(Menu* menu) {

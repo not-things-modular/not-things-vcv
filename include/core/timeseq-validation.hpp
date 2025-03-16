@@ -70,6 +70,7 @@ enum ValidationErrorCode {
 	Lane_StopTriggerLength = 306,
 	Lane_SegmentsMissing = 307,
 	Lane_SegmentObject = 308,
+	Lane_DisableUiBoolean = 309,
 
 	If_EqArray = 400,
 	If_NeArray = 401,

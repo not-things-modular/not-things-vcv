@@ -175,6 +175,8 @@ struct ScriptLane {
 	std::string startTrigger;
 	std::string stopTrigger;
 	std::vector<ScriptSegment> segments;
+
+	bool disableUi;
 };
 
 struct ScriptTimeScale {

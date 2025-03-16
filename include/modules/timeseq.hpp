@@ -3,14 +3,16 @@
 #include "not-things.hpp"
 
 #include "core/timeseq-core.hpp"
-#include "components/timeseq-display.hpp"
 
+struct TimeSeqDisplay;
+struct LEDDisplay;
 
 struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::SampleRateReader, timeseq::EventListener {
 	enum ParamId {
 		PARAM_RUN,
 		PARAM_RESET,
 		PARAM_RATE,
+		PARAM_RESET_CLOCK,
 		NUM_PARAMS
 	};
 	enum InputId {
@@ -31,6 +33,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		LIGHT_NOT_READY,
 		LIGHT_RUN,
 		LIGHT_RESET,
+		LIGHT_LANE_LOOPED,
 		LIGHT_SEGMENT_STARTED,
 		LIGHT_TRIGGER_TRIGGERED,
 		NUM_LIGHTS
@@ -38,6 +41,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	enum TriggerId {
 		TRIG_RUN,
 		TRIG_RESET,
+		TRIG_RESET_CLOCK,
 		NUM_TRIGGERS
 	};
 
@@ -58,6 +62,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void setOutputPortVoltage(int index, int channel, float voltage) override;
 	void setOutputPortChannels(int index, int channels) override;
 
+	void laneLooped() override;
 	void segmentStarted() override;
 	void triggerTriggered() override;
 
@@ -67,7 +72,8 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void clearScript();
 	std::list<std::string>& getLastScriptLoadErrors();
 
-	TimeSeqDisplay* m_timeSeqDisplay;
+	TimeSeqDisplay* m_timeSeqDisplay = nullptr;
+	LEDDisplay* m_ledDisplay = nullptr;
 
 	private:
 		timeseq::TimeSeqCore *m_timeSeqCore;
@@ -76,10 +82,13 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 
 		dsp::BooleanTrigger m_buttonTrigger[TriggerId::NUM_TRIGGERS];
 		dsp::TSchmittTrigger<float> m_trigTriggers[TriggerId::NUM_TRIGGERS];
+		dsp::PulseGenerator m_runPulse;
+		dsp::PulseGenerator m_resetPulse;
 
 		std::array<std::array<float, 16>, 8> m_outputVoltages;
 		std::array<int, 8> m_outputChannels;
 
+		bool m_laneLooped = false;
 		bool m_segmentStarted = false;
 		bool m_triggerTriggered = false;
 		int m_rateDivision = 0;

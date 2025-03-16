@@ -1,0 +1,101 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "0.0.1",
+	"timelines": [
+		{
+			"time-scale": { "bpm": 120, "bpb": 4 },
+		  	"lanes": [ { "auto-start": true, "loop": true,
+				"segments": [
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 10 }, "output": { "index": 1 } } }
+						]
+					},
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 0 }, "output": { "index": 1 } } }
+						]
+					}
+				]
+			} ]
+		},
+		{
+			"time-scale": { "bpm": 60, "bpb": 4 },
+		  	"lanes": [ { "auto-start": true, "loop": true,
+				"segments": [
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 10 }, "output": { "index": 2 } } }
+						]
+					},
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 0 }, "output": { "index": 2 } } }
+						]
+					}
+				]
+			} ]
+		},
+		{
+			"time-scale": { "bpm": 90, "bpb": 4 },
+		  	"lanes": [ { "auto-start": true, "loop": true,
+				"segments": [
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 10 }, "output": { "index": 3 } } }
+						]
+					},
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 0 }, "output": { "index": 3 } } }
+						]
+					}
+				]
+			} ]
+		},
+		{
+			"time-scale": { "bpm": 75, "bpb": 4 },
+		  	"lanes": [ { "auto-start": true, "loop": true,
+				"segments": [
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 10 }, "output": { "index": 4 } } }
+						]
+					},
+					{
+						"duration": { "beats": 1 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 0 }, "output": { "index": 4 } } }
+						]
+					}
+				]
+			} ]
+		},
+		{
+			"time-scale": { "bpm": 120, "bpb": 4 },
+		  	"lanes": [ { "auto-start": true, "loop": true,
+				"segments": [
+					{
+						"duration": { "bars": 20, "beats": 0 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 10 }, "output": { "index": 5 } } }
+						]
+					},
+					{
+						"duration": { "bars": 20, "beats": 0 },
+						"actions": [
+							{ "timing": "start", "set-value": { "value": { "voltage": 0 }, "output": { "index": 5 } } }
+						]
+					}
+				]
+			} ]
+		}
+	]
+}

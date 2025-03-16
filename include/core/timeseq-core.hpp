@@ -29,6 +29,7 @@ struct SampleRateReader {
 };
 
 struct EventListener {
+	virtual void laneLooped() = 0;
 	virtual void segmentStarted() = 0;
 	virtual void triggerTriggered() = 0;
 };
@@ -59,7 +60,8 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 	std::vector<std::string>& getTriggers() override;
 
 	uint32_t getElapsedSamples();
-
+	void resetElapsedSamples();
+	
 	private:
 		Status m_status = Status::EMPTY;
 		uint32_t m_elapsedSamples = 0;

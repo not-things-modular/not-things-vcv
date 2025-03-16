@@ -497,7 +497,18 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_SegmentsMissing, "segments is required and must be an array.");
 	}
 
-	return lane;
+	lane.disableUi = false;
+	json::const_iterator disableUi = laneJson.find("disable-ui");
+	if (disableUi != laneJson.end()) {
+		location.push_back("disable-ui");
+		if (disableUi->is_boolean()) {
+			lane.disableUi = disableUi->get<bool>();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_DisableUiBoolean, "'disable-ui' must be a boolean.");
+		}
+	}
+
+return lane;
 }
 
 ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
@@ -672,7 +683,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBars, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
 	} else if (duration.bars && !duration.beats) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
-	} else if ((!duration.bars) && (duration.beats) && (duration.beats.get() == 0)) {
+	} else if ((!duration.bars) && (duration.beats) && (*duration.beats.get() == 0)) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BeatsNotZero, "'beats' can not be 0 unless 'bars' is also used.");
 	}
 

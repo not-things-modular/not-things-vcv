@@ -307,7 +307,7 @@ void SegmentProcessor::processGlideActions(bool start, bool end) {
 	}
 }
 
-LaneProcessor::LaneProcessor(ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments) : m_scriptLane(scriptLane), m_segments(segments) {
+LaneProcessor::LaneProcessor(ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments, EventListener* eventListener) : m_scriptLane(scriptLane), m_segments(segments), m_eventListener(eventListener) {
 	reset();
 }
 
@@ -360,6 +360,10 @@ void LaneProcessor::loop() {
 			m_activeSegment = 0;
 			m_state = LaneState::STATE_PROCESSING;
 			process();
+
+			if (!m_scriptLane->disableUi) {
+				m_eventListener->laneLooped();
+			}
 		}
 	}
 }

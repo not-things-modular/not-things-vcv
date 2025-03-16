@@ -40,9 +40,9 @@ PipoInputWidget::PipoInputWidget(PipoInputModule* module): NTModuleWidget(dynami
 		addInput(createInputCentered<NTPort>(Vec(xIn, y), module, PipoInputModule::IN_INPUTS + i));
 		y += yDelta;
 
-		LEDDisplay* pDisplay = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "18", 10, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP, true);
-		pDisplay->box.pos = Vec(3.5f, 53.25f + (yDelta * i));
-		pDisplay->box.size = Vec(15.f, 12.5f);
+		LEDDisplay* pDisplay = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "18", 10, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
+		pDisplay->box.pos = Vec(3.f, 52.f + (yDelta * i));
+		pDisplay->box.size = Vec(13.f, 12.5f);
 		pDisplay->setForegroundText("1");
 		addChild(pDisplay);
 

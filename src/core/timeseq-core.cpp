@@ -39,6 +39,8 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 
 			m_processor->reset();
 			m_status = Status::IDLE;
+
+			resetElapsedSamples();
 		}
 	}
 
@@ -58,6 +60,7 @@ void TimeSeqCore::clearScript() {
 	m_status = Status::EMPTY;
 	m_processor.reset();
 	m_script.reset();
+	resetElapsedSamples();
 }
 
 TimeSeqCore::Status TimeSeqCore::getStatus() {
@@ -94,6 +97,8 @@ void TimeSeqCore::reset() {
 	m_triggers[0].clear();
 	m_triggers[1].clear();
 	m_variables.clear();
+
+	resetElapsedSamples();
 }
 
 void TimeSeqCore::process() {
@@ -140,6 +145,10 @@ std::vector<std::string>& TimeSeqCore::getTriggers() {
 
 uint32_t TimeSeqCore::getElapsedSamples() {
 	return m_elapsedSamples;
+}
+
+void TimeSeqCore::resetElapsedSamples() {
+	m_elapsedSamples = 0;
 }
 
 

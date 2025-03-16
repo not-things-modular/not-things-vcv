@@ -127,7 +127,7 @@ shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ProcessorScriptParseC
 	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(context, &scriptLane->segments, timeScale, location, vector<string>());
 	location.pop_back();
 
-	return shared_ptr<LaneProcessor>(new LaneProcessor(scriptLane, segmentProcessors));
+	return shared_ptr<LaneProcessor>(new LaneProcessor(scriptLane, segmentProcessors, m_eventListener));
 }
 
 vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(ProcessorScriptParseContext* context, vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {

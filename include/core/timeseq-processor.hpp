@@ -254,7 +254,7 @@ struct SegmentProcessor {
 struct LaneProcessor {
 	enum LaneState { STATE_IDLE, STATE_PROCESSING, STATE_PENDING_LOOP };
 
-	LaneProcessor(ScriptLane* scriptLane, std::vector<std::shared_ptr<SegmentProcessor>> segments);
+	LaneProcessor(ScriptLane* scriptLane, std::vector<std::shared_ptr<SegmentProcessor>> segments, EventListener* eventListener);
 
 	LaneState getState();
 
@@ -273,7 +273,9 @@ struct LaneProcessor {
 
 		int m_activeSegment = 0;
 		double m_drift = 0.;
-};
+
+		EventListener* m_eventListener;
+	};
 
 struct TimelineProcessor {
 	TimelineProcessor(
