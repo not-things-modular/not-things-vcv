@@ -5,8 +5,6 @@
 #include <osdialog.h>
 
 #define TO_CHANNEL_PORT_IDENTIFIER(channel, port) ((channel << 5) + port)
-#define CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier >> 5)
-#define PORT_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier & 0xF)
 
 
 TimeSeqModule::TimeSeqModule() {
@@ -40,7 +38,7 @@ TimeSeqModule::TimeSeqModule() {
 
 	m_PortChannelChangeClockDivider.setDivision(48000 / 30);
 
-	resetOutputs();
+	resetUi();
 }
 
 TimeSeqModule::~TimeSeqModule() {
@@ -67,6 +65,7 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 }
 
 void TimeSeqModule::process(const ProcessArgs& args) {
+	// Process any triggers that may have happened
 	if (m_buttonTrigger[TriggerId::TRIG_RESET_CLOCK].process(params[ParamId::PARAM_RESET_CLOCK].getValue())) {
 		m_timeSeqCore->resetElapsedSamples();
 	}
@@ -75,6 +74,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
 		bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
 
+		// Change the run state if needed
 		if (runTriggered) {
 			switch (m_timeSeqCore->getStatus()) {
 				case timeseq::TimeSeqCore::Status::IDLE:
@@ -87,16 +87,18 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 					m_runPulse.trigger(0.001f);
 					break;
 				case timeseq::TimeSeqCore::Status::EMPTY:
+					// Can't run if no script is loaded
 					break;
 			}
 		}
 
+		// Perform a reset
 		if (resetTriggered) {
 			lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
-			resetOutputs();
-			m_timeSeqCore->reset();
-			m_timeSeqDisplay->m_voltagePoints.clear();
 			m_resetPulse.trigger(0.001f);
+			
+			resetUi();
+			m_timeSeqCore->reset();
 		}
 
 		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
@@ -120,51 +122,8 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 	}
 
 	if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_PortChannelChangeClockDivider.process())) {
-		// Remove voltage points that haven't changed recently, and update & age those that are recent enough
-		for (int i = m_timeSeqDisplay->m_voltagePoints.size() - 1; i >= 0; i--) {
-			if (m_timeSeqDisplay->m_voltagePoints[i].age >= TIMESEQ_DISPLAY_WINDOW_SIZE * 2) {
-				m_timeSeqDisplay->m_voltagePoints.erase(m_timeSeqDisplay->m_voltagePoints.begin() + i);
-			} else {
-				m_timeSeqDisplay->m_voltagePoints[i].voltage = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(m_timeSeqDisplay->m_voltagePoints[i].id)];
-				m_timeSeqDisplay->m_voltagePoints[i].age++;
-			}
-		}
-
-		// Update/add the voltage points for the recently changed ports
 		if (m_changedPortChannelVoltages.size() > 0) {
-			for (std::vector<int>::iterator it = m_changedPortChannelVoltages.begin(); it != m_changedPortChannelVoltages.end(); it++) {
-				bool found = false;
-				// See if the port&channel combination is already in the current list of voltage points
-				for (std::vector<TimeSeqVoltagePoints>::iterator vpIt = m_timeSeqDisplay->m_voltagePoints.begin(); vpIt != m_timeSeqDisplay->m_voltagePoints.end(); vpIt++) {
-					if (vpIt->id == *it) {
-						// The voltage point is already in there, so it was already captured. Just reset its age.
-						found = true;
-						vpIt->age = 0;
-						break;
-					}
-				}
-				// It's a new voltage point
-				if (!found)
-				{
-					if (m_timeSeqDisplay->m_voltagePoints.size() < 16) {
-						// We haven't reached the limit of trackable voltages yet, so just add a new one to the list.
-						m_timeSeqDisplay->m_voltagePoints.emplace_back(*it);
-						TimeSeqVoltagePoints& voltagePoints = m_timeSeqDisplay->m_voltagePoints.back();
-						voltagePoints.voltage = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)];
-					} else {
-						// We have reached the limit of trackable voltages. See if there is one that hasn't updated in the last cycle (start from the end, i.e. the most recent changing one)
-						for (std::vector<TimeSeqVoltagePoints>::reverse_iterator vpIt = m_timeSeqDisplay->m_voltagePoints.rbegin(); vpIt != m_timeSeqDisplay->m_voltagePoints.rend(); vpIt++) {
-							if (vpIt->age > TIMESEQ_DISPLAY_WINDOW_SIZE) {
-								// Replace this tracked output with the newly changed one
-								vpIt->id = *it;
-								vpIt->age = 0;
-								vpIt->voltage = m_outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)];
-								break;
-							}
-						}
-					}
-				}
-			}
+			m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputVoltages);
 		}
 		m_changedPortChannelVoltages.clear();
 	}
@@ -200,11 +159,8 @@ void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
 }
 
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
-	if (m_timeSeqDisplay) {
-		m_timeSeqDisplay->m_voltagePoints.clear();
-	}
 	m_timeSeqCore->reloadScript();
-	resetOutputs();
+	resetUi();
 }
 
 
@@ -257,10 +213,7 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 	m_lastScriptLoadErrors.clear();
 	if (errors.size() == 0) {
 		m_script = script;
-		if (m_timeSeqDisplay) {
-			m_timeSeqDisplay->m_voltagePoints.clear();
-		}
-		resetOutputs();
+		resetUi();
 		return std::string();
 	} else {
 		std::ostringstream errorMessage;
@@ -275,6 +228,13 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 		}
 
 		return errorMessage.str();
+	}
+}
+
+void TimeSeqModule::resetUi() {
+	resetOutputs();
+	if (m_timeSeqDisplay) {
+		m_timeSeqDisplay->reset();
 	}
 }
 
@@ -299,7 +259,7 @@ void TimeSeqModule::updateOutputs() {
 void TimeSeqModule::clearScript() {
 	m_timeSeqCore->clearScript();
 	m_script.reset();
-	resetOutputs();
+	resetUi();
 }
 
 std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
@@ -367,24 +327,50 @@ void TimeSeqWidget::loadScript() {
 		char* path = osdialog_file(OSDIALOG_OPEN, "", "", filters);
 		osdialog_filters_free(filters);
 		if (path) {
-			std::vector<uint8_t> data = system::readFile(path);
-			free(path);
-			std::string json = std::string(data.begin(), data.end());
+			try {
+				std::vector<uint8_t> data = system::readFile(path);
+				std::string json = std::string(data.begin(), data.end());
 
-			TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
-			if (timeSeqModule != nullptr) {
-				std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
-				if (error.length() > 0) {
-					if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
-						copyLastLoadErrors();
+				TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
+				if (timeSeqModule != nullptr) {
+					std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
+					if (error.length() > 0) {
+						if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
+							copyLastLoadErrors();
+						}
 					}
 				}
+			} catch (Exception& e) {
+				osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, string::f("Unexpected error: %s", e.msg.c_str()).c_str());
 			}
+			free(path);
 		}
 	}
 }
 
 void TimeSeqWidget::saveScript() {
+	TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
+	if ((timeSeqModule) && (timeSeqModule->getScript()) ) {
+		std::string script = *timeSeqModule->getScript();
+		if (script.size() > 0) {
+			osdialog_filters* filters = osdialog_filters_parse("JSON Files (*.json):json;All Files (*.*):*");
+			char* path = osdialog_file(OSDIALOG_SAVE, "", "", filters);
+			osdialog_filters_free(filters);
+			if (path) {
+				std::string file = path;
+				std::string ext = ".json";
+				if ((ext.size() > file.size()) || (!std::equal(ext.rbegin(), ext.rend(), file.rbegin()))) {
+					file = file + ext;
+				}
+				try {
+					system::writeFile(file.c_str(), std::vector<uint8_t>(script.begin(), script.end()));
+				} catch (Exception& e) {
+					osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, string::f("Unexpected error: %s", e.msg.c_str()).c_str());
+				}
+				free(path);
+			}
+		}
+	}
 }
 
 void TimeSeqWidget::clearScript() {

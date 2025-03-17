@@ -1,5 +1,9 @@
 #include "components/timeseq-display.hpp"
 #include <algorithm>
+#include <array>
+
+#define CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier >> 5)
+#define PORT_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier & 0xF)
 
 void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	if (layer != 1) {
@@ -40,4 +44,55 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	}
 
 	nvgRestore(args.vg);
+}
+
+void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages) {
+	// Remove voltage points that haven't changed recently, and update & age those that are recent enough
+	for (int i = m_voltagePoints.size() - 1; i >= 0; i--) {
+		if (m_voltagePoints[i].age >= TIMESEQ_DISPLAY_WINDOW_SIZE * 2) {
+			m_voltagePoints.erase(m_voltagePoints.begin() + i);
+		} else {
+			m_voltagePoints[i].voltage = outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(m_voltagePoints[i].id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(m_voltagePoints[i].id)];
+			m_voltagePoints[i].age++;
+		}
+	}
+
+	// Update/add the voltage points for the recently changed ports
+	for (std::vector<int>::iterator it = changedVoltages.begin(); it != changedVoltages.end(); it++) {
+		bool found = false;
+		// See if the port&channel combination is already in the current list of voltage points
+		for (std::vector<TimeSeqVoltagePoints>::iterator vpIt = m_voltagePoints.begin(); vpIt != m_voltagePoints.end(); vpIt++) {
+			if (vpIt->id == *it) {
+				// The voltage point is already in there, so it was already captured. Just reset its age.
+				found = true;
+				vpIt->age = 0;
+				break;
+			}
+		}
+		// It's a new voltage point
+		if (!found)
+		{
+			if (m_voltagePoints.size() < 16) {
+				// We haven't reached the limit of trackable voltages yet, so just add a new one to the list.
+				m_voltagePoints.emplace_back(*it);
+				TimeSeqVoltagePoints& voltagePoints = m_voltagePoints.back();
+				voltagePoints.voltage = outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(voltagePoints.id)];
+			} else {
+				// We have reached the limit of trackable voltages. See if there is one that hasn't updated in the last cycle (start from the end, i.e. the most recent changing one)
+				for (std::vector<TimeSeqVoltagePoints>::reverse_iterator vpIt = m_voltagePoints.rbegin(); vpIt != m_voltagePoints.rend(); vpIt++) {
+					if (vpIt->age > TIMESEQ_DISPLAY_WINDOW_SIZE) {
+						// Replace this tracked output with the newly changed one
+						vpIt->id = *it;
+						vpIt->age = 0;
+						vpIt->voltage = outputVoltages[CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)][PORT_FROM_CHANNEL_PORT_IDENTIFIER(vpIt->id)];
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+void TimeSeqDisplay::reset() {
+	m_voltagePoints.clear();
 }

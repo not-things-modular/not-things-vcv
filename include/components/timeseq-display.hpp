@@ -16,6 +16,9 @@ struct TimeSeqVoltagePoints {
 struct TimeSeqDisplay : widget::Widget {
 	void drawLayer(const DrawArgs& args, int layer) override;
 
-	std::string m_time = "04:20";
-	std::vector<TimeSeqVoltagePoints> m_voltagePoints;
+	void processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages);
+	void reset();
+
+	private:
+		std::vector<TimeSeqVoltagePoints> m_voltagePoints;
 };

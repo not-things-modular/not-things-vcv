@@ -96,6 +96,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		std::vector<int> m_changedPortChannelVoltages;
 		dsp::ClockDivider m_PortChannelChangeClockDivider;
 
+		void resetUi();
 		void resetOutputs();
 		void updateOutputs();
 };
