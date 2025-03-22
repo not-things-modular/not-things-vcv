@@ -1223,6 +1223,16 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");
 			}
 		}
+
+		value.quantize = false;
+		json::const_iterator quantize = valueJson.find("quantize");
+		if (quantize != valueJson.end()) {
+			if (quantize->is_boolean()) {
+				value.quantize = quantize->get<bool>();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_QuantizeBool, "'quantize' must be a boolean.");
+			}
+		}
 	}
 
 	return value;

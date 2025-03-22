@@ -46,17 +46,20 @@ struct CalcProcessor {
 };
 
 struct ValueProcessor {
-	ValueProcessor(std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+	ValueProcessor(std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
 
 	double process();
 	virtual double processValue() = 0;
 
 	private:
 		std::vector<std::shared_ptr<CalcProcessor>> m_calcProcessors;
+		bool m_quantize;
+
+		double quantize(double value);
 };
 
 struct StaticValueProcessor : ValueProcessor {
-	StaticValueProcessor(float value, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+	StaticValueProcessor(float value, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
 
 	double processValue() override;
 
@@ -65,7 +68,7 @@ struct StaticValueProcessor : ValueProcessor {
 };
 
 struct VariableValueProcessor : ValueProcessor {
-	VariableValueProcessor(std::string name, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, VariableHandler* variableHandler);
+	VariableValueProcessor(std::string name, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize, VariableHandler* variableHandler);
 
 	double processValue() override;
 
@@ -75,7 +78,7 @@ struct VariableValueProcessor : ValueProcessor {
 };
 
 struct InputValueProcessor : ValueProcessor {
-	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler);
+	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler);
 
 	double processValue() override;
 
@@ -86,7 +89,7 @@ struct InputValueProcessor : ValueProcessor {
 };
 
 struct OutputValueProcessor : ValueProcessor {
-	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler);
+	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler);
 
 	double processValue() override;
 
@@ -97,7 +100,7 @@ struct OutputValueProcessor : ValueProcessor {
 };
 
 struct RandValueProcessor : ValueProcessor {
-	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors);
+	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
 
 	double processValue() override;
 

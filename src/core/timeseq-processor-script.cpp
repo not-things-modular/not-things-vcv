@@ -452,11 +452,11 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScri
 		}
 		value = note[1] - '0' - 4 + ((float) noteIndex / 12);
 	}
-	return shared_ptr<ValueProcessor>(new StaticValueProcessor(value, calcProcessors));
+	return shared_ptr<ValueProcessor>(new StaticValueProcessor(value, calcProcessors, scriptValue->quantize));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
-	return shared_ptr<ValueProcessor>(new VariableValueProcessor(*scriptValue->variable.get(), calcProcessors, m_variableHandler));
+	return shared_ptr<ValueProcessor>(new VariableValueProcessor(*scriptValue->variable.get(), calcProcessors, scriptValue->quantize, m_variableHandler));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
@@ -464,7 +464,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScrip
 	pair<int, int> input = parseInput(context, scriptValue->input.get(), location);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors, m_portHandler));
+	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors, scriptValue->quantize, m_portHandler));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
@@ -472,7 +472,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScri
 	pair<int, int> output = parseOutput(context, scriptValue->output.get(), location);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors, m_portHandler));
+	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors, scriptValue->quantize, m_portHandler));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location, vector<string> valueStack) {
@@ -484,7 +484,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 	shared_ptr<ValueProcessor> upperValueProcessor = parseValue(context, scriptValue->rand.get()->upper.get(), location, valueStack);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new RandValueProcessor(lowerValueProcessor, upperValueProcessor, calcProcessors));
+	return shared_ptr<ValueProcessor>(new RandValueProcessor(lowerValueProcessor, upperValueProcessor, calcProcessors, scriptValue->quantize));
 }
 
 shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {

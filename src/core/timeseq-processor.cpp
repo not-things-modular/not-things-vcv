@@ -34,7 +34,7 @@ double CalcProcessor::calc(double value) {
 }
 
 
-ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors) : m_calcProcessors(calcProcessors) {}
+ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : m_calcProcessors(calcProcessors), m_quantize(quantize) {}
 
 double ValueProcessor::process() {
 	double value = processValue();
@@ -43,34 +43,70 @@ double ValueProcessor::process() {
 		value = (*it)->calc(value);
 	}
 
+	if (m_quantize) {
+		value = quantize(value);
+	}
+
 	return value;
 }
 
-StaticValueProcessor::StaticValueProcessor(float value, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_value(value) {}
+// The quantizing thresholds within an octave for quantizing to the nearest note.
+// The first value is halfway between two quantized notes, the second value is the quantized note that is below it.
+// Any value that is below the first value should be quantized down to the note that's in the second value.
+const float quantize_treshholds[][2] = {
+	{ 1.f / 24, 0.f }, // C
+	{ (1.f / 12) + (1.f / 24), (1.f / 12) }, // C#
+	{ (2.f / 12) + (1.f / 24), (2.f / 12) }, // D
+	{ (3.f / 12) + (1.f / 24), (3.f / 12) }, // Eb
+	{ (4.f / 12) + (1.f / 24), (4.f / 12) }, // E
+	{ (5.f / 12) + (1.f / 24), (5.f / 12) }, // F
+	{ (6.f / 12) + (1.f / 24), (6.f / 12) }, // F#
+	{ (7.f / 12) + (1.f / 24), (7.f / 12) }, // G
+	{ (8.f / 12) + (1.f / 24), (8.f / 12) }, // Ab
+	{ (9.f / 12) + (1.f / 24), (9.f / 12) }, // A
+	{ (10.f / 12) + (1.f / 24), (10.f / 12) }, // Bb
+	{ (11.f / 12) + (1.f / 24), (11.f / 12) }, // B
+};
+
+double ValueProcessor::quantize(double value) {
+	double octave;
+	double note = std::modf(value, &octave);
+
+	for (int i = 0; i < 12; i++) {
+		if (note < quantize_treshholds[i][0]) {
+			note = quantize_treshholds[i][1];
+			break;
+		}
+	}
+
+	return octave + note;
+}
+
+StaticValueProcessor::StaticValueProcessor(float value, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_value(value) {}
 
 double StaticValueProcessor::processValue() {
 	return m_value;
 }
 
-VariableValueProcessor::VariableValueProcessor(string name, vector<shared_ptr<CalcProcessor>> calcProcessors, VariableHandler* variableHandler) : ValueProcessor(calcProcessors), m_name(name), m_variableHandler(variableHandler) {}
+VariableValueProcessor::VariableValueProcessor(string name, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize, VariableHandler* variableHandler) : ValueProcessor(calcProcessors, quantize), m_name(name), m_variableHandler(variableHandler) {}
 
 double VariableValueProcessor::processValue() {
 	return m_variableHandler->getVariable(m_name);
 }
 
-InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler) : ValueProcessor(calcProcessors), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler) {}
+InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler) : ValueProcessor(calcProcessors, quantize), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler) {}
 
 double InputValueProcessor::processValue() {
 	return m_portHandler->getInputPortVoltage(m_inputPort, m_inputChannel);
 }
 
-OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, PortHandler* portHandler) : ValueProcessor(calcProcessors), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
+OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler) : ValueProcessor(calcProcessors, quantize), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
 
 double OutputValueProcessor::processValue() {
 	return m_portHandler->getOutputPortVoltage(m_outputPort, m_outputChannel);
 }
 
-RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, vector<shared_ptr<CalcProcessor>> calcProcessors) : ValueProcessor(calcProcessors), m_lowerValue(lowerValue), m_upperValue(upperValue), m_generator(chrono::steady_clock::now().time_since_epoch().count()) {}
+RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_lowerValue(lowerValue), m_upperValue(upperValue), m_generator(chrono::steady_clock::now().time_since_epoch().count()) {}
 
 double RandValueProcessor::processValue() {
 	float lower = m_lowerValue->process();

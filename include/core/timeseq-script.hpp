@@ -67,6 +67,8 @@ struct ScriptCalc : ScriptRefObject {
  * @struct ScriptValue
  */
 struct ScriptValue : ScriptRefObject {
+	bool quantize;
+	
 	/**
 	 * @brief Uses a fixed voltage value
 	*/

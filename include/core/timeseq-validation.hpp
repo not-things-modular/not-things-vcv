@@ -155,6 +155,7 @@ enum ValidationErrorCode {
 	Value_RandObject = 1212,
 	Value_CalcArray = 1213,
 	Value_CalcObject = 1214,
+	Value_QuantizeBool = 1215,
 
 	Output_RefOrInstance = 1300,
 	Output_IndexNumber = 1301,
