@@ -348,7 +348,18 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(Process
 		outputChannel = output.second;
 	}
 
-	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
+	float easeFactor = 0.f;
+	bool easePow = true;
+	if (scriptAction->easeFactor) {
+		easeFactor = *scriptAction->easeFactor.get();
+	}
+	if (scriptAction->easeAlgorithm) {
+		if (*scriptAction->easeAlgorithm == ScriptAction::EaseAlgorithm::SIG) {
+			easePow = false;
+		}
+	}
+
+	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {

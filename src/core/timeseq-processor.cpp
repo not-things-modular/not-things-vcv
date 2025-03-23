@@ -191,6 +191,8 @@ void ActionTriggerProcessor::processAction() {
 }
 
 ActionGlideProcessor::ActionGlideProcessor(
+	float easeFactor,
+	bool easePow,
 	shared_ptr<ValueProcessor> startValue,
 	shared_ptr<ValueProcessor> endValue,
 	shared_ptr<IfProcessor> ifProcessor,
@@ -199,7 +201,7 @@ ActionGlideProcessor::ActionGlideProcessor(
 	string variable,
 	PortHandler* portHandler,
 	VariableHandler* variableHandler) :
-		m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_ifProcessor(ifProcessor), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
+		m_easeFactor(easeFactor), m_easePow(easePow), m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_ifProcessor(ifProcessor), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
 
 void ActionGlideProcessor::start(uint64_t glideLength) {
 	m_startValue = m_startValueProcessor->process();
@@ -212,7 +214,16 @@ void ActionGlideProcessor::start(uint64_t glideLength) {
 
 void ActionGlideProcessor::process(uint64_t glidePosition) {
 	if (m_if) {
-		double value = m_startValue + (m_valueDelta * glidePosition * m_durationInverse);
+		float ease = m_durationInverse * glidePosition;
+		if (m_easeFactor != 0.f) {
+			if (m_easePow) {
+				ease = calculatePowEase(ease, glidePosition);
+			} else {
+				ease = calculateSigEase(ease, glidePosition);
+			}
+		}
+        
+		double value = m_startValue + m_valueDelta * ease;
 		if (m_variable.length() > 0) {
 			m_variableHandler->setVariable(m_variable, value);
 		} else {
@@ -230,6 +241,23 @@ void ActionGlideProcessor::end() {
 		}
 	}
 }
+
+double ActionGlideProcessor::calculatePowEase(float ease, uint64_t glidePosition) {
+	if (m_easeFactor > 0.f) {
+		return pow(ease, 1.f + m_easeFactor * 2.f);
+	} else {
+		return 1.f - pow(1.f - (ease), 1.f - m_easeFactor * 2.f);
+	}
+}
+
+double ActionGlideProcessor::calculateSigEase(float ease, uint64_t glidePosition) {
+	if (m_easeFactor > 0.f) {
+		return ease / (1.0f + m_easeFactor * (1.0f - ease));
+	} else {
+		return 1.0f - ((1.0f - ease) / (1.0f - m_easeFactor * ease));
+	}
+}
+
 
 DurationProcessor::DurationProcessor(uint64_t duration, double drift) : m_duration(duration), m_drift(drift) {}
 

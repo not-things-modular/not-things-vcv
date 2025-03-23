@@ -786,6 +786,33 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			}
 		}
 
+		json::const_iterator easeFactor = actionJson.find("ease-factor");
+		if (easeFactor != actionJson.end()) {
+			if (easeFactor->is_number()) {
+				action.easeFactor.reset(new float(easeFactor->get<float>()));
+				if ((*action.easeFactor.get() < -5.0) || (*action.easeFactor.get() > 5.0)) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_EaseFactorRange, "'ease-factor' must be a number between -5.0 and 5.0.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_EaseFactorFloat, "'ease-factor' must be a number between -5.0 and 5.0.");
+			}
+		}
+
+		json::const_iterator easeAlgorithm = actionJson.find("ease-algorithm");
+		if (easeAlgorithm != actionJson.end()) {
+			if (easeAlgorithm->is_string()) {
+				if (easeAlgorithm->get<string>() == "pow") {
+					action.easeAlgorithm.reset(new ScriptAction::EaseAlgorithm(ScriptAction::EaseAlgorithm::POW));
+				} else if (easeAlgorithm->get<string>() == "sig") {
+					action.easeAlgorithm.reset(new ScriptAction::EaseAlgorithm(ScriptAction::EaseAlgorithm::SIG));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
+			}
+		}
+
 		json::const_iterator output = actionJson.find("output");
 		if (output != actionJson.end()) {
 			if (output->is_object()) {
@@ -836,8 +863,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when for 'GLIDE' timing.");
 			}
 		} else {
-			if ((action.startValue) || (action.endValue)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_OnlyGlideProperties, "'start-value' and 'end-value' can only be used in combination with 'GLIDE' timing.");
+			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_OnlyGlideProperties, "'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((action.output) || (action.variable.length() > 0)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideActions, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");

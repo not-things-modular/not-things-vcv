@@ -135,6 +135,7 @@ struct ScriptIf {
 
 struct ScriptAction : ScriptRefObject {
 	enum ActionTiming { START, END, GLIDE };
+	enum EaseAlgorithm { POW, SIG };
 
 	ActionTiming timing;
 	std::unique_ptr<ScriptIf> condition;
@@ -146,6 +147,8 @@ struct ScriptAction : ScriptRefObject {
 
 	std::unique_ptr<ScriptValue> startValue;
 	std::unique_ptr<ScriptValue> endValue;
+	std::unique_ptr<float> easeFactor;
+	std::unique_ptr<EaseAlgorithm> easeAlgorithm;
 	std::unique_ptr<ScriptOutput> output;
 	std::string variable;
 };

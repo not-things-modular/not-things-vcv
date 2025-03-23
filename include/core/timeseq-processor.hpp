@@ -177,13 +177,15 @@ struct ActionTriggerProcessor : ActionProcessor {
 };
 
 struct ActionGlideProcessor {
-	ActionGlideProcessor(std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, std::string variable, PortHandler* portHandler, VariableHandler* variableHandler);
+	ActionGlideProcessor(float easeFactor, bool easePow, std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, std::string variable, PortHandler* portHandler, VariableHandler* variableHandler);
 
 	void start(uint64_t glideLength);
 	void process(uint64_t glidePosition);
 	void end();
 
 	private:
+		float m_easeFactor;
+		bool m_easePow;
 		std::shared_ptr<ValueProcessor> m_startValueProcessor;
 		std::shared_ptr<ValueProcessor> m_endValueProcessor;
 		std::shared_ptr<IfProcessor> m_ifProcessor;
@@ -203,6 +205,11 @@ struct ActionGlideProcessor {
 		// Pre-calculated for runtime performance: the difference between start and end, and "1.0 / duration"
 		double m_valueDelta;
 		double m_durationInverse;
+
+		// A power-based easing calculation
+		double calculatePowEase(float ease, uint64_t glidePosition);
+		// A sigmoid-based easing calculation
+		double calculateSigEase(float ease, uint64_t glidePosition);
 };
 
 struct DurationProcessor {
