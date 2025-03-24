@@ -349,13 +349,13 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(Process
 	}
 
 	float easeFactor = 0.f;
-	bool easePow = true;
+	bool easePow = false;
 	if (scriptAction->easeFactor) {
 		easeFactor = *scriptAction->easeFactor.get();
 	}
 	if (scriptAction->easeAlgorithm) {
-		if (*scriptAction->easeAlgorithm == ScriptAction::EaseAlgorithm::SIG) {
-			easePow = false;
+		if (*scriptAction->easeAlgorithm == ScriptAction::EaseAlgorithm::POW) {
+			easePow = true;
 		}
 	}
 

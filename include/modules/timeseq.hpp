@@ -96,6 +96,9 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		std::vector<int> m_changedPortChannelVoltages;
 		dsp::ClockDivider m_PortChannelChangeClockDivider;
 
+		// Starting from a loaded data json introduces a processing delay to allow everything in the patch to be loaded.
+		int m_startDelay = 0;
+
 		void resetUi();
 		void resetOutputs();
 		void updateOutputs();

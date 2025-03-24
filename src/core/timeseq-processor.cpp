@@ -201,7 +201,13 @@ ActionGlideProcessor::ActionGlideProcessor(
 	string variable,
 	PortHandler* portHandler,
 	VariableHandler* variableHandler) :
-		m_easeFactor(easeFactor), m_easePow(easePow), m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_ifProcessor(ifProcessor), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {}
+		m_easeFactor(easeFactor), m_easePow(easePow), m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_ifProcessor(ifProcessor), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {
+
+	if (!m_easePow) {
+		// Multiply the ease factor if we're using the sigmoid function since it reacts slower to the easing factor when compared to the power-based algorithm.
+		m_easeFactor *= 3.5f;
+	}
+}
 
 void ActionGlideProcessor::start(uint64_t glideLength) {
 	m_startValue = m_startValueProcessor->process();

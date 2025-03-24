@@ -59,12 +59,14 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 	void setTrigger(std::string name) override;
 	std::vector<std::string>& getTriggers() override;
 
+	uint32_t getSampleRate();
 	uint32_t getElapsedSamples();
 	void resetElapsedSamples();
 	
 	private:
 		Status m_status = Status::EMPTY;
 		uint32_t m_elapsedSamples = 0;
+		uint32_t m_sampleRate = 48000;
 		uint32_t m_samplesPerHour = 48000 * 60 * 60;
 
 		JsonLoader* m_jsonLoader;
@@ -78,6 +80,7 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 		bool m_triggerIdx = false;
 
 		EventListener* m_eventListener;
+		SampleRateReader* m_sampleRateReader;
 };
 
 }

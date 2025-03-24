@@ -20,6 +20,7 @@ TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateR
 
 	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener);
 	m_eventListener = eventListener;
+	m_sampleRateReader = sampleRateReader;
 }
 
 TimeSeqCore::~TimeSeqCore() {
@@ -34,6 +35,8 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
 
 		if (validationErrors.size() == 0) {
+			m_sampleRate = m_sampleRateReader->getSampleRate();
+			m_samplesPerHour = m_sampleRate * 60 * 60;
 			m_script = script;
 			m_processor = processor;
 
@@ -141,6 +144,10 @@ void TimeSeqCore::setTrigger(std::string name) {
 
 std::vector<std::string>& TimeSeqCore::getTriggers() {
 	return m_triggers[m_triggerIdx];
+}
+
+uint32_t TimeSeqCore::getSampleRate() {
+	return m_sampleRate;
 }
 
 uint32_t TimeSeqCore::getElapsedSamples() {

@@ -202,8 +202,11 @@ struct ScriptInputTrigger {
 };
 
 struct Script {
+	enum AutoStartMode { TRUE, FALSE, INHERIT };
+
 	std::string type;
 	std::string version;
+	
 
 	std::vector<ScriptTimeline> timelines;
 	std::vector<ScriptAction> globalActions;

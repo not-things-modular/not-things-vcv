@@ -50,6 +50,7 @@ json_t *TimeSeqModule::dataToJson() {
 	if (m_script) {
 		json_object_set_new(rootJ, "ntTimeSeqScript", json_string(m_script->c_str()));
 	}
+	json_object_set_new(rootJ, "ntTimeSeqStatus", json_integer(m_timeSeqCore->getStatus()));
 	return rootJ;
 }
 
@@ -60,6 +61,15 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 	if (ntTimeSeqScript) {
 		if (json_is_string(ntTimeSeqScript)) {
 			loadScript(std::make_shared<std::string>(json_string_value(ntTimeSeqScript)));
+		}
+	}
+
+	json_t *ntTimeSeqStatus = json_object_get(rootJ, "ntTimeSeqStatus");
+	if (ntTimeSeqStatus) {
+		json_int_t status = json_integer_value(ntTimeSeqStatus);
+		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
+			m_startDelay = 10; // Introduce a 10 sample delay in the processing when a start is received from the data JSON to allow any other setup in the patch to complete.
+			m_timeSeqCore->start();
 		}
 	}
 }
@@ -79,10 +89,12 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			switch (m_timeSeqCore->getStatus()) {
 				case timeseq::TimeSeqCore::Status::IDLE:
 				case timeseq::TimeSeqCore::Status::PAUSED:
+					m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
 					m_timeSeqCore->start();
 					m_runPulse.trigger(0.001f);
 					break;
 				case timeseq::TimeSeqCore::Status::RUNNING:
+					m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
 					m_timeSeqCore->pause();
 					m_runPulse.trigger(0.001f);
 					break;
@@ -101,7 +113,9 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			m_timeSeqCore->reset();
 		}
 
-		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+		if (m_startDelay > 0) {
+			m_startDelay--;
+		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
 			int rate = params[TimeSeqModule::ParamId::PARAM_RATE].getValue();
 			if (rate < -1) {
 				m_rateDivision++;
@@ -122,10 +136,12 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 	}
 
 	if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_PortChannelChangeClockDivider.process())) {
-		if (m_changedPortChannelVoltages.size() > 0) {
-			m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputVoltages);
+		if (m_timeSeqDisplay != nullptr) {
+			if (m_changedPortChannelVoltages.size() > 0) {
+				m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputVoltages);
+			}
+			m_changedPortChannelVoltages.clear();
 		}
-		m_changedPortChannelVoltages.clear();
 	}
 
 	// Update the Run and Reset outputs
@@ -159,8 +175,10 @@ void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
 }
 
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
-	m_timeSeqCore->reloadScript();
-	resetUi();
+	if (sampleRateChangeEvent.sampleRate != m_timeSeqCore->getSampleRate()) {
+		m_timeSeqCore->reloadScript();
+		resetUi();
+	}
 }
 
 

@@ -32,7 +32,7 @@
 							"actions": [
 								{
 									"timing": "glide",
-									"ease-factor": 4,
+									"ease-factor": 1.25,
 									"ease-algorithm": "sig",
 									"start-value": { "voltage": -5.0 },
 									"end-value": { "voltage": 5.0 },
