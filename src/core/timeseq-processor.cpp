@@ -228,7 +228,7 @@ void ActionGlideProcessor::process(uint64_t glidePosition) {
 				ease = calculateSigEase(ease, glidePosition);
 			}
 		}
-        
+
 		double value = m_startValue + m_valueDelta * ease;
 		if (m_variable.length() > 0) {
 			m_variableHandler->setVariable(m_variable, value);
@@ -532,7 +532,7 @@ void TriggerProcessor::process() {
 	}
 }
 
-Processor::Processor(vector<shared_ptr<TimelineProcessor>> timelines, vector<shared_ptr<TriggerProcessor>> triggers, vector<shared_ptr<ActionProcessor>> startActions, vector<shared_ptr<ActionProcessor>> endActions) : m_timelines(timelines), m_triggers(triggers), m_startActions(startActions), m_endActions(endActions) {}
+Processor::Processor(vector<shared_ptr<TimelineProcessor>> timelines, vector<shared_ptr<TriggerProcessor>> triggers, vector<shared_ptr<ActionProcessor>> startActions) : m_timelines(timelines), m_triggers(triggers), m_startActions(startActions) {}
 
 void Processor::reset() {
 	for (vector<shared_ptr<ActionProcessor>>::iterator it = m_startActions.begin(); it != m_startActions.end(); it++) {

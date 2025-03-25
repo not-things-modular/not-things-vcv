@@ -48,22 +48,19 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 	count = 0;
 	location.push_back("global-actions");
 	vector<shared_ptr<ActionProcessor>> startActionProcessors;
-	vector<shared_ptr<ActionProcessor>> endActionProcessors;
 	for (vector<ScriptAction>::iterator it = script->globalActions.begin(); it != script->globalActions.end(); it++) {
 		location.push_back(to_string(count));
 		if (it->timing == ScriptAction::ActionTiming::START) {
 			startActionProcessors.push_back(parseAction(&context, &(*it), location));
-		} else if (it->timing == ScriptAction::ActionTiming::END) {
-			endActionProcessors.push_back(parseAction(&context, &(*it), location));
 		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have 'start' or 'end' timings.");
+			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
 		}
 		location.pop_back();
 		count++;
 	}
 	location.pop_back();
 
-	return shared_ptr<Processor>(new Processor(timelineProcessors, triggerProcessors, startActionProcessors, endActionProcessors));
+	return shared_ptr<Processor>(new Processor(timelineProcessors, triggerProcessors, startActionProcessors));
 }
 
 shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, vector<string> location) {

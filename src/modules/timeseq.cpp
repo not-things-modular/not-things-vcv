@@ -108,7 +108,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		if (resetTriggered) {
 			lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
 			m_resetPulse.trigger(0.001f);
-			
+
 			resetUi();
 			m_timeSeqCore->reset();
 		}
@@ -332,10 +332,19 @@ void TimeSeqWidget::appendContextMenu(Menu* menu) {
 	NTModuleWidget::appendContextMenu(menu);
 
 	bool disabled = !hasScript();
+	bool hasClipboard = glfwGetClipboardString(APP->window->win) == nullptr;
 	menu->addChild(new MenuSeparator);
-	menu->addChild(createMenuItem("Load script...", "", [this]() { this->loadScript(); }));
-	menu->addChild(createMenuItem("Save script...", "", [this]() { this->saveScript(); }, disabled));
-	menu->addChild(createMenuItem("Clear script...", "", [this]() { this->clearScript(); }, disabled));
+	menu->addChild(createSubmenuItem("Script", "",
+		[this, disabled, hasClipboard](Menu* menu) {
+			menu->addChild(createMenuItem("Load script...", "", [this]() { this->loadScript(); }));
+			menu->addChild(createMenuItem("Save script...", "", [this]() { this->saveScript(); }, disabled));
+			menu->addChild(new MenuSeparator);
+			menu->addChild(createMenuItem("Copy script", "", [this]() { this->copyScript(); }, disabled));
+			menu->addChild(createMenuItem("Paste script", "", [this]() { this->pasteScript(); }, hasClipboard));
+			menu->addChild(new MenuSeparator);
+			menu->addChild(createMenuItem("Clear script", "", [this]() { this->clearScript(); }, disabled));
+		}
+	));
 }
 
 void TimeSeqWidget::loadScript() {
@@ -387,6 +396,35 @@ void TimeSeqWidget::saveScript() {
 				}
 				free(path);
 			}
+		}
+	}
+}
+
+void TimeSeqWidget::pasteScript() {
+	const char* clipboardString = glfwGetClipboardString(APP->window->win);
+	if (clipboardString) {
+		// If a script is already loaded, first confirm if it should be replaced.
+		if ((!hasScript()) || (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, "A script is already loaded. Are you sure you want to replace it?") == 1)) {
+			std::string json = clipboardString;
+			TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
+			if (timeSeqModule != nullptr) {
+				std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
+				if (error.length() > 0) {
+					if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
+						copyLastLoadErrors();
+					}
+				}
+			}
+		}
+	}
+}
+
+void TimeSeqWidget::copyScript() {
+	TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
+	if ((timeSeqModule) && (timeSeqModule->getScript()) ) {
+		std::string script = *timeSeqModule->getScript();
+		if (script.size() > 0) {
+			glfwSetClipboardString(APP->window->win, script.c_str());
 		}
 	}
 }

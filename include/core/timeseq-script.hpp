@@ -68,7 +68,7 @@ struct ScriptCalc : ScriptRefObject {
  */
 struct ScriptValue : ScriptRefObject {
 	bool quantize;
-	
+
 	/**
 	 * @brief Uses a fixed voltage value
 	*/
@@ -126,7 +126,7 @@ struct ScriptIf {
 	enum IfOperator {EQ, NE, LT, LTE, GT, GTE, AND, OR };
 
 	IfOperator ifOperator;
-	
+
 	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> values;
 	std::unique_ptr<float> tolerance;
 
@@ -202,11 +202,9 @@ struct ScriptInputTrigger {
 };
 
 struct Script {
-	enum AutoStartMode { TRUE, FALSE, INHERIT };
-
 	std::string type;
 	std::string version;
-	
+
 
 	std::vector<ScriptTimeline> timelines;
 	std::vector<ScriptAction> globalActions;

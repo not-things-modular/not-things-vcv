@@ -325,7 +325,7 @@ struct TriggerProcessor {
 };
 
 struct Processor {
-	Processor(std::vector<std::shared_ptr<TimelineProcessor>> m_timelines, std::vector<std::shared_ptr<TriggerProcessor>> m_triggers, std::vector<std::shared_ptr<ActionProcessor>> startActions, std::vector<std::shared_ptr<ActionProcessor>> endActions);
+	Processor(std::vector<std::shared_ptr<TimelineProcessor>> m_timelines, std::vector<std::shared_ptr<TriggerProcessor>> m_triggers, std::vector<std::shared_ptr<ActionProcessor>> startActions);
 
 	void reset();
 	void process();
@@ -334,7 +334,6 @@ struct Processor {
 		std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
 		std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
-		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
 };
 
 struct ProcessorScriptParseContext {

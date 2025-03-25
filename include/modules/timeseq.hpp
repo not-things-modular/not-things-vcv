@@ -112,6 +112,8 @@ struct TimeSeqWidget : NTModuleWidget {
 	private:
 		void loadScript();
 		void saveScript();
+		void copyScript();
+		void pasteScript();
 		void clearScript();
 		void copyLastLoadErrors();
 
