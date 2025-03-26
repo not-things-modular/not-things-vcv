@@ -93,6 +93,17 @@ void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, s
 	}
 }
 
+void TimeSeqDisplay::ageVoltages() {
+	// Remove voltage points that haven't changed recently, age those that are recent enough
+	for (int i = m_voltagePoints.size() - 1; i >= 0; i--) {
+		if (m_voltagePoints[i].age >= TIMESEQ_DISPLAY_WINDOW_SIZE * 2) {
+			m_voltagePoints.erase(m_voltagePoints.begin() + i);
+		} else {
+			m_voltagePoints[i].age++;
+		}
+	}
+}
+
 void TimeSeqDisplay::reset() {
 	m_voltagePoints.clear();
 }

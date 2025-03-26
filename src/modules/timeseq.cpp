@@ -139,8 +139,11 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		if (m_timeSeqDisplay != nullptr) {
 			if (m_changedPortChannelVoltages.size() > 0) {
 				m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputVoltages);
+				m_changedPortChannelVoltages.clear();
+			} else {
+				// No port voltages have changed, so just age the existing voltages.
+				m_timeSeqDisplay->ageVoltages();
 			}
-			m_changedPortChannelVoltages.clear();
 		}
 	}
 

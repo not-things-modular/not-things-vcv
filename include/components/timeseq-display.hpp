@@ -17,6 +17,7 @@ struct TimeSeqDisplay : widget::Widget {
 	void drawLayer(const DrawArgs& args, int layer) override;
 
 	void processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages);
+	void ageVoltages();
 	void reset();
 
 	private:
