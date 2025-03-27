@@ -97,6 +97,7 @@ enum ValidationErrorCode {
 	SegmentBlock_RefOrInstance = 600,
 	SegmentBlock_SegmentsArray = 601,
 	SegmentBlock_SegmentObject = 602,
+	SegmentBlock_RepeatNumber = 603,
 
 	Duration_SamplesNumber = 700,
 	Duration_MillisNumber = 701,

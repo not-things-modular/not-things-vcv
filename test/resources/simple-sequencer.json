@@ -29,13 +29,6 @@
 			}
 		},
 		{
-			"timing": "end",
-			"set-value": {
-				"output": { "index": 1 },
-				"value": { "voltage": -1.01 }
-			}
-		},
-		{
 			"timing": "start",
 			"set-value": {
 				"output": { "index": 2 },
@@ -51,7 +44,7 @@
 					"loop": true,
 					"segments": [
 						{
-							"duration": { "xhz": 130.815, "millis": 1500 },
+							"duration": { "xhz": 40, "millis": 25 },
 							"actions": [
 								{
 									"if": {

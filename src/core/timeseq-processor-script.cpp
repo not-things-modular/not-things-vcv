@@ -80,7 +80,6 @@ shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScri
 		location.pop_back();
 		count++;
 
-		laneProcessors.push_back(laneProcessor);
 		if (scriptLane.startTrigger.length() > 0) {
 			if (startTriggers.find(scriptLane.startTrigger) == startTriggers.end()) {
 				startTriggers[scriptLane.startTrigger] = vector<shared_ptr<LaneProcessor>>();
@@ -157,7 +156,15 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 		location.push_back("segments");
 		vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(context, &scriptSegmentBlock->segments, timeScale, location, segmentStack);
 		location.pop_back();
-		return segmentProcessors;
+		if (!scriptSegmentBlock->repeat) {
+			return segmentProcessors;
+		} else {
+			vector<shared_ptr<SegmentProcessor>> result;
+			for (int i = 0; i < *scriptSegmentBlock->repeat.get(); i++) {
+				result.insert(result.end(), segmentProcessors.begin(), segmentProcessors.end());
+			}
+			return result;
+		}
 	} else {
 		if (find(segmentStack.begin(), segmentStack.end(), string("sb-") + scriptSegmentBlock->ref) == segmentStack.end()) {
 			int count = 0;
@@ -252,7 +259,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 	} else if (scriptDuration->beats) {
 		if (timeScale->bpm) {
 			int bpm = *timeScale->bpm.get();
-			int beats = *scriptDuration->beats.get();
+			double beats = *scriptDuration->beats.get();
 			if (scriptDuration->bars) {
 				if (timeScale->bpb) {
 					beats += ((*scriptDuration->bars.get()) * (*timeScale->bpb.get()));
@@ -273,7 +280,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 		double refactoredDuration = (double) m_sampleRateReader->getSampleRate() / (*scriptDuration->hz.get());
 		duration = round(refactoredDuration);
 		drift = refactoredDuration - duration;
-}
+	}
 
 	return shared_ptr<DurationProcessor>(new DurationProcessor(duration, drift));
 }

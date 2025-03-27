@@ -170,6 +170,7 @@ struct ScriptSegment : ScriptRefObject {
 };
 
 struct ScriptSegmentBlock : ScriptRefObject {
+	std::unique_ptr<int> repeat;
 	std::vector<ScriptSegment> segments;
 };
 

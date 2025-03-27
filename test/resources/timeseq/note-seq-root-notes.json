@@ -1,0 +1,64 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "0.0.1",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "millis": 2000 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "C3" }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "millis": 2000 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "F3" }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "millis": 2000 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "D3" }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "millis": 2000 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "G3" }
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

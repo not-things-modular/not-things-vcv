@@ -594,10 +594,18 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 
 	populateRef(segmentBlock, segmentBlockJson, allowRefs, validationErrors, location);
 	if (segmentBlock.ref.length() > 0) {
-		if (hasOneOf(segmentBlockJson, { "segments" })) {
+		if (hasOneOf(segmentBlockJson, { "segments", "repeat" })) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_RefOrInstance, "A ref segment-block can not be combined other non-ref segment-block properties.");
 		}
 	} else {
+		json::const_iterator repeat = segmentBlockJson.find("repeat");
+		if (repeat != segmentBlockJson.end()) {
+			if ((repeat->is_number_unsigned()) && (repeat->is_number_unsigned() > 0)) {
+				segmentBlock.repeat.reset(new int(repeat->get<int>()));
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentObject, "'repeat' must be a positive number.");
+			}
+		}
 		json::const_iterator segments = segmentBlockJson.find("segments");
 		if ((segments != segmentBlockJson.end()) && (segments->is_array())) {
 			location.push_back("segments");

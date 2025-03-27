@@ -229,12 +229,18 @@ std::shared_ptr<std::string> TimeSeqModule::getScript() {
 }
 
 std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
+	timeseq::TimeSeqCore::Status status = m_timeSeqCore->getStatus();
 	std::vector<timeseq::ValidationError> errors = m_timeSeqCore->loadScript(*script);
 
 	m_lastScriptLoadErrors.clear();
 	if (errors.size() == 0) {
 		m_script = script;
 		resetUi();
+		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
+			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
+			m_timeSeqCore->start();
+			m_runPulse.trigger(0.001f);
+}
 		return std::string();
 	} else {
 		std::ostringstream errorMessage;
