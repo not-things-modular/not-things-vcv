@@ -13,7 +13,6 @@
 							"duration": { "millis": 1 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-variable": {
 										"name": "bernoulli-chance",
 										"value": {
@@ -25,14 +24,12 @@
 									}
 								},
 								{
-									"timing": "start",
 									"set-value": {
 										"output": { "index": 3 },
 										"value": { "variable": "bernoulli-chance" }
 									}
 								},
 								{
-									"timing": "start",
 									"if": {
 										"gt": [
 											{ "variable": "bernoulli-chance" },
@@ -45,7 +42,6 @@
 									}
 								},
 								{
-									"timing": "start",
 									"if": {
 										"lte": [
 											{ "variable": "bernoulli-chance" },
@@ -58,7 +54,7 @@
 									}
 								},
 								{
-									"timing": "start",
+									"timing": "end",
 									"trigger": "reset-output"
 								}
 							]
@@ -75,7 +71,6 @@
 							"duration": { "samples": 1 },
 							"actions": [
 								{
-									"timing": "start",
 									"if": {
 										"lt": [
 											{ "input": { "index": 1 } },
@@ -88,7 +83,6 @@
 									}
 								},
 								{
-									"timing": "start",
 									"if": {
 										"lt": [
 											{ "input": { "index": 1 } },
@@ -101,7 +95,6 @@
 									}
 								},
 								{
-									"timing": "start",
 									"if": {
 										"lt": [
 											{ "input": { "index": 1 } },

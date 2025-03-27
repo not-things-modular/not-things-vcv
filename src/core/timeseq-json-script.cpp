@@ -716,10 +716,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			} else if (*timing == "glide") {
 				action.timing = ScriptAction::ActionTiming::GLIDE;
 			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_RefOrInstance, "timing is required and must be either 'start', 'end' or 'glide'.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TimingEnum, "timing must be either 'start', 'end' or 'glide'.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_RefOrInstance, "timing is required and must be either 'start', 'end' or 'glide'.");
+			action.timing = ScriptAction::ActionTiming::START;
 		}
 
 		json::const_iterator setValue = actionJson.find("set-value");
