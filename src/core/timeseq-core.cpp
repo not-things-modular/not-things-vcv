@@ -53,6 +53,7 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 void TimeSeqCore::reloadScript() {
 	if (m_script) {
 		m_processor = m_processorLoader->loadScript(m_script, nullptr);
+		m_sampleRate = m_sampleRateReader->getSampleRate();
 
 		m_processor->reset();
 		m_status = Status::IDLE;

@@ -1,0 +1,141 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "0.0.1",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "voltage": 5 }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "voltage": -5 }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "hz": 130.815 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": { "voltage": -5.0 },
+									"end-value": { "voltage": 5.0 },
+									"output": { "index": 2 }
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": { "voltage": -5.0 },
+									"end-value": { "voltage": 5.0 },
+									"output": { "index": 3 }
+								}
+							]
+						},
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": { "voltage": 5.0 },
+									"end-value": { "voltage": -5.0 },
+									"output": { "index": 3 }
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": 0.375,
+									"ease-algorithm": "pow",
+									"start-value": { "voltage": -5.0 },
+									"end-value": { "voltage": 0.0 },
+									"output": { "index": 4 }
+								}
+							]
+						},
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": -0.375,
+									"ease-algorithm": "pow",
+									"start-value": { "voltage": 0.0 },
+									"end-value": { "voltage": 5.0 },
+									"output": { "index": 4 }
+								}
+							]
+						},
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": 0.375,
+									"ease-algorithm": "pow",
+									"start-value": { "voltage": 5.0 },
+									"end-value": { "voltage": 0.0 },
+									"output": { "index": 4 }
+								}
+							]
+						},
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": -0.375,
+									"ease-algorithm": "pow",
+									"start-value": { "voltage": 0.0 },
+									"end-value": { "voltage": -5.0 },
+									"output": { "index": 4 }
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

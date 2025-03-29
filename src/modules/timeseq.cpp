@@ -49,6 +49,8 @@ json_t *TimeSeqModule::dataToJson() {
 	json_t *rootJ = NTModule::dataToJson();
 	if (m_script) {
 		json_object_set_new(rootJ, "ntTimeSeqScript", json_string(m_script->c_str()));
+	} else {
+		json_object_set_new(rootJ, "ntTimeSeqScript", json_string(""));
 	}
 	json_object_set_new(rootJ, "ntTimeSeqStatus", json_integer(m_timeSeqCore->getStatus()));
 	return rootJ;
@@ -60,7 +62,12 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 	json_t *ntTimeSeqScript = json_object_get(rootJ, "ntTimeSeqScript");
 	if (ntTimeSeqScript) {
 		if (json_is_string(ntTimeSeqScript)) {
-			loadScript(std::make_shared<std::string>(json_string_value(ntTimeSeqScript)));
+			const char* script = json_string_value(ntTimeSeqScript);
+			if (strlen(script) > 0) {
+				loadScript(std::make_shared<std::string>(json_string_value(ntTimeSeqScript)));
+			} else {
+				clearScript();
+			}
 		}
 	}
 
@@ -369,11 +376,21 @@ void TimeSeqWidget::loadScript() {
 
 				TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
 				if (timeSeqModule != nullptr) {
+					history::ModuleChange *h = new history::ModuleChange;
+					h->name = "load TimeSeq script";
+					h->moduleId = module->id;
+					h->oldModuleJ = json_incref(toJson());
+					h->newModuleJ = nullptr;
+
 					std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
 					if (error.length() > 0) {
+						delete h;
 						if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
 							copyLastLoadErrors();
 						}
+					} else {
+						h->newModuleJ = json_incref(toJson());
+						APP->history->push(h);
 					}
 				}
 			} catch (Exception& e) {
@@ -417,11 +434,21 @@ void TimeSeqWidget::pasteScript() {
 			std::string json = clipboardString;
 			TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
 			if (timeSeqModule != nullptr) {
+				history::ModuleChange *h = new history::ModuleChange;
+				h->name = "paste TimeSeq script";
+				h->moduleId = module->id;
+				h->oldModuleJ = json_incref(toJson());
+				h->newModuleJ = nullptr;
+
 				std::string error = timeSeqModule->loadScript(std::make_shared<std::string>(json));
 				if (error.length() > 0) {
+					delete h;
 					if (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, error.c_str()) == 1) {
 						copyLastLoadErrors();
 					}
+				} else {
+					h->newModuleJ = json_incref(toJson());
+					APP->history->push(h);
 				}
 			}
 		}
@@ -440,8 +467,16 @@ void TimeSeqWidget::copyScript() {
 
 void TimeSeqWidget::clearScript() {
 	if (osdialog_message(OSDIALOG_WARNING, OSDIALOG_YES_NO, "Are you sure you want to clear the currently loaded script?") == 1) {
+		history::ModuleChange *h = new history::ModuleChange;
+		h->name = "clear TimeSeq script";
+		h->moduleId = module->id;
+		h->oldModuleJ = json_incref(toJson());
+
 		dynamic_cast<TimeSeqModule *>(getModule())->clearScript();
-	}
+
+		h->newModuleJ = json_incref(toJson());
+		APP->history->push(h);	
+}
 }
 
 void TimeSeqWidget::copyLastLoadErrors() {
