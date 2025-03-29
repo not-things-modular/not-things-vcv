@@ -463,6 +463,18 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 		}
 	}
 
+	json::const_iterator restartTrigger = laneJson.find("restart-trigger");
+	if (restartTrigger != laneJson.end()) {
+		if (restartTrigger->is_string()) {
+			lane.restartTrigger = *restartTrigger;
+			if (lane.restartTrigger.length() == 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_RestartTriggerLength, "restart-trigger can not be an empty string.");
+			}
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_RestartTriggerString, "restart-trigger must be a string.");
+		}
+	}
+
 	json::const_iterator stopTrigger = laneJson.find("stop-trigger");
 	if (stopTrigger != laneJson.end()) {
 		if (stopTrigger->is_string()) {

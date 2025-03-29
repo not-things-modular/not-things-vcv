@@ -179,6 +179,7 @@ struct ScriptLane {
 	bool loop;
 	int repeat;
 	std::string startTrigger;
+	std::string restartTrigger;
 	std::string stopTrigger;
 	std::vector<ScriptSegment> segments;
 

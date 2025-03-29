@@ -283,8 +283,8 @@ double DurationProcessor::process(double drift) {
 	if (m_state == DurationState::STATE_IDLE) {
 		// The segment is being started.
 		m_state = DurationState::STATE_START;
-		// Reset the position
-		m_position = 0;
+		// Reset the position, we've now processed one sample.
+		m_position = 1;
 		// Add the drift at the start of the segment, so that the end of the segment will wait if we went over 1 total drift
 		return drift + m_drift;
 	} else if (m_position < m_duration - 1) {
@@ -455,9 +455,19 @@ void LaneProcessor::reset() {
 }
 
 void LaneProcessor::processTriggers(vector<string>& triggers) {
-	if ((m_scriptLane->startTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->startTrigger) != triggers.end()) && (m_segments.size() > 0)) {
-		reset();
-		m_state = LaneState::STATE_PROCESSING;
+	// No use in starting if we have no segments...
+	if (m_segments.size() > 0) {
+		// Restarts must be done no matter the current state
+		if ((m_scriptLane->restartTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->restartTrigger) != triggers.end())) {
+			reset();
+			m_state = LaneState::STATE_PROCESSING;
+		} else if (m_state != LaneState::STATE_PROCESSING) {
+			// Starts must only be done if we're not already running
+			if ((m_scriptLane->startTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->startTrigger) != triggers.end())) {
+				reset();
+				m_state = LaneState::STATE_PROCESSING;
+			}
+		}
 	}
 
 	if ((m_state != LaneState::STATE_IDLE) && (m_scriptLane->stopTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->stopTrigger) != triggers.end())) {

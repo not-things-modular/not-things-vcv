@@ -247,14 +247,14 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 		float activeSampleRate = m_sampleRateReader->getSampleRate();
 		if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
 			double refactoredDuration = (double) (*scriptDuration->samples.get()) * activeSampleRate / (*timeScale->sampleRate.get());
-			duration = round(refactoredDuration);
+			duration = floor(refactoredDuration);
 			drift = refactoredDuration - duration;
 		} else{
 			duration = *scriptDuration->samples.get();
 		}
 	} else if (scriptDuration->millis) {
 		double refactoredDuration = (double) (*scriptDuration->millis.get()) * m_sampleRateReader->getSampleRate() / 1000;
-		duration = round(refactoredDuration);
+		duration = floor(refactoredDuration);
 		drift = refactoredDuration - duration;
 	} else if (scriptDuration->beats) {
 		if (timeScale->bpm) {
@@ -270,7 +270,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 			}
 
 			double refactoredDuration = m_sampleRateReader->getSampleRate() * beats * 60 / bpm;
-			duration = round(refactoredDuration);
+			duration = floor(refactoredDuration);
 			drift = refactoredDuration - duration;
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
@@ -278,7 +278,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 		}
 	} else if (scriptDuration->hz) {
 		double refactoredDuration = (double) m_sampleRateReader->getSampleRate() / (*scriptDuration->hz.get());
-		duration = round(refactoredDuration);
+		duration = floor(refactoredDuration);
 		drift = refactoredDuration - duration;
 	}
 
