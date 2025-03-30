@@ -33,6 +33,8 @@ bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
 }
 
 
+JsonScriptParser::~JsonScriptParser() {}
+
 std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError> *validationErrors, vector<string> location) {
 	Script* script = new Script();
 
@@ -307,7 +309,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			for (const json& inputTrigger : inputTriggerElements) {
 				location.push_back(std::to_string(count));
 				if (inputTrigger.is_object()) {
-					script->inputTriggers.push_back(parseInputTrigger(inputTrigger, false, validationErrors, location));
+					script->inputTriggers.push_back(parseInputTrigger(inputTrigger, validationErrors, location));
 				} else {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggerObject, "'input-triggers' elements must be objects.");
 				}
@@ -318,6 +320,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			if (count == 0) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersItemRequired, "At least one input-trigger item is required.");
 			}
+			
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
@@ -1458,7 +1461,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 	return calc;
 }
 
-ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptInputTrigger inputTrigger;
 
 	json::const_iterator id = inputTriggerJson.find("id");

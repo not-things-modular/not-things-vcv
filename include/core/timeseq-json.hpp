@@ -11,7 +11,9 @@ using namespace nlohmann;
 namespace timeseq {
 
 struct JsonScriptParser {
-	std::shared_ptr<Script> parseScript(const json& timelineJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	virtual ~JsonScriptParser();
+
+	virtual std::shared_ptr<Script> parseScript(const json& timelineJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptTimeline parseTimeline(const json& timelineJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptTimeScale parseTimeScale(const json& timeScaleJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptLane parseLane(const json& laneJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
@@ -27,7 +29,7 @@ struct JsonScriptParser {
 	ScriptInput parseInput(const json& inputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptRand parseRand(const json& randJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptCalc parseCalc(const json& calcJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	ScriptInputTrigger parseInputTrigger(const json& inputTriggerJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptInputTrigger parseInputTrigger(const json& inputTriggerJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 
 	ScriptIf parseIf(const json& ifJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::pair<ScriptValue, ScriptValue> parseIfValues(std::string ifOperator, const json& valuesJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);

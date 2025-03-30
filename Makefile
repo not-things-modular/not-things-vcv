@@ -47,7 +47,7 @@ GTEST_SRCS = $(GTEST_DIR)/googletest/src/gtest-all.cc $(GTEST_DIR)/googletest/sr
 GTEST_OBJS = $(BUILD_DIR)/googletest/gtest-all.o $(BUILD_DIR)/googletest/gtest_main.o $(BUILD_DIR)/googletest/gmock-all.o
 
 TEST_DIR = test/googletest
-TEST_SRCS = $(wildcard $(TEST_DIR)/*.cpp) $(wildcard $(TEST_DIR)/**/*.cpp)
+TEST_SRCS = $(wildcard $(TEST_DIR)/*.cpp) $(wildcard $(TEST_DIR)/**/*.cpp) $(wildcard $(TEST_DIR)/**/**/*.cpp)
 TEST_OBJS = $(patsubst $(TEST_DIR)/%.cpp, $(BUILD_DIR)/test/%.o, $(TEST_SRCS))
 
 $(BUILD_DIR)/googletest/gtest%.o: $(GTEST_DIR)/googletest/src/gtest%.cc
@@ -86,6 +86,7 @@ else
 endif
 
 test-coverage: CXXFLAGS := $(filter-out -O3, $(CXXFLAGS)) $(GCOVFLAGS) -lgcov
+test-coverage: LDFLAGS := $(filter-out -O3, $(LDFLAGS))
 test-coverage: GTEST_CXXFLAGS += $(GCOVFLAGS) -lgcov
 test-coverage: LDFLAGS += $(GCOVFLAGS) -lgcov
 test-coverage: test
