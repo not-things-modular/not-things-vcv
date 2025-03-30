@@ -40,24 +40,24 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 	json::const_iterator type = scriptJson.find("type");
 	if ((type == scriptJson.end()) || (!type->is_string())) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeMissing, "type is required and must be a string.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeMissing, "'type' is required and must be a string.");
 	} else {
 		script->type = *type;
 		if (script->type != "not-things_timeseq_script") {
 			std::string typeValue = (*type);
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeUnsupported, "type '", typeValue.c_str(), "' is not supported.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TypeUnsupported, "'type' '", typeValue.c_str(), "' is not supported.");
 		}
 	}
 
 	json::const_iterator version = scriptJson.find("version");
 	if ((version == scriptJson.end()) || (!version->is_string())) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionMissing, "version is required and must be a string.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionMissing, "'version' is required and must be a string.");
 	}
 	else {
 		script->version = *version;
 		if (script->version != "0.0.1") {
 			std::string versionValue = (*version);
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "version '", versionValue.c_str(), "' is not supported.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is not supported.");
 		}
 	}
 
@@ -80,7 +80,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 		location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TimelinesMissing, "timelines is required and must be an array.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TimelinesMissing, "'timelines' is required and must be an array.");
 	}
 
 	json::const_iterator globalActions = scriptJson.find("global-actions");
@@ -320,7 +320,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			if (count == 0) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersItemRequired, "At least one input-trigger item is required.");
 			}
-			
+
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
@@ -385,35 +385,33 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 
 	json::const_iterator sampleRate = timeScaleJson.find("sample-rate");
 	if (sampleRate != timeScaleJson.end()) {
-		if (sampleRate->is_number_unsigned()) {
+		if ((sampleRate->is_number_unsigned()) && (sampleRate->get<int>() > 0)) {
 			timeScale.sampleRate.reset(new int(sampleRate->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_SampleRateNumber, "sample-rate must be an unsigned number.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_SampleRateNumber, "sample-rate must be a positive integer number.");
 		}
 	}
 
 	json::const_iterator bpm = timeScaleJson.find("bpm");
 	if (bpm != timeScaleJson.end()) {
-		if (bpm->is_number_unsigned()) {
+		if ((bpm->is_number_unsigned()) && (bpm->get<int>() > 0)) {
 			timeScale.bpm.reset(new int(bpm->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpmNumber, "bpm must be an unsigned number.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpmNumber, "bpm must be a positive integer number.");
 		}
 	}
 
 	json::const_iterator bpb = timeScaleJson.find("bpb");
 	if (bpb != timeScaleJson.end()) {
-		if (bpb->is_number_unsigned()) {
+		if ((bpb->is_number_unsigned()) && (bpb->get<int>() > 0)) {
 			timeScale.bpb.reset(new int(bpb->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbNumber, "bpb must be an unsigned number.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbNumber, "bpb must be a positive integer number.");
 		}
 	}
 
 	if (!(timeScale.sampleRate) && !(timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_SampleRateOnly, "One of sample-rate or bpm is required.");
-	} else if ((timeScale.sampleRate) && (timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_SampleRateOnly, "No bpm can be set if sample-rate is set.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_Empty, "One of sample-rate or bpm is required.");
 	} else if ((timeScale.bpb) && !(timeScale.bpm)) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbRequiresBpm, "bpm  must be set if bpb is set.");
 	}
