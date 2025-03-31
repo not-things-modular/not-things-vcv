@@ -426,3 +426,114 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseTimeScaleWithBpmBpbAndSa
 	ASSERT_TRUE(script->timelines[0].timeScale->bpb);
 	EXPECT_EQ(*script->timelines[0].timeScale->bpb.get(), 4);
 }
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldDefaultToFalseLoopLock) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "lanes", json::array() },
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0);
+	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_FALSE(script->timelines[0].loopLock);
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnNonBooleanLoopLock) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "loop-lock", "not-a-boolean" },
+			{ "lanes", json::array() }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Timeline_LoopLockBoolean, "/timelines/0");
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseLoopLockTrue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "loop-lock", true },
+			{ "lanes", json::array() }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0);
+	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_TRUE(script->timelines[0].loopLock);
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnNonObjectLane) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{
+				"lanes", json::array({
+					json::object({ { "segments", json::array() } }),
+					"not-a-lane",
+					json::object({ { "segments", json::array() } }),
+			})
+			}
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Timeline_LaneObject, "/timelines/0/lanes/1");
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseMultipleLanes) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{
+				"lanes", json::array({
+					json::object({ { "start-trigger", "sat" }, { "segments", json::array() } }),
+					json::object({ { "restart-trigger", "rst" }, { "segments", json::array() } }),
+					json::object({ { "stop-trigger", "sot" }, { "segments", json::array() } }),
+			})
+			}
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 3);
+	ASSERT_EQ(script->timelines[0].lanes[0].startTrigger, "sat");
+	ASSERT_EQ(script->timelines[0].lanes[1].restartTrigger, "rst");
+	ASSERT_EQ(script->timelines[0].lanes[2].stopTrigger, "sot");
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailWithoutLanes) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({ json::object() });
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Timeline_LanesMissing, "/timelines/0");
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseLoopLockFalse) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+}

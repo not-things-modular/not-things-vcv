@@ -513,7 +513,6 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 	lane.disableUi = false;
 	json::const_iterator disableUi = laneJson.find("disable-ui");
 	if (disableUi != laneJson.end()) {
-		location.push_back("disable-ui");
 		if (disableUi->is_boolean()) {
 			lane.disableUi = disableUi->get<bool>();
 		} else {
@@ -521,7 +520,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 		}
 	}
 
-return lane;
+	return lane;
 }
 
 ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
