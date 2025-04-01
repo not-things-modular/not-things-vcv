@@ -101,9 +101,6 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				count++;
 			}
 
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_GlobalActionsItemRequired, "At least one action item is required in the 'global-actions' array.");
-			}
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_GlobalActionsArray, "'global-actions' must be an array.");
@@ -128,9 +125,6 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				count++;
 			}
 
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksItemRequired, "At least one segment-block item is required.");
-			}
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksArray, "segment-blocks must be an array.");
@@ -615,7 +609,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 			if ((repeat->is_number_unsigned()) && (repeat->is_number_unsigned() > 0)) {
 				segmentBlock.repeat.reset(new int(repeat->get<int>()));
 			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentObject, "'repeat' must be a positive number.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
 			}
 		}
 		json::const_iterator segments = segmentBlockJson.find("segments");

@@ -10,6 +10,17 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNoGlobalActionsShouldSucceed
 	EXPECT_EQ(script->globalActions.size(), 0);
 }
 
+TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithEmptyGlobalActionsShouldSucceed) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["global-actions"] = json::array();
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0);
+	EXPECT_EQ(script->globalActions.size(), 0);
+}
+
 TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNonArrayGlobalActionsShouldFail) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -19,17 +30,6 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNonArrayGlobalActionsShouldF
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1);
 	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionsArray, "/");
-}
-
-TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithEmptyGlobalActionsShouldFail) {
-	vector<ValidationError> validationErrors;
-	JsonLoader jsonLoader;
-	json json = getMinimalJson();
-	json["global-actions"] = json::array();
-
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
-	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionsItemRequired, "/global-actions");
 }
 
 TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNonObjectActionShouldFail) {
