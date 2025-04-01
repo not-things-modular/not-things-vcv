@@ -95,7 +95,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				if (action.is_object()) {
 					script->globalActions.push_back(parseAction(action, true, validationErrors, location));
 				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_GlobalActionsArray, "'global-actions' elements must be action objects.");
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_GlobalActionsObject, "'global-actions' elements must be action objects.");
 				}
 				location.pop_back();
 				count++;
@@ -902,7 +902,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 ScriptIf JsonScriptParser::parseIf(const json& ifJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptIf scriptIf;
 	int operatorCount = 0;
-	
+
 	json::const_iterator eqValue = ifJson.find("eq");
 	if (eqValue != ifJson.end()) {
 		operatorCount++;
