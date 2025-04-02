@@ -24,6 +24,10 @@ struct TriggerHandler {
 	virtual std::vector<std::string>& getTriggers() = 0;
 };
 
+struct AssertListener {
+	virtual void assertFailed(std::string name, bool stop) = 0;
+};
+
 struct SampleRateReader {
 	virtual float getSampleRate() = 0;
 };
@@ -37,7 +41,7 @@ struct EventListener {
 struct TimeSeqCore : VariableHandler, TriggerHandler {
 	enum Status { EMPTY, IDLE, RUNNING, PAUSED };
 
-	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener);
+	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
 	virtual ~TimeSeqCore();
 
 	std::vector<timeseq::ValidationError> loadScript(std::string& scriptData);

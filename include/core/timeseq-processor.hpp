@@ -33,6 +33,7 @@ struct VariableHandler;
 struct TriggerHandler;
 struct SampleRateReader;
 struct EventListener;
+struct AssertListener;
 
 
 struct CalcProcessor {
@@ -164,6 +165,18 @@ struct ActionSetPolyphonyProcessor : ActionProcessor {
 		int m_outputPort;
 		int m_channelCount;
 		PortHandler* m_portHandler;
+};
+
+struct ActionAssertProcessor : ActionProcessor {
+	ActionAssertProcessor(std::string name, std::shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, std::shared_ptr<IfProcessor> ifProcessor);
+
+	void processAction() override;
+
+	private:
+		std::string m_name;
+		std::shared_ptr<IfProcessor> m_expect;
+		bool m_stopOnFail;
+		AssertListener* m_assertListener;
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
@@ -342,7 +355,7 @@ struct ProcessorScriptParseContext {
 };
 
 struct ProcessorScriptParser {
-	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener);
+	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
 
 	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::shared_ptr<TimelineProcessor> parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, std::vector<std::string> location);
@@ -357,6 +370,7 @@ struct ProcessorScriptParser {
 	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::string> location, std::vector<std::string> valueStack);
 	std::shared_ptr<ValueProcessor> parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
@@ -376,10 +390,11 @@ struct ProcessorScriptParser {
 		TriggerHandler* m_triggerHandler;
 		SampleRateReader* m_sampleRateReader;
 		EventListener* m_eventListener;
+		AssertListener* m_assertListener;
 };
 
 struct ProcessorLoader {
-	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener);
+	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
 
 	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 

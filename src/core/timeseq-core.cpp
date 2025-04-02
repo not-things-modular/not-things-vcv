@@ -10,7 +10,7 @@ extern rack::Plugin* pluginInstance;
 using namespace timeseq;
 
 
-TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener) {
+TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) {
 	m_jsonLoader = new JsonLoader();
 	std::string schemaFile = rack::asset::plugin(pluginInstance, "res/timeseq.schema.json");
 	std::ifstream schemaStream(schemaFile);
@@ -18,7 +18,7 @@ TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateR
 
 	m_jsonLoader->setSchema(schemaJson);
 
-	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener);
+	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener, assertListener);
 	m_eventListener = eventListener;
 	m_sampleRateReader = sampleRateReader;
 }

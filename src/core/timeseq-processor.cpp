@@ -184,6 +184,14 @@ void ActionSetPolyphonyProcessor::processAction() {
 	m_portHandler->setOutputPortChannels(m_outputPort, m_channelCount);
 }
 
+ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
+
+void ActionAssertProcessor::processAction() {
+	if (!m_expect->process()) {
+		m_assertListener->assertFailed(m_name, m_stopOnFail);
+	}
+}
+
 ActionTriggerProcessor::ActionTriggerProcessor(string trigger, TriggerHandler* triggerHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_trigger(trigger), m_triggerHandler(triggerHandler) {}
 
 void ActionTriggerProcessor::processAction() {
@@ -564,7 +572,7 @@ void Processor::process() {
 	}
 }
 
-ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener) {}
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
 	return m_processorScriptParser.parseScript(script.get(), validationErrors, vector<string>());

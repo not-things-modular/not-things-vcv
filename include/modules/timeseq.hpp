@@ -7,7 +7,7 @@
 struct TimeSeqDisplay;
 struct LEDDisplay;
 
-struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::SampleRateReader, timeseq::EventListener {
+struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::SampleRateReader, timeseq::EventListener, timeseq::AssertListener {
 	enum ParamId {
 		PARAM_RUN,
 		PARAM_RESET,
@@ -65,6 +65,8 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void laneLooped() override;
 	void segmentStarted() override;
 	void triggerTriggered() override;
+
+	void assertFailed(std::string name, bool stop) override;
 
 
 	std::shared_ptr<std::string> getScript();

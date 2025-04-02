@@ -8,7 +8,7 @@
 
 
 TimeSeqModule::TimeSeqModule() {
-	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this);
+	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this, this);
 
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {
@@ -229,6 +229,10 @@ void TimeSeqModule::segmentStarted() {
 
 void TimeSeqModule::triggerTriggered() {
 	m_triggerTriggered = true;
+}
+
+void TimeSeqModule::assertFailed(std::string name, bool stop) {
+
 }
 
 std::shared_ptr<std::string> TimeSeqModule::getScript() {

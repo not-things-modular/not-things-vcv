@@ -133,6 +133,12 @@ struct ScriptIf {
 	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> ifs;
 };
 
+struct ScriptAssert {
+	std::string name;
+	ScriptIf expect;
+	bool stopOnFail;
+};
+
 struct ScriptAction : ScriptRefObject {
 	enum ActionTiming { START, END, GLIDE };
 	enum EaseAlgorithm { POW, SIG };
@@ -143,6 +149,7 @@ struct ScriptAction : ScriptRefObject {
 	std::unique_ptr<ScriptSetValue> setValue;
 	std::unique_ptr<ScriptSetVariable> setVariable;
 	std::unique_ptr<ScriptSetPolyphony> setPolyphony;
+	std::unique_ptr<ScriptAssert> assert;
 	std::string trigger;
 
 	std::unique_ptr<ScriptValue> startValue;

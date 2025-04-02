@@ -9,12 +9,13 @@ using namespace std;
 using namespace timeseq;
 
 
-ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener) {
+ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) {
 	m_portHandler = portHandler;
 	m_variableHandler = variableHandler;
 	m_triggerHandler = triggerHandler;
 	m_sampleRateReader = sampleRateReader;
 	m_eventListener = eventListener;
+	m_assertListener = assertListener;
 }
 
 shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<ValidationError> *validationErrors, vector<string> location) {
@@ -303,6 +304,8 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptPa
 			actionProcessor = parseSetVariableAction(context, scriptAction, ifProcessor, location);
 		} else if (scriptAction->setPolyphony) {
 			actionProcessor = parseSetPolyphonyAction(context, scriptAction, ifProcessor, location);
+		} else if (scriptAction->assert) {
+			actionProcessor = parseAssertAction(context, scriptAction, ifProcessor, location);
 		} else if (scriptAction->trigger.length() > 0) {
 			actionProcessor = parseTriggerAction(context, scriptAction, ifProcessor, location);
 		} else {
@@ -389,6 +392,16 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Proces
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
 	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor));
+}
+
+std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location) {
+	ScriptAssert* scriptAssert = scriptAction->assert.get();
+
+	location.push_back("if");
+	shared_ptr<IfProcessor> expect = parseIf(context, &scriptAssert->expect, location);
+	location.pop_back();
+
+	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
