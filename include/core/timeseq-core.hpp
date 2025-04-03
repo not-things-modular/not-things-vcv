@@ -25,7 +25,7 @@ struct TriggerHandler {
 };
 
 struct AssertListener {
-	virtual void assertFailed(std::string name, bool stop) = 0;
+	virtual void assertFailed(std::string name, std::string message, bool stop) = 0;
 };
 
 struct SampleRateReader {

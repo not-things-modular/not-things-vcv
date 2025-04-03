@@ -36,7 +36,8 @@ TimeSeqModule::TimeSeqModule() {
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
 
-	m_PortChannelChangeClockDivider.setDivision(48000 / 30);
+	m_portChannelChangeClockDivider.setDivision(48000 / 30);
+	m_failedAssertBlinkClockDivider.setDivision(40000);
 
 	resetUi();
 }
@@ -118,6 +119,8 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 
 			resetUi();
 			m_timeSeqCore->reset();
+
+			m_failedAsserts.clear();
 		}
 
 		if (m_startDelay > 0) {
@@ -142,7 +145,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		}
 	}
 
-	if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_PortChannelChangeClockDivider.process())) {
+	if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_portChannelChangeClockDivider.process())) {
 		if (m_timeSeqDisplay != nullptr) {
 			if (m_changedPortChannelVoltages.size() > 0) {
 				m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputVoltages);
@@ -152,6 +155,10 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 				m_timeSeqDisplay->ageVoltages();
 			}
 		}
+	}
+
+	if ((m_failedAsserts.size() > 0) && (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_failedAssertBlinkClockDivider.process())) {
+		lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
 	}
 
 	// Update the Run and Reset outputs
@@ -169,8 +176,8 @@ void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
 
 	lights[LightId::LIGHT_READY].setBrightnessSmooth((bool) m_script, .01f);
 	lights[LightId::LIGHT_NOT_READY].setBrightnessSmooth(!(bool) m_script, .01f);
-	lights[LightId::LIGHT_RUN].setBrightnessSmooth((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::RUNNING), .01f);
-	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f);
+	lights[LightId::LIGHT_RUN].setBrightnessSmooth((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::RUNNING), .01f, 20.f);
+	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f, 20.f);
 
 	int sampleRate = getSampleRate();
 	uint32_t elapsedSamples = m_timeSeqCore->getElapsedSamples();
@@ -188,6 +195,9 @@ void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateCh
 	if (sampleRateChangeEvent.sampleRate != m_timeSeqCore->getSampleRate()) {
 		m_timeSeqCore->reloadScript();
 		resetUi();
+
+		m_portChannelChangeClockDivider.setDivision(sampleRateChangeEvent.sampleRate);
+		m_failedAssertBlinkClockDivider.setDivision(sampleRateChangeEvent.sampleRate);
 	}
 }
 
@@ -231,8 +241,15 @@ void TimeSeqModule::triggerTriggered() {
 	m_triggerTriggered = true;
 }
 
-void TimeSeqModule::assertFailed(std::string name, bool stop) {
+void TimeSeqModule::assertFailed(std::string name, std::string message, bool stop) {
+	if (m_failedAsserts.size() < 25) {
+		m_failedAsserts.push_back(string::f("Assert '%s' failed due to expectation '%s'.", name.c_str(), message.c_str()));
+	}
 
+	if ((stop) && (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING)) {
+		m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
+		m_timeSeqCore->pause();
+	}
 }
 
 std::shared_ptr<std::string> TimeSeqModule::getScript() {
@@ -247,6 +264,7 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 	if (errors.size() == 0) {
 		m_script = script;
 		resetUi();
+		m_failedAsserts.clear();
 		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
 			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
 			m_timeSeqCore->start();
@@ -298,10 +316,15 @@ void TimeSeqModule::clearScript() {
 	m_timeSeqCore->clearScript();
 	m_script.reset();
 	resetUi();
+	m_failedAsserts.clear();
 }
 
 std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
 	return m_lastScriptLoadErrors;
+}
+
+std::vector<std::string>& TimeSeqModule::getFailedAsserts() {
+	return m_failedAsserts;
 }
 
 
@@ -353,6 +376,7 @@ void TimeSeqWidget::appendContextMenu(Menu* menu) {
 
 	bool disabled = !hasScript();
 	bool hasClipboard = glfwGetClipboardString(APP->window->win) == nullptr;
+	bool hasAsserts = hasFailedAsserts();
 	menu->addChild(new MenuSeparator);
 	menu->addChild(createSubmenuItem("Script", "",
 		[this, disabled, hasClipboard](Menu* menu) {
@@ -365,6 +389,8 @@ void TimeSeqWidget::appendContextMenu(Menu* menu) {
 			menu->addChild(createMenuItem("Clear script", "", [this]() { this->clearScript(); }, disabled));
 		}
 	));
+	menu->addChild(new MenuSeparator);
+	menu->addChild(createMenuItem("Copy failed assertions", "", [this]() { this->copyAssertions(); }, !hasAsserts));
 }
 
 void TimeSeqWidget::loadScript() {
@@ -500,8 +526,29 @@ void TimeSeqWidget::copyLastLoadErrors() {
 	}
 }
 
+void TimeSeqWidget::copyAssertions() {
+	TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
+	if (timeSeqModule != nullptr) {
+		std::vector<std::string>& failedAsserts = timeSeqModule->getFailedAsserts();
+		if (failedAsserts.size() > 0) {
+			std::ostringstream assertsMessage;
+			for (const std::string& assert : failedAsserts) {
+				if (assertsMessage.tellp() != 0) {
+					assertsMessage << "\n";
+				}
+				assertsMessage << assert;
+			}
+			glfwSetClipboardString(APP->window->win, assertsMessage.str().c_str());
+		}
+	}
+}
+
 bool TimeSeqWidget::hasScript() {
 	return getModule() ? (bool) dynamic_cast<TimeSeqModule *>(getModule())->getScript() : false;
+}
+
+bool TimeSeqWidget::hasFailedAsserts() {
+	return getModule() ? dynamic_cast<TimeSeqModule *>(getModule())->getFailedAsserts().size() > 0 : false;
 }
 
 

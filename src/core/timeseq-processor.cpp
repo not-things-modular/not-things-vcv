@@ -119,47 +119,126 @@ double RandValueProcessor::processValue() {
 
 IfProcessor::IfProcessor(ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
 
-bool IfProcessor::process() {
-	switch (m_scriptIf->ifOperator) {
-		case ScriptIf::IfOperator::EQ: {
-			double value1 = m_values.first->process();
-			double value2 = m_values.first->process();
-			if (m_scriptIf->tolerance) {
-				return std::fabs(value1 - value2) <= *m_scriptIf->tolerance.get();
-			} else {
-				return value1 == value2;
+bool IfProcessor::process(string* message) {
+	if (message == nullptr) {
+		// If no message needs to be returned upon failure, we can do a simple check for the different operator types
+		switch (m_scriptIf->ifOperator) {
+			case ScriptIf::IfOperator::EQ: {
+				if (m_scriptIf->tolerance) {
+					return std::fabs(m_values.first->process() - m_values.second->process()) <= *m_scriptIf->tolerance.get();
+				} else {
+					return m_values.first->process() == m_values.second->process();
+				}
 			}
-		}
-		case ScriptIf::IfOperator::NE: {
-			double value1 = m_values.first->process();
-			double value2 = m_values.first->process();
-			if (m_scriptIf->tolerance) {
-				return std::fabs(value1 - value2) > *m_scriptIf->tolerance.get();
-			} else {
-				return value1 != value2;
+			case ScriptIf::IfOperator::NE: {
+				if (m_scriptIf->tolerance) {
+					return std::fabs(m_values.first->process() - m_values.second->process()) > *m_scriptIf->tolerance.get();
+				} else {
+					return m_values.first->process() != m_values.second->process();
+				}
 			}
+			case ScriptIf::IfOperator::LT:
+				return m_values.first->process() < m_values.second->process();
+			case ScriptIf::IfOperator::LTE:
+				return m_values.first->process() <= m_values.second->process();
+			case ScriptIf::IfOperator::GT:
+				return m_values.first->process() > m_values.second->process();
+			case ScriptIf::IfOperator::GTE:
+				return m_values.first->process() >= m_values.second->process();
+			case ScriptIf::IfOperator::AND:
+				return m_ifs.first->process(nullptr) && m_ifs.second->process(nullptr);
+			case ScriptIf::IfOperator::OR:
+				return m_ifs.second->process(nullptr) || m_ifs.second->process(nullptr);
 		}
-		case ScriptIf::IfOperator::LT:
-			return m_values.first->process() < m_values.second->process();
-		case ScriptIf::IfOperator::LTE:
-			return m_values.first->process() <= m_values.second->process();
-		case ScriptIf::IfOperator::GT:
-			return m_values.first->process() > m_values.second->process();
-		case ScriptIf::IfOperator::GTE:
-			return m_values.first->process() >= m_values.second->process();
-		case ScriptIf::IfOperator::AND:
-			return m_ifs.first->process() && m_ifs.second->process();
-		case ScriptIf::IfOperator::OR:
-			return m_ifs.first->process() || m_ifs.second->process();
-	}
 
-	return false;
+		return false;
+	} else {
+		// We'll need to return the details of the comparison if it failed, so we'll need to do some additional work...
+		std::ostringstream oss;
+		if (m_scriptIf->ifOperator == ScriptIf::IfOperator::AND) {
+			string message1;
+			string message2;
+			bool if1 = m_ifs.first->process(&message1);
+			bool if2 = m_ifs.second->process(&message2);
+
+			if (if1 && if2) {
+				return true;
+			} else {
+				oss << "(" << message1 << " and " << message2 << ")";
+				*message = oss.str();
+			}
+		} else if (m_scriptIf->ifOperator == ScriptIf::IfOperator::OR) {
+			string message1;
+			string message2;
+			bool if1 = m_ifs.first->process(&message1);
+			bool if2 = m_ifs.second->process(&message2);
+
+			if (if1 || if2) {
+				return true;
+			} else {
+				oss << "(" << message1 << " or " << message2 << ")";
+				*message = oss.str();
+			}
+		} else {
+			double value1 = m_values.first->process();
+			double value2 = m_values.second->process();
+			string operatorName;
+			bool result = false;
+
+			switch (m_scriptIf->ifOperator) {
+				case ScriptIf::IfOperator::EQ: {
+					if (m_scriptIf->tolerance) {
+						result = std::fabs(m_values.first->process() - m_values.second->process()) <= *m_scriptIf->tolerance.get();
+					} else {
+						result = m_values.first->process() == m_values.second->process();
+					}
+					operatorName = " eq ";
+					break;
+				}
+				case ScriptIf::IfOperator::NE: {
+					if (m_scriptIf->tolerance) {
+						result = std::fabs(m_values.first->process() - m_values.second->process()) > *m_scriptIf->tolerance.get();
+					} else {
+						result = m_values.first->process() != m_values.second->process();
+					}
+					operatorName = " ne ";
+					break;
+				}
+				case ScriptIf::IfOperator::LT: {
+					result = m_values.first->process() < m_values.second->process();
+					operatorName = " lt ";
+					break;
+				}
+				case ScriptIf::IfOperator::LTE: {
+					result = m_values.first->process() <= m_values.second->process();
+					operatorName = " lte ";
+					break;
+				}
+				case ScriptIf::IfOperator::GT: {
+					result = m_values.first->process() > m_values.second->process();
+					operatorName = " gt ";
+					break;
+				}
+				case ScriptIf::IfOperator::GTE: {
+					result = m_values.first->process() >= m_values.second->process();
+					operatorName = " gte ";
+					break;
+				}
+			}
+
+			if (!result) {
+				oss << "(" << value1 << operatorName << value2 << ")";
+				*message = oss.str();
+			}
+			return result;
+		}
+	}
 }
 
 ActionProcessor::ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
 
 void ActionProcessor::process() {
-	if ((!m_ifProcessor) || (m_ifProcessor->process())) {
+	if ((!m_ifProcessor) || (m_ifProcessor->process(nullptr))) {
 		processAction();
 	}
 }
@@ -187,8 +266,9 @@ void ActionSetPolyphonyProcessor::processAction() {
 ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
 
 void ActionAssertProcessor::processAction() {
-	if (!m_expect->process()) {
-		m_assertListener->assertFailed(m_name, m_stopOnFail);
+	string message;
+	if (!m_expect->process(&message)) {
+		m_assertListener->assertFailed(m_name, message, m_stopOnFail);
 	}
 }
 
@@ -220,7 +300,7 @@ ActionGlideProcessor::ActionGlideProcessor(
 void ActionGlideProcessor::start(uint64_t glideLength) {
 	m_startValue = m_startValueProcessor->process();
 	m_endValue = m_endValueProcessor->process();
-	m_if = (!m_ifProcessor) || m_ifProcessor->process();
+	m_if = (!m_ifProcessor) || m_ifProcessor->process(nullptr);
 
 	m_valueDelta = m_endValue - m_startValue;
 	m_durationInverse = 1. / glideLength;

@@ -115,7 +115,7 @@ struct RandValueProcessor : ValueProcessor {
 struct IfProcessor {
 	IfProcessor(ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> ifs);
 
-	bool process();
+	bool process(std::string* message);
 
 	private:
 		ScriptIf* m_scriptIf;

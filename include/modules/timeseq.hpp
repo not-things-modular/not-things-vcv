@@ -66,13 +66,15 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void segmentStarted() override;
 	void triggerTriggered() override;
 
-	void assertFailed(std::string name, bool stop) override;
+	void assertFailed(std::string name, std::string message, bool stop) override;
 
 
 	std::shared_ptr<std::string> getScript();
 	std::string loadScript(std::shared_ptr<std::string> script);
 	void clearScript();
 	std::list<std::string>& getLastScriptLoadErrors();
+
+	std::vector<std::string>& getFailedAsserts();
 
 	TimeSeqDisplay* m_timeSeqDisplay = nullptr;
 	LEDDisplay* m_ledDisplay = nullptr;
@@ -96,7 +98,10 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		int m_rateDivision = 0;
 
 		std::vector<int> m_changedPortChannelVoltages;
-		dsp::ClockDivider m_PortChannelChangeClockDivider;
+		dsp::ClockDivider m_portChannelChangeClockDivider;
+
+		std::vector<std::string> m_failedAsserts;
+		dsp::ClockDivider m_failedAssertBlinkClockDivider;
 
 		// Starting from a loaded data json introduces a processing delay to allow everything in the patch to be loaded.
 		int m_startDelay = 0;
@@ -119,5 +124,8 @@ struct TimeSeqWidget : NTModuleWidget {
 		void clearScript();
 		void copyLastLoadErrors();
 
+		void copyAssertions();
+
 		bool hasScript();
+		bool hasFailedAsserts();
 };
