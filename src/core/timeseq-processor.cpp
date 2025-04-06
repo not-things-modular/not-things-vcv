@@ -224,6 +224,11 @@ bool IfProcessor::process(string* message) {
 					operatorName = " gte ";
 					break;
 				}
+				case ScriptIf::IfOperator::AND:
+				case ScriptIf::IfOperator::OR: {
+						// Shouldn't come here anymore, AND and OR have been handled earlier
+					break;
+				}
 			}
 
 			if (!result) {

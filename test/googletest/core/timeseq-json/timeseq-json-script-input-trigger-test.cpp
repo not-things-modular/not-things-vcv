@@ -83,17 +83,6 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldFailOnNonObjectTrigg
 	expectError(validationErrors, ValidationErrorCode::Script_InputTriggerObject, "/input-triggers/0");
 }
 
-TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldFailOnEmptyInputTriggers) {
-	vector<ValidationError> validationErrors;
-	JsonLoader jsonLoader;
-	json json = getMinimalJson();
-	json["input-triggers"] = json::array();
-
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
-	expectError(validationErrors, ValidationErrorCode::Script_InputTriggersItemRequired, "/input-triggers");
-}
-
 TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldFailOnNonArray) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;

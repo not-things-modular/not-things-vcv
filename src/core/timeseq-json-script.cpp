@@ -127,7 +127,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksArray, "segment-blocks must be an array.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksArray, "'segment-blocks' must be an array.");
 		}
 	}
 
@@ -148,13 +148,9 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				location.pop_back();
 				count++;
 			}
-
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsItemRequired, "At least one segment item is required.");
-			}
 			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsArray, "segments must be an array.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsArray, "'segments' must be an array.");
 		}
 	}
 
@@ -176,12 +172,9 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				count++;
 			}
 
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputsItemRequired, "At least one input item is required.");
-			}
 			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputsArray, "inputs must be an array.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputsArray, "'inputs' must be an array.");
 		}
 	}
 
@@ -203,12 +196,9 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				count++;
 			}
 
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputsItemRequired, "At least one output item is required.");
-			}
 			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputsArray, "outputs must be an array.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputsArray, "'outputs' must be an array.");
 		}
 	}
 
@@ -230,9 +220,6 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				count++;
 			}
 
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcsItemRequired, "At least one calc item is required.");
-			}
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcsArray, "'calcs' must be an array.");
@@ -257,9 +244,6 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				count++;
 			}
 
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValuesItemRequired, "At least one value item is required.");
-			}
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValuesArray, "'values' must be an array.");
@@ -284,9 +268,6 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				count++;
 			}
 
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionsItemRequired, "At least one action item is required.");
-			}
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionsArray, "'actions' must be an array.");
@@ -309,10 +290,6 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				}
 				location.pop_back();
 				count++;
-			}
-
-			if (count == 0) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersItemRequired, "At least one input-trigger item is required.");
 			}
 
 			location.pop_back();
@@ -522,7 +499,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 
 	populateRef(segment, segmentJson, allowRefs, validationErrors, location);
 	if (segment.ref.length() > 0) {
-		if (hasOneOf(segmentJson, { "duration", "actions", "segment-block" })) {
+		if (hasOneOf(segmentJson, { "duration", "actions", "segment-block", "disable-ui" })) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_RefOrInstance, "A ref segment can not be combined other non-ref segment properties.");
 		}
 	} else {
@@ -1003,7 +980,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, std::vector<ValidationErr
 		if (andValue->is_array()) {
 			location.push_back("and");
 			scriptIf.ifOperator = ScriptIf::IfOperator::AND;
-			scriptIf.ifs.reset(new std::pair<ScriptIf, ScriptIf>(parseIfIfs("and", *andValue, validationErrors, location)));
+			scriptIf.ifs = parseIfIfs("and", *andValue, validationErrors, location);
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_AndArray, "'and' must be an array.");
@@ -1016,7 +993,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, std::vector<ValidationErr
 		if (orValue->is_array()) {
 			location.push_back("or");
 			scriptIf.ifOperator = ScriptIf::IfOperator::OR;
-			scriptIf.ifs.reset(new std::pair<ScriptIf, ScriptIf>(parseIfIfs("or", *orValue, validationErrors, location)));
+			scriptIf.ifs = parseIfIfs("or", *orValue, validationErrors, location);
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_OrArray, "'or' must be an array.");
@@ -1063,19 +1040,20 @@ std::pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(std::string 
 	return valuePair;
 }
 
-std::pair<ScriptIf, ScriptIf> JsonScriptParser::parseIfIfs(std::string ifOperator, const json& ifsJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
-	std::pair<ScriptIf, ScriptIf> ifPair;
+std::unique_ptr<std::pair<ScriptIf, ScriptIf>> JsonScriptParser::parseIfIfs(std::string ifOperator, const json& ifsJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> ifPair;
 
 	std::vector<json> ifElements = ifsJson.get<std::vector<json>>();
 	if (ifElements.size() == 2) {
+		ifPair.reset(new std::pair<ScriptIf, ScriptIf>());
 		location.push_back("0");
-		ifPair.first = parseIf(ifElements[0], validationErrors, location);
+		ifPair->first = parseIf(ifElements[0], validationErrors, location);
 		location.pop_back();
 		location.push_back("1");
-		ifPair.second = parseIf(ifElements[1], validationErrors, location);
+		ifPair->second = parseIf(ifElements[1], validationErrors, location);
 		location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two if items are expected in the '", ifOperator, "' array");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two if items are expected in the '", ifOperator.c_str(), "' array");
 	}
 
 	return ifPair;

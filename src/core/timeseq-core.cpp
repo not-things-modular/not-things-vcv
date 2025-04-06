@@ -31,7 +31,7 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 	std::vector<ValidationError> validationErrors;
 
 	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, &validationErrors);
-	if (script) {
+	if ((validationErrors.size() == 0) && (script)) {
 		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
 
 		if (validationErrors.size() == 0) {
