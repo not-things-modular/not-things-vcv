@@ -6,6 +6,9 @@
 The core idea behind this set of modules is to first **lim**it a sequence of input values to a defined range and subsequently **so**rt them. While this would normally result in *Limso* as a name, *Solim* just seemed to sound better.
 
 > **NOTE:** This document provides a detailed description of the Solim modules. While it aims to cover all features comprehensively, the amount of information may be a can much to read in one go. For a concise summary of each module’s functionality, check out the [TL;DR version here](./SOLIMI-tldr.md). You can always return to this page later for deeper insights into how and why specific features behave as they do.
+>
+> **Tutorial Video:** This patch-from-scratch tutorial includes a demonstration of the core functionality of Solim and its expanders:<br>
+> [![Solim Tutorial patch from scratch](https://img.youtube.com/vi/bFnPbz3OmdE/mqdefault.jpg)](https://www.youtube.com/watch?v=bFnPbz3OmdE)
 
 The concept of Solim is intended to work on a sequence of input voltages that represent 1V/oct note values. As such the limiting is done by either adding or removing octaves (i.e. 1V) from the incoming voltages until the resulting values are within the specified range. The rest of this documentation will also describe the functionality in this context, although the modular nature of VCV Rack allows it to be used in any other context if its funtionality fits the requirements.
 
@@ -27,7 +30,7 @@ On the Solim main module and expanders, the different settings that configure ho
 ## Solim (Main module)
 ![Solim main module](./solim-light.png)
 
-This module provides the core Solim functionality. It takes up to eight input voltages, limits them according to the values set for *Lower Lim* and *Upper Lim* and sorts them according to the selected *Sort* mode.
+This module provides the core Solim functionality. It takes up to eight input voltages, limits them according to the values set for *Lower Lim* and *Upper Lim* and sorts them according to the selected *Sort* mode. The limiting is done by adding or subtracting 1V (i.e. shifting by octaves) from the voltage until it falls within the specified range. In practice, this means that the note doesn't change (e.g. a C remains a C, and an E remains an E, etc.), only the octave adjusted.
 
 Solim does not quantize voltages during processing. While the limiting values are displayed on the module as quantized note values for ease of use, the limiting process itself only works on octave (i.e. 1V) ranges and does not quantize the values to specific scales or exact note voltages.
 
@@ -70,7 +73,7 @@ Several expanders can modify or extend Solim's functionality. A flexible, variab
 All expander modules have a small LED at the top of the panel that turns green when correctly connected to a Solim chain.
 
 ### Performance considerations
-By default, Solim processes at the current VCV Rack audio sample rate (44100 times per second at 44.1kHz, 48000 times per second at 48kHz, etc.). However, in most scenarios, the values Solim processes (e.g. the notes of a chord in a chord progression) do not change that frequently, so Solim does not need to check for changes at the audio sample rate. 
+By default, Solim processes at the current VCV Rack audio sample rate (44100 times per second at 44.1kHz, 48000 times per second at 48kHz, etc.). However, in most scenarios, the values Solim processes (e.g. the notes of a chord in a chord progression) do not change that frequently, so Solim does not need to check for changes at the audio sample rate.
 
 In the right-click menu of the main Solim module, there is a *Process at audio rate* option that can be turned on or off. If turned off, Solim instead checks and processes values approximately 6000 times per second (i.e. 6 times per millisecond), significantly reducing CPU usage.
 
