@@ -1034,7 +1034,7 @@ std::pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(std::string 
 		valuePair.second = parseValue(valueElements[1], true, validationErrors, location);
 		location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator, "' array");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator.c_str(), "' array");
 	}
 
 	return valuePair;
