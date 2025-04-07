@@ -547,7 +547,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_DisableUiBoolean, "'disable-ui' must be a boolean.");
 				}
 			}
-		} else if (!hasOneOf(segmentJson, { "duration", "actions" })) {
+		} else if (!hasOneOf(segmentJson, { "duration", "actions", "disable-ui" })) {
 			json::const_iterator segmentBlock = segmentJson.find("segment-block");
 			if (segmentBlock != segmentJson.end()) {
 				location.push_back("segment-block");
@@ -669,9 +669,9 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 	}
 
 	if (durationCount == 0) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBars, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
 	} else if (durationCount > 1) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBars, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
 	} else if (duration.bars && !duration.beats) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
 	} else if ((!duration.bars) && (duration.beats) && (*duration.beats.get() == 0)) {

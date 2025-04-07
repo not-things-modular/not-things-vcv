@@ -166,6 +166,7 @@ bool IfProcessor::process(string* message) {
 			} else {
 				oss << "(" << message1 << " and " << message2 << ")";
 				*message = oss.str();
+				return false;
 			}
 		} else if (m_scriptIf->ifOperator == ScriptIf::IfOperator::OR) {
 			string message1;
@@ -178,6 +179,7 @@ bool IfProcessor::process(string* message) {
 			} else {
 				oss << "(" << message1 << " or " << message2 << ")";
 				*message = oss.str();
+				return false;
 			}
 		} else {
 			double value1 = m_values.first->process();

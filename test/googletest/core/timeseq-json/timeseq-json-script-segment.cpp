@@ -128,6 +128,252 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithoutSegmentId) {
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/segments/0");
 }
 
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailSegmentDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "actions", json::array() } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Segment_DurationObject, "/segments/0");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithNonObjectSegmentDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", "not-an-object" } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Segment_DurationObject, "/segments/0");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNoChildren) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", json::object() } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndMillis) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "samples", 1 }, { "millis", 1 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndBeats) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "samples", 1 }, { "beats", 1 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndHz) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "samples", 1 }, { "hz", 100 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithMillisAndBeat) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "millis", 1 }, { "beats", 1 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithMillisAndHz) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "millis", 1 }, { "hz", 100 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithBeatsAndHz) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "beats", 1 }, { "hz", 100 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithBarsButNoBeats) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "millis", 1 }, { "bars", 1 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_BarsRequiresBeats, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNoBarsButZeroBeats) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "beats", 0 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1);
+	expectError(validationErrors, ValidationErrorCode::Duration_BeatsNotZero, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeSamples) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "samples", -1 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0);
+	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumber, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroSamples) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "samples", 0 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0);
+	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumber, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithFloatSamples) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "samples", 1.1 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0);
+	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumber, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeMillis) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "millis", -1 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0);
+	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumber, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroMillis) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "millis", 0 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0);
+	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumber, "/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithPositiveSamples) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "samples", 6942 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0);
+	ASSERT_EQ(script->segments.size(), 1);
+	ASSERT_TRUE(script->segments[0].duration.samples);
+	EXPECT_EQ(*script->segments[0].duration.samples.get(), 6942);
+	EXPECT_FALSE(script->segments[0].duration.bars);
+	EXPECT_FALSE(script->segments[0].duration.beats);
+	EXPECT_FALSE(script->segments[0].duration.hz);
+	EXPECT_FALSE(script->segments[0].duration.millis);
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithMillis) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["segments"] = json::array({
+		{ { "id", "segment-1" }, { "duration", { { "millis", 4269 } } } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0);
+	ASSERT_EQ(script->segments.size(), 1);
+	ASSERT_TRUE(script->segments[0].duration.millis);
+	EXPECT_EQ(*script->segments[0].duration.millis.get(), 4269);
+	EXPECT_FALSE(script->segments[0].duration.bars);
+	EXPECT_FALSE(script->segments[0].duration.beats);
+	EXPECT_FALSE(script->segments[0].duration.hz);
+	EXPECT_FALSE(script->segments[0].duration.samples);
+}
+
 
 // TODO: Next up -> parse duration section (including missing/non-object duration)
 
