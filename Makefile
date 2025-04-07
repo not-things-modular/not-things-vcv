@@ -31,7 +31,8 @@ include $(RACK_DIR)/plugin.mk
 dep:
 	$(MAKE) -C dep
 cleandep:
-    $(MAKE) -C dep clean
+	echo $(MAKE) -C dep clean
+	$(MAKE) -C dep clean
 
 ### Test dependencies ###
 dep_test:
