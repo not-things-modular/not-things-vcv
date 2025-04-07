@@ -30,6 +30,8 @@ include $(RACK_DIR)/plugin.mk
 ### Dependencies ###
 dep:
 	$(MAKE) -C dep
+cleandep:
+    $(MAKE) -C dep clean
 
 ### Test dependencies ###
 dep_test:
