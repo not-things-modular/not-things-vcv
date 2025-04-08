@@ -9,11 +9,11 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithoutIdAndInput
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::InputTrigger_IdString, "/input-triggers/0");
 	expectError(validationErrors, ValidationErrorCode::InputTrigger_InputObject, "/input-triggers/0");
 
-	EXPECT_EQ(script->inputTriggers.size(), 1);
+	EXPECT_EQ(script->inputTriggers.size(), 1u);
 }
 
 TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithoutInput) {
@@ -25,10 +25,10 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithoutInput) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
+	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::InputTrigger_InputObject, "/input-triggers/0");
 
-	ASSERT_EQ(script->inputTriggers.size(), 1);
+	ASSERT_EQ(script->inputTriggers.size(), 1u);
 	EXPECT_EQ(script->inputTriggers[0].id, "my-trigger-id");
 
 }
@@ -44,10 +44,10 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithoutId) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
+	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::InputTrigger_IdString, "/input-triggers/0");
 
-	ASSERT_EQ(script->inputTriggers.size(), 1);
+	ASSERT_EQ(script->inputTriggers.size(), 1u);
 	EXPECT_EQ(script->inputTriggers[0].input.ref, "input-ref");
 }
 
@@ -63,10 +63,10 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithEmptyId) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
+	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::InputTrigger_IdLength, "/input-triggers/0");
 
-	ASSERT_EQ(script->inputTriggers.size(), 1);
+	ASSERT_EQ(script->inputTriggers.size(), 1u);
 	EXPECT_EQ(script->inputTriggers[0].input.ref, "input-ref");
 }
 
@@ -79,7 +79,7 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldFailOnNonObjectTrigg
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
+	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_InputTriggerObject, "/input-triggers/0");
 }
 
@@ -90,7 +90,7 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldFailOnNonArray) {
 	json["input-triggers"] = { { "not", "an array" }};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
+	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_InputTriggersArray, "/");
 }
 
@@ -110,10 +110,10 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldFailWithEmptyIdOnSec
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
+	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::InputTrigger_IdLength, "/input-triggers/1");
 
-	ASSERT_EQ(script->inputTriggers.size(), 2);
+	ASSERT_EQ(script->inputTriggers.size(), 2u);
 	EXPECT_EQ(script->inputTriggers[0].id, "input-id");
 	EXPECT_EQ(script->inputTriggers[0].input.ref, "input-ref-1");
 	EXPECT_EQ(script->inputTriggers[1].input.ref, "input-ref-2");
