@@ -540,7 +540,6 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 			segment.disableUi = false;
 			json::const_iterator disableUi = segmentJson.find("disable-ui");
 			if (disableUi != segmentJson.end()) {
-				location.push_back("disable-ui");
 				if (disableUi->is_boolean()) {
 					segment.disableUi = disableUi->get<bool>();
 				} else {
@@ -550,7 +549,6 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 		} else if (!hasOneOf(segmentJson, { "duration", "actions", "disable-ui" })) {
 			json::const_iterator segmentBlock = segmentJson.find("segment-block");
 			if (segmentBlock != segmentJson.end()) {
-				location.push_back("segment-block");
 				if (segmentBlock->is_string()) {
 					string segmentBlockRef = segmentBlock->get<string>();
 					if (segmentBlockRef.length() > 0) {
@@ -562,7 +560,6 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				} else {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_SegmentBlockString, "'segment-block' must be a non-empty string");
 				}
-				location.pop_back();
 			}
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference, but not both.");
@@ -626,6 +623,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_SamplesNumber, "samples must be a positive integer number.");
+			durationCount++; // It's not configured correctly, but we did encounter a duration entry
 		}
 	}
 
@@ -636,6 +634,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_MillisNumber, "millis must be a positive decimal number.");
+			durationCount++; // It's not configured correctly, but we did encounter a duration entry
 		}
 	}
 
@@ -655,6 +654,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_BeatsNumber, "beats must be a positive decimal number.");
+			durationCount++; // It's not configured correctly, but we did encounter a duration entry
 		}
 	}
 
@@ -665,6 +665,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 			durationCount++;
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Duration_HzNumber, "'hz' must be a positive decimal number.");
+			durationCount++; // It's not configured correctly, but we did encounter a duration entry
 		}
 	}
 
