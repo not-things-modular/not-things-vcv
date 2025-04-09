@@ -304,6 +304,8 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			}
 
 			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ComponentPoolObject, "'component-pool' must be an object.");
 		}
 	}
 
@@ -1430,20 +1432,20 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 	populateRef(calc, calcJson, allowRefs, validationErrors, location);
 	if (calc.ref.length() > 0) {
 		if (hasOneOf(calcJson, { "add", "sub", "div", "mult" })) {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
 		}
 	} else {
 		int count = 0;
 
 		json::const_iterator add = calcJson.find("add");
 		if (add != calcJson.end()) {
+			count++;
 			if (add->is_object()) {
 				calc.operation = ScriptCalc::CalcOperation::ADD;
 				location.push_back("add");
 				ScriptValue *scriptValue = new ScriptValue(parseValue(*add, true, validationErrors, location));
 				calc.value.reset(scriptValue);
 				location.pop_back();
-				count++;
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_AddObject, "'add' must be an object.");
 			}
@@ -1451,13 +1453,13 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 
 		json::const_iterator sub = calcJson.find("sub");
 		if (sub != calcJson.end()) {
+			count++;
 			if (sub->is_object()) {
 				calc.operation = ScriptCalc::CalcOperation::SUB;
 				location.push_back("sub");
 				ScriptValue *scriptValue = new ScriptValue(parseValue(*sub, true, validationErrors, location));
 				calc.value.reset(scriptValue);
 				location.pop_back();
-				count++;
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_SubObject, "'sub' must be an object.");
 			}
@@ -1465,13 +1467,13 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 
 		json::const_iterator div = calcJson.find("div");
 		if (div != calcJson.end()) {
+			count++;
 			if (div->is_object()) {
 				calc.operation = ScriptCalc::CalcOperation::DIV;
 				location.push_back("div");
 				ScriptValue *scriptValue = new ScriptValue(parseValue(*div, true, validationErrors, location));
 				calc.value.reset(scriptValue);
 				location.pop_back();
-				count++;
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_DivObject, "'div' must be an object.");
 			}
@@ -1479,13 +1481,13 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 
 		json::const_iterator mult = calcJson.find("mult");
 		if (mult != calcJson.end()) {
+			count++;
 			if (mult->is_object()) {
 				calc.operation = ScriptCalc::CalcOperation::MULT;
 				location.push_back("mult");
 				ScriptValue *scriptValue = new ScriptValue(parseValue(*mult, true, validationErrors, location));
 				calc.value.reset(scriptValue);
 				location.pop_back();
-				count++;
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_MultObject, "'mult' must be an object.");
 			}
