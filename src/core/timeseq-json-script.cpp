@@ -107,173 +107,6 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 		}
 	}
 
-	json::const_iterator segmentBlocks = scriptJson.find("segment-blocks");
-	if (segmentBlocks != scriptJson.end()) {
-		if (segmentBlocks->is_array()) {
-			location.push_back("segment-blocks");
-
-			int count = 0;
-			std::vector<json> segmentBlockElements = (*segmentBlocks);
-			for (const json& segmentBlock : segmentBlockElements) {
-				location.push_back(std::to_string(count));
-				if (segmentBlock.is_object()) {
-					script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, false, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlockObject, "'segment-blocks' elements must be objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-
-			location.pop_back();
-		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksArray, "'segment-blocks' must be an array.");
-		}
-	}
-
-	json::const_iterator segments = scriptJson.find("segments");
-	if (segments != scriptJson.end()) {
-		if (segments->is_array()) {
-			location.push_back("segments");
-
-			int count = 0;
-			std::vector<json> segmentElements = (*segments);
-			for (const json& segment : segmentElements) {
-				location.push_back(std::to_string(count));
-				if (segment.is_object()) {
-					script->segments.push_back(parseSegment(segment, false, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentObject, "'segments' elements must be objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-			location.pop_back();
-		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsArray, "'segments' must be an array.");
-		}
-	}
-
-	json::const_iterator inputs = scriptJson.find("inputs");
-	if (inputs != scriptJson.end()) {
-		if (inputs->is_array()) {
-			location.push_back("inputs");
-
-			int count = 0;
-			std::vector<json> inputElements = (*inputs);
-			for (const json& input : inputElements) {
-				location.push_back(std::to_string(count));
-				if (input.is_object()) {
-					script->inputs.push_back(parseInput(input, false, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputObject, "'inputs' elements must be objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-
-			location.pop_back();
-		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputsArray, "'inputs' must be an array.");
-		}
-	}
-
-	json::const_iterator outputs = scriptJson.find("outputs");
-	if (outputs != scriptJson.end()) {
-		if (outputs->is_array()) {
-			location.push_back("outputs");
-
-			int count = 0;
-			std::vector<json> outputElements = (*outputs);
-			for (const json& output : outputElements) {
-				location.push_back(std::to_string(count));
-				if (output.is_object()) {
-					script->outputs.push_back(parseOutput(output, false, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputObject, "'outputs' elements must be objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-
-			location.pop_back();
-		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputsArray, "'outputs' must be an array.");
-		}
-	}
-
-	json::const_iterator calcs = scriptJson.find("calcs");
-	if (calcs != scriptJson.end()) {
-		if (calcs->is_array()) {
-			location.push_back("calcs");
-
-			int count = 0;
-			std::vector<json> calcElements = (*calcs);
-			for (const json& calc : calcElements) {
-				location.push_back(std::to_string(count));
-				if (calc.is_object()) {
-					script->calcs.push_back(parseCalc(calc, false, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcObject, "'calcs' elements must be objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-
-			location.pop_back();
-		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcsArray, "'calcs' must be an array.");
-		}
-	}
-
-	json::const_iterator values = scriptJson.find("values");
-	if (values != scriptJson.end()) {
-		if (values->is_array()) {
-			location.push_back("values");
-
-			int count = 0;
-			std::vector<json> valueElements = (*values);
-			for (const json& value : valueElements) {
-				location.push_back(std::to_string(count));
-				if (value.is_object()) {
-					script->values.push_back(parseValue(value, false, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValueObject, "'values' elements must be objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-
-			location.pop_back();
-		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValuesArray, "'values' must be an array.");
-		}
-	}
-
-	json::const_iterator actions = scriptJson.find("actions");
-	if (actions != scriptJson.end()) {
-		if (actions->is_array()) {
-			location.push_back("actions");
-
-			int count = 0;
-			std::vector<json> actionElements = (*actions);
-			for (const json& action : actionElements) {
-				location.push_back(std::to_string(count));
-				if (action.is_object()) {
-					script->actions.push_back(parseAction(action, false, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionObject, "'actions' elements must be objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-
-			location.pop_back();
-		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionsArray, "'actions' must be an array.");
-		}
-	}
-
 	json::const_iterator inputTriggers = scriptJson.find("input-triggers");
 	if (inputTriggers != scriptJson.end()) {
 		if (inputTriggers->is_array()) {
@@ -295,6 +128,182 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
+		}
+	}
+
+	json::const_iterator componentPool = scriptJson.find("component-pool");
+	if (componentPool != scriptJson.end()) {
+		if (componentPool->is_object()) {
+			location.push_back("component-pool");
+
+			json::const_iterator segmentBlocks = componentPool->find("segment-blocks");
+			if (segmentBlocks != componentPool->end()) {
+				if (segmentBlocks->is_array()) {
+					location.push_back("segment-blocks");
+
+					int count = 0;
+					std::vector<json> segmentBlockElements = (*segmentBlocks);
+					for (const json& segmentBlock : segmentBlockElements) {
+						location.push_back(std::to_string(count));
+						if (segmentBlock.is_object()) {
+							script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, false, validationErrors, location));
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlockObject, "'segment-blocks' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlocksArray, "'segment-blocks' must be an array.");
+				}
+			}
+
+			json::const_iterator segments = componentPool->find("segments");
+			if (segments != componentPool->end()) {
+				if (segments->is_array()) {
+					location.push_back("segments");
+
+					int count = 0;
+					std::vector<json> segmentElements = (*segments);
+					for (const json& segment : segmentElements) {
+						location.push_back(std::to_string(count));
+						if (segment.is_object()) {
+							script->segments.push_back(parseSegment(segment, false, validationErrors, location));
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentObject, "'segments' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentsArray, "'segments' must be an array.");
+				}
+			}
+
+			json::const_iterator inputs = componentPool->find("inputs");
+			if (inputs != componentPool->end()) {
+				if (inputs->is_array()) {
+					location.push_back("inputs");
+
+					int count = 0;
+					std::vector<json> inputElements = (*inputs);
+					for (const json& input : inputElements) {
+						location.push_back(std::to_string(count));
+						if (input.is_object()) {
+							script->inputs.push_back(parseInput(input, false, validationErrors, location));
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputObject, "'inputs' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputsArray, "'inputs' must be an array.");
+				}
+			}
+
+			json::const_iterator outputs = componentPool->find("outputs");
+			if (outputs != componentPool->end()) {
+				if (outputs->is_array()) {
+					location.push_back("outputs");
+
+					int count = 0;
+					std::vector<json> outputElements = (*outputs);
+					for (const json& output : outputElements) {
+						location.push_back(std::to_string(count));
+						if (output.is_object()) {
+							script->outputs.push_back(parseOutput(output, false, validationErrors, location));
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputObject, "'outputs' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputsArray, "'outputs' must be an array.");
+				}
+			}
+
+			json::const_iterator calcs = componentPool->find("calcs");
+			if (calcs != componentPool->end()) {
+				if (calcs->is_array()) {
+					location.push_back("calcs");
+
+					int count = 0;
+					std::vector<json> calcElements = (*calcs);
+					for (const json& calc : calcElements) {
+						location.push_back(std::to_string(count));
+						if (calc.is_object()) {
+							script->calcs.push_back(parseCalc(calc, false, validationErrors, location));
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcObject, "'calcs' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcsArray, "'calcs' must be an array.");
+				}
+			}
+
+			json::const_iterator values = componentPool->find("values");
+			if (values != componentPool->end()) {
+				if (values->is_array()) {
+					location.push_back("values");
+
+					int count = 0;
+					std::vector<json> valueElements = (*values);
+					for (const json& value : valueElements) {
+						location.push_back(std::to_string(count));
+						if (value.is_object()) {
+							script->values.push_back(parseValue(value, false, validationErrors, location));
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValueObject, "'values' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValuesArray, "'values' must be an array.");
+				}
+			}
+
+			json::const_iterator actions = componentPool->find("actions");
+			if (actions != componentPool->end()) {
+				if (actions->is_array()) {
+					location.push_back("actions");
+
+					int count = 0;
+					std::vector<json> actionElements = (*actions);
+					for (const json& action : actionElements) {
+						location.push_back(std::to_string(count));
+						if (action.is_object()) {
+							script->actions.push_back(parseAction(action, false, validationErrors, location));
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionObject, "'actions' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionsArray, "'actions' must be an array.");
+				}
+			}
+
+			location.pop_back();
 		}
 	}
 

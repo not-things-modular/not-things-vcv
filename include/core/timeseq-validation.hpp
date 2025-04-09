@@ -40,6 +40,7 @@ enum ValidationErrorCode {
 	Script_GlobalActionsArray = 123,
 	Script_GlobalActionsObject = 124,
 	Script_GlobalActionTiming = 125,
+	Script_ComponentPoolObject = 126,
 
 	Timeline_TimeScaleObject = 200,
 	Timeline_LanesMissing = 201,

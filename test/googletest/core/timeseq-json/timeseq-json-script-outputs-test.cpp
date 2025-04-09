@@ -14,7 +14,9 @@ TEST(TimeSeqJsonScriptOutput, ParseShouldSucceedWithEmptyOutputs) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array();
+	json["component-pool"] = {
+		{ "outputs", json::array() }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
@@ -25,121 +27,139 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputsShouldNotAllowRefAndRequireIdOnRoot) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = {
-		{ { "ref", "output-ref" } }
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "ref", "output-ref" } }
+		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 2u);
-	expectError(validationErrors, ValidationErrorCode::Id_String, "/outputs/0");
-	expectError(validationErrors, ValidationErrorCode::Ref_NotAllowed, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Ref_NotAllowed, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputsShouldFailOnNonArrayOutputs) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = "not-an-array";
+	json["component-pool"] = {
+		{ "outputs", "not-an-array" }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Script_OutputsArray, "/");
+	expectError(validationErrors, ValidationErrorCode::Script_OutputsArray, "/component-pool");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputsShouldFailOnNonObjectOutput) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 1 } },
-		"not-an-object",
-		{ { "id", "output-1" }, { "index", 2 } }
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 1 } },
+			"not-an-object",
+			{ { "id", "output-1" }, { "index", 2 } }
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Script_OutputObject, "/outputs/1");
+	expectError(validationErrors, ValidationErrorCode::Script_OutputObject, "/component-pool/outputs/1");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithoutIndex) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" } },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" } },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithNonNumericIndex) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", "not-a-number" } },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", "not-a-number" } },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithANegativeIndex) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", -1 } },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", -1 } },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithAZeroIndex) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 0 } },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 0 } },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithANonIntegerIndex) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 1.1f } },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 1.1f } },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldParseIndexInRange) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 1 } },
-		{ { "id", "output-2" }, { "index", 2 } },
-		{ { "id", "output-3" }, { "index", 3 } },
-		{ { "id", "output-4" }, { "index", 4 } },
-		{ { "id", "output-5" }, { "index", 5 } },
-		{ { "id", "output-6" }, { "index", 6 } },
-		{ { "id", "output-7" }, { "index", 7 } },
-		{ { "id", "output-8" }, { "index", 8 } }
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 1 } },
+			{ { "id", "output-2" }, { "index", 2 } },
+			{ { "id", "output-3" }, { "index", 3 } },
+			{ { "id", "output-4" }, { "index", 4 } },
+			{ { "id", "output-5" }, { "index", 5 } },
+			{ { "id", "output-6" }, { "index", 6 } },
+			{ { "id", "output-7" }, { "index", 7 } },
+			{ { "id", "output-8" }, { "index", 8 } }
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
@@ -174,82 +194,94 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithIndexAboveRange) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 9 } },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 9 } },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithNonNumericChannel) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 4 }, { "channel", "not-a-number"} },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 4 }, { "channel", "not-a-number"} },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_ChannelNumber, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_ChannelNumber, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithNegativeChannel) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 4 }, { "channel", -1} },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 4 }, { "channel", -1} },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_ChannelNumber, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_ChannelNumber, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithZeroChannel) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 4 }, { "channel", 0} },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 4 }, { "channel", 0} },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_ChannelRange, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_ChannelRange, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithFloatChannel) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 4 }, { "channel", 0} },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 4 }, { "channel", 0} },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_ChannelRange, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_ChannelRange, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldParseChannelInRange) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 3 }, { "channel", 1 } },
-		{ { "id", "output-2" }, { "index", 4 }, { "channel", 3 } },
-		{ { "id", "output-3" }, { "index", 5 }, { "channel", 5 } },
-		{ { "id", "output-4" }, { "index", 6 }, { "channel", 7 } },
-		{ { "id", "output-5" }, { "index", 7 }, { "channel", 9 } },
-		{ { "id", "output-6" }, { "index", 8 }, { "channel", 11 } },
-		{ { "id", "output-7" }, { "index", 1 }, { "channel", 13 } },
-		{ { "id", "output-8" }, { "index", 2 }, { "channel", 15 } },
-		{ { "id", "output-9" }, { "index", 3 }, { "channel", 16 } }
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 3 }, { "channel", 1 } },
+			{ { "id", "output-2" }, { "index", 4 }, { "channel", 3 } },
+			{ { "id", "output-3" }, { "index", 5 }, { "channel", 5 } },
+			{ { "id", "output-4" }, { "index", 6 }, { "channel", 7 } },
+			{ { "id", "output-5" }, { "index", 7 }, { "channel", 9 } },
+			{ { "id", "output-6" }, { "index", 8 }, { "channel", 11 } },
+			{ { "id", "output-7" }, { "index", 1 }, { "channel", 13 } },
+			{ { "id", "output-8" }, { "index", 2 }, { "channel", 15 } },
+			{ { "id", "output-9" }, { "index", 3 }, { "channel", 16 } }
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
@@ -296,80 +328,88 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithChannelAboveRange) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["outputs"] = json::array({
-		{ { "id", "output-1" }, { "index", 2 }, { "channel", 17 } },
-	});
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 2 }, { "channel", 17 } },
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_ChannelRange, "/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Output_ChannelRange, "/component-pool/outputs/0");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldNotAllowIdOnNonRootOutput) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["actions"] = json::array({
-		{
-			{ "id", "action-1" },
-			{ "timing", "start" },
-			{ "set-value", {
-				{ "value", { { "voltage", 1 } } },
-				{ "output", {
-					{ "id", "output-id" },
-					{ "index", 1 }
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "timing", "start" },
+				{ "set-value", {
+					{ "value", { { "voltage", 1 } } },
+					{ "output", {
+						{ "id", "output-id" },
+						{ "index", 1 }
+					} }
 				} }
-			} }
-		}
-	});
+			}
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/actions/0/set-value/output");
+	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/set-value/output");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseRefInputShouldNotAllowIndexProperty) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["actions"] = json::array({
-		{
-			{ "id", "action-1" },
-			{ "timing", "start" },
-			{ "set-value", {
-				{ "value", { { "voltage", 1 } } },
-				{ "output", {
-					{ "ref", "output-id" },
-					{ "index", 1 }
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "timing", "start" },
+				{ "set-value", {
+					{ "value", { { "voltage", 1 } } },
+					{ "output", {
+						{ "ref", "output-id" },
+						{ "index", 1 }
+					} }
 				} }
-			} }
-		}
-	});
+			}
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_RefOrInstance, "/actions/0/set-value/output");
+	expectError(validationErrors, ValidationErrorCode::Output_RefOrInstance, "/component-pool/actions/0/set-value/output");
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseRefInputShouldNotAllowChannelProperty) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
-	json["actions"] = json::array({
-		{
-			{ "id", "action-1" },
-			{ "timing", "start" },
-			{ "set-value", {
-				{ "value", { { "voltage", 1 } } },
-				{ "output", {
-					{ "ref", "output-id" },
-					{ "channel", 1 }
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "timing", "start" },
+				{ "set-value", {
+					{ "value", { { "voltage", 1 } } },
+					{ "output", {
+						{ "ref", "output-id" },
+						{ "channel", 1 }
+					} }
 				} }
-			} }
-		}
-	});
+			}
+		}) }
+	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_RefOrInstance, "/actions/0/set-value/output");
+	expectError(validationErrors, ValidationErrorCode::Output_RefOrInstance, "/component-pool/actions/0/set-value/output");
 }

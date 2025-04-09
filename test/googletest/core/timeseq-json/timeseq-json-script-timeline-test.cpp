@@ -9,7 +9,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithoutTimelines) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_TimelinesMissing, "/");
 }
 
@@ -20,7 +20,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithNonArrayTimelines) {
 	json["timelines"] = json::object({ { "not", "an array " } });
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_TimelinesMissing, "/");
 }
 
@@ -36,7 +36,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithMixOfTimelinesAndNonObj
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_TimelineObject, "/timelines/1");
 }
 
@@ -60,8 +60,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldParseMultipleTimelines) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 3);
+	EXPECT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 3u);
 	ASSERT_EQ(*script->timelines[0].timeScale.get()->sampleRate.get(), 1);
 	ASSERT_EQ(*script->timelines[1].timeScale.get()->sampleRate.get(), 2);
 	ASSERT_EQ(*script->timelines[2].timeScale.get()->sampleRate.get(), 3);
@@ -79,7 +79,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnNonObjectTimeScale) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	EXPECT_EQ(validationErrors.size(), 1);
+	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Timeline_TimeScaleObject, "/timelines/0");
 }
 
@@ -95,7 +95,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNoKnownPro
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
 
@@ -111,7 +111,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithBpbButNoBp
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpbRequiresBpm, "/timelines/0/time-scale");
 }
 
@@ -127,7 +127,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNonNumeric
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_SampleRateNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -144,7 +144,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNegativeSa
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_SampleRateNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -161,7 +161,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithZeroSample
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_SampleRateNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -178,7 +178,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithFloatSampl
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_SampleRateNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -195,8 +195,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseTimeScaleWithSampleRate)
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].timeScale);
 	ASSERT_TRUE(script->timelines[0].timeScale->sampleRate);
 	EXPECT_EQ(*script->timelines[0].timeScale->sampleRate.get(), 44000);
@@ -216,7 +216,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNonNumeric
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpmNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -233,7 +233,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNegativeBp
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpmNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -250,7 +250,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithZeroBpm) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpmNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -267,7 +267,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithFloatBpm) 
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2);
+	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpmNumber, "/timelines/0/time-scale");
 	expectError(validationErrors, ValidationErrorCode::TimeScale_Empty, "/timelines/0/time-scale");
 }
@@ -284,8 +284,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseTimeScaleWithBpm) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].timeScale);
 	ASSERT_TRUE(script->timelines[0].timeScale->bpm);
 	EXPECT_EQ(*script->timelines[0].timeScale->bpm.get(), 4);
@@ -308,7 +308,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNonNumeric
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpbNumber, "/timelines/0/time-scale");
 }
 
@@ -324,7 +324,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNegativeBp
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpbNumber, "/timelines/0/time-scale");
 }
 
@@ -340,7 +340,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithZeroBpb) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpbNumber, "/timelines/0/time-scale");
 }
 
@@ -356,7 +356,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithFloatBpb) 
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::TimeScale_BpbNumber, "/timelines/0/time-scale");
 }
 
@@ -372,8 +372,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseTimeScaleWithBpb) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].timeScale);
 	EXPECT_FALSE(script->timelines[0].timeScale->sampleRate);
 	ASSERT_TRUE(script->timelines[0].timeScale->bpm);
@@ -394,8 +394,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseTimeScaleWithBpmAndSampl
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].timeScale);
 	ASSERT_TRUE(script->timelines[0].timeScale->sampleRate);
 	EXPECT_EQ(*script->timelines[0].timeScale->sampleRate.get(), 44100);
@@ -416,8 +416,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseTimeScaleWithBpmBpbAndSa
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].timeScale);
 	ASSERT_TRUE(script->timelines[0].timeScale->sampleRate);
 	EXPECT_EQ(*script->timelines[0].timeScale->sampleRate.get(), 44100);
@@ -438,8 +438,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldDefaultToFalseLoopLock) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
 	ASSERT_FALSE(script->timelines[0].loopLock);
 }
 
@@ -455,7 +455,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnNonBooleanLoopLock) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Timeline_LoopLockBoolean, "/timelines/0");
 }
 
@@ -471,8 +471,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseLoopLockTrue) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].loopLock);
 }
 
@@ -493,7 +493,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnNonObjectLane) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Timeline_LaneObject, "/timelines/0/lanes/1");
 }
 
@@ -514,8 +514,8 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseMultipleLanes) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 3);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 3u);
 	ASSERT_EQ(script->timelines[0].lanes[0].startTrigger, "sat");
 	ASSERT_EQ(script->timelines[0].lanes[1].restartTrigger, "rst");
 	ASSERT_EQ(script->timelines[0].lanes[2].stopTrigger, "sot");
@@ -528,7 +528,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailWithoutLanes) {
 	json["timelines"] = json::array({ json::object() });
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Timeline_LanesMissing, "/timelines/0");
 }
 
