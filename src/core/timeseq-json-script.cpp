@@ -1346,7 +1346,7 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_ChannelRange, "'channel' must be a number between 1 and 16.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetPolyphony_ChannelsNumber, "'channel' must be a number between 1 and 16.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_ChannelNumber, "'channel' must be a number between 1 and 16.");
 			}
 		}
 	}
