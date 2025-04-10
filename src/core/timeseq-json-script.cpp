@@ -1195,8 +1195,8 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 		json::const_iterator voltage = valueJson.find("voltage");
 		if (voltage != valueJson.end()) {
+			valueTypes++;
 			if (voltage->is_number()) {
-				valueTypes++;
 				value.voltage.reset(new float(voltage->get<float>()));
 				if ((*value.voltage < -10) || (*value.voltage > 10)) {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageRange, "'voltage' must be a decimal number between -10 and 10.");
@@ -1208,8 +1208,8 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 		json::const_iterator note = valueJson.find("note");
 		if (note != valueJson.end()) {
+			valueTypes++;
 			if (note->is_string()) {
-				valueTypes++;
 				value.note.reset(new std::string(*note));
 				if ((value.note->size() < 2) || (value.note->size() > 3)) {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
@@ -1236,8 +1236,8 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 		json::const_iterator variable = valueJson.find("variable");
 		if (variable != valueJson.end()) {
+			valueTypes++;
 			if (variable->is_string()) {
-				valueTypes++;
 				value.variable.reset(new string(*variable));
 				if (value.variable->length() == 0) {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VariableNonEmpty, "'variable' must be a non-empty string.");
@@ -1249,8 +1249,8 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 		json::const_iterator input = valueJson.find("input");
 		if (input != valueJson.end()) {
+			valueTypes++;
 			if (input->is_object()) {
-				valueTypes++;
 				location.push_back("input");
 				ScriptInput* scriptInput = new ScriptInput(parseInput(*input, true, validationErrors, location));
 				value.input.reset(scriptInput);
@@ -1262,8 +1262,8 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 		json::const_iterator output = valueJson.find("output");
 		if (output != valueJson.end()) {
+			valueTypes++;
 			if (output->is_object()) {
-				valueTypes++;
 				location.push_back("output");
 				ScriptOutput* scriptOutput = new ScriptOutput(parseOutput(*output, true, validationErrors, location));
 				value.output.reset(scriptOutput);
@@ -1275,8 +1275,8 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 		json::const_iterator rand = valueJson.find("rand");
 		if (rand != valueJson.end()) {
+			valueTypes++;
 			if (rand->is_object()) {
-				valueTypes++;
 				location.push_back("rand");
 				ScriptRand* scriptRand = new ScriptRand(parseRand(*rand, validationErrors, location));
 				value.rand.reset(scriptRand);
