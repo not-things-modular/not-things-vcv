@@ -1215,7 +1215,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 				} else {
 					char n = toupper((*value.note)[0]);
-					if (n < 'A' || n > 'Z') {
+					if (n < 'A' || n > 'G') {
 						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must start with a valid note name (A-G).");
 					}
 					char s = (*value.note)[1];
@@ -1289,7 +1289,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 		if (valueTypes == 0) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoActualValue, "One of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' must be set.");
 		} else if (valueTypes > 1) {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoActualValue, "Only one of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' can be used.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_MultipleValues, "Only one of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' can be used.");
 		}
 
 		json::const_iterator calcs = valueJson.find("calc");
