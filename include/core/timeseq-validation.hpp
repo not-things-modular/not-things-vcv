@@ -126,7 +126,7 @@ enum ValidationErrorCode {
 	Action_MissingGlideValues = 918,
 	Action_MissingGlideActions = 919,
 	Action_TooManyGlideActions = 920,
-	Action_OnlyGlideProperties = 921,
+	Action_GlidePropertiesOnNonGlideAction = 921,
 	Action_MissingNonGlideProperties = 922,
 	Action_TooManyNonGlideProperties = 923,
 
@@ -134,7 +134,8 @@ enum ValidationErrorCode {
 	SetValue_ValueObject = 1001,
 
 	SetVariable_NameString = 1100,
-	SetVariable_ValueObject = 1101,
+	SetVariable_NameLength = 1101,
+	SetVariable_ValueObject = 1102,
 
 	SetPolyphony_IndexNumber = 1200,
 	SetPolyphony_IndexRange = 1201,

@@ -82,3 +82,54 @@ TEST(TimeSeqJsonScript, ParseWithEmptyComponentPoolShouldSucceed) {
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 }
+
+TEST(TimeSeqJsonScript, ParseRefShouldFailOnNonString) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "component-pool", { { "calcs", json::array({
+			{ { "id", "calc-id" }, { "add", { { "ref", 1 } } } }
+		}) } } }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Ref_String, "/component-pool/calcs/0/add");
+}
+
+TEST(TimeSeqJsonScript, ParseRefShouldFailOnEmptyString) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "component-pool", { { "calcs", json::array({
+			{ { "id", "calc-id" }, { "add", { { "ref", "" } } } }
+		}) } } }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Ref_Length, "/component-pool/calcs/0/add");
+}
+
+TEST(TimeSeqJsonScript, ParseRefShouldFailOnEmptyId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "component-pool", { { "calcs", json::array({
+			{ { "id", "" }, { "add", { { "ref", "value-ref" } } } }
+		}) } } }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Id_Length, "/component-pool/calcs/0");
+}

@@ -698,7 +698,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 	populateRef(action, actionJson, allowRefs, validationErrors, location);
 	if (action.ref.length() > 0) {
-		if (hasOneOf(actionJson, { "timing", "set-value", "set-variable", "set-polyphony", "assert", "trigger", "start-value", "end-value", "if" })) {
+		if (hasOneOf(actionJson, { "timing", "set-value", "set-variable", "set-polyphony", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if" })) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
 		}
 	} else {
@@ -721,8 +721,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 		json::const_iterator setValue = actionJson.find("set-value");
 		if (setValue != actionJson.end()) {
+			actionCount++;
 			if (setValue->is_object()) {
-				actionCount++;
 				location.push_back("set-value");
 				ScriptSetValue *scriptSetValue = new ScriptSetValue(parseSetValue(*setValue, validationErrors, location));
 				action.setValue.reset(scriptSetValue);
@@ -734,8 +734,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 		json::const_iterator setVariable = actionJson.find("set-variable");
 		if (setVariable != actionJson.end()) {
+			actionCount++;
 			if (setVariable->is_object()) {
-				actionCount++;
 				location.push_back("set-variable");
 				ScriptSetVariable *scriptSetVariable = new ScriptSetVariable(parseSetVariable(*setVariable, validationErrors, location));
 				action.setVariable.reset(scriptSetVariable);
@@ -747,6 +747,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 		json::const_iterator setPolyphony = actionJson.find("set-polyphony");
 		if (setPolyphony != actionJson.end()) {
+			actionCount++;
 			if (setPolyphony->is_object()) {
 				location.push_back("set-polyphony");
 				ScriptSetPolyphony *scriptSetPolyphony = new ScriptSetPolyphony(parseSetPolyphony(*setPolyphony, validationErrors, location));
@@ -759,8 +760,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 		json::const_iterator assert = actionJson.find("assert");
 		if (assert != actionJson.end()) {
+			actionCount++;
 			if (assert->is_object()) {
-				actionCount++;
 				location.push_back("assert");
 				ScriptAssert *scriptAssert = new ScriptAssert(parseAssert(*assert, validationErrors, location));
 				action.assert.reset(scriptAssert);
@@ -772,8 +773,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 		json::const_iterator trigger = actionJson.find("trigger");
 		if (trigger != actionJson.end()) {
+			actionCount++;
 			if (trigger->is_string()) {
-				actionCount++;
 				action.trigger = *trigger;
 				if (action.trigger.size() == 0) {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TriggerLength, "'trigger' can not be an empty string.");
@@ -885,17 +886,17 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			}
 		} else {
 			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_OnlyGlideProperties, "'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can only be used in combination with 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((action.output) || (action.variable.length() > 0)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideActions, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.assert) && (action.trigger.size() == 0)) {
-				std::string timingStr = *timing;
+				std::string timingStr = timing != actionJson.end() ? *timing : "start";
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert' or 'trigger' must be present for '", timingStr.c_str(), "' timing.");
 			}
 			if (actionCount > 1) {
-				std::string timingStr = *timing;
+				std::string timingStr = timing != actionJson.end() ? *timing : "start";
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'assert' or 'trigger' can be used in the same '", timingStr.c_str(), "' action.");
 			}
 		}
@@ -1101,8 +1102,11 @@ ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson
 	json::const_iterator name = setVariableJson.find("name");
 	if ((name != setVariableJson.end()) && (name->is_string())) {
 		setVariable.name = *name;
+		if (setVariable.name.length() == 0) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetVariable_NameLength, "'name' must be a non-empty string.");
+		}
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetVariable_NameString, "'name' is required and must be a string.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetVariable_NameString, "'name' is required and must be a non-empty string.");
 	}
 
 	json::const_iterator value = setVariableJson.find("value");
@@ -1156,6 +1160,8 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, std::vector<V
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Assert_NameString, "'name' is required and must be a non-empty string.");
 		}
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Assert_NameString, "'name' must be a non-empty string.");
 	}
 
 	json::const_iterator expect = assertJson.find("expect");
@@ -1167,6 +1173,8 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, std::vector<V
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Assert_ExpectObject, "'expect' must be an object.");
 		}
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Assert_ExpectObject, "'expect' is required and must be an object.");
 	}
 
 	json::const_iterator stopOnFail = assertJson.find("stop-on-fail");
@@ -1187,7 +1195,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 	populateRef(value, valueJson, allowRefs, validationErrors, location);
 	if (value.ref.length() > 0) {
-		if (hasOneOf(valueJson, { "voltage", "note", "variable", "input", "output", "rand", "calc" })) {
+		if (hasOneOf(valueJson, { "voltage", "note", "variable", "input", "output", "rand", "calc", "quantize" })) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_RefOrInstance, "A ref value can not be combined other non-ref value properties.");
 		}
 	} else {
@@ -1304,7 +1312,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 					if (calc.is_object()) {
 						value.calc.push_back(parseCalc(calc, true, validationErrors, location));
 					} else {
-						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_RandObject, "'calc' elements must be objects.");
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_CalcObject, "'calc' elements must be objects.");
 					}
 					location.pop_back();
 					count++;

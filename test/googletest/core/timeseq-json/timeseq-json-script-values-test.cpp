@@ -701,3 +701,140 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseQuantizeTrue) {
 	ASSERT_TRUE(script->values[0].voltage);
 	EXPECT_TRUE(script->values[0].quantize);
 }
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldParseWithoutCalcs) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", 5 } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->values.size(), 1u);
+	EXPECT_EQ(script->values[0].calc.size(), 0u);
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithNonArrayCalc) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", 5 }, { "calc", "not-an-array" } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_CalcArray, "/component-pool/values/0");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithEmptyCalcArray) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", 5 }, { "calc", json::array() } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->values.size(), 1u);
+	EXPECT_EQ(script->values[0].calc.size(), 0u);
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedFailWithNonObjectCalc) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", 5 }, { "calc", json::array({
+				{ { "add", { { "voltage", 5} } } },
+				"not-an-object",
+				{ { "add", { { "voltage", 5} } } }
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_CalcObject, "/component-pool/values/0/calc/1");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithSingleCalc) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", 5 }, { "calc", json::array({
+				{ { "ref", "calc-ref-1" } }
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->values.size(), 1u);
+	ASSERT_EQ(script->values[0].calc.size(), 1u);
+	EXPECT_EQ(script->values[0].calc[0].ref, "calc-ref-1");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithMultipleCalcs) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", 5 }, { "calc", json::array({
+				{ { "ref", "calc-ref-1" } },
+				{ { "ref", "calc-ref-2" } },
+				{ { "ref", "calc-ref-3" } }
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->values.size(), 1u);
+	ASSERT_EQ(script->values[0].calc.size(), 3u);
+	EXPECT_EQ(script->values[0].calc[0].ref, "calc-ref-1");
+	EXPECT_EQ(script->values[0].calc[1].ref, "calc-ref-2");
+	EXPECT_EQ(script->values[0].calc[2].ref, "calc-ref-3");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueNotAllowOtherPropertiesOnRef) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "voltage", 5 } } } },
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "note", "a4" } } } },
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "variable", "variable-name" } } } },
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "input", { { "dummy", "calc" } } } } } },
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "output", { { "dummy", "calc" } } } } } },
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "rand", { { "dummy", "rand" }} } } } },
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "calc", { { "dummy", "calc" } } } } } },
+			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "quantize", true } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 8u);
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/0/add");
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/1/add");
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/2/add");
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/3/add");
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/4/add");
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/5/add");
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/6/add");
+	expectError(validationErrors, ValidationErrorCode::Value_RefOrInstance, "/component-pool/calcs/7/add");
+}

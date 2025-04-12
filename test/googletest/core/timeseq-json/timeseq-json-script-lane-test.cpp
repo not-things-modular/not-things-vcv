@@ -13,7 +13,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonBooleanAutoStart) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_AutoStartBoolean, "/timelines/0/lanes/0");
 }
 
@@ -30,9 +30,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultAutoStartToTrue) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].lanes[0].autoStart);
 }
 
@@ -49,9 +49,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseAutoStartTrue) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].lanes[0].autoStart);
 }
 
@@ -68,9 +68,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseAutoStartFalse) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_FALSE(script->timelines[0].lanes[0].autoStart);
 }
 
@@ -87,7 +87,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonBooleanLoop) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_LoopBoolean, "/timelines/0/lanes/0");
 }
 
@@ -104,9 +104,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultLoopToTrue) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_FALSE(script->timelines[0].lanes[0].loop);
 }
 
@@ -123,9 +123,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseLoopTrue) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].lanes[0].loop);
 }
 
@@ -142,9 +142,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseLoopFalse) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_FALSE(script->timelines[0].lanes[0].loop);
 }
 
@@ -161,7 +161,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonNumberRepeat) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_RepeatNumber, "/timelines/0/lanes/0");
 }
 
@@ -178,7 +178,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNegativeRepeat) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_RepeatNumber, "/timelines/0/lanes/0");
 }
 
@@ -195,7 +195,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonIntegerRepeat) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_RepeatNumber, "/timelines/0/lanes/0");
 }
 
@@ -212,9 +212,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultRepeatToZero) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].repeat, 0);
 }
 
@@ -231,9 +231,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseZeroRepeat) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].repeat, 0);
 }
 
@@ -250,9 +250,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParsePositiveRepeat) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].repeat, 69);
 }
 
@@ -269,9 +269,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultStartTriggerToEmpty) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].startTrigger, "");
 }
 
@@ -288,7 +288,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonStringStartTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_StartTriggerString, "/timelines/0/lanes/0");
 }
 
@@ -305,7 +305,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithEmptyStartTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_StartTriggerLength, "/timelines/0/lanes/0");
 }
 
@@ -322,9 +322,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseStartTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].startTrigger, "a-start-trigger");
 }
 
@@ -341,9 +341,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultRestartTriggerToEmpty) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].restartTrigger, "");
 }
 
@@ -360,7 +360,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonStringRestartTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_RestartTriggerString, "/timelines/0/lanes/0");
 }
 
@@ -377,7 +377,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithEmptyRestartTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_RestartTriggerLength, "/timelines/0/lanes/0");
 }
 
@@ -394,9 +394,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseRestartTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].restartTrigger, "a-restart-trigger");
 }
 
@@ -413,9 +413,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultStopTriggerToEmpty) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].stopTrigger, "");
 }
 
@@ -432,7 +432,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonStringStopTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_StopTriggerString, "/timelines/0/lanes/0");
 }
 
@@ -449,7 +449,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithEmptyStopTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_StopTriggerLength, "/timelines/0/lanes/0");
 }
 
@@ -466,9 +466,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseStopTrigger) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_EQ(script->timelines[0].lanes[0].stopTrigger, "a-stop-trigger");
 }
 
@@ -488,7 +488,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonBooleanDisableUi) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_DisableUiBoolean, "/timelines/0/lanes/0");
 }
 
@@ -505,9 +505,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultDisableUiToTrue) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_FALSE(script->timelines[0].lanes[0].disableUi);
 }
 
@@ -524,9 +524,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseDisableUiTrue) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_TRUE(script->timelines[0].lanes[0].disableUi);
 }
 
@@ -543,9 +543,9 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseDisableUiFalse) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
 	ASSERT_FALSE(script->timelines[0].lanes[0].disableUi);
 }
 
@@ -562,7 +562,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailOnMissingSegments) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_SegmentsMissing, "/timelines/0/lanes/0");
 }
 
@@ -579,7 +579,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailOnNonArraySegments) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_SegmentsMissing, "/timelines/0/lanes/0");
 }
 
@@ -596,10 +596,10 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldAcceptEmptySegments) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
-	EXPECT_EQ(script->timelines[0].lanes[0].segments.size(), 0);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
+	EXPECT_EQ(script->timelines[0].lanes[0].segments.size(), 0u);
 }
 
 TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailOnNonObjectSegment) {
@@ -619,7 +619,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailOnNonObjectSegment) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1);
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Lane_SegmentObject, "/timelines/0/lanes/0/segments/1");
 }
 
@@ -640,10 +640,10 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseSegments) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0);
-	ASSERT_EQ(script->timelines.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes.size(), 1);
-	ASSERT_EQ(script->timelines[0].lanes[0].segments.size(), 3);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script->timelines.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes.size(), 1u);
+	ASSERT_EQ(script->timelines[0].lanes[0].segments.size(), 3u);
 	EXPECT_EQ(script->timelines[0].lanes[0].segments[0].ref, "segment-1");
 	EXPECT_EQ(script->timelines[0].lanes[0].segments[1].ref, "segment-2");
 	EXPECT_EQ(script->timelines[0].lanes[0].segments[2].ref, "segment-3");
