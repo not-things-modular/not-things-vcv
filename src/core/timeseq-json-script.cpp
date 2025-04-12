@@ -1029,7 +1029,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, std::vector<ValidationErr
 	if (operatorCount == 0) {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_NoOperation, "One of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is required.");
 	} else if (operatorCount > 1) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_NoOperation, "Only one of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is allowed.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_MultpleOperations, "Only one of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is allowed.");
 	}
 
 	return scriptIf;

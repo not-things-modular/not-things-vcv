@@ -1084,13 +1084,21 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingNonGlideAction) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "actions", json::array({
-			{ { "id", "action-1" } }
+			// Test for the three possible timings (absent, start & end) to validate that the error message is constructed accordingly
+			{ { "id", "action-1" } },
+			{ { "id", "action-1" }, { "timing", "start" } },
+			{ { "id", "action-1" }, { "timing", "end" } }
 		} ) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1u);
+	ASSERT_EQ(validationErrors.size(), 3u);
 	expectError(validationErrors, ValidationErrorCode::Action_MissingNonGlideProperties, "/component-pool/actions/0");
+	expectError(validationErrors, ValidationErrorCode::Action_MissingNonGlideProperties, "/component-pool/actions/1");
+	expectError(validationErrors, ValidationErrorCode::Action_MissingNonGlideProperties, "/component-pool/actions/2");
+	EXPECT_NE(validationErrors[0].message.find("'start'"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'start'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'end'"), std::string::npos);
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnTooManyActions) {
@@ -1099,9 +1107,9 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnTooManyActions) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "actions", json::array({
-			{ { "id", "action-1" }, { "set-value", { { "dummy", "value" } } }, { "set-variable", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "set-value", { { "dummy", "value" } } }, { "set-polyphony", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "set-value", { { "dummy", "value" } } }, { "assert", { { "dummy", "value" } } } },
+			{ { "id", "action-1" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "set-variable",  { { "value", { { "ref", "value-ref" } } }, { "name", "variable-name" } } } },
+			{ { "id", "action-1" }, { "timing", "start" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "set-polyphony", { { "index", 1 }, { "channels", 1 } } } },
+			{ { "id", "action-1" }, { "timing", "end" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "assert", { { "name", "assert-name" }, { "expect",  { { "eq", json::array({ { { "ref", "ref-value-1" } }, { { "ref", "ref-value-2" } }  }) } } } } } },
 			{ { "id", "action-1" }, { "set-value", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
 
 			{ { "id", "action-1" }, { "set-variable", { { "dummy", "value" } } }, { "set-polyphony", { { "dummy", "value" } } } },
@@ -1127,6 +1135,11 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnTooManyActions) {
 	expectError(validationErrors, ValidationErrorCode::Action_TooManyNonGlideProperties, "/component-pool/actions/7");
 	expectError(validationErrors, ValidationErrorCode::Action_TooManyNonGlideProperties, "/component-pool/actions/8");
 	expectError(validationErrors, ValidationErrorCode::Action_TooManyNonGlideProperties, "/component-pool/actions/9");
+
+	// Verify that the action timing is correctly embedded in the error message (using the first three test actions, which represent the possible applicable timing inputs: absent, start and end)
+	EXPECT_NE(validationErrors[0].message.find("'start'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[1].message.find("'start'"), std::string::npos) << validationErrors[1].message;
+	EXPECT_NE(validationErrors[2].message.find("'end'"), std::string::npos) << json.dump() << " " << validationErrors[2].message;
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnGlidePropertiesOnNonGlideAction) {
