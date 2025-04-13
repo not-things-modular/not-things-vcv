@@ -18,7 +18,7 @@ UNTAR := tar xf
 UNZIP := unzip -o
 
 DEPS += json
-DEPS += json-schema-validator
+#DEPS += json-schema-validator
 
 json-3.11.3:
 	$(WGET) "https://github.com/nlohmann/json/archive/refs/tags/v3.11.3.tar.gz" -O json-3.11.3.tar.gz

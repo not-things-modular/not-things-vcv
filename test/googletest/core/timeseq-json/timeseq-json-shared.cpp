@@ -1,6 +1,6 @@
 #include "timeseq-json-shared.hpp"
 
-shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, bool validate, vector<ValidationError> *validationErrors) {
+shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<ValidationError> *validationErrors) {
 	string jsonString = json.dump();
 	istringstream is(jsonString);
 

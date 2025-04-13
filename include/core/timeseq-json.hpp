@@ -2,7 +2,7 @@
 
 #include "core/timeseq-script.hpp"
 #include <istream>
-#include "nlohmann/json-schema.hpp"
+#include "nlohmann/json.hpp"
 #include "core/timeseq-validation.hpp"
 
 using namespace nlohmann;
@@ -43,13 +43,10 @@ struct JsonLoader {
 	JsonLoader();
 	~JsonLoader();
 
-	void setSchema(std::shared_ptr<json> schema);
-
-	std::shared_ptr<json> loadJson(std::istream& inputStream, bool validate=true, std::vector<ValidationError> *validationErrors=nullptr);
+	std::shared_ptr<json> loadJson(std::istream& inputStream, std::vector<ValidationError> *validationErrors=nullptr);
 	std::shared_ptr<Script> loadScript(std::istream& inputStream, std::vector<ValidationError> *validationErrors);
 
 	private:
-		json_schema::json_validator *m_validator;
 		JsonScriptParser *m_jsonScriptParser;
 };
 

@@ -5,7 +5,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNoGlobalActionsShouldSucceed
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	EXPECT_EQ(script->globalActions.size(), 0u);
 }
@@ -16,7 +16,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithEmptyGlobalActionsShouldSucc
 	json json = getMinimalJson();
 	json["global-actions"] = json::array();
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	EXPECT_EQ(script->globalActions.size(), 0u);
 }
@@ -27,7 +27,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNonArrayGlobalActionsShouldF
 	json json = getMinimalJson();
 	json["global-actions"] = "not-an-array";
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionsArray, "/");
 }
@@ -42,7 +42,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNonObjectActionShouldFail) {
 		{ { "ref", "action-3"} }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionsObject, "/global-actions/1");
 }
@@ -57,7 +57,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptShouldParseActions) {
 		{ { "ref", "action-3"} }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->globalActions.size(), 3u);
 	EXPECT_EQ(script->globalActions[0].ref, "action-1");

@@ -4,24 +4,6 @@ using namespace std;
 using namespace timeseq;
 
 
-class ValidationErrorHandler : public json_schema::error_handler {
-	public:
-		ValidationErrorHandler(vector<ValidationError> *validationErrors) {
-			m_validationErrors = validationErrors;
-		}
-
-		void error(const json::json_pointer &ptr, const json &instance, const string &message) override
-		{
-			if (m_validationErrors != nullptr) {
-				string location = ptr.to_string();
-				m_validationErrors->emplace_back(location, message);
-			}
-		}
-
-	private:
-		vector<ValidationError> *m_validationErrors;
-};
-
 template<size_t N>
 bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
 	for (const char* propertyName : propertyNames) {

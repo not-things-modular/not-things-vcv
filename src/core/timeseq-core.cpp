@@ -12,12 +12,6 @@ using namespace timeseq;
 
 TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) {
 	m_jsonLoader = new JsonLoader();
-	std::string schemaFile = rack::asset::plugin(pluginInstance, "res/timeseq.schema.json");
-	std::ifstream schemaStream(schemaFile);
-	std::shared_ptr<json> schemaJson = m_jsonLoader->loadJson(schemaStream, false);
-
-	m_jsonLoader->setSchema(schemaJson);
-
 	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener, assertListener);
 	m_eventListener = eventListener;
 	m_sampleRateReader = sampleRateReader;

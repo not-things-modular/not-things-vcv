@@ -11,6 +11,6 @@ using namespace std;
 #define SCRIPT_VERSION "0.0.1"
 
 
-shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, bool validate, vector<ValidationError> *validationErrors);
+shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<ValidationError> *validationErrors);
 json getMinimalJson();
 void expectError(vector<ValidationError>& validationErrors, int errorCode, string errorLocation);

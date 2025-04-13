@@ -14,7 +14,7 @@ TEST(TimeSeqJsonScriptIf, ParseActionWithoutIfShouldWork) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_FALSE(script->actions[0].condition);
@@ -30,7 +30,7 @@ TEST(TimeSeqJsonScriptIf, ParseActionWithNonObjectIfShouldFail) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_IfObject, "/component-pool/actions/0");
 }
@@ -45,7 +45,7 @@ TEST(TimeSeqJsonScriptIf, ParseIfShouldFailForMissingOperation) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_NoOperation, "/component-pool/actions/0/if");
 }
@@ -60,7 +60,7 @@ void testIfPairWithNonArray(std::string compareOperator, ValidationErrorCode err
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, errorCode, "/component-pool/actions/0/if");
 }
@@ -75,7 +75,7 @@ void testIfPairWithEmptyArray(std::string compareOperator) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/" + compareOperator);
 }
@@ -90,7 +90,7 @@ void testIfPairWithSingleValue(std::string compareOperator) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/" + compareOperator);
 }
@@ -105,7 +105,7 @@ void testIfPairWithTwoValue(std::string compareOperator, ScriptIf::IfOperator if
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u);
 
 	ASSERT_EQ(script->actions.size(), 1u);
@@ -126,7 +126,7 @@ void testIfPairWithTwoInvalidValue(std::string compareOperator) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/if/" + compareOperator + "/0");
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/if/" + compareOperator + "/1");
@@ -142,7 +142,7 @@ void testIfPairWithThreeValue(std::string compareOperator) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/" + compareOperator);
 }
@@ -233,7 +233,7 @@ TEST(TimeSeqJsonScriptIf, ParseAndWithSingleChildShouldFail) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/and");
 }
@@ -251,7 +251,7 @@ TEST(TimeSeqJsonScriptIf, ParseAndWithTwoChildrenShouldSucceed) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u);
 
 	ASSERT_EQ(script->actions.size(), 1u);
@@ -283,7 +283,7 @@ TEST(TimeSeqJsonScriptIf, ParseAndWithThreeChildShouldFail) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/and");
 }
@@ -300,7 +300,7 @@ TEST(TimeSeqJsonScriptIf, ParseOrWithSingleChildShouldFail) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/or");
 }
@@ -318,7 +318,7 @@ TEST(TimeSeqJsonScriptIf, ParseOrWithTwoChildrenShouldSucceed) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u);
 
 	ASSERT_EQ(script->actions.size(), 1u);
@@ -350,7 +350,7 @@ TEST(TimeSeqJsonScriptIf, ParseOrWithThreeChildShouldFail) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/or");
 }
@@ -365,7 +365,7 @@ TEST(TimeSeqJsonScriptIf, ParseWithoutToleranceShouldSucceed) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u);
 
 	ASSERT_EQ(script->actions.size(), 1u);
@@ -383,7 +383,7 @@ TEST(TimeSeqJsonScriptIf, ParseWithNonNumericToleranceShouldFail) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_ToleranceNumber, "/component-pool/actions/0/if");
 }
@@ -398,7 +398,7 @@ TEST(TimeSeqJsonScriptIf, ParseWithNegativeToleranceShouldFail) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::If_ToleranceNumber, "/component-pool/actions/0/if");
 }
@@ -413,7 +413,7 @@ TEST(TimeSeqJsonScriptIf, ParseWithZeroToleranceShouldSucceed) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u);
 
 	ASSERT_EQ(script->actions.size(), 1u);
@@ -432,7 +432,7 @@ TEST(TimeSeqJsonScriptIf, ParseWithPositiveToleranceShouldSucceed) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u);
 
 	ASSERT_EQ(script->actions.size(), 1u);
@@ -489,7 +489,7 @@ TEST(TimeSeqJsonScriptIf, ParseShouldFailWithMultipleOperators) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 
 	ASSERT_EQ(validationErrors.size(), 28u);
 	for (unsigned int i = 0; i < 28; i++) {

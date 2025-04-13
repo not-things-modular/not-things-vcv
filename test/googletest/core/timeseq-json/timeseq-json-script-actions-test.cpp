@@ -5,7 +5,7 @@ TEST(TimeSeqJsonScriptAction, ParseShouldSucceedWithoutActions) {
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	EXPECT_EQ(script->actions.size(), 0u);
 }
@@ -18,7 +18,7 @@ TEST(TimeSeqJsonScriptAction, ParseShouldSucceedWithEmptyActions) {
 		{ "actions", json::array() }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	EXPECT_EQ(script->values.size(), 0u);
 }
@@ -33,7 +33,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldNotAllowRefAndRequireIdOnRoot) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Ref_NotAllowed, "/component-pool/actions/0");
@@ -47,7 +47,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonArrayActions) {
 		{ "actions", "not-an-array" }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_ActionsArray, "/component-pool");
 }
@@ -64,7 +64,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectAction) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_ActionObject, "/component-pool/actions/1");
 }
@@ -84,7 +84,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnDuplicateIds) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
 	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/actions/2");
 	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/actions/4");
@@ -105,7 +105,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldDefaultToStartTiming) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::START);
@@ -121,7 +121,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseStartTiming) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::START);
@@ -137,7 +137,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseEndTiming) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::END);
@@ -153,7 +153,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnUnknownTiming) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_TimingEnum, "/component-pool/actions/0");
 }
@@ -168,7 +168,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectSetValue) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_SetValueObject, "/component-pool/actions/0");
 }
@@ -183,7 +183,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectSetVariable) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_SetVariableObject, "/component-pool/actions/0");
 }
@@ -198,7 +198,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectSetPolyphony) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_SetPolyphonyObject, "/component-pool/actions/0");
 }
@@ -213,7 +213,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectAssert) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_AssertObject, "/component-pool/actions/0");
 }
@@ -228,7 +228,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetValueOutput) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetValue_OutputObject, "/component-pool/actions/0/set-value");
 }
@@ -243,7 +243,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetValueValue) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetValue_ValueObject, "/component-pool/actions/0/set-value");
 }
@@ -258,7 +258,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetValue) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].setValue);
@@ -276,7 +276,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetVariableName) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetVariable_NameString, "/component-pool/actions/0/set-variable");
 }
@@ -291,7 +291,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnEmptySetVariableName) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetVariable_NameLength, "/component-pool/actions/0/set-variable");
 }
@@ -306,7 +306,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetVariableValue) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetVariable_ValueObject, "/component-pool/actions/0/set-variable");
 }
@@ -321,7 +321,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetVariable) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].setVariable);
@@ -339,7 +339,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetPolyphonyIndex) 
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_IndexNumber, "/component-pool/actions/0/set-polyphony");
 }
@@ -354,7 +354,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonNumericSetPolyphonyInde
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_IndexNumber, "/component-pool/actions/0/set-polyphony");
 }
@@ -370,7 +370,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetPolyphonyIndexOutOfRang
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_IndexRange, "/component-pool/actions/0/set-polyphony");
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_IndexRange, "/component-pool/actions/1/set-polyphony");
@@ -386,7 +386,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonIntegerPolyphonyIndex) 
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_IndexNumber, "/component-pool/actions/0/set-polyphony");
 }
@@ -401,7 +401,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetPolyphonyChannel
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_ChannelsNumber, "/component-pool/actions/0/set-polyphony");
 }
@@ -416,7 +416,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonNumericSetPolyphonyChan
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_ChannelsNumber, "/component-pool/actions/0/set-polyphony");
 }
@@ -432,7 +432,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetPolyphonyChannelsOutOfR
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_ChannelsRange, "/component-pool/actions/0/set-polyphony");
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_ChannelsRange, "/component-pool/actions/1/set-polyphony");
@@ -448,7 +448,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonIntegerChannelsIndex) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_ChannelsNumber, "/component-pool/actions/0/set-polyphony");
 }
@@ -478,7 +478,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetPolyphony) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 16u);
 	for (int i = 0; i < 16; i++) {
@@ -498,7 +498,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonStringTrigger) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_TriggerString, "/component-pool/actions/0");
 }
@@ -513,7 +513,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnEmptyTrigger) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_TriggerLength, "/component-pool/actions/0");
 }
@@ -528,7 +528,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseTrigger) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_EQ(script->actions[0].trigger, "trigger-name");
@@ -549,7 +549,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnAssertWithMissingName) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Assert_NameString, "/component-pool/actions/0/assert");
 }
@@ -569,7 +569,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnAssertWithNonStringName) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Assert_NameString, "/component-pool/actions/0/assert");
 }
@@ -589,7 +589,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnAssertWithEmptyName) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Assert_NameLength, "/component-pool/actions/0/assert");
 }
@@ -604,7 +604,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingAssertExpect) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Assert_ExpectObject, "/component-pool/actions/0/assert");
 }
@@ -619,7 +619,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectAssertExpect) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Assert_ExpectObject, "/component-pool/actions/0/assert");
 }
@@ -639,7 +639,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithNonBooleanStopOnFail) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Assert_StopOnFailBool, "/component-pool/actions/0/assert");
 }
@@ -659,7 +659,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldDefaultAssertToStopOnFail) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].assert);
@@ -683,7 +683,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseAssertStopOnFailFalse) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].assert);
@@ -707,7 +707,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseAssertStopOnFailTrue) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].assert);
@@ -726,7 +726,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectStartValue) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_StartValueObject, "/component-pool/actions/0");
 }
@@ -741,7 +741,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnInvalidStartValue) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/start-value");
 }
@@ -756,7 +756,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectEndValue) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_EndValueObject, "/component-pool/actions/0");
 }
@@ -771,7 +771,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnInvalidEndValue) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/end-value");
 }
@@ -786,7 +786,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailNonObjectOutput) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_OutputObject, "/component-pool/actions/0");
 }
@@ -801,7 +801,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithInvalidOutput) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/output");
 }
@@ -816,7 +816,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailNonStringVariable) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_VariableString, "/component-pool/actions/0");
 }
@@ -831,7 +831,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailEmptyStringVariable) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_VariableLength, "/component-pool/actions/0");
 }
@@ -846,7 +846,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithNoOutputOrVariable) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Action_MissingGlideActions, "/component-pool/actions/0");
 }
@@ -861,7 +861,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingStartValue) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_MissingGlideValues, "/component-pool/actions/0");
 }
@@ -876,7 +876,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingEndValue) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_MissingGlideValues, "/component-pool/actions/0");
 }
@@ -891,7 +891,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingOutputAndVariable) 
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_MissingGlideActions, "/component-pool/actions/0");
 }
@@ -910,7 +910,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonGlideActionsCombinedWit
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 4u);
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/1");
@@ -929,7 +929,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnBothVariableAndOutputActio
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_TooManyGlideActions, "/component-pool/actions/0");
 }
@@ -944,7 +944,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGlideActionWithNoEaseAndVar
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].id, "action-1");
@@ -969,7 +969,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGlideActionWithNoEaseAndOut
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].id, "action-1");
@@ -995,7 +995,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithNoneNumericEaseFactor) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_EaseFactorFloat, "/component-pool/actions/0");
 }
@@ -1011,7 +1011,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithEaseFactorOutOfRange) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::Action_EaseFactorRange, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_EaseFactorRange, "/component-pool/actions/1");
@@ -1029,7 +1029,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseEaseFactor) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 3u);
 	EXPECT_TRUE(script->actions[0].easeFactor);
@@ -1050,7 +1050,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithNonStringEaseAlgorithm) 
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_EaseAlgorithmEnum, "/component-pool/actions/0");
 }
@@ -1065,7 +1065,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithUnknownEaseAlgorithm) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_EaseAlgorithmEnum, "/component-pool/actions/0");
 }
@@ -1080,7 +1080,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSigEaseAlgorithm) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_TRUE(script->actions[0].easeAlgorithm);
@@ -1097,7 +1097,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParsePowEaseAlgorithm) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_TRUE(script->actions[0].easeAlgorithm);
@@ -1117,7 +1117,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingNonGlideAction) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
 	expectError(validationErrors, ValidationErrorCode::Action_MissingNonGlideProperties, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_MissingNonGlideProperties, "/component-pool/actions/1");
@@ -1149,7 +1149,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnTooManyActions) {
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 9u) << json.dump();
 	expectError(validationErrors, ValidationErrorCode::Action_TooManyNonGlideProperties, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_TooManyNonGlideProperties, "/component-pool/actions/1");
@@ -1183,7 +1183,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnGlidePropertiesOnNonGlideA
 		} ) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 6u);
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/1");
@@ -1213,7 +1213,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 		{ { "ref", "action-ref"}, { "trigger", "trigger-name" } },
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 11u);
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/1");

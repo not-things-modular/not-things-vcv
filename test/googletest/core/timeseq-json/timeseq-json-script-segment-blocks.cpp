@@ -5,7 +5,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptWithNoSegmentBlocksShouldSucceed
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	EXPECT_EQ(script->segmentBlocks.size(), 0u);
 }
@@ -18,7 +18,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptWithEmptySegmentBlocksShouldSucc
 		{ "segment-blocks", json::array() }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	EXPECT_EQ(script->segmentBlocks.size(), 0u);
 }
@@ -31,7 +31,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptWithNonArraySegmentBlocksShouldF
 		{ "segment-blocks", "not-an-array" }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_SegmentBlocksArray, "/component-pool");
 }
@@ -48,7 +48,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptWithNonObjectSegmentBlockShouldF
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_SegmentBlockObject, "/component-pool/segment-blocks/1");
 }
@@ -65,7 +65,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldParseSegmentBlocks) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->segmentBlocks.size(), 3u);
 	EXPECT_EQ(script->segmentBlocks[0].id, "segment-block-1");
@@ -89,7 +89,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnDuplicateSegmentBloc
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
 	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segment-blocks/2");
 	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segment-blocks/4");
@@ -110,7 +110,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldNotAllowRefSegmentBlocks) 
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotAllowed, "/component-pool/segment-blocks/0");
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/segment-blocks/0");
@@ -127,7 +127,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldShouldFailWithoutId) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/segment-blocks/0");
 }
@@ -142,7 +142,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldAllowEmptySegmentsArrayAnd
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->segmentBlocks.size(), 1u);
 	EXPECT_EQ(script->segmentBlocks[0].segments.size(), 0u);
@@ -159,7 +159,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnNonNumericRepeat) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SegmentBlock_RepeatNumber, "/component-pool/segment-blocks/0");
 }
@@ -174,7 +174,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnNegativeRepeat) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SegmentBlock_RepeatNumber, "/component-pool/segment-blocks/0");
 }
@@ -189,7 +189,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnFloatRepeat) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SegmentBlock_RepeatNumber, "/component-pool/segment-blocks/0");
 }
@@ -204,7 +204,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldSucceedOnPositiveIntegerRe
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->segmentBlocks.size(), 1u);
 	EXPECT_EQ(script->segmentBlocks[0].segments.size(), 0u);
@@ -227,7 +227,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnNonObjectSegment) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SegmentBlock_SegmentObject, "/component-pool/segment-blocks/0/segments/1");
 }
@@ -246,7 +246,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldParseSegments) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
 	ASSERT_EQ(script->segmentBlocks.size(), 1u);
 	ASSERT_EQ(script->segmentBlocks[0].segments.size(), 2u);
