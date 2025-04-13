@@ -13,7 +13,8 @@ enum ValidationErrorCode {
 	Ref_CircularFound = 5,
 	Id_String = 6,
 	Id_Length = 7,
-	Id_NotAllowed= 8,
+	Id_NotAllowed = 8,
+	Id_Duplicate = 9,
 
 	Script_TypeMissing = 101,
 	Script_TypeUnsupported = 102,

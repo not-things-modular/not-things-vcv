@@ -60,7 +60,7 @@ TEST(TimeSeqJsonScriptValue, ParseValuesShouldFailOnNonObjectValue) {
 		{ "values", json::array({
 			{ { "id", "value-1" }, { "voltage", 1 } },
 			"not-an-object",
-			{ { "id", "value-1" }, { "voltage", 2 } }
+			{ { "id", "value-2" }, { "voltage", 2 } }
 		}) }
 	};
 
@@ -124,9 +124,9 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithIntegerVoltages) {
 		{ "values", json::array({
 			{ { "id", "value-1" }, { "voltage", -10 } },
 			{ { "id", "value-2" }, { "voltage", -4 } },
-			{ { "id", "value-2" }, { "voltage", 0 } },
-			{ { "id", "value-2" }, { "voltage", 6 } },
-			{ { "id", "value-2" }, { "voltage", 10 } },
+			{ { "id", "value-3" }, { "voltage", 0 } },
+			{ { "id", "value-4" }, { "voltage", 6 } },
+			{ { "id", "value-5" }, { "voltage", 10 } },
 		}) }
 	};
 
@@ -145,6 +145,31 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithIntegerVoltages) {
 	EXPECT_EQ(*script->values[4].voltage.get(), 10);
 }
 
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnDuplicateIds) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", -10 } },
+			{ { "id", "value-2" }, { "voltage", -10 } },
+			{ { "id", "value-3" }, { "voltage", -10 } },
+			{ { "id", "value-1" }, { "voltage", -10 } },
+			{ { "id", "value-2" }, { "voltage", -10 } },
+			{ { "id", "value-3" }, { "voltage", -10 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/values/3");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/values/4");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/values/5");
+	EXPECT_NE(validationErrors[0].message.find("'value-1'"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'value-2'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'value-3'"), std::string::npos);
+}
+
 TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithFloatVoltages) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -153,9 +178,9 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithFloatVoltages) {
 		{ "values", json::array({
 			{ { "id", "value-1" }, { "voltage", -10.0f } },
 			{ { "id", "value-2" }, { "voltage", -9.999f } },
-			{ { "id", "value-2" }, { "voltage", 0.1f } },
-			{ { "id", "value-2" }, { "voltage", 4.99f } },
-			{ { "id", "value-2" }, { "voltage", 10.0f } },
+			{ { "id", "value-3" }, { "voltage", 0.1f } },
+			{ { "id", "value-4" }, { "voltage", 4.99f } },
+			{ { "id", "value-5" }, { "voltage", 10.0f } },
 		}) }
 	};
 
@@ -310,10 +335,10 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseAllNotesWithAccidental) {
 	};
 
 	for (int i = 0; i < 7; i++) {
-		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i) }, { "note", std::string(1, 'a' + i) + "4-" } }));
-		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i) }, { "note", std::string(1, 'a' + i) + "4+" } }));
-		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i + 19) }, { "note", std::string(1, 'A' + i) + "4-" } }));
-		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i + 19) }, { "note", std::string(1, 'A' + i) + "4+" } }));
+		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i * 4) }, { "note", std::string(1, 'a' + i) + "4-" } }));
+		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i * 4 + 1) }, { "note", std::string(1, 'a' + i) + "4+" } }));
+		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i * 4 + 2) }, { "note", std::string(1, 'A' + i) + "4-" } }));
+		json["component-pool"]["values"].push_back(json::object({ { "id", std::string("value-") + std::to_string(i * 4 + 3) }, { "note", std::string(1, 'A' + i) + "4+" } }));
 	}
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
@@ -605,19 +630,19 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnMultipleValues) {
 		// Combine each of the possible values with each other
 		{ "values", json::array({
 			{ { "id", "value-1" }, { "voltage", 1 }, { "note", "a4" } },
-			{ { "id", "value-1" }, { "voltage", 1 }, { "variable", "variable-name" } },
-			{ { "id", "value-1" }, { "voltage", 1 }, { "input", { { "index", 1 } } } },
-			{ { "id", "value-1" }, { "voltage", 1 }, { "output", { { "index", 1 } } } },
-			{ { "id", "value-1" }, { "voltage", 1 }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
+			{ { "id", "value-2" }, { "voltage", 1 }, { "variable", "variable-name" } },
+			{ { "id", "value-3" }, { "voltage", 1 }, { "input", { { "index", 1 } } } },
+			{ { "id", "value-4" }, { "voltage", 1 }, { "output", { { "index", 1 } } } },
+			{ { "id", "value-5" }, { "voltage", 1 }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
 
-			{ { "id", "value-1" }, { "variable", "variable-name" }, { "input", { { "index", 1 } } } },
-			{ { "id", "value-1" }, { "variable", "variable-name" }, { "output", { { "index", 1 } } } },
-			{ { "id", "value-1" }, { "variable", "variable-name" }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
+			{ { "id", "value-6" }, { "variable", "variable-name" }, { "input", { { "index", 1 } } } },
+			{ { "id", "value-7" }, { "variable", "variable-name" }, { "output", { { "index", 1 } } } },
+			{ { "id", "value-8" }, { "variable", "variable-name" }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
 
-			{ { "id", "value-1" }, { "input", { { "index", 1 } } }, { "output", { { "index", 1 } } } },
-			{ { "id", "value-1" }, { "input", { { "index", 1 } } }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
+			{ { "id", "value-9" }, { "input", { { "index", 1 } } }, { "output", { { "index", 1 } } } },
+			{ { "id", "value-10" }, { "input", { { "index", 1 } } }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
 
-			{ { "id", "value-1" }, { "output", { { "index", 1 } } }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
+			{ { "id", "value-11" }, { "output", { { "index", 1 } } }, { "rand", { { "lower", { { "voltage", 1 } } }, { "upper", { { "voltage", 1 } } } } } },
 		}) }
 	};
 
@@ -816,14 +841,14 @@ TEST(TimeSeqJsonScriptValue, ParseValueNotAllowOtherPropertiesOnRef) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "calcs", json::array({
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "voltage", 5 } } } },
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "note", "a4" } } } },
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "variable", "variable-name" } } } },
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "input", { { "dummy", "calc" } } } } } },
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "output", { { "dummy", "calc" } } } } } },
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "rand", { { "dummy", "rand" }} } } } },
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "calc", { { "dummy", "calc" } } } } } },
-			{ { "id", "calc-id" }, { "add", { { "ref", "value-ref" }, { "quantize", true } } } }
+			{ { "id", "calc-id-1" }, { "add", { { "ref", "value-ref" }, { "voltage", 5 } } } },
+			{ { "id", "calc-id-2" }, { "add", { { "ref", "value-ref" }, { "note", "a4" } } } },
+			{ { "id", "calc-id-3" }, { "add", { { "ref", "value-ref" }, { "variable", "variable-name" } } } },
+			{ { "id", "calc-id-4" }, { "add", { { "ref", "value-ref" }, { "input", { { "dummy", "calc" } } } } } },
+			{ { "id", "calc-id-5" }, { "add", { { "ref", "value-ref" }, { "output", { { "dummy", "calc" } } } } } },
+			{ { "id", "calc-id-6" }, { "add", { { "ref", "value-ref" }, { "rand", { { "dummy", "rand" }} } } } },
+			{ { "id", "calc-id-7" }, { "add", { { "ref", "value-ref" }, { "calc", { { "dummy", "calc" } } } } } },
+			{ { "id", "calc-id-8" }, { "add", { { "ref", "value-ref" }, { "quantize", true } } } }
 		}) }
 	};
 

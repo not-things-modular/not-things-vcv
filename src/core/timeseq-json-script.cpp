@@ -135,6 +135,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 	if (componentPool != scriptJson.end()) {
 		if (componentPool->is_object()) {
 			location.push_back("component-pool");
+			vector<string> ids;
 
 			json::const_iterator segmentBlocks = componentPool->find("segment-blocks");
 			if (segmentBlocks != componentPool->end()) {
@@ -147,6 +148,11 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 						location.push_back(std::to_string(count));
 						if (segmentBlock.is_object()) {
 							script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, false, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->segmentBlocks.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->segmentBlocks.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->segmentBlocks.back().id.size() > 0) {
+								ids.push_back(script->segmentBlocks.back().id);
+							}
 						} else {
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentBlockObject, "'segment-blocks' elements must be objects.");
 						}
@@ -165,12 +171,18 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				if (segments->is_array()) {
 					location.push_back("segments");
 
+					ids.clear();
 					int count = 0;
 					std::vector<json> segmentElements = (*segments);
 					for (const json& segment : segmentElements) {
 						location.push_back(std::to_string(count));
 						if (segment.is_object()) {
 							script->segments.push_back(parseSegment(segment, false, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->segments.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->segments.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->segments.back().id.size() > 0) {
+								ids.push_back(script->segments.back().id);
+							}
 						} else {
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_SegmentObject, "'segments' elements must be objects.");
 						}
@@ -188,12 +200,18 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				if (inputs->is_array()) {
 					location.push_back("inputs");
 
+					ids.clear();
 					int count = 0;
 					std::vector<json> inputElements = (*inputs);
 					for (const json& input : inputElements) {
 						location.push_back(std::to_string(count));
 						if (input.is_object()) {
 							script->inputs.push_back(parseInput(input, false, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->inputs.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->inputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->inputs.back().id.size() > 0) {
+								ids.push_back(script->inputs.back().id);
+							}
 						} else {
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_InputObject, "'inputs' elements must be objects.");
 						}
@@ -212,12 +230,18 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				if (outputs->is_array()) {
 					location.push_back("outputs");
 
+					ids.clear();
 					int count = 0;
 					std::vector<json> outputElements = (*outputs);
 					for (const json& output : outputElements) {
 						location.push_back(std::to_string(count));
 						if (output.is_object()) {
 							script->outputs.push_back(parseOutput(output, false, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->outputs.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->outputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->outputs.back().id.size() > 0) {
+								ids.push_back(script->outputs.back().id);
+							}
 						} else {
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_OutputObject, "'outputs' elements must be objects.");
 						}
@@ -236,12 +260,18 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				if (calcs->is_array()) {
 					location.push_back("calcs");
 
+					ids.clear();
 					int count = 0;
 					std::vector<json> calcElements = (*calcs);
 					for (const json& calc : calcElements) {
 						location.push_back(std::to_string(count));
 						if (calc.is_object()) {
 							script->calcs.push_back(parseCalc(calc, false, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->calcs.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->calcs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->calcs.back().id.size() > 0) {
+								ids.push_back(script->calcs.back().id);
+							}
 						} else {
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_CalcObject, "'calcs' elements must be objects.");
 						}
@@ -260,12 +290,18 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				if (values->is_array()) {
 					location.push_back("values");
 
+					ids.clear();
 					int count = 0;
 					std::vector<json> valueElements = (*values);
 					for (const json& value : valueElements) {
 						location.push_back(std::to_string(count));
 						if (value.is_object()) {
 							script->values.push_back(parseValue(value, false, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->values.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->values.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->values.back().id.size() > 0) {
+								ids.push_back(script->values.back().id);
+							}
 						} else {
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ValueObject, "'values' elements must be objects.");
 						}
@@ -284,12 +320,18 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 				if (actions->is_array()) {
 					location.push_back("actions");
 
+					ids.clear();
 					int count = 0;
 					std::vector<json> actionElements = (*actions);
 					for (const json& action : actionElements) {
 						location.push_back(std::to_string(count));
 						if (action.is_object()) {
 							script->actions.push_back(parseAction(action, false, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->actions.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->actions.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->actions.back().id.size() > 0) {
+								ids.push_back(script->actions.back().id);
+							}
 						} else {
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_ActionObject, "'actions' elements must be objects.");
 						}

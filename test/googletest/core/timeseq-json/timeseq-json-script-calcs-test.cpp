@@ -186,6 +186,31 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseCalcs) {
 	EXPECT_EQ(script->calcs[3].value.get()->ref, "value-4");
 }
 
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnDuplicateIds) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "add", { { "ref", "value-1" }} } },
+			{ { "id", "calc-1" }, { "add", { { "ref", "value-1" }} } },
+			{ { "id", "calc-2" }, { "add", { { "ref", "value-1" }} } },
+			{ { "id", "calc-3" }, { "add", { { "ref", "value-1" }} } },
+			{ { "id", "calc-2" }, { "add", { { "ref", "value-1" }} } },
+			{ { "id", "calc-1" }, { "add", { { "ref", "value-1" }} } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/calcs/1");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/calcs/4");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/calcs/5");
+	EXPECT_NE(validationErrors[0].message.find("'calc-1'"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'calc-2'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'calc-1'"), std::string::npos);
+}
+
 TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnRefWithOtherCalcProperties) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;

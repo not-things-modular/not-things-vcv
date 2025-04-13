@@ -818,6 +818,32 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnNonBooleanDisableUi) {
 	expectError(validationErrors, ValidationErrorCode::Segment_DisableUiBoolean, "/component-pool/segments/0");
 }
 
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDuplicateSegmentIds) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "samples", 1 } } } },
+			{ { "id", "segment-2" }, { "duration", { { "samples", 1 } } } },
+			{ { "id", "segment-1" }, { "duration", { { "samples", 1 } } } },
+			{ { "id", "segment-3" }, { "duration", { { "samples", 1 } } } },
+			{ { "id", "segment-2" }, { "duration", { { "samples", 1 } } } },
+			{ { "id", "segment-1" }, { "duration", { { "samples", 1 } } } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segments/2");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segments/4");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segments/5");
+
+	EXPECT_NE(validationErrors[0].message.find("'segment-1"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'segment-2'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'segment-1'"), std::string::npos);
+}
+
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseWithoutDisableUi) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;

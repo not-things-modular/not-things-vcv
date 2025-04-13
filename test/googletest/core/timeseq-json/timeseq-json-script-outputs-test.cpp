@@ -60,7 +60,7 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputsShouldFailOnNonObjectOutput) {
 		{ "outputs", json::array({
 			{ { "id", "output-1" }, { "index", 1 } },
 			"not-an-object",
-			{ { "id", "output-1" }, { "index", 2 } }
+			{ { "id", "output-2" }, { "index", 2 } }
 		}) }
 	};
 
@@ -188,6 +188,31 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputShouldParseIndexInRange) {
 	EXPECT_EQ(script->outputs[7].id, "output-8");
 	EXPECT_EQ(script->outputs[7].index, 8);
 	EXPECT_FALSE(script->outputs[7].channel);
+}
+
+TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailOnDuplicateIds) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 1 } },
+			{ { "id", "output-2" }, { "index", 1 } },
+			{ { "id", "output-1" }, { "index", 1 } },
+			{ { "id", "output-2" }, { "index", 1 } },
+			{ { "id", "output-1" }, { "index", 1 } },
+			{ { "id", "output-3" }, { "index", 1 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/outputs/2");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/outputs/3");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/outputs/4");
+	EXPECT_NE(validationErrors[0].message.find("'output-1'"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'output-2'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'output-1'"), std::string::npos);
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithIndexAboveRange) {

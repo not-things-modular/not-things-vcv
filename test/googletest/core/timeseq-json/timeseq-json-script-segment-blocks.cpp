@@ -53,7 +53,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptWithNonObjectSegmentBlockShouldF
 	expectError(validationErrors, ValidationErrorCode::Script_SegmentBlockObject, "/component-pool/segment-blocks/1");
 }
 
-TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldSegmentBlocks) {
+TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldParseSegmentBlocks) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
@@ -71,6 +71,33 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldSegmentBlocks) {
 	EXPECT_EQ(script->segmentBlocks[0].id, "segment-block-1");
 	EXPECT_EQ(script->segmentBlocks[1].id, "segment-block-2");
 	EXPECT_EQ(script->segmentBlocks[2].id, "segment-block-3");
+}
+
+TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnDuplicateSegmentBlockIds) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segment-blocks", json::array({
+			{ { "id", "segment-block-1" }, { "segments", json::array() } },
+			{ { "id", "segment-block-2" }, { "segments", json::array() } },
+			{ { "id", "segment-block-1" }, { "segments", json::array() } },
+			{ { "id", "segment-block-4" }, { "segments", json::array() } },
+			{ { "id", "segment-block-1" }, { "segments", json::array() } },
+			{ { "id", "segment-block-3" }, { "segments", json::array() } },
+			{ { "id", "segment-block-2" }, { "segments", json::array() } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segment-blocks/2");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segment-blocks/4");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/segment-blocks/6");
+
+	EXPECT_NE(validationErrors[0].message.find("'segment-block-1'"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'segment-block-1'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'segment-block-2'"), std::string::npos);
 }
 
 TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldNotAllowRefSegmentBlocks) {

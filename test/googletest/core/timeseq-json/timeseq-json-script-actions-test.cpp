@@ -69,6 +69,32 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectAction) {
 	expectError(validationErrors, ValidationErrorCode::Script_ActionObject, "/component-pool/actions/1");
 }
 
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnDuplicateIds) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-variable", { { "name", "variable-name" }, { "value", { { "voltage", 5 } } } } } },
+			{ { "id", "action-2" }, { "set-variable", { { "name", "variable-name" }, { "value", { { "voltage", 5 } } } } } },
+			{ { "id", "action-1" }, { "set-variable", { { "name", "variable-name" }, { "value", { { "voltage", 5 } } } } } },
+			{ { "id", "action-3" }, { "set-variable", { { "name", "variable-name" }, { "value", { { "voltage", 5 } } } } } },
+			{ { "id", "action-2" }, { "set-variable", { { "name", "variable-name" }, { "value", { { "voltage", 5 } } } } } },
+			{ { "id", "action-1" }, { "set-variable", { { "name", "variable-name" }, { "value", { { "voltage", 5 } } } } } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, true, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/actions/2");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/actions/4");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/actions/5");
+
+	EXPECT_NE(validationErrors[0].message.find("'action-1'"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'action-2'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'action-1'"), std::string::npos);
+}
+
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldDefaultToStartTiming) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -981,7 +1007,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithEaseFactorOutOfRange) {
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "timing", "glide" }, { "ease-factor", -5.1 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } },
-			{ { "id", "action-1" }, { "timing", "glide" }, { "ease-factor", 5.1 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } }
+			{ { "id", "action-2" }, { "timing", "glide" }, { "ease-factor", 5.1 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } }
 		} ) }
 	};
 
@@ -998,8 +1024,8 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseEaseFactor) {
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "timing", "glide" }, { "ease-factor", -4 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } },
-			{ { "id", "action-1" }, { "timing", "glide" }, { "ease-factor", 0 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } },
-			{ { "id", "action-1" }, { "timing", "glide" }, { "ease-factor", 3.5 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } }
+			{ { "id", "action-2" }, { "timing", "glide" }, { "ease-factor", 0 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } },
+			{ { "id", "action-3" }, { "timing", "glide" }, { "ease-factor", 3.5 }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" } }
 		} ) }
 	};
 
@@ -1086,8 +1112,8 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingNonGlideAction) {
 		{ "actions", json::array({
 			// Test for the three possible timings (absent, start & end) to validate that the error message is constructed accordingly
 			{ { "id", "action-1" } },
-			{ { "id", "action-1" }, { "timing", "start" } },
-			{ { "id", "action-1" }, { "timing", "end" } }
+			{ { "id", "action-2" }, { "timing", "start" } },
+			{ { "id", "action-3" }, { "timing", "end" } }
 		} ) }
 	};
 
@@ -1108,18 +1134,18 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnTooManyActions) {
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "set-variable",  { { "value", { { "ref", "value-ref" } } }, { "name", "variable-name" } } } },
-			{ { "id", "action-1" }, { "timing", "start" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "set-polyphony", { { "index", 1 }, { "channels", 1 } } } },
-			{ { "id", "action-1" }, { "timing", "end" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "assert", { { "name", "assert-name" }, { "expect",  { { "eq", json::array({ { { "ref", "ref-value-1" } }, { { "ref", "ref-value-2" } }  }) } } } } } },
-			{ { "id", "action-1" }, { "set-value", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
+			{ { "id", "action-2" }, { "timing", "start" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "set-polyphony", { { "index", 1 }, { "channels", 1 } } } },
+			{ { "id", "action-3" }, { "timing", "end" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", { { "ref", "output-ref" } } } } }, { "assert", { { "name", "assert-name" }, { "expect",  { { "eq", json::array({ { { "ref", "ref-value-1" } }, { { "ref", "ref-value-2" } }  }) } } } } } },
+			{ { "id", "action-4" }, { "set-value", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
 
-			{ { "id", "action-1" }, { "set-variable", { { "dummy", "value" } } }, { "set-polyphony", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "set-variable", { { "dummy", "value" } } }, { "assert", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "set-variable", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
+			{ { "id", "action-5" }, { "set-variable", { { "dummy", "value" } } }, { "set-polyphony", { { "dummy", "value" } } } },
+			{ { "id", "action-6" }, { "set-variable", { { "dummy", "value" } } }, { "assert", { { "dummy", "value" } } } },
+			{ { "id", "action-7" }, { "set-variable", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
 
-			{ { "id", "action-1" }, { "set-polyphony", { { "dummy", "value" } } }, { "assert", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "set-polyphony", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
+			{ { "id", "action-8" }, { "set-polyphony", { { "dummy", "value" } } }, { "assert", { { "dummy", "value" } } } },
+			{ { "id", "action-9" }, { "set-polyphony", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
 
-			{ { "id", "action-1" }, { "assert", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
+			{ { "id", "action-10" }, { "assert", { { "dummy", "value" } } }, { "trigger", "trigger-name" } },
 		} ) }
 	};
 
