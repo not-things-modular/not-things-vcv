@@ -133,3 +133,16 @@ TEST(TimeSeqJsonScript, ParseRefShouldFailOnEmptyId) {
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Id_Length, "/component-pool/calcs/0");
 }
+
+TEST(TimeSeqJsonScript, ParseShouldFailOnInvalidJson) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	string jsonString = "{ \"this\": \"json\", is: \"invalid\" }";
+	istringstream is(jsonString);
+
+	jsonLoader.loadScript(is, &validationErrors);
+
+	ASSERT_EQ(validationErrors.size(), 1u);
+	EXPECT_EQ(validationErrors[0].location, "/");
+	EXPECT_GT(validationErrors[0].message.size(), 0u);
+}

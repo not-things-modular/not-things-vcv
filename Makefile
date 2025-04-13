@@ -77,7 +77,7 @@ test: all $(GTEST_TARGET)
 
 
 ### Code coverage ###
-GCOVFLAGS = -fprofile-arcs -ftest-coverage
+GCOVFLAGS = -fprofile-arcs -ftest-coverage -fno-omit-frame-pointer -fno-elide-constructors -fno-default-inline
 
 ifdef ARCH_WIN
 	OLD_SHELL := $(SHELL)
