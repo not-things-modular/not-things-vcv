@@ -51,9 +51,18 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 	vector<shared_ptr<ActionProcessor>> startActionProcessors;
 	for (vector<ScriptAction>::iterator it = script->globalActions.begin(); it != script->globalActions.end(); it++) {
 		location.push_back(to_string(count));
-		startActionProcessors.push_back(parseAction(&context, &(*it), location));
-		if ((!startActionProcessors.back()) || (!startActionProcessors.back()->hasStartTiming())) {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.", std::to_string(it->timing).c_str(), " ... ");
+
+		ScriptAction& scriptAction = (*it);
+		ScriptAction* resolvedAction = resolveScriptAction(&context, &scriptAction);
+
+		if (resolvedAction) {
+			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
+				startActionProcessors.push_back(parseAction(&context, &scriptAction, location));
+			} else {
+				ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
+			}
+		} else {
+			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 		}
 		location.pop_back();
 		count++;
@@ -201,15 +210,23 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScript
 		vector<shared_ptr<ActionGlideProcessor>> glideActions;
 		location.push_back("actions");
 		for (vector<ScriptAction>::iterator it = scriptSegment->actions.begin(); it != scriptSegment->actions.end(); it++) {
-			ScriptAction& scriptAction = *it;
 			location.push_back(to_string(count));
-			if (scriptAction.timing == ScriptAction::ActionTiming::START) {
-				startActions.push_back(parseAction(context, &(*it), location));
-			} else if (scriptAction.timing == ScriptAction::ActionTiming::END) {
-				endActions.push_back(parseAction(context, &(*it), location));
-			} else if (scriptAction.timing == ScriptAction::ActionTiming::GLIDE) {
-				glideActions.push_back(parseGlideAction(context, &(*it), location));
+
+			ScriptAction& scriptAction = *it;
+			ScriptAction* resolvedAction = resolveScriptAction(context, &scriptAction);
+
+			if (resolvedAction) {
+				if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
+					startActions.push_back(parseAction(context, &(*it), location));
+				} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
+					endActions.push_back(parseAction(context, &(*it), location));
+				} else if (resolvedAction->timing == ScriptAction::ActionTiming::GLIDE) {
+					glideActions.push_back(parseGlideAction(context, &(*it), location));
+				}
+			} else {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 			}
+			
 			location.pop_back();
 			count++;
 		}
@@ -286,7 +303,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
-	// Check if it's a ref segment block object or a full one
+	// Check if it's a ref action object or a full one
 	if (scriptAction->ref.length() == 0) {
 		shared_ptr<ActionProcessor> actionProcessor;
 		shared_ptr<IfProcessor> ifProcessor;
@@ -329,43 +346,58 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptPa
 }
 
 shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
-	shared_ptr<IfProcessor> ifProcessor;
+	if (scriptAction->ref.length() == 0) {
+		shared_ptr<IfProcessor> ifProcessor;
 
-	if (scriptAction->condition) {
-		location.push_back("if");
-		ifProcessor = parseIf(context, scriptAction->condition.get(), location);
-		location.pop_back();
-	}
-
-	location.push_back("start-value");
-	shared_ptr<ValueProcessor> startValueProcessor = parseValue(context, &(*scriptAction->startValue.get()), location, vector<string>());
-	location.pop_back();
-	location.push_back("end-value");
-	shared_ptr<ValueProcessor> endValueProcessor = parseValue(context, &(*scriptAction->endValue.get()), location, vector<string>());
-	location.pop_back();
-
-	int outputPort = -1;
-	int outputChannel = -1;
-	if (scriptAction->output) {
-		location.push_back("output");
-		pair<int, int> output = parseOutput(context, &(*scriptAction->output), location);
-		location.pop_back();
-		outputPort = output.first;
-		outputChannel = output.second;
-	}
-
-	float easeFactor = 0.f;
-	bool easePow = false;
-	if (scriptAction->easeFactor) {
-		easeFactor = *scriptAction->easeFactor.get();
-	}
-	if (scriptAction->easeAlgorithm) {
-		if (*scriptAction->easeAlgorithm == ScriptAction::EaseAlgorithm::POW) {
-			easePow = true;
+		if (scriptAction->condition) {
+			location.push_back("if");
+			ifProcessor = parseIf(context, scriptAction->condition.get(), location);
+			location.pop_back();
 		}
-	}
 
-	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
+		location.push_back("start-value");
+		shared_ptr<ValueProcessor> startValueProcessor = parseValue(context, &(*scriptAction->startValue.get()), location, vector<string>());
+		location.pop_back();
+		location.push_back("end-value");
+		shared_ptr<ValueProcessor> endValueProcessor = parseValue(context, &(*scriptAction->endValue.get()), location, vector<string>());
+		location.pop_back();
+
+		int outputPort = -1;
+		int outputChannel = -1;
+		if (scriptAction->output) {
+			location.push_back("output");
+			pair<int, int> output = parseOutput(context, &(*scriptAction->output), location);
+			location.pop_back();
+			outputPort = output.first;
+			outputChannel = output.second;
+		}
+
+		float easeFactor = 0.f;
+		bool easePow = false;
+		if (scriptAction->easeFactor) {
+			easeFactor = *scriptAction->easeFactor.get();
+		}
+		if (scriptAction->easeAlgorithm) {
+			if (*scriptAction->easeAlgorithm == ScriptAction::EaseAlgorithm::POW) {
+				easePow = true;
+			}
+		}
+
+		return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
+	} else {
+		int count = 0;
+		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
+			if (scriptAction->ref.compare(it->id) == 0) {
+				vector<string> refLocation = { "script",  "actions", to_string(count) };
+				return parseGlideAction(context, &(*it), refLocation);
+			}
+			count++;
+		}
+
+		// Couldn't find the referenced action...
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction->ref.c_str(), "' in the script actions.");
+		return shared_ptr<ActionGlideProcessor>();
+	}
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
@@ -377,7 +409,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(Processor
 	pair<int, int> output = parseOutput(context, &scriptAction->setValue.get()->output, location);
 	location.pop_back();
 
-	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
+	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portHandler, ifProcessor));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
@@ -385,12 +417,12 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Proces
 	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setVariable.get()->value, location, vector<string>());
 	location.pop_back();
 
-	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
+	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, ifProcessor));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
-	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
+	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor));
 }
 
 std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location) {
@@ -400,11 +432,11 @@ std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(Proces
 	shared_ptr<IfProcessor> expect = parseIf(context, &scriptAssert->expect, location);
 	location.pop_back();
 
-	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
+	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
-	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
+	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler, ifProcessor));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<string> location, vector<string> valueStack) {
@@ -626,7 +658,21 @@ pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* c
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced output with id '", scriptOutput->ref.c_str(), "' in the script outputs.");
 		return pair<int, int>(-1, -1);
 	}
+}
 
+ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction) {
+	if (scriptAction->ref.length() == 0) {
+		return scriptAction;
+	} else {
+		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
+			if (scriptAction->ref.compare(it->id) == 0) {
+				return &(*it);
+			}
+		}
+
+		return nullptr;
+	}
+	
 }
 
 ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener) {}

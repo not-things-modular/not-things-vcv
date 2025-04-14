@@ -242,11 +242,7 @@ bool IfProcessor::process(string* message) {
 	}
 }
 
-ActionProcessor::ActionProcessor(bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor) : m_hasStartTiming(hasStartTiming), m_ifProcessor(ifProcessor) {}
-
-bool ActionProcessor::hasStartTiming() {
-	return m_hasStartTiming;
-}
+ActionProcessor::ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
 
 void ActionProcessor::process() {
 	if ((!m_ifProcessor) || (m_ifProcessor->process(nullptr))) {
@@ -254,27 +250,27 @@ void ActionProcessor::process() {
 	}
 }
 
-ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, bool hasStartTiming, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(hasStartTiming, ifProcessor), m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
+ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
 
 void ActionSetValueProcessor::processAction() {
 	float value = m_value->process();
 	m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
 }
 
-ActionSetVariableProcessor::ActionSetVariableProcessor(shared_ptr<ValueProcessor> value, string name, VariableHandler* variableHandler, bool hasStartTiming, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(hasStartTiming, ifProcessor), m_value(value), m_name(name), m_variableHandler(variableHandler) {}
+ActionSetVariableProcessor::ActionSetVariableProcessor(shared_ptr<ValueProcessor> value, string name, VariableHandler* variableHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_name(name), m_variableHandler(variableHandler) {}
 
 void ActionSetVariableProcessor::processAction() {
 	float value = m_value->process();
 	m_variableHandler->setVariable(m_name, value);
 }
 
-ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, bool hasStartTiming, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(hasStartTiming, ifProcessor), m_outputPort(outputPort), m_channelCount(channelCount), m_portHandler(portHandler) {}
+ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_outputPort(outputPort), m_channelCount(channelCount), m_portHandler(portHandler) {}
 
 void ActionSetPolyphonyProcessor::processAction() {
 	m_portHandler->setOutputPortChannels(m_outputPort, m_channelCount);
 }
 
-ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, bool hasStartTiming, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(hasStartTiming, ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
+ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
 
 void ActionAssertProcessor::processAction() {
 	string message;
@@ -283,7 +279,7 @@ void ActionAssertProcessor::processAction() {
 	}
 }
 
-ActionTriggerProcessor::ActionTriggerProcessor(string trigger, TriggerHandler* triggerHandler, bool hasStartTiming, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(hasStartTiming, ifProcessor), m_trigger(trigger), m_triggerHandler(triggerHandler) {}
+ActionTriggerProcessor::ActionTriggerProcessor(string trigger, TriggerHandler* triggerHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_trigger(trigger), m_triggerHandler(triggerHandler) {}
 
 void ActionTriggerProcessor::processAction() {
 	m_triggerHandler->setTrigger(m_trigger);

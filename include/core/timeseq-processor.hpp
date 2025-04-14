@@ -128,19 +128,17 @@ struct IfProcessor {
 };
 
 struct ActionProcessor {
-	ActionProcessor(bool isStart, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor);
 
-	bool hasStartTiming();
 	void process();
 	virtual void processAction() = 0;
 
 	nt_private:
-		bool m_hasStartTiming;
 		std::shared_ptr<IfProcessor> m_ifProcessor;
 };
 
 struct ActionSetValueProcessor : ActionProcessor {
-	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
@@ -152,7 +150,7 @@ struct ActionSetValueProcessor : ActionProcessor {
 };
 
 struct ActionSetVariableProcessor : ActionProcessor {
-	ActionSetVariableProcessor(std::shared_ptr<ValueProcessor> value, std::string name, VariableHandler* variableHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetVariableProcessor(std::shared_ptr<ValueProcessor> value, std::string name, VariableHandler* variableHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
@@ -163,7 +161,7 @@ struct ActionSetVariableProcessor : ActionProcessor {
 };
 
 struct ActionSetPolyphonyProcessor : ActionProcessor {
-	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
@@ -174,7 +172,7 @@ struct ActionSetPolyphonyProcessor : ActionProcessor {
 };
 
 struct ActionAssertProcessor : ActionProcessor {
-	ActionAssertProcessor(std::string name, std::shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionAssertProcessor(std::string name, std::shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
@@ -186,7 +184,7 @@ struct ActionAssertProcessor : ActionProcessor {
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
-	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
@@ -389,6 +387,8 @@ struct ProcessorScriptParser {
 
 	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string> location);
 	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);
+
+	ScriptAction* resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction);
 
 	nt_private:
 		PortHandler* m_portHandler;
