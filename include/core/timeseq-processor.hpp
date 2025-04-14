@@ -9,6 +9,10 @@
 #include <rack.hpp>
 #include "core/timeseq-validation.hpp"
 
+#ifndef nt_private
+	#define nt_private private
+#endif
+
 
 namespace timeseq {
 
@@ -41,7 +45,7 @@ struct CalcProcessor {
 
 	double calc(double value);
 
-	private:
+	nt_private:
 		ScriptCalc *m_scriptCalc;
 		std::shared_ptr<ValueProcessor> m_value;
 };
@@ -52,7 +56,7 @@ struct ValueProcessor {
 	double process();
 	virtual double processValue() = 0;
 
-	private:
+	nt_private:
 		std::vector<std::shared_ptr<CalcProcessor>> m_calcProcessors;
 		bool m_quantize;
 
@@ -64,7 +68,7 @@ struct StaticValueProcessor : ValueProcessor {
 
 	double processValue() override;
 
-	private:
+	nt_private:
 		float m_value;
 };
 
@@ -73,7 +77,7 @@ struct VariableValueProcessor : ValueProcessor {
 
 	double processValue() override;
 
-	private:
+	nt_private:
 		std::string m_name;
 		VariableHandler* m_variableHandler;
 };
@@ -83,7 +87,7 @@ struct InputValueProcessor : ValueProcessor {
 
 	double processValue() override;
 
-	private:
+	nt_private:
 		int m_inputPort;
 		int m_inputChannel;
 		PortHandler* m_portHandler;
@@ -94,7 +98,7 @@ struct OutputValueProcessor : ValueProcessor {
 
 	double processValue() override;
 
-	private:
+	nt_private:
 		int m_outputPort;
 		int m_outputChannel;
 		PortHandler* m_portHandler;
@@ -105,7 +109,7 @@ struct RandValueProcessor : ValueProcessor {
 
 	double processValue() override;
 
-	private:
+	nt_private:
 		std::shared_ptr<ValueProcessor> m_lowerValue;
 		std::shared_ptr<ValueProcessor> m_upperValue;
 
@@ -117,28 +121,30 @@ struct IfProcessor {
 
 	bool process(std::string* message);
 
-	private:
+	nt_private:
 		ScriptIf* m_scriptIf;
 		std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> m_values;
 		std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> m_ifs;
 };
 
 struct ActionProcessor {
-	ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor);
+	ActionProcessor(bool isStart, std::shared_ptr<IfProcessor> ifProcessor);
 
+	bool hasStartTiming();
 	void process();
 	virtual void processAction() = 0;
 
-	private:
+	nt_private:
+		bool m_hasStartTiming;
 		std::shared_ptr<IfProcessor> m_ifProcessor;
 };
 
 struct ActionSetValueProcessor : ActionProcessor {
-	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
-	private:
+	nt_private:
 		std::shared_ptr<ValueProcessor> m_value;
 		int m_outputPort;
 		int m_outputChannel;
@@ -146,33 +152,33 @@ struct ActionSetValueProcessor : ActionProcessor {
 };
 
 struct ActionSetVariableProcessor : ActionProcessor {
-	ActionSetVariableProcessor(std::shared_ptr<ValueProcessor> value, std::string name, VariableHandler* variableHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetVariableProcessor(std::shared_ptr<ValueProcessor> value, std::string name, VariableHandler* variableHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
-	private:
+	nt_private:
 		std::shared_ptr<ValueProcessor> m_value;
 		std::string m_name;
 		VariableHandler* m_variableHandler;
 };
 
 struct ActionSetPolyphonyProcessor : ActionProcessor {
-	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
-	private:
+	nt_private:
 		int m_outputPort;
 		int m_channelCount;
 		PortHandler* m_portHandler;
 };
 
 struct ActionAssertProcessor : ActionProcessor {
-	ActionAssertProcessor(std::string name, std::shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionAssertProcessor(std::string name, std::shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
-	private:
+	nt_private:
 		std::string m_name;
 		std::shared_ptr<IfProcessor> m_expect;
 		bool m_stopOnFail;
@@ -180,11 +186,11 @@ struct ActionAssertProcessor : ActionProcessor {
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
-	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler, bool hasStartTiming, std::shared_ptr<IfProcessor> ifProcessor);
 
 	void processAction() override;
 
-	private:
+	nt_private:
 		std::string m_trigger;
 		TriggerHandler* m_triggerHandler;
 };
@@ -196,7 +202,7 @@ struct ActionGlideProcessor {
 	void process(uint64_t glidePosition);
 	void end();
 
-	private:
+	nt_private:
 		float m_easeFactor;
 		bool m_easePow;
 		std::shared_ptr<ValueProcessor> m_startValueProcessor;
@@ -237,7 +243,7 @@ struct DurationProcessor {
 	double process(double drift);
 	void reset();
 
-	private:
+	nt_private:
 		DurationState m_state = STATE_IDLE;
 		uint64_t m_duration;
 		double m_drift;
@@ -259,7 +265,7 @@ struct SegmentProcessor {
 	double process(double drift);
 	void reset();
 
-	private:
+	nt_private:
 		ScriptSegment* m_scriptSegment;
 		std::shared_ptr<DurationProcessor> m_duration;
 
@@ -287,7 +293,7 @@ struct LaneProcessor {
 
 	void processTriggers(std::vector<std::string>& triggers);
 
-	private:
+	nt_private:
 		ScriptLane* m_scriptLane;
 		std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
 
@@ -312,7 +318,7 @@ struct TimelineProcessor {
 	void process();
 	void reset();
 
-	private:
+	nt_private:
 		ScriptTimeline* m_scriptTimeline;
 		std::vector<std::shared_ptr<LaneProcessor>> m_lanes;
 
@@ -327,7 +333,7 @@ struct TriggerProcessor {
 
 	void process();
 
-	private:
+	nt_private:
 		std::string m_id;
 		int m_inputPort;
 		int m_inputChannel;
@@ -343,7 +349,7 @@ struct Processor {
 	void reset();
 	void process();
 
-	private:
+	nt_private:
 		std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
 		std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
@@ -384,7 +390,7 @@ struct ProcessorScriptParser {
 	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string> location);
 	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);
 
-	private:
+	nt_private:
 		PortHandler* m_portHandler;
 		VariableHandler* m_variableHandler;
 		TriggerHandler* m_triggerHandler;
@@ -398,7 +404,7 @@ struct ProcessorLoader {
 
 	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 
-	private:
+	nt_private:
 		ProcessorScriptParser m_processorScriptParser;
 };
 

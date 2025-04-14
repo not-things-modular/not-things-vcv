@@ -214,9 +214,9 @@ struct Script {
 	std::string type;
 	std::string version;
 
-
 	std::vector<ScriptTimeline> timelines;
 	std::vector<ScriptAction> globalActions;
+	std::vector<ScriptInputTrigger> inputTriggers;
 	std::vector<ScriptSegmentBlock> segmentBlocks;
 	std::vector<ScriptSegment> segments;
 	std::vector<ScriptInput> inputs;
@@ -224,7 +224,6 @@ struct Script {
 	std::vector<ScriptCalc> calcs;
 	std::vector<ScriptValue> values;
 	std::vector<ScriptAction> actions;
-	std::vector<ScriptInputTrigger> inputTriggers;
 };
 
 }

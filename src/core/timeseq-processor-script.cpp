@@ -51,10 +51,9 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 	vector<shared_ptr<ActionProcessor>> startActionProcessors;
 	for (vector<ScriptAction>::iterator it = script->globalActions.begin(); it != script->globalActions.end(); it++) {
 		location.push_back(to_string(count));
-		if (it->timing == ScriptAction::ActionTiming::START) {
-			startActionProcessors.push_back(parseAction(&context, &(*it), location));
-		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
+		startActionProcessors.push_back(parseAction(&context, &(*it), location));
+		if ((!startActionProcessors.back()) || (!startActionProcessors.back()->hasStartTiming())) {
+			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.", std::to_string(it->timing).c_str(), " ... ");
 		}
 		location.pop_back();
 		count++;
@@ -378,7 +377,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(Processor
 	pair<int, int> output = parseOutput(context, &scriptAction->setValue.get()->output, location);
 	location.pop_back();
 
-	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portHandler, ifProcessor));
+	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
@@ -386,12 +385,12 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Proces
 	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setVariable.get()->value, location, vector<string>());
 	location.pop_back();
 
-	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, ifProcessor));
+	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
-	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor));
+	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
 }
 
 std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location) {
@@ -401,11 +400,11 @@ std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(Proces
 	shared_ptr<IfProcessor> expect = parseIf(context, &scriptAssert->expect, location);
 	location.pop_back();
 
-	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor));
+	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
-	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler, ifProcessor));
+	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler, scriptAction->timing == ScriptAction::ActionTiming::START, ifProcessor));
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<string> location, vector<string> valueStack) {
@@ -628,4 +627,10 @@ pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* c
 		return pair<int, int>(-1, -1);
 	}
 
+}
+
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener) {}
+
+shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
+	return m_processorScriptParser.parseScript(script.get(), validationErrors, vector<string>());
 }
