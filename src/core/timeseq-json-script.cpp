@@ -129,7 +129,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 					for (const json& segmentBlock : segmentBlockElements) {
 						location.push_back(std::to_string(count));
 						if (segmentBlock.is_object()) {
-							script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, false, validationErrors, location));
+							script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, validationErrors, location));
 							if (std::find(ids.begin(), ids.end(), script->segmentBlocks.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->segmentBlocks.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->segmentBlocks.back().id.size() > 0) {
@@ -604,44 +604,39 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 	return segment;
 }
 
-ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	ScriptSegmentBlock segmentBlock;
 
-	populateRef(segmentBlock, segmentBlockJson, allowRefs, validationErrors, location);
-	if (segmentBlock.ref.length() > 0) {
-		if (hasOneOf(segmentBlockJson, { "segments", "repeat" })) {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_RefOrInstance, "A ref segment-block can not be combined other non-ref segment-block properties.");
-		}
-	} else {
-		json::const_iterator repeat = segmentBlockJson.find("repeat");
-		if (repeat != segmentBlockJson.end()) {
-			if ((repeat->is_number_unsigned()) && (repeat->is_number_unsigned() > 0)) {
-				segmentBlock.repeat.reset(new int(repeat->get<int>()));
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
-			}
-		}
-		json::const_iterator segments = segmentBlockJson.find("segments");
-		if ((segments != segmentBlockJson.end()) && (segments->is_array())) {
-			location.push_back("segments");
+	populateRef(segmentBlock, segmentBlockJson, false, validationErrors, location);
 
-			int count = 0;
-			std::vector<json> segmentElements = (*segments);
-			for (const json& segment : segmentElements) {
-				location.push_back(std::to_string(count));
-				if (segment.is_object()) {
-					segmentBlock.segments.push_back(parseSegment(segment, true, validationErrors, location));
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be Segment objects.");
-				}
-				location.pop_back();
-				count++;
-			}
-
-			location.pop_back();
+	json::const_iterator repeat = segmentBlockJson.find("repeat");
+	if (repeat != segmentBlockJson.end()) {
+		if ((repeat->is_number_unsigned()) && (repeat->is_number_unsigned() > 0)) {
+			segmentBlock.repeat.reset(new int(repeat->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentsArray, "'segments' is required and must be an array.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
 		}
+	}
+	json::const_iterator segments = segmentBlockJson.find("segments");
+	if ((segments != segmentBlockJson.end()) && (segments->is_array())) {
+		location.push_back("segments");
+
+		int count = 0;
+		std::vector<json> segmentElements = (*segments);
+		for (const json& segment : segmentElements) {
+			location.push_back(std::to_string(count));
+			if (segment.is_object()) {
+				segmentBlock.segments.push_back(parseSegment(segment, true, validationErrors, location));
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be Segment objects.");
+			}
+			location.pop_back();
+			count++;
+		}
+
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentsArray, "'segments' is required and must be an array.");
 	}
 
 	return segmentBlock;

@@ -86,85 +86,85 @@ INSTANTIATE_TEST_SUITE_P(
 	testing::Values(limitValueLoop, limitValueIf)
 );
 
-// TEST(LimitValueTestBurst, BurstRandomValuesAndLimits) {
-// 	int burstCount = 1000000;
-// 	float precision = 0.00002f;
-// 	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
-// 	std::uniform_real_distribution<float> dist(-5.f, 5.f);
-// 	std::list<float> lowerLimits;
-// 	std::list<float> upperLimits;
-// 	std::list<float> values;
+TEST(LimitValueTestBurst, BurstRandomValuesAndLimits) {
+	int burstCount = 1000000;
+	float precision = 0.00002f;
+	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
+	std::uniform_real_distribution<float> dist(-5.f, 5.f);
+	std::list<float> lowerLimits;
+	std::list<float> upperLimits;
+	std::list<float> values;
 
-// 	for (int i = 0; i < burstCount; i++) {
-// 		float lower = round(dist(rng) / RNG_FLOAT_PRECISION) * RNG_FLOAT_PRECISION;
-// 		float upper = round(dist(rng) / RNG_FLOAT_PRECISION) * RNG_FLOAT_PRECISION;
-// 		float value = round(dist(rng) / RNG_FLOAT_PRECISION) * RNG_FLOAT_PRECISION;
+	for (int i = 0; i < burstCount; i++) {
+		float lower = round(dist(rng) / RNG_FLOAT_PRECISION) * RNG_FLOAT_PRECISION;
+		float upper = round(dist(rng) / RNG_FLOAT_PRECISION) * RNG_FLOAT_PRECISION;
+		float value = round(dist(rng) / RNG_FLOAT_PRECISION) * RNG_FLOAT_PRECISION;
 
-// 		lowerLimits.push_back(lower);
-// 		upperLimits.push_back(upper);
-// 		values.push_back(value);
+		lowerLimits.push_back(lower);
+		upperLimits.push_back(upper);
+		values.push_back(value);
 
-// 		// Every ten items, insert an entry where the value equals the lowerLimit, and one where the value equals the upper limit
-// 		if (burstCount % 10 == 0) {
-// 			lowerLimits.push_back(lower);
-// 			upperLimits.push_back(upper);
-// 			values.push_back(upper);
+		// Every ten items, insert an entry where the value equals the lowerLimit, and one where the value equals the upper limit
+		if (burstCount % 10 == 0) {
+			lowerLimits.push_back(lower);
+			upperLimits.push_back(upper);
+			values.push_back(upper);
 
-// 			lowerLimits.push_back(lower);
-// 			upperLimits.push_back(upper);
-// 			values.push_back(lower);
-// 		}
-// 	}
+			lowerLimits.push_back(lower);
+			upperLimits.push_back(upper);
+			values.push_back(lower);
+		}
+	}
 
-// 	while (values.size() > 0) {
-// 		float lowerLimit = lowerLimits.back();
-// 		float upperLimit = upperLimits.back();
-// 		float value = values.back();
+	while (values.size() > 0) {
+		float lowerLimit = lowerLimits.back();
+		float upperLimit = upperLimits.back();
+		float value = values.back();
 
-// 		float loopResult = limitValueLoop(value, lowerLimit, upperLimit);
-// 		float ifResult = limitValueIf(value, lowerLimit, upperLimit);
-// 		EXPECT_NEAR(loopResult, ifResult, precision) << "loopResult and ifResult differ: value = " << value << "; lowerLimit = " << lowerLimit << "; upperLimit = " << upperLimit << "; loopResult = " << loopResult << "; ifResult = " << ifResult;
+		float loopResult = limitValueLoop(value, lowerLimit, upperLimit);
+		float ifResult = limitValueIf(value, lowerLimit, upperLimit);
+		EXPECT_NEAR(loopResult, ifResult, precision) << "loopResult and ifResult differ: value = " << value << "; lowerLimit = " << lowerLimit << "; upperLimit = " << upperLimit << "; loopResult = " << loopResult << "; ifResult = " << ifResult;
 
-// 		// Removing the octave information (i.e. everything non-decimal), the value should still be on the same note.
-// 		// Do take into account that it may have gone between negative vs positive, so add 10.0f to make it all-positive.
-// 		EXPECT_NEAR(fractionalPart(value + 10.f), fractionalPart(loopResult + 10.f), precision);
+		// Removing the octave information (i.e. everything non-decimal), the value should still be on the same note.
+		// Do take into account that it may have gone between negative vs positive, so add 10.0f to make it all-positive.
+		EXPECT_NEAR(fractionalPart(value + 10.f), fractionalPart(loopResult + 10.f), precision);
 
-// 		// Apply the float deviation allowance that's also applied in solim-core.cpp
-// 		lowerLimit = lowerLimit - 0.00001f;
-// 		upperLimit = upperLimit + 0.00001f;
+		// Apply the float deviation allowance that's also applied in solim-core.cpp
+		lowerLimit = lowerLimit - 0.00001f;
+		upperLimit = upperLimit + 0.00001f;
 
-// 		// Lower limit is below upper limit
-// 		if (lowerLimit < upperLimit) {
-// 			if (lowerLimit + 1 <= upperLimit) {
-// 				// There is one volt difference between lower and upper limit, so the limited value ends up between them
-// 				EXPECT_GE(loopResult, lowerLimit);
-// 				EXPECT_LE(loopResult, upperLimit);
-// 			} else if ((::fmodf(loopResult, 1.f) > ::fmodf(lowerLimit, 1.f)) && (::fmodf(loopResult, 1.f) < ::fmodf(upperLimit, 1.f))) {
-// 				// The upward limiting moves the value above the lower limit, but below the upper limit
-// 				EXPECT_GT(loopResult, lowerLimit);
-// 				EXPECT_LT(loopResult, upperLimit);
-// 			} else {
-// 				// There is less than one volt between the two limits, and moving the value upwards moves it beyond the upper limit.
-// 				// The upper limit is applied last, so the limit should be just below it.
-// 				EXPECT_GT(loopResult, lowerLimit - 1.f);
-// 				EXPECT_LE(loopResult, upperLimit);
-// 				EXPECT_GE(loopResult, upperLimit - 1.f);
-// 			}
-// 		}
-// 		// Lower limit is above upper limit
-// 		else {
-// 			// The result should always be below upperLimit, but no further than 1.f below it.
-// 			if (upperLimit > lowerLimit) {
-// 				EXPECT_LT(loopResult, lowerLimit);
-// 			} else {
-// 				EXPECT_LE(loopResult, lowerLimit);
-// 			}
-// 			EXPECT_LE(loopResult, upperLimit);
-// 			EXPECT_GE(loopResult, upperLimit - 1.f);
-// 		}
+		// Lower limit is below upper limit
+		if (lowerLimit < upperLimit) {
+			if (lowerLimit + 1 <= upperLimit) {
+				// There is one volt difference between lower and upper limit, so the limited value ends up between them
+				EXPECT_GE(loopResult, lowerLimit);
+				EXPECT_LE(loopResult, upperLimit);
+			} else if ((::fmodf(loopResult, 1.f) > ::fmodf(lowerLimit, 1.f)) && (::fmodf(loopResult, 1.f) < ::fmodf(upperLimit, 1.f))) {
+				// The upward limiting moves the value above the lower limit, but below the upper limit
+				EXPECT_GT(loopResult, lowerLimit);
+				EXPECT_LT(loopResult, upperLimit);
+			} else {
+				// There is less than one volt between the two limits, and moving the value upwards moves it beyond the upper limit.
+				// The upper limit is applied last, so the limit should be just below it.
+				EXPECT_GT(loopResult, lowerLimit - 1.f);
+				EXPECT_LE(loopResult, upperLimit);
+				EXPECT_GE(loopResult, upperLimit - 1.f);
+			}
+		}
+		// Lower limit is above upper limit
+		else {
+			// The result should always be below upperLimit, but no further than 1.f below it.
+			if (upperLimit > lowerLimit) {
+				EXPECT_LT(loopResult, lowerLimit);
+			} else {
+				EXPECT_LE(loopResult, lowerLimit);
+			}
+			EXPECT_LE(loopResult, upperLimit);
+			EXPECT_GE(loopResult, upperLimit - 1.f);
+		}
 
-// 		lowerLimits.pop_back();
-// 		upperLimits.pop_back();
-// 		values.pop_back();
-// 	}
-// }
+		lowerLimits.pop_back();
+		upperLimits.pop_back();
+		values.pop_back();
+	}
+}
