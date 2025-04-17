@@ -375,20 +375,19 @@ uint64_t DurationProcessor::getDuration() {
 }
 
 double DurationProcessor::process(double drift) {
-	if (m_state == DurationState::STATE_IDLE) {
-		// The segment is being started.
-		m_state = DurationState::STATE_START;
-		// Reset the position, we've now processed one sample.
+	if (m_state == DurationState::STATE_START) {
 		m_position = 1;
-		// Add the drift at the start of the segment, so that the end of the segment will wait if we went over 1 total drift
-		return drift + m_drift;
-	} else if (m_position < m_duration - 1) {
+		drift += m_drift;
+	}
+	
+	if (m_position < m_duration) {
 		// The segment isn't done yet, move to the next position
 		m_state = DurationState::STATE_PROGRESS;
 		m_position++;
 		return drift;
 	} else if (drift >= 1.) {
 		// The segment is done, but we drifted with more then one step, so correct the drift now by waiting one step
+		m_state = DurationState::STATE_PROGRESS;
 		return drift - 1;
 	} else {
 		// The segment is done, and the drift is below a step. Move to the final position and change to the end state
@@ -399,7 +398,7 @@ double DurationProcessor::process(double drift) {
 }
 
 void DurationProcessor::reset() {
-	m_state = DurationState::STATE_IDLE;
+	m_state = DurationState::STATE_START;
 	m_position = 0;
 }
 
@@ -417,25 +416,29 @@ DurationProcessor::DurationState SegmentProcessor::getState() {
 }
 
 double SegmentProcessor::process(double drift) {
+	bool starting = false;
+
+	// Trigger the start actions if we're at the start of the segment
+	if (m_duration->getState() == DurationProcessor::DurationState::STATE_START) {
+		if (!m_scriptSegment->disableUi) {
+			m_eventListener->segmentStarted();
+		}
+		processStartActions();
+		starting = true; // The glide actions will have to be processed from their start position.
+	}
+
 	drift = m_duration->process(drift);
 
 	switch (m_duration->getState()) {
 		case DurationProcessor::DurationState::STATE_START:
-			if (!m_scriptSegment->disableUi) {
-				m_eventListener->segmentStarted();
-			}
-			processStartActions();
-			processGlideActions(true, false);
+			// Shouldn't occur since duration processing will move us away from the start state
 			break;
 		case DurationProcessor::DurationState::STATE_PROGRESS:
-			processGlideActions(false, false);
+			processGlideActions(starting, false);
 			break;
 		case DurationProcessor::DurationState::STATE_END:
 			processGlideActions(false, true);
 			processEndActions();
-			break;
-		case DurationProcessor::DurationState::STATE_IDLE:
-			// Shouldn't occur: the m_duration::process call will always move away from the idle state
 			break;
 	}
 
@@ -487,7 +490,6 @@ bool LaneProcessor::process() {
 		vector<shared_ptr<SegmentProcessor>>::iterator segment = m_segments.begin() + m_activeSegment;
 		DurationProcessor::DurationState state = (*segment)->getState();
 		switch (state) {
-			case DurationProcessor::DurationState::STATE_IDLE:
 			case DurationProcessor::DurationState::STATE_START:
 			case DurationProcessor::DurationState::STATE_PROGRESS: {
 				// The active segment can do further processing

@@ -5,9 +5,9 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithNoGlobalActionsShouldSucceed) {
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 
-	shared_ptr<Processor> processor = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
-	EXPECT_EQ(processor->m_startActions.size(), 0u);
+	EXPECT_EQ(script.second->m_startActions.size(), 0u);
 }
 
 TEST(TimeSeqProcessorGlobalActions, ScriptWithNonStartGlobalActionsShouldFail) {
@@ -19,7 +19,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithNonStartGlobalActionsShouldFail) {
 		{ { "timing", "glide" }, { "start-value", { { "voltage", 5 } } }, { "end-value", { { "voltage", 5 } } }, { "output", { { "index", 1 } } } }
 	});
 
-	shared_ptr<Processor> processor = loadProcessor(processorLoader, json, &validationErrors);
+	loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionTiming, "/global-actions/0");
 	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionTiming, "/global-actions/1");
@@ -38,15 +38,15 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 		{ { "timing", "start" }, { "trigger", "trigger-name" } },
 	});
 
-	shared_ptr<Processor> processor = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
-	ASSERT_EQ(processor->m_startActions.size(), 3u);
+	ASSERT_EQ(script.second->m_startActions.size(), 3u);
 
 	// Process should not trigger the global start actions
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage).Times(0);
 	EXPECT_CALL(mockVariableHandler, setVariable).Times(0);
 	EXPECT_CALL(mockTriggerHandler, setTrigger).Times(0);
-	processor->process();
+	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockPortHandler);
 	testing::Mock::VerifyAndClearExpectations(&mockVariableHandler);
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -54,7 +54,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 1.5f)).Times(1);
 	EXPECT_CALL(mockVariableHandler, setVariable("variable-name", 4.1)).Times(1);
 	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-name")).Times(1);
-	processor->reset();
+	script.second->reset();
 	testing::Mock::VerifyAndClearExpectations(&mockPortHandler);
 	testing::Mock::VerifyAndClearExpectations(&mockVariableHandler);
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -62,7 +62,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage).Times(0);
 	EXPECT_CALL(mockVariableHandler, setVariable).Times(0);
 	EXPECT_CALL(mockTriggerHandler, setTrigger).Times(0);
-	processor->process();
+	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockPortHandler);
 	testing::Mock::VerifyAndClearExpectations(&mockVariableHandler);
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -70,7 +70,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 1.5f)).Times(1);
 	EXPECT_CALL(mockVariableHandler, setVariable("variable-name", 4.1)).Times(1);
 	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-name")).Times(1);
-	processor->reset();
+	script.second->reset();
 }
 
 TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldLoad) {
@@ -90,29 +90,29 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldLoad) {
 		{ { "ref", "action-2" } }
 	});
 
-	shared_ptr<Processor> processor = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
-	ASSERT_EQ(processor->m_startActions.size(), 2u);
+	ASSERT_EQ(script.second->m_startActions.size(), 2u);
 
 	// Process should not trigger the global start actions
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage).Times(0);
 	EXPECT_CALL(mockVariableHandler, setVariable).Times(0);
-	processor->process();
+	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockPortHandler);
 	// A reset should trigger the actions
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 1.5f)).Times(1);
 	EXPECT_CALL(mockVariableHandler, setVariable("variable-name", 4.1)).Times(1);
-	processor->reset();
+	script.second->reset();
 	testing::Mock::VerifyAndClearExpectations(&mockPortHandler);
 	// Another process should still not trigger the global start actions
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage).Times(0);
 	EXPECT_CALL(mockVariableHandler, setVariable).Times(0);
-	processor->process();
+	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockPortHandler);
 	// A re-reset should re-trigger the actions
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 1.5f)).Times(1);
 	EXPECT_CALL(mockVariableHandler, setVariable("variable-name", 4.1)).Times(1);
-	processor->reset();
+	script.second->reset();
 }
 
 TEST(TimeSeqProcessorGlobalActions, ScriptWithUnknownPooledStartActionsShouldFail) {
@@ -133,7 +133,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithUnknownPooledStartActionsShouldFai
 		{ { "ref", "action-2" } }
 	});
 
-	shared_ptr<Processor> processor = loadProcessor(processorLoader, json, &validationErrors);
+	loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/global-actions/1");
 }

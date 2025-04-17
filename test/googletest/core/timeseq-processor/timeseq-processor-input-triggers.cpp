@@ -5,9 +5,9 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithNoInputTriggersShouldSucceed) {
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 
-	shared_ptr<Processor> processor = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u);
-	EXPECT_EQ(processor->m_triggers.size(), 0u);
+	EXPECT_EQ(script.second->m_triggers.size(), 0u);
 }
 
 void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler& mockTriggerHandler, ProcessorLoader& processorLoader, shared_ptr<Processor> processor) {
@@ -95,7 +95,31 @@ void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler&
 	}
 }
 
-TEST(TimeSeqProcessorInputTriggers, ScriptWithInlineInputTriggersWithInlineInputsShouldLoad) {
+TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithNonExistingPooledInputsShouldFail) {
+	MockPortHandler mockPortHandler;
+	MockTriggerHandler mockTriggerHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, nullptr, &mockTriggerHandler, nullptr, nullptr, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["input-triggers"] = json::array({
+		{ { "id", "trigger-1" }, { "input", { { "ref", "input-1" } } } },
+		{ { "id", "trigger-2" }, { "input", { { "ref", "input-2" } } } },
+		{ { "id", "trigger-3" }, { "input", { { "ref", "input-3" } } } },
+		{ { "id", "trigger-4" }, { "input", { { "ref", "input-4" } } } }
+	});
+	json["component-pool"] = { { "inputs", json::array({
+		{ { "id", "input-1" }, { "index", 2 } },
+		{ { "id", "input-3" }, { "index", 5 }, { "channel", 2 } }
+	})}};
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/input-triggers/1/input");
+	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/input-triggers/3/input");
+}
+
+
+TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithInlineInputsShouldWork) {
 	MockPortHandler mockPortHandler;
 	MockTriggerHandler mockTriggerHandler;
 	ProcessorLoader processorLoader(&mockPortHandler, nullptr, &mockTriggerHandler, nullptr, nullptr, nullptr);
@@ -106,9 +130,31 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithInlineInputTriggersWithInlineInput
 		{ { "id", "trigger-2" }, { "input", { { "index", 5 }, { "channel", 2 } } } }
 	});
 
-	shared_ptr<Processor> processor = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u) << validationErrors[0].location << " " << validationErrors[1].message;
-	ASSERT_EQ(processor->m_triggers.size(), 2u);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script.second->m_triggers.size(), 2u);
 
-	testTriggerInvocation(mockPortHandler, mockTriggerHandler, processorLoader, processor);
+	testTriggerInvocation(mockPortHandler, mockTriggerHandler, processorLoader, script.second);
+}
+
+TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithPooledInputsShouldWork) {
+	MockPortHandler mockPortHandler;
+	MockTriggerHandler mockTriggerHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, nullptr, &mockTriggerHandler, nullptr, nullptr, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["input-triggers"] = json::array({
+		{ { "id", "trigger-1" }, { "input", { { "ref", "input-1" } } } },
+		{ { "id", "trigger-2" }, { "input", { { "ref", "input-2" } } } }
+	});
+	json["component-pool"] = { { "inputs", json::array({
+		{ { "id", "input-1" }, { "index", 2 } },
+		{ { "id", "input-2" }, { "index", 5 }, { "channel", 2 } }
+	})}};
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script.second->m_triggers.size(), 2u);
+
+	testTriggerInvocation(mockPortHandler, mockTriggerHandler, processorLoader, script.second);
 }

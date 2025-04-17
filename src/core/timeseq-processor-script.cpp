@@ -128,11 +128,18 @@ shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorS
 }
 
 shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, vector<string> location) {
+	unsigned int validationCount = context->validationErrors->size();
+
 	location.push_back("segments");
 	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(context, &scriptLane->segments, timeScale, location, vector<string>());
 	location.pop_back();
 
-	return shared_ptr<LaneProcessor>(new LaneProcessor(scriptLane, segmentProcessors, m_eventListener));
+	// Only return an actual processor if there were no validation errors during parsing. Otherwise there might be partially loaded children, and we can't reliably continue with this processor.
+	if (validationCount == context->validationErrors->size()) {
+		return shared_ptr<LaneProcessor>(new LaneProcessor(scriptLane, segmentProcessors, m_eventListener));
+	} else {
+		return shared_ptr<LaneProcessor>();
+	}
 }
 
 vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(ProcessorScriptParseContext* context, vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
@@ -247,7 +254,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScript
 				count++;
 			}
 
-			// Couldn't find the referenced input...
+			// Couldn't find the referenced segment...
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment with the id '", scriptSegment->ref.c_str(), "'. Circular references can not be resolved.");

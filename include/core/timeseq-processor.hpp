@@ -230,7 +230,7 @@ struct ActionGlideProcessor {
 };
 
 struct DurationProcessor {
-	enum DurationState { STATE_IDLE, STATE_START, STATE_PROGRESS, STATE_END };
+	enum DurationState { STATE_START, STATE_PROGRESS, STATE_END };
 
 	DurationProcessor(uint64_t duration, double drift);
 
@@ -242,7 +242,7 @@ struct DurationProcessor {
 	void reset();
 
 	nt_private:
-		DurationState m_state = STATE_IDLE;
+		DurationState m_state = STATE_START;
 		uint64_t m_duration;
 		double m_drift;
 		uint64_t m_position;

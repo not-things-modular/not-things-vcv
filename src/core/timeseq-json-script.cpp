@@ -432,7 +432,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 	lane.autoStart = true;
 	if (autoStart != laneJson.end()) {
 		if (autoStart->is_boolean()) {
-			lane.autoStart = *autoStart;
+			lane.autoStart = autoStart->get<bool>();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_AutoStartBoolean, "auto-start must be an boolean.");
 		}
@@ -442,7 +442,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 	lane.loop = false;
 	if (loop != laneJson.end()) {
 		if (loop->is_boolean()) {
-			lane.loop = *loop;
+			lane.loop = loop->get<bool>();
 		} else {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Lane_LoopBoolean, "loop must be an boolean.");
 		}

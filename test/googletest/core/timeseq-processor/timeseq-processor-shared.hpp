@@ -24,4 +24,19 @@ struct MockTriggerHandler : TriggerHandler {
 	MOCK_METHOD(void, setTrigger, (std::string), (override));
 };
 
-shared_ptr<Processor> loadProcessor(ProcessorLoader& processorLoader, json& json, vector<ValidationError> *validationErrors);
+struct MockSampleRateReader : SampleRateReader {
+	MOCK_METHOD(float, getSampleRate, (), (override));
+};
+
+struct MockEventListener : EventListener {
+	MOCK_METHOD(void, laneLooped, (), (override));
+	MOCK_METHOD(void, segmentStarted, (), (override));
+	MOCK_METHOD(void, triggerTriggered, (), (override));
+};
+
+#define MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler) \
+		std::vector<std::string> emptyTriggers; \
+		ON_CALL(mockTriggerHandler, getTriggers).WillByDefault(testing::ReturnRef(emptyTriggers));
+
+
+pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, json& json, vector<ValidationError> *validationErrors);
