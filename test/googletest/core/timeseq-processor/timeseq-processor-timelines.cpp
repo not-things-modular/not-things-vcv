@@ -105,12 +105,112 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 	// The first process should trigger the start actions of the segments all three lanes
 	{
 		testing::InSequence inSequence;
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+	}
+	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	// The second process should trigger the only the first lane action:
+	// the second lane will move to its second (and thus last) sample, the third lane will move to its second sample
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	// The third process should trigger the first lane and the second lane (which also looped now)
+	// The third lane will move to its third (and last) sample
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	// The fourth process should trigger the first lane and the third lane (which also looped now)
+	// The second lane will move to its second sample (for the second time)
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+	}
+	script.second->process();
+}
+
+TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockFalseShouldLoopLanesSeparately) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "loop-lock", false }, { "lanes", json::array({
+			{ { "segments", json::array({ { { "ref", "segment-1" }} }) }, { "loop", true } },
+			{ { "segments", json::array({ { { "ref", "segment-2" }} }) }, { "loop", true } },
+			{ { "segments", json::array({ { { "ref", "segment-3" }} }) }, { "loop", true } }
+		}) } }
+	});
+	json["component-pool"] = { { "segments", json::array({
+		{
+			{ "id", "segment-1" }, { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "timing", "start" }, { "trigger", "trigger-1" } }
+			})}
+		},
+		{
+			{ "id", "segment-2" }, { "duration", { { "samples", 2 } } }, { "actions", json::array({
+				{ { "timing", "start" }, { "trigger", "trigger-2" } }
+			})}
+		},
+		{
+			{ "id", "segment-3" }, { "duration", { { "samples", 3 } } }, { "actions", json::array({
+				{ { "timing", "start" }, { "trigger", "trigger-3" } }
+			})}
+		}
+	}) } };
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script.second->m_timelines.size(), 1u);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
+
+	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
+	// The first process should trigger the start actions of the segments all three lanes
+	{
+		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
 
 	// The second process should trigger the only the first lane action:
 	// the second lane will move to its second (and thus last) sample, the third lane will move to its second sample
@@ -122,6 +222,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
 
 	// The third process should trigger the first lane and the second lane (which also looped now)
 	// The third lane will move to its third (and last) sample
@@ -133,6 +234,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
 
 	// The fourth process should trigger the first lane and the third lane (which also looped now)
 	// The second lane will move to its second sample (for the second time)
@@ -141,6 +243,239 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+	}
+	script.second->process();
+}
+
+TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrueShouldLoopLanesSeparately) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "loop-lock", true }, { "lanes", json::array({
+			{ { "segments", json::array({ { { "ref", "segment-1" }} }) }, { "loop", true } },
+			{ { "segments", json::array({ { { "ref", "segment-2" }} }) }, { "loop", true } },
+			{ { "segments", json::array({ { { "ref", "segment-3" }} }) }, { "loop", true } }
+		}) } }
+	});
+	json["component-pool"] = { { "segments", json::array({
+		{
+			{ "id", "segment-1" }, { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-1" } }
+			})}
+		},
+		{
+			{ "id", "segment-2" }, { "duration", { { "samples", 2 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-2" } }
+			})}
+		},
+		{
+			{ "id", "segment-3" }, { "duration", { { "samples", 3 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-3" } }
+			})}
+		}
+	}) } };
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script.second->m_timelines.size(), 1u);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
+
+	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
+	// The first process should trigger the end action of the first lane
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+	}
+	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	// The second process should trigger to end action of the second lane.
+	// The first lane should not have looped yet
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+	}
+	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	// The third process should trigger to end action of the third lane.
+	// The other two lanes should not have looped yet
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+	}
+	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	// The fourth process should have looped all lanes.
+	// The first lane should end again, and the other two should have started, but not completed
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	// Complete another loop to verify that the actions get re-triggered
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+	}
+	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+	testing::Mock::VerifyAndClearExpectations(&mockEventListener);
+
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+	}
+	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
+	script.second->process();
+}
+
+TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrueShouldLoopLanesSeparatelyWithNonLoopingLane) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "loop-lock", true }, { "lanes", json::array({
+			{ { "segments", json::array({ { { "ref", "segment-1" }} }) }, { "loop", true } },
+			{ { "segments", json::array({ { { "ref", "segment-2" }} }) }, { "loop", true } },
+			{ { "segments", json::array({ { { "ref", "segment-3" }} }) }, { "loop", true } },
+			{ { "segments", json::array({ { { "ref", "segment-4" }} }) }, { "loop", false } },
+		}) } }
+	});
+	json["component-pool"] = { { "segments", json::array({
+		{
+			{ "id", "segment-1" }, { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-1" } }
+			})}
+		},
+		{
+			{ "id", "segment-2" }, { "duration", { { "samples", 2 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-2" } }
+			})}
+		},
+		{
+			{ "id", "segment-3" }, { "duration", { { "samples", 3 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-3" } }
+			})}
+		},
+		{
+			{ "id", "segment-4" }, { "duration", { { "samples", 2 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-4" } }
+			})}
+		}
+	}) } };
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script.second->m_timelines.size(), 1u);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 4u);
+
+	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
+	// The first process should trigger the end action of the first lane
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+
+	// The second process should trigger to end action of the second and fourth lane.
+	// The first lane should not have looped yet
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(1);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+
+	// The third process should trigger to end action of the third lane.
+	// The other two lanes should not have looped yet
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+
+	// The fourth process should have looped all lanes.
+	// The first lane should end again, the second and third should have looped, and the fourth should not loop
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+
+	// Complete another loop to verify that the actions get re-triggered, but the fourth lane should not loop
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
+	}
+	script.second->process();
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+
+	{
+		testing::InSequence inSequence;
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);

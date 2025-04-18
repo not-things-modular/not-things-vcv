@@ -526,11 +526,12 @@ void LaneProcessor::loop() {
 			m_repeatCount++;
 			m_activeSegment = 0;
 			m_state = LaneState::STATE_PROCESSING;
-			process();
 
 			if (!m_scriptLane->disableUi) {
 				m_eventListener->laneLooped();
 			}
+
+			process();
 		}
 	}
 }
