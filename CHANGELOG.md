@@ -1,3 +1,6 @@
+## 2.0.2
+* **Solim**: Fixed bug where a polyphonic input with more then 7 channels would cause Upper Limit to reset to 0v
+
 ## 2.0.1
 * **P-SD**: Initial version of the P-SD *(Polyphonic Same and Different)* module
 
