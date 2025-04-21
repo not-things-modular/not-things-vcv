@@ -1,7 +1,7 @@
 {
   "slug": "not-things",
   "name": "not-things",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "license": "GPL-3.0-or-later",
   "brand": "not-things",
   "author": "Johan Vanbockryck",
@@ -18,14 +18,14 @@
       "name": "Solim",
       "description": "Limiter and sorter of (note) voltages",
       "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/SOLIM.md",
-      "tags": [ "Utility" ]
+      "tags": [ "Utility", "Polyphonic" ]
     },
     {
       "slug": "solim-input-expander",
       "name": "SL-I",
       "description": "Input expander for Solim",
       "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/SOLIM.md",
-      "tags": [ "Utility", "Expander" ],
+      "tags": [ "Utility", "Expander", "Polyphonic" ],
 	  "keywords": "sli"
     },
     {
@@ -33,7 +33,7 @@
       "name": "SL-IO",
       "description": "Input Octaver expander for Solim",
       "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/SOLIM.md",
-      "tags": [ "Utility", "Expander" ],
+      "tags": [ "Utility", "Expander", "Polyphonic" ],
 	  "keywords": "slio"
     },
     {
@@ -41,7 +41,7 @@
       "name": "SL-O",
       "description": "Output expander for Solim",
       "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/SOLIM.md",
-      "tags": [ "Utility", "Expander" ],
+      "tags": [ "Utility", "Expander", "Polyphonic" ],
 	  "keywords": "slo"
     },
     {
@@ -49,7 +49,7 @@
       "name": "SL-OO",
       "description": "Output Octaver expander for Solim",
       "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/SOLIM.md",
-      "tags": [ "Utility", "Expander" ],
+      "tags": [ "Utility", "Expander", "Polyphonic" ],
 	  "keywords": "sloo"
     },
     {
@@ -57,7 +57,7 @@
       "name": "SL-R",
       "description": "Random expander for Solim",
       "manualUrl": "https://github.com/not-things-modular/not-things-vcv/blob/main/doc/SOLIM.md",
-      "tags": [ "Utility", "Expander", "Random" ],
+      "tags": [ "Utility", "Expander", "Random", "Polyphonic" ],
       "keywords": "slr"
     },
     {
