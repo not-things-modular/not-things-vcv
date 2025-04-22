@@ -34,9 +34,9 @@ struct MockEventListener : EventListener {
 	MOCK_METHOD(void, triggerTriggered, (), (override));
 };
 
+static std::vector<std::string> mockDefaultTriggerHandlerEmptyTriggers;
 #define MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler) \
-		std::vector<std::string> emptyTriggers; \
-		ON_CALL(mockTriggerHandler, getTriggers).WillByDefault(testing::ReturnRef(emptyTriggers));
+	ON_CALL(mockTriggerHandler, getTriggers).WillByDefault(testing::ReturnRef(mockDefaultTriggerHandlerEmptyTriggers));
 
 
 pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, json& json, vector<ValidationError> *validationErrors);

@@ -376,11 +376,11 @@ uint64_t DurationProcessor::getDuration() {
 
 double DurationProcessor::process(double drift) {
 	if (m_state == DurationState::STATE_START) {
-		m_position = 1;
+		m_position = 0;
 		drift += m_drift;
 	}
-	
-	if (m_position < m_duration) {
+
+	if (m_position < m_duration - 1) {
 		// The segment isn't done yet, move to the next position
 		m_state = DurationState::STATE_PROGRESS;
 		m_position++;

@@ -1,0 +1,172 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "0.0.1",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": false,
+					"loop": false,
+					"start-trigger": "determine-output",
+					"segments": [
+						{
+							"duration": { "millis": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "voltage": 0 }
+									}
+								},
+								{
+									"set-value": {
+										"output": { "index": 2 },
+										"value": { "voltage": 0 }
+									}
+								},
+								{
+									"set-value": {
+										"output": { "index": 3 },
+										"value": { "voltage": 0 }
+									}
+								},
+								{
+									"set-variable": {
+										"name": "do-output",
+										"value": {
+											"rand": {
+												"lower": { "voltage": 0 },
+												"upper": { "voltage": 10 }
+											}
+										}
+									}
+								},
+								{
+									"set-value": {
+										"output": { "index": 4 },
+										"value": { "variable": "do-output" }
+									}
+								},
+								{
+									"if": {
+										"gt": [
+											{ "variable": "do-output" },
+											{ "voltage": 7.5 }
+										]
+									},
+									"set-variable": {
+										"name": "output-select",
+										"value": {
+											"rand": {
+												"lower": { "voltage": 0 },
+												"upper": { "voltage": 3 }
+											}
+										}
+									}
+								},
+								{
+									"set-value": {
+										"output": { "index": 5 },
+										"value": { "variable": "output-select" }
+									}
+								},
+								{
+									"if": {
+										"and": [
+											{
+												"gt": [
+													{ "variable": "do-output" },
+													{ "voltage": 7.5 }
+												]
+											},
+											{
+												"lt": [
+													{ "variable": "output-select" },
+													{ "voltage": 1 }
+												]
+											}
+										]
+									},
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "voltage": 10 }
+									}
+								},
+								{
+									"if": {
+										"and": [
+											{
+												"and": [
+													{
+														"gt": [
+															{ "variable": "do-output" },
+															{ "voltage": 7.5 }
+														]
+													},
+													{
+														"gte": [
+															{ "variable": "output-select" },
+															{ "voltage": 1 }
+														]
+													}
+												]
+											},
+											{
+												"lt": [
+													{ "variable": "output-select" },
+													{ "voltage": 2 }
+												]
+											}
+										]
+									},
+									"set-value": {
+										"output": { "index": 2 },
+										"value": { "voltage": 10 }
+									}
+								},
+								{
+									"if": {
+										"and": [
+											{
+												"and": [
+													{
+														"gt": [
+															{ "variable": "do-output" },
+															{ "voltage": 7.5 }
+														]
+													},
+													{
+														"gte": [
+															{ "variable": "output-select" },
+															{ "voltage": 2 }
+														]
+													}
+												]
+											},
+											{
+												"lt": [
+													{ "variable": "output-select" },
+													{ "voltage": 3 }
+												]
+											}
+										]
+									},
+									"set-value": {
+										"output": { "index": 3 },
+										"value": { "voltage": 10 }
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"input-triggers": [
+		{
+			"id": "determine-output",
+			"input": { "index": 1 }
+		}
+	]
+}
