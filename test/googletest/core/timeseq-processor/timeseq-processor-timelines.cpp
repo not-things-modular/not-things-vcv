@@ -805,3 +805,158 @@ TEST(TimeSeqProcessorTimelines, ScriptWithMutlipleTimelinesWithLanesAndLoopLockM
 		script.second->process();
 	}
 }
+
+TEST(TimeSeqProcessorTimelines, ScriptWithLoopingLaneAndRepeatingLaneShouldWork) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "ref", "segment-1" }} }) }, { "repeat", 3 }, { "start-trigger", "start-1" } },
+			{ { "segments", json::array({ { { "ref", "segment-2" }} }) }, { "loop", true } }
+		}) } }
+	});
+	json["component-pool"] = { { "segments", json::array({
+		{
+			{ "id", "segment-1" }, { "duration", { { "samples", 3 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-1" } }
+			})}
+		},
+		{
+			{ "id", "segment-2" }, { "duration", { { "samples", 3 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-2" } }
+			})}
+		}
+	}) } };
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script.second->m_timelines.size(), 1u);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 2u);
+
+	vector<string> emptyTrigger = {};
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillRepeatedly(testing::ReturnRef(emptyTrigger));
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(5); // Should keep repeating
+
+	for (int i = 0; i < 15; i++) {
+		script.second->process();
+	}
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+
+	// After a start trigger, the first lane should repeat the same amount again
+	vector<string> startTrigger = { "start-1" };
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(5); // Should keep repeating
+
+	for (int i = 0; i < 15; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorTimelines, ScriptWithTwoRepeatingLanesShouldLoopSeparate) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "ref", "segment-1" }} }) }, { "repeat", 3 }, { "start-trigger", "start-1" } },
+			{ { "segments", json::array({ { { "ref", "segment-2" }} }) }, { "repeat", 3 }, { "start-trigger", "start-2" } }
+		}) } }
+	});
+	json["component-pool"] = { { "segments", json::array({
+		{
+			{ "id", "segment-1" }, { "duration", { { "samples", 2 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-1" } }
+			})}
+		},
+		{
+			{ "id", "segment-2" }, { "duration", { { "samples", 2 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-2" } }
+			})}
+		}
+	}) } };
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u) << validationErrors[0].location << " " << validationErrors[0].message;
+	ASSERT_EQ(script.second->m_timelines.size(), 1u);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 2u);
+
+	vector<string> emptyTrigger = {};
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillRepeatedly(testing::ReturnRef(emptyTrigger));
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3);
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(3);
+
+	for (int i = 0; i < 15; i++) {
+		script.second->process();
+	}
+	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
+
+	// After a start trigger, the first lane should repeat the same amount again
+	vector<string> startTrigger1 = { "start-1" };
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger1)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
+
+	for (int i = 0; i < 15; i++) {
+		script.second->process();
+	}
+
+	// After a start trigger, the second lane should repeat the same amount again
+	vector<string> startTrigger2 = { "start-2" };
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger2)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(3); // Should stop repeating after 3 times
+
+	for (int i = 0; i < 15; i++) {
+		script.second->process();
+	}
+
+	// After a start trigger for both, the both lanes should repeat the same amount again
+	vector<string> startTrigger3 = { "start-1", "start-2" };
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger3)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(3); // Should stop repeating after 3 times
+
+	for (int i = 0; i < 15; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorTimelines, ScriptWithTwoLoopAndRepeatShouldKeepLooping) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "ref", "segment-1" }} }) }, { "loop", true }, { "repeat", 3 } },
+		}) } }
+	});
+	json["component-pool"] = { { "segments", json::array({
+		{
+			{ "id", "segment-1" }, { "duration", { { "samples", 2 } } }, { "actions", json::array({
+				{ { "timing", "end" }, { "trigger", "trigger-1" } }
+			})}
+		}
+	}) } };
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u) << validationErrors[0].location << " " << validationErrors[0].message;
+	ASSERT_EQ(script.second->m_timelines.size(), 1u);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
+
+	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(10);
+
+	for (int i = 0; i < 20; i++) {
+		script.second->process();
+	}
+}

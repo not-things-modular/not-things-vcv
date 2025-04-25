@@ -522,7 +522,7 @@ bool LaneProcessor::process() {
 void LaneProcessor::loop() {
 	if (m_state == LaneState::STATE_PENDING_LOOP) {
 		// Check if we need to loop or repeat
-		if ((m_scriptLane->loop) || (m_scriptLane->repeat > 1 && m_repeatCount < m_scriptLane->repeat)) {
+		if ((m_scriptLane->loop) || (m_scriptLane->repeat > 1 && m_repeatCount < m_scriptLane->repeat - 1)) {
 			m_repeatCount++;
 			m_activeSegment = 0;
 			m_state = LaneState::STATE_PROCESSING;
