@@ -1,5 +1,31 @@
 #include "timeseq-processor-shared.hpp"
 
+TEST(TimeSeqProcessorLane, LaneWithNoSegmentsShouldNotFail) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({/* { { "ref", "segment-1" } } */}) }, { "loop", true } }
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 0u);
+	ASSERT_EQ(script.second->m_timelines.size(), 1u);
+	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
+	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 0u);
+
+	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
+
+	for (int i = 0; i < 69; i++) {
+		script.second->process();
+	}
+}
+
 TEST(TimeSeqProcessorLane, LaneWithNoDisableUiShouldTriggerLaneLoop) {
 	MockEventListener mockEventListener;
 	MockTriggerHandler mockTriggerHandler;

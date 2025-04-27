@@ -9,6 +9,10 @@ using namespace std;
 using namespace timeseq;
 
 
+inline uint64_t uint64_max(uint64_t a, uint64_t b) {
+	return a > b ? a : b;
+}
+
 ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) {
 	m_portHandler = portHandler;
 	m_variableHandler = variableHandler;
@@ -195,7 +199,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 				count++;
 			}
 
-			// Couldn't find the referenced input...
+			// Couldn't find the referenced segment-block...
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment-block with the id '", scriptSegmentBlock->ref.c_str(), "'. Circular references can not be resolved.");
@@ -233,7 +237,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScript
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 			}
-			
+
 			location.pop_back();
 			count++;
 		}
@@ -271,14 +275,14 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 		float activeSampleRate = m_sampleRateReader->getSampleRate();
 		if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
 			double refactoredDuration = (double) (*scriptDuration->samples.get()) * activeSampleRate / (*timeScale->sampleRate.get());
-			duration = floor(refactoredDuration);
+			duration = uint64_max(floor(refactoredDuration), 1);
 			drift = refactoredDuration - duration;
 		} else{
 			duration = *scriptDuration->samples.get();
 		}
 	} else if (scriptDuration->millis) {
 		double refactoredDuration = (double) (*scriptDuration->millis.get()) * m_sampleRateReader->getSampleRate() / 1000;
-		duration = floor(refactoredDuration);
+		duration = uint64_max(floor(refactoredDuration), 1);
 		drift = refactoredDuration - duration;
 	} else if (scriptDuration->beats) {
 		if (timeScale->bpm) {
@@ -679,7 +683,7 @@ ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseCon
 
 		return nullptr;
 	}
-	
+
 }
 
 ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener) {}
