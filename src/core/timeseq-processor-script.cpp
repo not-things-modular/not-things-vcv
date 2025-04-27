@@ -190,7 +190,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 			int count = 0;
 			for (vector<ScriptSegmentBlock>::iterator it = context->script->segmentBlocks.begin(); it != context->script->segmentBlocks.end(); it++) {
 				if (scriptSegmentBlock->ref.compare(it->id) == 0) {
-					vector<string> refLocation = { "script",  "segment-blocks", to_string(count) };
+					vector<string> refLocation = { "component-pool",  "segment-blocks", to_string(count) };
 					segmentStack.push_back(string("sb-") + scriptSegmentBlock->ref);
 					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(context, &(*it), timeScale, refLocation, segmentStack);
 					segmentStack.pop_back();
@@ -249,7 +249,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseSegment(ProcessorScript
 			int count = 0;
 			for (vector<ScriptSegment>::iterator it = context->script->segments.begin(); it != context->script->segments.end(); it++) {
 				if (scriptSegment->ref.compare(it->id) == 0) {
-					vector<string> refLocation = { "script",  "segments", to_string(count) };
+					vector<string> refLocation = { "component-pool",  "segments", to_string(count) };
 					segmentStack.push_back(string("s-") + scriptSegment->ref);
 					shared_ptr<SegmentProcessor> segment = parseSegment(context, &(*it), timeScale, refLocation, segmentStack);
 					segmentStack.pop_back();
@@ -344,7 +344,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptPa
 		int count = 0;
 		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
 			if (scriptAction->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "script",  "actions", to_string(count) };
+				vector<string> refLocation = { "component-pool",  "actions", to_string(count) };
 				return parseAction(context, &(*it), refLocation);
 			}
 			count++;
@@ -399,7 +399,7 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(Process
 		int count = 0;
 		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
 			if (scriptAction->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "script",  "actions", to_string(count) };
+				vector<string> refLocation = { "component-pool",  "actions", to_string(count) };
 				return parseGlideAction(context, &(*it), refLocation);
 			}
 			count++;
@@ -483,7 +483,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 			int count = 0;
 			for (vector<ScriptValue>::iterator it = context->script->values.begin(); it != context->script->values.end(); it++) {
 				if (scriptValue->ref.compare(it->id) == 0) {
-					vector<string> refLocation = { "script",  "values", to_string(count) };
+					vector<string> refLocation = { "component-pool",  "values", to_string(count) };
 					valueStack.push_back(scriptValue->ref);
 					return parseValue(context, &(*it), refLocation, valueStack);
 					valueStack.pop_back();
@@ -638,7 +638,7 @@ pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* co
 		int count = 0;
 		for (vector<ScriptInput>::iterator it = context->script->inputs.begin(); it != context->script->inputs.end(); it++) {
 			if (scriptInput->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "script",  "inputs", to_string(count) };
+				vector<string> refLocation = { "component-pool",  "inputs", to_string(count) };
 				return parseInput(context, &(*it), refLocation);
 			}
 			count++;
@@ -659,7 +659,7 @@ pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* c
 		int count = 0;
 		for (vector<ScriptOutput>::iterator it = context->script->outputs.begin(); it != context->script->outputs.end(); it++) {
 			if (scriptOutput->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "script",  "outputs", to_string(count) };
+				vector<string> refLocation = { "component-pool",  "outputs", to_string(count) };
 				return parseOutput(context, &(*it), refLocation);
 			}
 			count++;
