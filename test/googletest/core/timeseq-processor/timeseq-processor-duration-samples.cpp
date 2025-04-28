@@ -266,9 +266,9 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldLimitD
 }
 
 TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldHandleDrift) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	testing::NiceMock<MockTriggerHandler> mockTriggerHandler;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
@@ -300,12 +300,13 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldHandle
 	ASSERT_EQ(validationErrors.size(), 0u);
 
 	vector<string> emptyTriggers = {};
-	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(67);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(80);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(43);
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3495).WillRepeatedly(testing::ReturnRef(emptyTriggers));
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(2330);
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(2796);
+	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1500);
 
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 3495; i++) { // Use the least common multiple of the scaled sample rates (1.5, 1.25 and 2.33)
 		script.second->process();
 	}
 }
+
