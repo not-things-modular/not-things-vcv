@@ -291,8 +291,8 @@ void SolimModule::readValues() {
 			values.inputValueCount = channelCount > 8 ? 8 : channelCount;
 			for (int i = 0; i < values.inputValueCount; i++) {
 				values.inputValues[i].value = polyVoltages[i];
-				values.inputValues[values.inputValueCount].replaceOriginal = false;
-				values.inputValues[values.inputValueCount].addOctave = SolimValue::AddOctave::NONE;
+				values.inputValues[i].replaceOriginal = false;
+				values.inputValues[i].addOctave = SolimValue::AddOctave::NONE;
 			}
 		}
 

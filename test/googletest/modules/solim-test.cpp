@@ -164,6 +164,10 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputAndOnePolyphonicInputShoul
 	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
 
 	setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + 3], { 1, 2, 3, 4});
+	for (int i = 0; i < 8; i++) {
+		inactiveSolimValueSet.inputValues[i].addOctave = static_cast<SolimValue::AddOctave>((i % 3) - 1);
+		inactiveSolimValueSet.inputValues[i].replaceOriginal = (i % 2);
+	}
 
 	solimModule.process(Module::ProcessArgs());
 
@@ -172,6 +176,74 @@ TEST(SolimTest, ProcessWithoutExpandersOrExternalInputAndOnePolyphonicInputShoul
 	EXPECT_EQ(inactiveSolimValueSet.upperLimit, 4.62f);
 	EXPECT_EQ(inactiveSolimValueSet.sort, -1);
 	for (int i = 0; i < 4; i++) {
+		EXPECT_NEAR(inactiveSolimValueSet.inputValues[i].value, i + 1, 0.00001f);
+		EXPECT_EQ(inactiveSolimValueSet.inputValues[i].addOctave, SolimValue::AddOctave::NONE);
+		EXPECT_EQ(inactiveSolimValueSet.inputValues[i].replaceOriginal, false);
+	}
+}
+
+TEST(SolimTest, ProcessWithoutExpandersOrExternalInputAndOnePolyphonicInputWithEightChannelsShouldReadValuesIntoInactiveSet) {
+	MockSolimCore* solimCore = new MockSolimCore();
+	SolimModule solimModule(solimCore);
+	initializeSolimModule(solimModule);
+
+	SolimValueSet activeSolimValueSet;
+	SolimValueSet inactiveSolimValueSet;
+	EXPECT_CALL(*solimCore, getActiveValues(0)).WillRepeatedly(testing::ReturnRef(activeSolimValueSet));
+	EXPECT_CALL(*solimCore, getInactiveValues(0)).Times(1).WillRepeatedly(testing::ReturnRef(inactiveSolimValueSet));
+	EXPECT_CALL(*solimCore, processAndActivateInactiveValues(1, nullptr)).Times(1);
+
+	solimModule.params[SolimModule::PARAM_LOWER_LIMIT].setValue(3.24f);
+	solimModule.params[SolimModule::PARAM_UPPER_LIMIT].setValue(4.62f);
+	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
+
+	setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + 3], { 1, 2, 3, 4, 5, 6, 7, 8 });
+	for (int i = 0; i < 8; i++) {
+		inactiveSolimValueSet.inputValues[i].addOctave = static_cast<SolimValue::AddOctave>((i % 3) - 1);
+		inactiveSolimValueSet.inputValues[i].replaceOriginal = (i % 2);
+	}
+
+	solimModule.process(Module::ProcessArgs());
+
+	EXPECT_EQ(inactiveSolimValueSet.inputValueCount, 8);
+	EXPECT_EQ(inactiveSolimValueSet.lowerLimit, 3.24f);
+	EXPECT_EQ(inactiveSolimValueSet.upperLimit, 4.62f);
+	EXPECT_EQ(inactiveSolimValueSet.sort, -1);
+	for (int i = 0; i < 8; i++) {
+		EXPECT_NEAR(inactiveSolimValueSet.inputValues[i].value, i + 1, 0.00001f);
+		EXPECT_EQ(inactiveSolimValueSet.inputValues[i].addOctave, SolimValue::AddOctave::NONE);
+		EXPECT_EQ(inactiveSolimValueSet.inputValues[i].replaceOriginal, false);
+	}
+}
+
+TEST(SolimTest, ProcessWithoutExpandersOrExternalInputAndOnePolyphonicInputOverEightChannelsShouldReadEightValuesIntoInactiveSet) {
+	MockSolimCore* solimCore = new MockSolimCore();
+	SolimModule solimModule(solimCore);
+	initializeSolimModule(solimModule);
+
+	SolimValueSet activeSolimValueSet;
+	SolimValueSet inactiveSolimValueSet;
+	EXPECT_CALL(*solimCore, getActiveValues(0)).WillRepeatedly(testing::ReturnRef(activeSolimValueSet));
+	EXPECT_CALL(*solimCore, getInactiveValues(0)).Times(1).WillRepeatedly(testing::ReturnRef(inactiveSolimValueSet));
+	EXPECT_CALL(*solimCore, processAndActivateInactiveValues(1, nullptr)).Times(1);
+
+	solimModule.params[SolimModule::PARAM_LOWER_LIMIT].setValue(3.24f);
+	solimModule.params[SolimModule::PARAM_UPPER_LIMIT].setValue(4.62f);
+	solimModule.params[SolimModule::PARAM_SORT].setValue(-1.2f);
+
+	setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + 3], { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+	for (int i = 0; i < 8; i++) {
+		inactiveSolimValueSet.inputValues[i].addOctave = static_cast<SolimValue::AddOctave>((i % 3) - 1);
+		inactiveSolimValueSet.inputValues[i].replaceOriginal = (i % 2);
+	}
+
+	solimModule.process(Module::ProcessArgs());
+
+	EXPECT_EQ(inactiveSolimValueSet.inputValueCount, 8);
+	EXPECT_EQ(inactiveSolimValueSet.lowerLimit, 3.24f);
+	EXPECT_EQ(inactiveSolimValueSet.upperLimit, 4.62f);
+	EXPECT_EQ(inactiveSolimValueSet.sort, -1);
+	for (int i = 0; i < 8; i++) {
 		EXPECT_NEAR(inactiveSolimValueSet.inputValues[i].value, i + 1, 0.00001f);
 		EXPECT_EQ(inactiveSolimValueSet.inputValues[i].addOctave, SolimValue::AddOctave::NONE);
 		EXPECT_EQ(inactiveSolimValueSet.inputValues[i].replaceOriginal, false);
