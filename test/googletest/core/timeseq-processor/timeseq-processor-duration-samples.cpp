@@ -1,9 +1,9 @@
 #include "timeseq-processor-shared.hpp"
 
 TEST(TimeSeqProcessorDuration, DurationInSamplesWithNoSampleScaleRateShouldUseProcessExactSamples) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	testing::NiceMock<MockTriggerHandler> mockTriggerHandler;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
@@ -51,9 +51,9 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithNoSampleScaleRateShouldUsePr
 }
 
 TEST(TimeSeqProcessorDuration, DurationInSamplesWithTimeScaleWithoutSampleRateShouldProcessExactSamples) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	testing::NiceMock<MockTriggerHandler> mockTriggerHandler;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
@@ -103,9 +103,9 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithTimeScaleWithoutSampleRateSh
 }
 
 TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateSameAsRealSampleRateShouldProcessExactSamples) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	testing::NiceMock<MockTriggerHandler> mockTriggerHandler;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
@@ -155,9 +155,9 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateSameAsRealSam
 }
 
 TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateDoubleOfRealSampleRateShouldScaleSamples) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	testing::NiceMock<MockTriggerHandler> mockTriggerHandler;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
@@ -207,9 +207,9 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateDoubleOfRealS
 }
 
 TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldLimitDurationToOne) {
-	MockEventListener mockEventListener;
+	testing::NiceMock<MockEventListener> mockEventListener;
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
