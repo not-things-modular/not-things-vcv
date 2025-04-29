@@ -341,6 +341,7 @@ void SolimModule::readValues() {
 			values.outputConnected = m_solimExpanders.connectedOutputPorts[channelIndex];
 		} else {
 			values.outputOctaves.fill(SolimValue::AddOctave::NONE);
+			values.outputReplaceOriginal.fill(false);
 			values.resortMode = SolimValueSet::ResortMode::RESORT_NONE;
 		}
 	}
