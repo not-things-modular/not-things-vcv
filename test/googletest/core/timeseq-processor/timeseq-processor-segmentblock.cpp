@@ -145,7 +145,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlocksInlineInLaneShouldExec
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 3u);
@@ -214,7 +214,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlocksFromSegmentsPoolLaneSh
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 3u);
@@ -294,7 +294,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithTwoLanesWithSegmentBlocksShouldExec
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 2u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 3u);
@@ -379,7 +379,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithMixOfSegmentBlocksAndSingleSegments
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 5u);
@@ -464,7 +464,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockShouldRepleatI
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 11u);
@@ -603,7 +603,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentAndSegmentBlocksWithSameIdsS
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(6).WillRepeatedly(testing::ReturnRef(emptyTriggers));

@@ -6,7 +6,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithNoGlobalActionsShouldSucceed) {
 	json json = getMinimalJson();
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	EXPECT_EQ(script.second->m_startActions.size(), 0u);
 }
 
@@ -39,7 +39,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_startActions.size(), 3u);
 
 	// Process should not trigger the global start actions
@@ -91,7 +91,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldLoad) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_startActions.size(), 2u);
 
 	// Process should not trigger the global start actions
@@ -113,6 +113,26 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldLoad) {
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 1.5f)).Times(1);
 	EXPECT_CALL(mockVariableHandler, setVariable("variable-name", 4.1)).Times(1);
 	script.second->reset();
+}
+
+TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldFailOnInvalidPooledAction) {
+	MockPortHandler mockPortHandler;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, &mockVariableHandler, nullptr, nullptr, nullptr, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "buh" }, { "set-variable", { { "name", "variable-name" }, { "value", { { "voltage", 4.1 } } } } } }
+		})}
+	};
+	json["global-actions"] = json::array({
+		{ { "ref", "action-1" } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_TimingEnum, "/component-pool/actions/0");
 }
 
 TEST(TimeSeqProcessorGlobalActions, ScriptWithUnknownPooledStartActionsShouldFail) {

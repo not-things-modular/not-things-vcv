@@ -56,12 +56,13 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 	for (vector<ScriptAction>::iterator it = script->globalActions.begin(); it != script->globalActions.end(); it++) {
 		location.push_back(to_string(count));
 
-		ScriptAction& scriptAction = (*it);
-		ScriptAction* resolvedAction = resolveScriptAction(&context, &scriptAction);
+		vector<string> actionLocation;
+		ScriptAction& scriptAction = *it;
+		ScriptAction* resolvedAction = resolveScriptAction(&context, &scriptAction, location, actionLocation);
 
 		if (resolvedAction) {
 			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
-				startActionProcessors.push_back(parseAction(&context, &scriptAction, location));
+				startActionProcessors.push_back(parseResolvedAction(&context, resolvedAction, location));
 			} else {
 				ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
 			}
@@ -166,7 +167,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(Process
 	if (scriptSegment->ref.length() == 0) {
 		if (!scriptSegment->segmentBlock) {
 			// It's an inline non-segment-block segment
-			return { parseInlineSegment(context, scriptSegment, timeScale, location, segmentStack) };
+			return { parseResolvedSegment(context, scriptSegment, timeScale, location, segmentStack) };
 		} else {
 			// It's a segment-block segment
 			vector<shared_ptr<SegmentProcessor>> blockSegments;
@@ -199,7 +200,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(Process
 	}
 }
 
-shared_ptr<SegmentProcessor> ProcessorScriptParser::parseInlineSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
+shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
 	location.push_back("duration");
 	shared_ptr<DurationProcessor> durationProcessor = parseDuration(context, &scriptSegment->duration, timeScale, location);
 	location.pop_back();
@@ -212,16 +213,17 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseInlineSegment(Processor
 	for (vector<ScriptAction>::iterator it = scriptSegment->actions.begin(); it != scriptSegment->actions.end(); it++) {
 		location.push_back(to_string(count));
 
+		vector<string> actionLocation;
 		ScriptAction& scriptAction = *it;
-		ScriptAction* resolvedAction = resolveScriptAction(context, &scriptAction);
+		ScriptAction* resolvedAction = resolveScriptAction(context, &scriptAction, location, actionLocation);
 
 		if (resolvedAction) {
 			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
-				startActions.push_back(parseAction(context, &(*it), location));
+				startActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
-				endActions.push_back(parseAction(context, &(*it), location));
+				endActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::GLIDE) {
-				glideActions.push_back(parseGlideAction(context, &(*it), location));
+				glideActions.push_back(parseGlideAction(context, resolvedAction, actionLocation));
 			}
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
@@ -319,47 +321,41 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 	return shared_ptr<DurationProcessor>(new DurationProcessor(duration, drift));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
-	// Check if it's a ref action object or a full one
-	if (scriptAction->ref.length() == 0) {
-		shared_ptr<ActionProcessor> actionProcessor;
-		shared_ptr<IfProcessor> ifProcessor;
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+	shared_ptr<ActionProcessor> actionProcessor;
+	shared_ptr<IfProcessor> ifProcessor;
 
-		if (scriptAction->condition) {
-			location.push_back("if");
-			ifProcessor = parseIf(context, scriptAction->condition.get(), location);
-			location.pop_back();
-		}
-
-		if (scriptAction->setValue) {
-			actionProcessor = parseSetValueAction(context, scriptAction, ifProcessor, location);
-		} else if (scriptAction->setVariable) {
-			actionProcessor = parseSetVariableAction(context, scriptAction, ifProcessor, location);
-		} else if (scriptAction->setPolyphony) {
-			actionProcessor = parseSetPolyphonyAction(context, scriptAction, ifProcessor, location);
-		} else if (scriptAction->assert) {
-			actionProcessor = parseAssertAction(context, scriptAction, ifProcessor, location);
-		} else if (scriptAction->trigger.length() > 0) {
-			actionProcessor = parseTriggerAction(context, scriptAction, ifProcessor, location);
-		} else {
-			return actionProcessor;
-		}
-
-		return actionProcessor;
-	} else {
-		int count = 0;
-		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
-			if (scriptAction->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "component-pool",  "actions", to_string(count) };
-				return parseAction(context, &(*it), refLocation);
-			}
-			count++;
-		}
-
-		// Couldn't find the referenced action...
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction->ref.c_str(), "' in the script actions.");
-		return shared_ptr<ActionProcessor>();
+	if (scriptAction->condition) {
+		location.push_back("if");
+		ifProcessor = parseIf(context, scriptAction->condition.get(), location);
+		location.pop_back();
 	}
+
+	if (scriptAction->setValue) {
+		location.push_back("set-value");
+		actionProcessor = parseSetValueAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else if (scriptAction->setVariable) {
+		location.push_back("set-variable");
+		actionProcessor = parseSetVariableAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else if (scriptAction->setPolyphony) {
+		location.push_back("set-polyphony");
+		actionProcessor = parseSetPolyphonyAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else if (scriptAction->assert) {
+		location.push_back("assert");
+		actionProcessor = parseAssertAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else if (scriptAction->trigger.length() > 0) {
+		location.push_back("trigger");
+		actionProcessor = parseTriggerAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else {
+		return actionProcessor;
+	}
+
+	return actionProcessor;
 }
 
 shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
@@ -677,14 +673,18 @@ pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* c
 	}
 }
 
-ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction) {
+ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& currentLocation, vector<string>& resolvedLocation) {
 	if (scriptAction->ref.length() == 0) {
+		resolvedLocation = currentLocation;
 		return scriptAction;
 	} else {
+		int count = 0;
 		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
 			if (scriptAction->ref.compare(it->id) == 0) {
+				resolvedLocation = { "component-pool", "actions", to_string(count) };
 				return &(*it);
 			}
+			count++;
 		}
 
 		return nullptr;

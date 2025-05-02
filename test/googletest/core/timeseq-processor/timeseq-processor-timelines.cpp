@@ -6,7 +6,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithEmptyTimelinesShouldSucceed) {
 	json json = getMinimalJson();
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	EXPECT_EQ(script.second->m_timelines.size(), 0u);
 
 	// Calling process should not give an error
@@ -23,7 +23,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithoutLanesShouldSuccee
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 0u);
 
@@ -52,7 +52,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesShouldSucceed) 
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -96,7 +96,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
@@ -195,7 +195,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockFals
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
@@ -280,7 +280,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
@@ -406,7 +406,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 4u);
@@ -526,7 +526,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 5u);
@@ -766,7 +766,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithMutlipleTimelinesWithLanesAndLoopLockM
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 3u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_scriptTimeline->loopLock, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
@@ -833,7 +833,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithLoopingLaneAndRepeatingLaneShouldWork)
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 2u);
 

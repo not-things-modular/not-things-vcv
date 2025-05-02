@@ -29,3 +29,10 @@ void expectError(vector<ValidationError>& validationErrors, int errorCode, strin
 	string errorMessage = "Expected error code " + errorCodeString + " to be part of the validation errors at '" + errorLocation + "'";
 	EXPECT_EQ(errorMessage, "") << validationErrors[0].location << " " << validationErrors[0].message;
 }
+
+void expectNoErrors(vector<ValidationError>& validationErrors) {
+	if (validationErrors.size() > 0) {
+		string errorMessage = "Expected no errors, but got " + to_string(validationErrors.size()) + ": " + validationErrors[0].message + " at '" + validationErrors[0].location + "'";
+		ASSERT_EQ("", errorMessage);
+	}
+}

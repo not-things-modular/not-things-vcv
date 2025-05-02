@@ -6,7 +6,7 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithNoInputTriggersShouldSucceed) {
 	json json = getMinimalJson();
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	EXPECT_EQ(script.second->m_triggers.size(), 0u);
 }
 
@@ -131,7 +131,7 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithInlineInputsShoul
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_triggers.size(), 2u);
 
 	testTriggerInvocation(mockPortHandler, mockTriggerHandler, processorLoader, script.second);
@@ -153,7 +153,7 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithPooledInputsShoul
 	})}};
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script.second->m_triggers.size(), 2u);
 
 	testTriggerInvocation(mockPortHandler, mockTriggerHandler, processorLoader, script.second);

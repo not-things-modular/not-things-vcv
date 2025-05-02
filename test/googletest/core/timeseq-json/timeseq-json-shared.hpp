@@ -14,3 +14,4 @@ using namespace std;
 shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<ValidationError> *validationErrors);
 json getMinimalJson();
 void expectError(vector<ValidationError>& validationErrors, int errorCode, string errorLocation);
+void expectNoErrors(vector<ValidationError>& validationErrors);

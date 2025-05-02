@@ -6,7 +6,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptWithNoSegmentBlocksShouldSucceed
 	json json = getMinimalJson();
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	EXPECT_EQ(script->segmentBlocks.size(), 0u);
 }
 
@@ -19,7 +19,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptWithEmptySegmentBlocksShouldSucc
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	EXPECT_EQ(script->segmentBlocks.size(), 0u);
 }
 
@@ -66,7 +66,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldParseSegmentBlocks) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script->segmentBlocks.size(), 3u);
 	EXPECT_EQ(script->segmentBlocks[0].id, "segment-block-1");
 	EXPECT_EQ(script->segmentBlocks[1].id, "segment-block-2");
@@ -143,7 +143,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldAllowEmptySegmentsArrayAnd
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script->segmentBlocks.size(), 1u);
 	EXPECT_EQ(script->segmentBlocks[0].segments.size(), 0u);
 	EXPECT_FALSE(script->segmentBlocks[0].repeat);
@@ -205,7 +205,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldSucceedOnPositiveIntegerRe
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script->segmentBlocks.size(), 1u);
 	EXPECT_EQ(script->segmentBlocks[0].segments.size(), 0u);
 	ASSERT_TRUE(script->segmentBlocks[0].repeat);
@@ -247,7 +247,7 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldParseSegments) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script->segmentBlocks.size(), 1u);
 	ASSERT_EQ(script->segmentBlocks[0].segments.size(), 2u);
 	EXPECT_EQ(script->segmentBlocks[0].segments[0].ref, "segment-id");

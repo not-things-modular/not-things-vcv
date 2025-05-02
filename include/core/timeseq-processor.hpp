@@ -367,10 +367,10 @@ struct ProcessorScriptParser {
 	std::shared_ptr<LaneProcessor> parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegments(ProcessorScriptParseContext* context, std::vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
-	std::shared_ptr<SegmentProcessor> parseInlineSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
+	std::shared_ptr<SegmentProcessor> parseResolvedSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
 	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string> location);
-	std::shared_ptr<ActionProcessor> parseAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionGlideProcessor> parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
@@ -389,7 +389,7 @@ struct ProcessorScriptParser {
 	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string> location);
 	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);
 
-	ScriptAction* resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction);
+	ScriptAction* resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string>& currentLocation, std::vector<std::string>& resolvedLocation);
 
 	nt_private:
 		PortHandler* m_portHandler;

@@ -6,7 +6,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithNoGlobalActionsShouldSucceed
 	json json = getMinimalJson();
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	EXPECT_EQ(script->globalActions.size(), 0u);
 }
 
@@ -17,7 +17,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptWithEmptyGlobalActionsShouldSucc
 	json["global-actions"] = json::array();
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	EXPECT_EQ(script->globalActions.size(), 0u);
 }
 
@@ -58,7 +58,7 @@ TEST(TimeSeqJsonScriptGlobalActions, ParseScriptShouldParseActions) {
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 0u);
+	expectNoErrors(validationErrors);
 	ASSERT_EQ(script->globalActions.size(), 3u);
 	EXPECT_EQ(script->globalActions[0].ref, "action-1");
 	EXPECT_EQ(script->globalActions[1].ref, "action-2");
