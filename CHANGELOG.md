@@ -1,3 +1,6 @@
+## 2.0.3
+* **Solim**: Fixed issue where Solim Output Octaver settings remained active on the main Solim module after disconnecting the Output Octaver expander.
+
 ## 2.0.2
 * **Solim**: Fixed bug where a polyphonic input with more then 7 channels would cause Upper Limit to reset to 0v
 

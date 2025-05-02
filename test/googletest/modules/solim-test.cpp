@@ -857,6 +857,54 @@ TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShou
 	}
 }
 
+TEST(SolimTest, ProcessThatHadOutputOctaverAndExpanderOnRightSideAndMultipleIOsShouldResetOldExpanderData) {
+	MockSolimCore* solimCore = new MockSolimCore();
+	SolimModule solimModule(solimCore);
+	SolimInputModule solimInputModule[3];
+	SolimOutputModule solimOutputModule[3];
+	SolimOutputOctaverModule solimOutputOctaverModule;
+	initializeSolimModule(solimModule);
+
+	SolimValueSet activeSolimValueSet[4];
+	SolimValueSet inactiveSolimValueSet[4];
+	for (int i = 0; i < 4; i++) {
+		EXPECT_CALL(*solimCore, getActiveValues(i)).WillRepeatedly(testing::ReturnRef(activeSolimValueSet[i]));
+		EXPECT_CALL(*solimCore, getInactiveValues(i)).Times(1).WillRepeatedly(testing::ReturnRef(inactiveSolimValueSet[i]));
+	}
+	EXPECT_CALL(*solimCore, processAndActivateInactiveValues(4, nullptr)).Times(1);
+
+	registerExpanderModules(solimModule, {
+		ExpanderData(solimInputModule[0], modelSolimInput, ExpanderSide::LEFT),
+		ExpanderData(solimInputModule[1], modelSolimInput, ExpanderSide::LEFT),
+		ExpanderData(solimInputModule[2], modelSolimInput, ExpanderSide::LEFT)
+	});
+
+	registerExpanderModules(solimModule, {
+		ExpanderData(solimOutputModule[0], modelSolimOutput, ExpanderSide::RIGHT),
+		ExpanderData(solimOutputModule[1], modelSolimOutput, ExpanderSide::RIGHT),
+		ExpanderData(solimOutputModule[2], modelSolimOutput, ExpanderSide::RIGHT),
+	});
+
+	for (int column = 0; column < 4; column++) {
+		for (int i = 0; i < 8; i++) {
+			setPortVoltages(solimModule.inputs[SolimModule::IN_INPUTS + i], { (float) i + 1 });
+			inactiveSolimValueSet[column].outputOctaves[i] = (i % 3 == 0 ? SolimValue::AddOctave::LOWER : i % 3 == 1 ? SolimValue::AddOctave::NONE : SolimValue::AddOctave::HIGHER);
+			inactiveSolimValueSet[column].outputReplaceOriginal[i] = (i % 2 == 1);
+		}
+		inactiveSolimValueSet[column].resortMode = SolimValueSet::ResortMode::RESORT_ALL;
+	}
+
+	solimModule.process(Module::ProcessArgs());
+
+	for (int column = 0; column < 4; column++) {
+		for (int i = 0; i < 8; i++) {
+			EXPECT_EQ(inactiveSolimValueSet[column].outputOctaves[i], SolimValue::AddOctave::NONE);
+			EXPECT_EQ(inactiveSolimValueSet[column].outputReplaceOriginal[i], false);
+		}
+		EXPECT_EQ(inactiveSolimValueSet[column].resortMode, SolimValueSet::ResortMode::RESORT_NONE);
+	}
+}
+
 TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShouldUseExpanderWithPolyphonicInputs) {
 	MockSolimCore* solimCore = new MockSolimCore();
 	SolimModule solimModule(solimCore);
@@ -906,7 +954,7 @@ TEST(SolimTest, ProcessWithOutputOctaverAndExpanderOnRightSideAndMultipleIOsShou
 	solimOutputOctaverModule.inputs[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 5].setVoltage(0.f, 0);
 	solimOutputOctaverModule.inputs[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 5].setVoltage(1.f, 1);
 
-	// The replace original on the sevent input should be off for all columns
+	// The replace original on the seventh input should be off for all columns
 	solimOutputOctaverModule.inputs[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 6].channels = 4;
 	solimOutputOctaverModule.inputs[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 6].setVoltage(1.f, 0);
 	solimOutputOctaverModule.inputs[SolimOutputOctaverModule::ParamId::PARAM_REPLACE_ORIGINAL + 6].setVoltage(1.f, 1);
