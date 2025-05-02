@@ -72,7 +72,9 @@ $(GTEST_TARGET): $(TEST_OBJS) $(OBJECTS) $(GTEST_OBJS)
 	$(CXX) $(GTEST_CXXFLAGS) $^ -o $(GTEST_TARGET) -pthread -L../.. -lRack -static-libgcc
 
 test: all $(GTEST_TARGET)
-#	Include RACK_DIR on the path to allow the Rack library to be included in the runtime environment.
+# Remove any possible remaining coverage files in case the previous run was a test-coverage run (otherwise, the metrics might accumulate over runs)
+	lcov --directory build --zerocounters
+# Include RACK_DIR on the path to allow the Rack library to be included in the runtime environment.
 	PATH=$$PATH:$(RACK_DIR) $(GTEST_TARGET)
 
 

@@ -223,7 +223,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(Process
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
 				endActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::GLIDE) {
-				glideActions.push_back(parseGlideAction(context, resolvedAction, actionLocation));
+				glideActions.push_back(parseResolvedGlideAction(context, resolvedAction, actionLocation));
 			}
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
@@ -358,59 +358,44 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(Processor
 	return actionProcessor;
 }
 
-shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
-	if (scriptAction->ref.length() == 0) {
-		shared_ptr<IfProcessor> ifProcessor;
+shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+	shared_ptr<IfProcessor> ifProcessor;
 
-		if (scriptAction->condition) {
-			location.push_back("if");
-			ifProcessor = parseIf(context, scriptAction->condition.get(), location);
-			location.pop_back();
-		}
-
-		location.push_back("start-value");
-		shared_ptr<ValueProcessor> startValueProcessor = parseValue(context, &(*scriptAction->startValue.get()), location, vector<string>());
+	if (scriptAction->condition) {
+		location.push_back("if");
+		ifProcessor = parseIf(context, scriptAction->condition.get(), location);
 		location.pop_back();
-		location.push_back("end-value");
-		shared_ptr<ValueProcessor> endValueProcessor = parseValue(context, &(*scriptAction->endValue.get()), location, vector<string>());
-		location.pop_back();
-
-		int outputPort = -1;
-		int outputChannel = -1;
-		if (scriptAction->output) {
-			location.push_back("output");
-			pair<int, int> output = parseOutput(context, &(*scriptAction->output), location);
-			location.pop_back();
-			outputPort = output.first;
-			outputChannel = output.second;
-		}
-
-		float easeFactor = 0.f;
-		bool easePow = false;
-		if (scriptAction->easeFactor) {
-			easeFactor = *scriptAction->easeFactor.get();
-		}
-		if (scriptAction->easeAlgorithm) {
-			if (*scriptAction->easeAlgorithm == ScriptAction::EaseAlgorithm::POW) {
-				easePow = true;
-			}
-		}
-
-		return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
-	} else {
-		int count = 0;
-		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
-			if (scriptAction->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "component-pool",  "actions", to_string(count) };
-				return parseGlideAction(context, &(*it), refLocation);
-			}
-			count++;
-		}
-
-		// Couldn't find the referenced action...
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction->ref.c_str(), "' in the script actions.");
-		return shared_ptr<ActionGlideProcessor>();
 	}
+
+	location.push_back("start-value");
+	shared_ptr<ValueProcessor> startValueProcessor = parseValue(context, &(*scriptAction->startValue.get()), location, vector<string>());
+	location.pop_back();
+	location.push_back("end-value");
+	shared_ptr<ValueProcessor> endValueProcessor = parseValue(context, &(*scriptAction->endValue.get()), location, vector<string>());
+	location.pop_back();
+
+	int outputPort = -1;
+	int outputChannel = -1;
+	if (scriptAction->output) {
+		location.push_back("output");
+		pair<int, int> output = parseOutput(context, &(*scriptAction->output), location);
+		location.pop_back();
+		outputPort = output.first;
+		outputChannel = output.second;
+	}
+
+	float easeFactor = 0.f;
+	bool easePow = false;
+	if (scriptAction->easeFactor) {
+		easeFactor = *scriptAction->easeFactor.get();
+	}
+	if (scriptAction->easeAlgorithm) {
+		if (*scriptAction->easeAlgorithm == ScriptAction::EaseAlgorithm::POW) {
+			easePow = true;
+		}
+	}
+
+	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {

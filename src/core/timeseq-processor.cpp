@@ -315,12 +315,15 @@ void ActionGlideProcessor::start(uint64_t glideLength) {
 
 void ActionGlideProcessor::process(uint64_t glidePosition) {
 	if (m_if) {
-		float ease = m_durationInverse * glidePosition;
+		// The position coming from the DurationProcessor goes from 1 until duration.
+		// For glide actions, we want the first call to be at position 0 so that the exact start value is used for the first iteration.
+		// The glide will then run through the range in the process() until just before the exact end value, and the exact end value will be set when the end() method is called.
+		float ease = m_durationInverse * (glidePosition - 1);
 		if (m_easeFactor != 0.f) {
 			if (m_easePow) {
-				ease = calculatePowEase(ease, glidePosition);
+				ease = calculatePowEase(ease, (glidePosition - 1));
 			} else {
-				ease = calculateSigEase(ease, glidePosition);
+				ease = calculateSigEase(ease, (glidePosition - 1));
 			}
 		}
 

@@ -371,7 +371,7 @@ struct ProcessorScriptParser {
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
 	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
-	std::shared_ptr<ActionGlideProcessor> parseGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionGlideProcessor> parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
