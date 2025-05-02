@@ -85,6 +85,7 @@ ifdef ARCH_WIN
 	OLD_SHELL := $(SHELL)
 	SHELL := /bin/bash
 	LCOV_PWD := $(shell echo `pwd -W`/ | tr / \)
+	LCOV_DEP_PWD := $(shell echo `pwd -W`/dep/ | tr / \)
 	SHELL = $(OLD_SHELL)
 else
 	LCOV_PWD := $(shell pwd)/
@@ -96,4 +97,5 @@ test-coverage: GTEST_CXXFLAGS += $(GCOVFLAGS) -lgcov
 test-coverage: LDFLAGS += $(GCOVFLAGS) -lgcov
 test-coverage: test
 	lcov --capture -d build/src -o build/coverage.info --include '$(LCOV_PWD)*'
-	genhtml build/coverage.info -o build/coverage_report
+	lcov --remove build/coverage.info '$(LCOV_DEP_PWD)*' -o build/coverage.lim.info
+	genhtml build/coverage.lim.info -o build/coverage_report

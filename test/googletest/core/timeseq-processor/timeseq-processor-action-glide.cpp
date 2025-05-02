@@ -552,3 +552,104 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndNegativeSigEaseValue
 		script.second->process();
 	}
 }
+
+TEST(TimeSeqProcessorGlideAction, GlideActionWithPositiveIfConditionShouldGlideVariable) {
+	testing::NiceMock<MockEventListener> mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "duration", { { "samples", 10 } } }, { "actions", json::array({
+				{
+					{ "timing", "glide" },
+					{ "if", { { "eq", json::array({
+						{ { "voltage", 1.f } },
+						{ { "variable", "if-variable" } }
+					}) } } },
+					{ "start-value", { { "voltage", 1.f } } },
+					{ "end-value", { { "voltage", 6.f } } },
+					{ "variable", "output-variable" }
+				}
+			}) } } }) } },
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+
+		// The first process should check the condition, and start on the exact start value.
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockVariableHandler, getVariable("if-variable")).Times(1).WillOnce(testing::Return(1.f));
+		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+
+		for (int i = 1; i < 9; i++) {
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", (float) 1 + i / 2.f)).Times(1);
+		}
+
+		// The last process should end on the exact end value.
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+
+		// No further calls should happen after that
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockVariableHandler, setVariable).Times(0);
+	}
+
+	for (int i = 0; i < 11; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorGlideAction, GlideActionWithNegativeIfConditionShouldDoNothing) {
+	testing::NiceMock<MockEventListener> mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "duration", { { "samples", 10 } } }, { "actions", json::array({
+				{
+					{ "timing", "glide" },
+					{ "if", { { "eq", json::array({
+						{ { "voltage", 1.f } },
+						{ { "variable", "if-variable" } }
+					}) } } },
+					{ "start-value", { { "voltage", 1.f } } },
+					{ "end-value", { { "voltage", 6.f } } },
+					{ "variable", "output-variable" }
+				}
+			}) } } }) } },
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+
+		// The first process should check the condition, and not execute the glide action
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockVariableHandler, getVariable("if-variable")).Times(1).WillOnce(testing::Return(2.f));
+		EXPECT_CALL(mockVariableHandler, setVariable).Times(0);
+		EXPECT_CALL(mockVariableHandler, getVariable).Times(0);
+		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(10).WillRepeatedly(testing::ReturnRef(emptyTriggers));
+	}
+
+	for (int i = 0; i < 11; i++) {
+		script.second->process();
+	}
+}
