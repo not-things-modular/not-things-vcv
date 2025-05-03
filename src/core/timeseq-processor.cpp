@@ -106,15 +106,21 @@ double OutputValueProcessor::processValue() {
 	return m_portHandler->getOutputPortVoltage(m_outputPort, m_outputChannel);
 }
 
-RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_lowerValue(lowerValue), m_upperValue(upperValue), m_generator(chrono::steady_clock::now().time_since_epoch().count()) {}
+RandValueGenerator::RandValueGenerator() : m_generator(chrono::steady_clock::now().time_since_epoch().count()) {}
+RandValueGenerator::~RandValueGenerator() {}
+
+float RandValueGenerator::generate(float lower, float upper) {
+	uniform_real_distribution<float> distribution(lower, upper);
+	return distribution(m_generator);
+}
+
+RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, shared_ptr<RandValueGenerator> randValueGenerator, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_lowerValue(lowerValue), m_upperValue(upperValue), m_randValueGenerator(randValueGenerator) {}
 
 double RandValueProcessor::processValue() {
 	float lower = m_lowerValue->process();
 	float upper = m_upperValue->process();
 
-	uniform_real_distribution<float> distribution(lower, upper);
-
-	return distribution(m_generator);
+	return m_randValueGenerator->generate(lower, upper);
 }
 
 IfProcessor::IfProcessor(ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}

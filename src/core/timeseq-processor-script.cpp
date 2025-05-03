@@ -13,13 +13,14 @@ inline uint64_t uint64_max(uint64_t a, uint64_t b) {
 	return a > b ? a : b;
 }
 
-ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) {
+ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) {
 	m_portHandler = portHandler;
 	m_variableHandler = variableHandler;
 	m_triggerHandler = triggerHandler;
 	m_sampleRateReader = sampleRateReader;
 	m_eventListener = eventListener;
 	m_assertListener = assertListener;
+	m_randomValueGenerator = randomValueGenerator;
 }
 
 shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<ValidationError> *validationErrors, vector<string> location) {
@@ -533,6 +534,8 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScri
 }
 
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location, vector<string> valueStack) {
+	location.push_back("rand");
+
 	location.push_back("lower");
 	shared_ptr<ValueProcessor> lowerValueProcessor = parseValue(context, scriptValue->rand.get()->lower.get(), location, valueStack);
 	location.pop_back();
@@ -541,7 +544,9 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 	shared_ptr<ValueProcessor> upperValueProcessor = parseValue(context, scriptValue->rand.get()->upper.get(), location, valueStack);
 	location.pop_back();
 
-	return shared_ptr<ValueProcessor>(new RandValueProcessor(lowerValueProcessor, upperValueProcessor, calcProcessors, scriptValue->quantize));
+	location.pop_back();
+
+	return shared_ptr<ValueProcessor>(new RandValueProcessor(lowerValueProcessor, upperValueProcessor, m_randomValueGenerator, calcProcessors, scriptValue->quantize));
 }
 
 shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {
@@ -677,7 +682,8 @@ ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseCon
 
 }
 
-ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener, shared_ptr<RandValueGenerator>(new RandValueGenerator())) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener, randomValueGenerator) {}
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
 	return m_processorScriptParser.parseScript(script.get(), validationErrors, vector<string>());

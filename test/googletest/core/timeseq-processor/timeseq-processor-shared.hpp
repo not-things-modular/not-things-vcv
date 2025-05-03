@@ -34,6 +34,10 @@ struct MockEventListener : EventListener {
 	MOCK_METHOD(void, triggerTriggered, (), (override));
 };
 
+struct MockRandValueGenerator : RandValueGenerator {
+	MOCK_METHOD(float, generate, (float, float), (override));
+};
+
 static std::vector<std::string> mockDefaultTriggerHandlerEmptyTriggers;
 #define MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler) \
 	ON_CALL(mockTriggerHandler, getTriggers).WillByDefault(testing::ReturnRef(mockDefaultTriggerHandlerEmptyTriggers));

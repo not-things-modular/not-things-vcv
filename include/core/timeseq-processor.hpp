@@ -104,8 +104,18 @@ struct OutputValueProcessor : ValueProcessor {
 		PortHandler* m_portHandler;
 };
 
+struct RandValueGenerator {
+	RandValueGenerator();
+	virtual ~RandValueGenerator();
+
+	virtual float generate(float lower, float upper);
+
+	nt_private:
+		std::minstd_rand m_generator;
+};
+
 struct RandValueProcessor : ValueProcessor {
-	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
+	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::shared_ptr<RandValueGenerator> randValueGenerator, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
 
 	double processValue() override;
 
@@ -113,7 +123,7 @@ struct RandValueProcessor : ValueProcessor {
 		std::shared_ptr<ValueProcessor> m_lowerValue;
 		std::shared_ptr<ValueProcessor> m_upperValue;
 
-		std::minstd_rand m_generator;
+		std::shared_ptr<RandValueGenerator> m_randValueGenerator;
 };
 
 struct IfProcessor {
@@ -359,7 +369,7 @@ struct ProcessorScriptParseContext {
 };
 
 struct ProcessorScriptParser {
-	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
+	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, std::shared_ptr<RandValueGenerator> randomValueGenerator);
 
 	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::shared_ptr<TimelineProcessor> parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, std::vector<std::string> location);
@@ -398,10 +408,12 @@ struct ProcessorScriptParser {
 		SampleRateReader* m_sampleRateReader;
 		EventListener* m_eventListener;
 		AssertListener* m_assertListener;
+		std::shared_ptr<RandValueGenerator> m_randomValueGenerator;
 };
 
 struct ProcessorLoader {
 	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
+	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, std::shared_ptr<RandValueGenerator> randomValueGenerator);
 
 	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 
