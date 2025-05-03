@@ -15,7 +15,7 @@ TEST(TimeSeqJsonScriptIf, ParseActionWithoutIfShouldWork) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_FALSE(script->actions[0].condition);
 }

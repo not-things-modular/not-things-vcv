@@ -6,7 +6,7 @@ TEST(TimeSeqJsonScriptOutput, ParseShouldSucceedWithouOutputs) {
 	json json = getMinimalJson();
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->outputs.size(), 0u);
 }
 
@@ -19,7 +19,7 @@ TEST(TimeSeqJsonScriptOutput, ParseShouldSucceedWithEmptyOutputs) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->outputs.size(), 0u);
 }
 
@@ -162,7 +162,7 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputShouldParseIndexInRange) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->outputs.size(), 8u);
 	EXPECT_EQ(script->outputs[0].id, "output-1");
 	EXPECT_EQ(script->outputs[0].index, 1);
@@ -309,7 +309,7 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputShouldParseChannelInRange) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->outputs.size(), 9u);
 	EXPECT_EQ(script->outputs[0].id, "output-1");
 	EXPECT_EQ(script->outputs[0].index, 3);

@@ -462,24 +462,22 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 			return parseOutputValue(context, scriptValue, calcProcessors, location);
 		} else if (scriptValue->rand) {
 			return parseRandValue(context, scriptValue, calcProcessors, location, valueStack);
-		} else {
-
 		}
 
 	} else {
-		if (find(valueStack.begin(), valueStack.end(), scriptValue->ref) == valueStack.end()) {
+		if (find(valueStack.begin(), valueStack.end(), string("v-") + scriptValue->ref) == valueStack.end()) {
 			int count = 0;
 			for (vector<ScriptValue>::iterator it = context->script->values.begin(); it != context->script->values.end(); it++) {
 				if (scriptValue->ref.compare(it->id) == 0) {
 					vector<string> refLocation = { "component-pool",  "values", to_string(count) };
-					valueStack.push_back(scriptValue->ref);
+					valueStack.push_back(string("v-") + scriptValue->ref);
 					return parseValue(context, &(*it), refLocation, valueStack);
 					valueStack.pop_back();
 				}
 				count++;
 			}
 
-			// Couldn't find the referenced action...
+			// Couldn't find the referenced value...
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced value with id '", scriptValue->ref.c_str(), "' in the script values.");
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the value with the id '", scriptValue->ref.c_str(), "'. Circular references can not be resolved.");
@@ -550,23 +548,46 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 }
 
 shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {
-	if (scriptCalc->operation == ScriptCalc::CalcOperation::ADD) {
-		location.push_back("add");
-	} else if (scriptCalc->operation == ScriptCalc::CalcOperation::SUB) {
-		location.push_back("sub");
-	} else if (scriptCalc->operation == ScriptCalc::CalcOperation::DIV) {
-		location.push_back("div");
-	} else if (scriptCalc->operation == ScriptCalc::CalcOperation::MULT) {
-		location.push_back("mult");
+	if (scriptCalc->ref.length() == 0) {
+		if (scriptCalc->operation == ScriptCalc::CalcOperation::ADD) {
+			location.push_back("add");
+		} else if (scriptCalc->operation == ScriptCalc::CalcOperation::SUB) {
+			location.push_back("sub");
+		} else if (scriptCalc->operation == ScriptCalc::CalcOperation::DIV) {
+			location.push_back("div");
+		} else if (scriptCalc->operation == ScriptCalc::CalcOperation::MULT) {
+			location.push_back("mult");
+		} else {
+			// Should already have been filtered by json parsing, so should not occur
+			location.push_back(" ");
+		}
+
+		shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
+
+		location.pop_back();
+
+		return shared_ptr<CalcProcessor>(new CalcProcessor(scriptCalc, valueProcessor));
 	} else {
-		location.push_back(" ");
+		if (find(valueStack.begin(), valueStack.end(), string("c-") + scriptCalc->ref) == valueStack.end()) {
+			int count = 0;
+			for (vector<ScriptCalc>::iterator it = context->script->calcs.begin(); it != context->script->calcs.end(); it++) {
+				if (scriptCalc->ref.compare(it->id) == 0) {
+					vector<string> refLocation = { "component-pool",  "calcs", to_string(count) };
+					valueStack.push_back(string("c-") + scriptCalc->ref);
+					return parseCalc(context, &(*it), refLocation, valueStack);
+					valueStack.pop_back();
+				}
+				count++;
+			}
+
+			// Couldn't find the referenced calc...
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced calc with id '", scriptCalc->ref.c_str(), "' in the script calcs.");
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the calc with the id '", scriptCalc->ref.c_str(), "'. Circular references can not be resolved.");
+		}
 	}
 
-	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
-
-	location.pop_back();
-
-	return shared_ptr<CalcProcessor>(new CalcProcessor(scriptCalc, valueProcessor));
+	return shared_ptr<CalcProcessor>();
 }
 
 shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string> location) {
@@ -636,7 +657,7 @@ pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* co
 			count++;
 		}
 
-		// Couldn't find the referenced action...
+		// Couldn't find the referenced input...
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInput->ref.c_str(), "' in the script inputs.");
 		return pair<int, int>(-1, -1);
 	}
@@ -657,7 +678,7 @@ pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* c
 			count++;
 		}
 
-		// Couldn't find the referenced action...
+		// Couldn't find the referenced output...
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced output with id '", scriptOutput->ref.c_str(), "' in the script outputs.");
 		return pair<int, int>(-1, -1);
 	}

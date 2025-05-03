@@ -37,7 +37,7 @@ TEST(TimeSeqProcessorSetVariableAction, SetVariableActionShouldSetProcessedInlin
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -76,7 +76,7 @@ TEST(TimeSeqProcessorSetVariableAction, SetVariableActionShouldSetProcessedRefVa
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{

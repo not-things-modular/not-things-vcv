@@ -6,7 +6,7 @@ TEST(TimeSeqJsonScriptValue, ParseShouldSucceedWithoutValues) {
 	json json = getMinimalJson();
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->values.size(), 0u);
 }
 
@@ -19,7 +19,7 @@ TEST(TimeSeqJsonScriptValue, ParseShouldSucceedWithEmptyValues) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->values.size(), 0u);
 }
 
@@ -131,7 +131,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithIntegerVoltages) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 5u);
 	ASSERT_TRUE(script->values[0].voltage);
 	EXPECT_EQ(*script->values[0].voltage.get(), -10);
@@ -185,7 +185,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithFloatVoltages) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 5u);
 	ASSERT_TRUE(script->values[0].voltage);
 	EXPECT_EQ(*script->values[0].voltage.get(), -10.0f);
@@ -315,7 +315,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseAllNotesWithoutAccidental) {
 	}
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 14u);
 	for (int i = 0; i < 7; i++) {
 		ASSERT_TRUE(script->values[i].note);
@@ -342,7 +342,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseAllNotesWithAccidental) {
 	}
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 28u);
 	for (int i = 0; i < 7; i++) {
 		ASSERT_TRUE(script->values[i].note);
@@ -397,7 +397,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseVariable) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_TRUE(script->values[0].variable);
 	EXPECT_EQ(*script->values[0].variable.get(), "variable-name");
@@ -444,7 +444,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseInput) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_TRUE(script->values[0].input);
 	EXPECT_EQ(script->values[0].input.get()->ref, "input-ref");
@@ -491,7 +491,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseOutput) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_TRUE(script->values[0].output);
 	EXPECT_EQ(script->values[0].output.get()->ref, "output-ref");
@@ -613,7 +613,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseRand) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_TRUE(script->values[0].rand);
 	ASSERT_TRUE(script->values[0].rand.get()->lower);
@@ -672,7 +672,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldWorkParseQuantize) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_TRUE(script->values[0].voltage);
 	EXPECT_FALSE(script->values[0].quantize);
@@ -704,7 +704,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseQuantizeFalse) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_TRUE(script->values[0].voltage);
 	EXPECT_FALSE(script->values[0].quantize);
@@ -721,7 +721,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseQuantizeTrue) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_TRUE(script->values[0].voltage);
 	EXPECT_TRUE(script->values[0].quantize);
@@ -738,7 +738,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseWithoutCalcs) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	EXPECT_EQ(script->values[0].calc.size(), 0u);
 }
@@ -769,7 +769,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithEmptyCalcArray) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	EXPECT_EQ(script->values[0].calc.size(), 0u);
 }
@@ -806,7 +806,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithSingleCalc) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_EQ(script->values[0].calc.size(), 1u);
 	EXPECT_EQ(script->values[0].calc[0].ref, "calc-ref-1");
@@ -827,7 +827,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithMultipleCalcs) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->values.size(), 1u);
 	ASSERT_EQ(script->values[0].calc.size(), 3u);
 	EXPECT_EQ(script->values[0].calc[0].ref, "calc-ref-1");

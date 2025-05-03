@@ -14,7 +14,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoSegmentsShouldNotFail) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 0u);
@@ -41,7 +41,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoDisableUiShouldTriggerLaneLoop) {
 	json["component-pool"] = { { "segments", json::array({ { { "id", "segment-1" }, { "duration", { { "samples", 1 } } } } }) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -70,7 +70,7 @@ TEST(TimeSeqProcessorLane, LaneWithDisableUiFalseShouldTriggerLaneLoop) {
 	json["component-pool"] = { { "segments", json::array({ { { "id", "segment-1" }, { "duration", { { "samples", 1 } } } } }) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -99,7 +99,7 @@ TEST(TimeSeqProcessorLane, LaneWithDisableUiTrueShouldNotTriggerLaneLoop) {
 	json["component-pool"] = { { "segments", json::array({ { { "id", "segment-1" }, { "duration", { { "samples", 1 } } } } }) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -133,7 +133,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoAutoStartShouldAutoStart) {
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -167,7 +167,7 @@ TEST(TimeSeqProcessorLane, LaneWithAutoStartTrueShouldAutoStart) {
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -201,7 +201,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoAutoStartFalseShouldNotStartUntilStartTrigg
 	}) } };
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);

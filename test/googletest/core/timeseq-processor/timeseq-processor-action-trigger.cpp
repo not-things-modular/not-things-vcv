@@ -16,7 +16,7 @@ TEST(TimeSeqProcessorTrigger, TriggerActionShouldTrigger) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{

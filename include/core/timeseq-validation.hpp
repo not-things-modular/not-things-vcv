@@ -203,7 +203,7 @@ std::string createValidationErrorLocation(std::vector<std::string> location);
 	}
 
 
-	struct ValidationError {
+struct ValidationError {
 	ValidationError(const std::string& location, const std::string& message) : location(location), message(message) {}
 
 	std::string location;

@@ -32,7 +32,7 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithIntegerMillisAndNoPartialSamp
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(48000)); // 48000 results in exactly 48 samples for each milli
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -80,7 +80,7 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithIntegerMillisAndPartialSample
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(44100)); // 44100 results in a fractional 44.1 samples per milli
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -128,7 +128,7 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithFractionalMillisAndNoPartialS
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(48000)); // 48000 results in exactly 48 samples for each milli
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -176,7 +176,7 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithFractionalMillisAndPartialSam
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(44100)); // 44100 results in a fractional 44.1 samples per milli
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
@@ -214,7 +214,7 @@ TEST(TimeSeqProcessorDuration, DurationInMillisShouldNotGoBelowOneSample) {
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(48));
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);

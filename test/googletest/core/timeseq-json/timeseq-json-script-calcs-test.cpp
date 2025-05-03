@@ -6,7 +6,7 @@ TEST(TimeSeqJsonScriptCalc, ParseShouldSucceedWithoutCalcs) {
 	json json = getMinimalJson();
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->calcs.size(), 0u);
 }
 
@@ -19,7 +19,7 @@ TEST(TimeSeqJsonScriptCalc, ParseShouldSucceedWithEmptyCalcs) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->calcs.size(), 0u);
 }
 
@@ -165,7 +165,7 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseCalcs) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->calcs.size(), 4u);
 	EXPECT_EQ(script->calcs[0].id, "calc-1");
 	EXPECT_EQ(script->calcs[0].operation, ScriptCalc::CalcOperation::ADD);

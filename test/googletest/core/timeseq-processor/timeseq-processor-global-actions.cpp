@@ -6,7 +6,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithNoGlobalActionsShouldSucceed) {
 	json json = getMinimalJson();
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script.second->m_startActions.size(), 0u);
 }
 
@@ -39,7 +39,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_startActions.size(), 3u);
 
 	// Process should not trigger the global start actions
@@ -91,7 +91,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldLoad) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_startActions.size(), 2u);
 
 	// Process should not trigger the global start actions

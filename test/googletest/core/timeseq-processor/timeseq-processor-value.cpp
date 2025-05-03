@@ -109,7 +109,7 @@ TEST(TimeSeqProcessorValue, ScriptWithActionRefShouldUseAction) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -143,7 +143,7 @@ TEST(TimeSeqProcessorValue, VoltageValueShouldUseExactValue) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -191,7 +191,7 @@ TEST(TimeSeqProcessorValue, NoteValueShouldUseExactValue) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -272,7 +272,7 @@ TEST(TimeSeqProcessorValue, InputValueShouldReadInputVoltage) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -367,7 +367,7 @@ TEST(TimeSeqProcessorValue, OutputValueShouldReadOutputVoltage) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -604,7 +604,7 @@ TEST(TimeSeqProcessorValue, RandValueShouldUseProvidedValues) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -673,7 +673,7 @@ TEST(TimeSeqProcessorValue, RandValueShouldRandomizeInRange) {
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 

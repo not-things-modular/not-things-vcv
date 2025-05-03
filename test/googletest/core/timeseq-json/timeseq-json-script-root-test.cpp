@@ -80,7 +80,7 @@ TEST(TimeSeqJsonScript, ParseWithEmptyComponentPoolShouldSucceed) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 }
 
 TEST(TimeSeqJsonScript, ParseRefShouldFailOnNonString) {

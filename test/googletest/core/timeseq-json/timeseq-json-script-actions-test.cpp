@@ -6,7 +6,7 @@ TEST(TimeSeqJsonScriptAction, ParseShouldSucceedWithoutActions) {
 	json json = getMinimalJson();
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->actions.size(), 0u);
 }
 
@@ -19,7 +19,7 @@ TEST(TimeSeqJsonScriptAction, ParseShouldSucceedWithEmptyActions) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->values.size(), 0u);
 }
 
@@ -106,7 +106,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldDefaultToStartTiming) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::START);
 }
@@ -122,7 +122,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseStartTiming) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::START);
 }
@@ -138,7 +138,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseEndTiming) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::END);
 }
@@ -259,7 +259,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetValue) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].setValue);
 	EXPECT_EQ(script->actions[0].setValue->value.ref, "value-ref");
@@ -322,7 +322,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetVariable) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].setVariable);
 	EXPECT_EQ(script->actions[0].setVariable->name, "variable-name");
@@ -479,7 +479,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetPolyphony) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 16u);
 	for (int i = 0; i < 16; i++) {
 		ASSERT_TRUE(script->actions[i].setPolyphony);
@@ -529,7 +529,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseTrigger) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_EQ(script->actions[0].trigger, "trigger-name");
 }
@@ -660,7 +660,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldDefaultAssertToStopOnFail) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].assert);
 	EXPECT_TRUE(script->actions[0].assert->stopOnFail);
@@ -684,7 +684,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseAssertStopOnFailFalse) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].assert);
 	EXPECT_FALSE(script->actions[0].assert->stopOnFail);
@@ -708,7 +708,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseAssertStopOnFailTrue) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].assert);
 	EXPECT_TRUE(script->actions[0].assert->stopOnFail);
@@ -945,7 +945,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGlideActionWithNoEaseAndVar
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].id, "action-1");
 	EXPECT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::GLIDE);
@@ -970,7 +970,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGlideActionWithNoEaseAndOut
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_EQ(script->actions[0].id, "action-1");
 	EXPECT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::GLIDE);
@@ -1030,7 +1030,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseEaseFactor) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 3u);
 	EXPECT_TRUE(script->actions[0].easeFactor);
 	EXPECT_EQ(*script->actions[0].easeFactor.get(), -4);
@@ -1081,7 +1081,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSigEaseAlgorithm) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_TRUE(script->actions[0].easeAlgorithm);
 	EXPECT_EQ(*script->actions[0].easeAlgorithm.get(), ScriptAction::EaseAlgorithm::SIG);
@@ -1098,7 +1098,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParsePowEaseAlgorithm) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	EXPECT_TRUE(script->actions[0].easeAlgorithm);
 	EXPECT_EQ(*script->actions[0].easeAlgorithm.get(), ScriptAction::EaseAlgorithm::POW);

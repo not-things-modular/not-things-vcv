@@ -15,3 +15,7 @@ shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<Validat
 json getMinimalJson();
 void expectError(vector<ValidationError>& validationErrors, int errorCode, string errorLocation);
 void expectNoErrors(vector<ValidationError>& validationErrors);
+
+#define EXPECT_NO_ERRORS(validationErrors) \
+	expectNoErrors(validationErrors); \
+	if (::testing::Test::HasFailure()) return;

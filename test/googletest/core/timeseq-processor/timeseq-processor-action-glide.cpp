@@ -148,7 +148,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithOnlyStartAndEndValueShouldGlide
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -200,7 +200,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithOnlyStartAndEndValueShouldGlide
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -253,7 +253,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositivePowEaseValue
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	float lastValue = 1.f;
@@ -307,7 +307,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositivePowEaseValue
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	float lastValue = 6.f;
@@ -361,7 +361,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndNegativePowEaseValue
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	float lastValue = 1.f;
@@ -415,7 +415,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositiveSigEaseValue
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	float lastValue = 1.f;
@@ -469,7 +469,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositiveSigEaseValue
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	float lastValue = 6.f;
@@ -523,7 +523,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndNegativeSigEaseValue
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	float lastValue = 1.f;
@@ -579,7 +579,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithPositiveIfConditionShouldGlideV
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
@@ -635,7 +635,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithNegativeIfConditionShouldDoNoth
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	expectNoErrors(validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
 	{
