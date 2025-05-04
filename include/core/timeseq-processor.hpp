@@ -203,19 +203,35 @@ struct ActionTriggerProcessor : ActionProcessor {
 		TriggerHandler* m_triggerHandler;
 };
 
-struct ActionGlideProcessor {
+struct ActionOngoingProcessor {
+	ActionOngoingProcessor(std::shared_ptr<IfProcessor> ifProcessor);
+
+	virtual void start(uint64_t glideLength);
+	virtual void process(uint64_t glidePosition) = 0;
+	virtual void end() = 0;
+
+	protected:
+		bool shouldProcess();
+
+	nt_private:
+		std::shared_ptr<IfProcessor> m_ifProcessor;
+
+		// The result of the "if" validation as captured when the ongoing action was started
+		bool m_if;
+};
+
+struct ActionGlideProcessor : ActionOngoingProcessor {
 	ActionGlideProcessor(float easeFactor, bool easePow, std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, std::string variable, PortHandler* portHandler, VariableHandler* variableHandler);
 
-	void start(uint64_t glideLength);
-	void process(uint64_t glidePosition);
-	void end();
+	void start(uint64_t glideLength) override;
+	void process(uint64_t glidePosition) override;
+	void end() override;
 
 	nt_private:
 		float m_easeFactor;
 		bool m_easePow;
 		std::shared_ptr<ValueProcessor> m_startValueProcessor;
 		std::shared_ptr<ValueProcessor> m_endValueProcessor;
-		std::shared_ptr<IfProcessor> m_ifProcessor;
 
 		PortHandler* m_portHandler;
 		VariableHandler* m_variableHandler;
@@ -224,8 +240,6 @@ struct ActionGlideProcessor {
 		int m_outputChannel;
 		std::string m_variable;
 
-		// The result of the "if" validation as captured when the glide action was started
-		bool m_if;
 		// The start and end values that were captured when the glide action was started
 		double m_startValue;
 		double m_endValue;
@@ -237,6 +251,24 @@ struct ActionGlideProcessor {
 		double calculatePowEase(float ease, uint64_t glidePosition);
 		// A sigmoid-based easing calculation
 		double calculateSigEase(float ease, uint64_t glidePosition);
+};
+
+struct ActionGateProcessor : ActionOngoingProcessor {
+	ActionGateProcessor(float gateHighRatio, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler);
+
+	void start(uint64_t glideLength) override;
+	void process(uint64_t glidePosition) override;
+	void end() override;
+
+	nt_private:
+		PortHandler* m_portHandler;
+
+		int m_outputPort;
+		int m_outputChannel;
+		float m_gateHighRatio;
+
+		bool m_gateHigh;
+		uint64_t m_gateLowPosition;
 };
 
 struct DurationProcessor {
@@ -264,7 +296,7 @@ struct SegmentProcessor {
 		std::shared_ptr<DurationProcessor> durationProcessor,
 		std::vector<std::shared_ptr<ActionProcessor>> startActions,
 		std::vector<std::shared_ptr<ActionProcessor>> endActions,
-		std::vector<std::shared_ptr<ActionGlideProcessor>> glideActions,
+		std::vector<std::shared_ptr<ActionOngoingProcessor>> ongoingActions,
 		EventListener* eventListener
 	);
 
@@ -279,13 +311,13 @@ struct SegmentProcessor {
 
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
 		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
-		std::vector<std::shared_ptr<ActionGlideProcessor>> m_glideActions;
+		std::vector<std::shared_ptr<ActionOngoingProcessor>> m_ongoingActions;
 
 		EventListener* m_eventListener;
 
 		void processStartActions();
 		void processEndActions();
-		void processGlideActions(bool start, bool end);
+		void processOngoingActions(bool start, bool end);
 };
 
 struct LaneProcessor {
@@ -382,6 +414,7 @@ struct ProcessorScriptParser {
 	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionGlideProcessor> parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
+	std::shared_ptr<ActionGateProcessor> parseResolvedGateAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);

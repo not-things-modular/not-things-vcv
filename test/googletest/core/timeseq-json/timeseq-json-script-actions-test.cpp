@@ -903,20 +903,55 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonGlideActionsCombinedWit
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "set-value", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "set-variable", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "set-polyphony", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "assert", { { "dummy", "value" } } } },
-			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "trigger", "trigger-name" } },
+			{ { "id", "action-2" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "set-variable", { { "dummy", "value" } } } },
+			{ { "id", "action-3" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "set-polyphony", { { "dummy", "value" } } } },
+			{ { "id", "action-4" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "assert", { { "dummy", "value" } } } },
+			{ { "id", "action-5" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "trigger", "trigger-name" } },
+			{ { "id", "action-6" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "gate-high-ratio", 0.1f } },
 		} ) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_GT(validationErrors.size(), 4u);
+	ASSERT_GT(validationErrors.size(), 6u);
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/1");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/2");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/3");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/4");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/5");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonGateActionsCombinedWithGateTiming) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "set-value", { { "dummy", "value" } } } },
+			{ { "id", "action-2" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "set-variable", { { "dummy", "value" } } } },
+			{ { "id", "action-3" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "set-polyphony", { { "dummy", "value" } } } },
+			{ { "id", "action-4" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "assert", { { "dummy", "value" } } } },
+			{ { "id", "action-5" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "trigger", "trigger-name" } },
+			{ { "id", "action-6" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "variable", "variable-name" } },
+			{ { "id", "action-7" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "start-value", { { "ref", "value-ref" } } } },
+			{ { "id", "action-8" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "end-value", { { "ref", "value-ref" } } } },
+			{ { "id", "action-9" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "ease-factor", 1 } },
+			{ { "id", "action-10" }, { "timing", "gate" }, { "output", { { "ref", "output-id" } } }, { "ease-algorithm", "pow" } },
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 10u) << json.dump();
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/0");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/1");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/2");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/3");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/4");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/5");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/6");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/7");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/8");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGateProperties, "/component-pool/actions/9");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnBothVariableAndOutputActions) {
@@ -1104,6 +1139,38 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParsePowEaseAlgorithm) {
 	EXPECT_EQ(*script->actions[0].easeAlgorithm.get(), ScriptAction::EaseAlgorithm::POW);
 }
 
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithNoneNumericGateHighRatio) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "gate-high-ratio", "not-a-number" }, { "output", { { "ref", "output-id" } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_GateHighRatioFloat, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithGateHighRatioOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "gate-high-ratio", -0.01 }, { "output", { { "ref", "output-id" } } } },
+			{ { "id", "action-2" }, { "timing", "gate" }, { "gate-high-ratio", 1.01 }, { "output", { { "ref", "output-id" } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Action_GateHighRatioRange, "/component-pool/actions/0");
+	expectError(validationErrors, ValidationErrorCode::Action_GateHighRatioRange, "/component-pool/actions/1");
+}
+
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingNonGlideAction) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -1180,17 +1247,19 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnGlidePropertiesOnNonGlideA
 			{ { "id", "action-4" }, { "trigger", "trigger-name" }, { "end-value", { { "ref", "value-ref" } } } },
 			{ { "id", "action-5" }, { "trigger", "trigger-name" }, { "ease-factor", 1 } },
 			{ { "id", "action-6" }, { "trigger", "trigger-name" }, { "ease-algorithm", "pow" } },
+			{ { "id", "action-7" }, { "trigger", "trigger-name" }, { "gate-high-ratio", 0.2f } },
 		} ) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 6u);
+	ASSERT_EQ(validationErrors.size(), 7u);
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/1");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/2");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/3");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/4");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/5");
+	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/6");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProperties) {
@@ -1198,19 +1267,20 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 	json["global-actions"] = json::array({
-		{ { "ref", "action-ref"}, { "output", { { "ref", "output-ref" } } } },
-		{ { "ref", "action-ref"}, { "variable", "variable-name" } },
-		{ { "ref", "action-ref"}, { "start-value", { { "ref", "value-ref" } } } },
-		{ { "ref", "action-ref"}, { "end-value", { { "ref", "value-ref" } } } },
-		{ { "ref", "action-ref"}, { "ease-factor", 1 } },
-		{ { "ref", "action-ref"}, { "ease-algorithm", "pow" } },
-		{ { "ref", "action-ref"}, { "if", { { "dummy", "value" } } } },
-		{ { "ref", "action-ref"}, { "timing", "start" } },
-		{ { "ref", "action-ref"}, { "set-value", { { "dummy", "value" } } } },
-		{ { "ref", "action-ref"}, { "set-variable", { { "dummy", "value" } } } },
-		{ { "ref", "action-ref"}, { "set-polyphony", { { "dummy", "value" } } } },
-		{ { "ref", "action-ref"}, { "assert", { { "dummy", "value" } } } },
-		{ { "ref", "action-ref"}, { "trigger", "trigger-name" } },
+		{ { "ref", "action-ref" }, { "output", { { "ref", "output-ref" } } } },
+		{ { "ref", "action-ref" }, { "variable", "variable-name" } },
+		{ { "ref", "action-ref" }, { "start-value", { { "ref", "value-ref" } } } },
+		{ { "ref", "action-ref" }, { "end-value", { { "ref", "value-ref" } } } },
+		{ { "ref", "action-ref" }, { "ease-factor", 1 } },
+		{ { "ref", "action-ref" }, { "ease-algorithm", "pow" } },
+		{ { "ref", "action-ref" }, { "if", { { "dummy", "value" } } } },
+		{ { "ref", "action-ref" }, { "timing", "start" } },
+		{ { "ref", "action-ref" }, { "set-value", { { "dummy", "value" } } } },
+		{ { "ref", "action-ref" }, { "set-variable", { { "dummy", "value" } } } },
+		{ { "ref", "action-ref" }, { "set-polyphony", { { "dummy", "value" } } } },
+		{ { "ref", "action-ref" }, { "assert", { { "dummy", "value" } } } },
+		{ { "ref", "action-ref" }, { "trigger", "trigger-name" } },
+		{ { "ref", "action-ref" }, { "gate-high-ratio", 0.1f } }
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
@@ -1227,4 +1297,45 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/10");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/1");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/12");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGateActionWithNoGateHighRatio) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "output", { { "ref", "ref-output" } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_EQ(script->actions[0].id, "action-1");
+	EXPECT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::GATE);
+	EXPECT_FALSE(script->actions[0].gateHighRatio);
+	ASSERT_TRUE(script->actions[0].output);
+	EXPECT_EQ(script->actions[0].output->ref, "ref-output");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGateActionWithGateHighRatio) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "output", { { "ref", "ref-output" } } }, { "gate-high-ratio", .69f } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_EQ(script->actions[0].id, "action-1");
+	EXPECT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::GATE);
+	ASSERT_TRUE(script->actions[0].gateHighRatio);
+	EXPECT_EQ(*script->actions[0].gateHighRatio, .69f);
+	ASSERT_TRUE(script->actions[0].output);
+	EXPECT_EQ(script->actions[0].output->ref, "ref-output");
 }

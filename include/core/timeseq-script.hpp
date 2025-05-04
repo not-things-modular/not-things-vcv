@@ -140,7 +140,7 @@ struct ScriptAssert {
 };
 
 struct ScriptAction : ScriptRefObject {
-	enum ActionTiming { START, END, GLIDE };
+	enum ActionTiming { START, END, GLIDE, GATE };
 	enum EaseAlgorithm { POW, SIG };
 
 	ActionTiming timing;
@@ -158,6 +158,8 @@ struct ScriptAction : ScriptRefObject {
 	std::unique_ptr<EaseAlgorithm> easeAlgorithm;
 	std::unique_ptr<ScriptOutput> output;
 	std::string variable;
+
+	std::unique_ptr<float> gateHighRatio;
 };
 
 struct ScriptDuration {

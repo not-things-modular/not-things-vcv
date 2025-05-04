@@ -717,7 +717,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 	populateRef(action, actionJson, allowRefs, validationErrors, location);
 	if (action.ref.length() > 0) {
-		if (hasOneOf(actionJson, { "timing", "set-value", "set-variable", "set-polyphony", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if" })) {
+		if (hasOneOf(actionJson, { "timing", "set-value", "set-variable", "set-polyphony", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" })) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
 		}
 	} else {
@@ -731,8 +731,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.timing = ScriptAction::ActionTiming::END;
 			} else if (*timing == "glide") {
 				action.timing = ScriptAction::ActionTiming::GLIDE;
+			} else if (*timing == "gate") {
+				action.timing = ScriptAction::ActionTiming::GATE;
 			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TimingEnum, "timing must be either 'start', 'end' or 'glide'.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TimingEnum, "timing must be either 'start', 'end', 'glide' or 'gate'.");
 			}
 		} else {
 			action.timing = ScriptAction::ActionTiming::START;
@@ -854,6 +856,18 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			}
 		}
 
+		json::const_iterator gateHighRatio = actionJson.find("gate-high-ratio");
+		if (gateHighRatio != actionJson.end()) {
+			if (gateHighRatio->is_number()) {
+				action.gateHighRatio.reset(new float(gateHighRatio->get<float>()));
+				if ((*action.gateHighRatio.get() < 0.f) || (*action.gateHighRatio.get() > 1.f)) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GateHighRatioRange, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GateHighRatioFloat, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+			}
+		}
+
 		json::const_iterator output = actionJson.find("output");
 		if (output != actionJson.end()) {
 			if (output->is_object()) {
@@ -891,8 +905,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		}
 
 		if (action.timing == ScriptAction::ActionTiming::GLIDE) {
-			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.assert) || (action.trigger.size() > 0)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert' and 'trigger' can not be used in combination with 'GLIDE' timing.");
+			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.assert) || (action.trigger.size() > 0) || (action.gateHighRatio)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert', 'trigger' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.startValue) || (!action.endValue)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when for 'GLIDE' timing.");
@@ -903,9 +917,16 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if ((action.output) && (action.variable.length() > 0)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when for 'GLIDE' timing.");
 			}
+		} else if (action.timing == ScriptAction::ActionTiming::GATE) {
+			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.assert) || (action.trigger.size() > 0) || (action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert', 'trigger', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
+			}
+			if (action.variable.length() > 0) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'variable' can only be used in combination with 'GLIDE' timing.");
+			}
 		} else {
-			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can only be used in combination with 'GLIDE' timing.");
+			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm) || (action.gateHighRatio)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' 'ease-algorithm' and 'gate-high-ratio' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((action.output) || (action.variable.length() > 0)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");

@@ -296,6 +296,16 @@ void ActionTriggerProcessor::processAction() {
 	m_triggerHandler->setTrigger(m_trigger);
 }
 
+ActionOngoingProcessor::ActionOngoingProcessor(shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
+
+void ActionOngoingProcessor::start(uint64_t glideLength) {
+	m_if = (!m_ifProcessor) || m_ifProcessor->process(nullptr);
+}
+
+bool ActionOngoingProcessor::shouldProcess() {
+	return m_if;
+}
+
 ActionGlideProcessor::ActionGlideProcessor(
 	float easeFactor,
 	bool easePow,
@@ -307,7 +317,7 @@ ActionGlideProcessor::ActionGlideProcessor(
 	string variable,
 	PortHandler* portHandler,
 	VariableHandler* variableHandler) :
-		m_easeFactor(easeFactor), m_easePow(easePow), m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_ifProcessor(ifProcessor), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {
+		ActionOngoingProcessor(ifProcessor), m_easeFactor(easeFactor), m_easePow(easePow), m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {
 
 	if (!m_easePow) {
 		// Multiply the ease factor if we're using the sigmoid function since it reacts slower to the easing factor when compared to the power-based algorithm.
@@ -316,16 +326,19 @@ ActionGlideProcessor::ActionGlideProcessor(
 }
 
 void ActionGlideProcessor::start(uint64_t glideLength) {
-	m_startValue = m_startValueProcessor->process();
-	m_endValue = m_endValueProcessor->process();
-	m_if = (!m_ifProcessor) || m_ifProcessor->process(nullptr);
+	ActionOngoingProcessor::start(glideLength);
 
-	m_valueDelta = m_endValue - m_startValue;
-	m_durationInverse = 1. / glideLength;
+	if (shouldProcess()) {
+		m_startValue = m_startValueProcessor->process();
+		m_endValue = m_endValueProcessor->process();
+
+		m_valueDelta = m_endValue - m_startValue;
+		m_durationInverse = 1. / glideLength;
+	}
 }
 
 void ActionGlideProcessor::process(uint64_t glidePosition) {
-	if (m_if) {
+	if (shouldProcess()) {
 		// The position coming from the DurationProcessor goes from 1 until duration.
 		// For glide actions, we want the first call to be at position 0 so that the exact start value is used for the first iteration.
 		// The glide will then run through the range in the process() until just before the exact end value, and the exact end value will be set when the end() method is called.
@@ -348,7 +361,7 @@ void ActionGlideProcessor::process(uint64_t glidePosition) {
 }
 
 void ActionGlideProcessor::end() {
-	if (m_if) {
+	if (shouldProcess()) {
 		if (m_variable.length() > 0) {
 			m_variableHandler->setVariable(m_variable, m_endValue);
 		} else {
@@ -373,6 +386,38 @@ double ActionGlideProcessor::calculateSigEase(float ease, uint64_t glidePosition
 	}
 }
 
+
+ActionGateProcessor::ActionGateProcessor(float gateHighRatio, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
+	ActionOngoingProcessor(ifProcessor), m_portHandler(portHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_gateHighRatio(gateHighRatio) {}
+
+void ActionGateProcessor::start(uint64_t glideLength) {
+	ActionOngoingProcessor::start(glideLength);
+
+	if (shouldProcess()) {
+		// There should be at least one high sample in the gate
+		m_gateLowPosition = std::fmax(std::ceil(m_gateHighRatio * glideLength), 1.f);
+
+		m_gateHigh = true;
+		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, 10.f);
+	}
+}
+
+void ActionGateProcessor::process(uint64_t glidePosition) {
+	if ((shouldProcess()) && (m_gateHigh)) {
+		if (glidePosition > m_gateLowPosition) {
+			m_gateHigh = false;
+			m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, 0.f);
+		}
+	}
+}
+
+void ActionGateProcessor::end() {
+	if ((shouldProcess()) && (m_gateHigh)) {
+		m_gateHigh = false;
+		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, 0.f);
+	}
+}
+	
 
 DurationProcessor::DurationProcessor(uint64_t duration, double drift) : m_duration(duration), m_drift(drift) {}
 
@@ -421,9 +466,9 @@ SegmentProcessor::SegmentProcessor(
 	shared_ptr<DurationProcessor> duration,
 	vector<shared_ptr<ActionProcessor>> startActions,
 	vector<shared_ptr<ActionProcessor>> endActions,
-	vector<shared_ptr<ActionGlideProcessor>> glideActions,
+	vector<shared_ptr<ActionOngoingProcessor>> ongoingActions,
 	EventListener* eventListener) :
-		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_glideActions(glideActions), m_eventListener(eventListener) {}
+		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_ongoingActions(ongoingActions), m_eventListener(eventListener) {}
 
 DurationProcessor::DurationState SegmentProcessor::getState() {
 	return m_duration->getState();
@@ -448,10 +493,10 @@ double SegmentProcessor::process(double drift) {
 			// Shouldn't occur since duration processing will move us away from the start state
 			break;
 		case DurationProcessor::DurationState::STATE_PROGRESS:
-			processGlideActions(starting, false);
+			processOngoingActions(starting, false);
 			break;
 		case DurationProcessor::DurationState::STATE_END:
-			processGlideActions(false, true);
+			processOngoingActions(false, true);
 			processEndActions();
 			break;
 	}
@@ -475,8 +520,8 @@ void SegmentProcessor::processEndActions() {
 	}
 }
 
-void SegmentProcessor::processGlideActions(bool start, bool end) {
-	for (vector<shared_ptr<ActionGlideProcessor>>::iterator it = m_glideActions.begin(); it != m_glideActions.end(); it++) {
+void SegmentProcessor::processOngoingActions(bool start, bool end) {
+	for (vector<shared_ptr<ActionOngoingProcessor>>::iterator it = m_ongoingActions.begin(); it != m_ongoingActions.end(); it++) {
 		if (start) {
 			(*it)->start(m_duration->getDuration());
 		}
