@@ -549,17 +549,19 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 
 shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {
 	if (scriptCalc->ref.length() == 0) {
-		if (scriptCalc->operation == ScriptCalc::CalcOperation::ADD) {
-			location.push_back("add");
-		} else if (scriptCalc->operation == ScriptCalc::CalcOperation::SUB) {
-			location.push_back("sub");
-		} else if (scriptCalc->operation == ScriptCalc::CalcOperation::DIV) {
-			location.push_back("div");
-		} else if (scriptCalc->operation == ScriptCalc::CalcOperation::MULT) {
-			location.push_back("mult");
-		} else {
-			// Should already have been filtered by json parsing, so should not occur
-			location.push_back(" ");
+		switch (scriptCalc->operation) {
+			case ScriptCalc::CalcOperation::ADD:
+				location.push_back("add");
+				break;
+			case ScriptCalc::CalcOperation::SUB:
+				location.push_back("sub");
+				break;
+			case ScriptCalc::CalcOperation::DIV:
+				location.push_back("div");
+				break;
+			case ScriptCalc::CalcOperation::MULT:
+				location.push_back("mult");
+				break;
 		}
 
 		shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
@@ -596,29 +598,35 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseConte
 	bool parseValues = true;
 	bool parseIfs = false;
 
-	if (scriptIf->ifOperator == ScriptIf::IfOperator::EQ) {
-		location.push_back("eq");
-	} else if (scriptIf->ifOperator == ScriptIf::IfOperator::NE) {
-		location.push_back("ne");
-	} else if (scriptIf->ifOperator == ScriptIf::IfOperator::LT) {
-		location.push_back("lt");
-	} else if (scriptIf->ifOperator == ScriptIf::IfOperator::LTE) {
-		location.push_back("lte");
-	} else if (scriptIf->ifOperator == ScriptIf::IfOperator::GT) {
-		location.push_back("gt");
-	} else if (scriptIf->ifOperator == ScriptIf::IfOperator::GTE) {
-		location.push_back("gte");
-	} else if (scriptIf->ifOperator == ScriptIf::IfOperator::AND) {
-		parseValues = false;
-		parseIfs = true;
-		location.push_back("and");
-	} else if (scriptIf->ifOperator == ScriptIf::IfOperator::OR) {
-		parseValues = false;
-		parseIfs = true;
-		location.push_back("or");
-	} else {
-		parseValues = false;
-		location.push_back(" ");
+	switch (scriptIf->ifOperator) {
+		case ScriptIf::IfOperator::EQ:
+			location.push_back("eq");
+			break;
+		case ScriptIf::IfOperator::NE:
+			location.push_back("ne");
+			break;
+		case ScriptIf::IfOperator::LT:
+			location.push_back("lt");
+			break;
+		case ScriptIf::IfOperator::LTE:
+			location.push_back("lte");
+			break;
+		case ScriptIf::IfOperator::GT:
+			location.push_back("gt");
+			break;
+		case ScriptIf::IfOperator::GTE:
+			location.push_back("gte");
+			break;
+		case ScriptIf::IfOperator::AND:
+			parseValues = false;
+			parseIfs = true;
+			location.push_back("and");
+			break;
+		case ScriptIf::IfOperator::OR:
+			parseValues = false;
+			parseIfs = true;
+			location.push_back("or");
+			break;
 	}
 
 	if (parseValues) {

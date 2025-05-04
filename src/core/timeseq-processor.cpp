@@ -27,10 +27,9 @@ double CalcProcessor::calc(double value) {
 			} else {
 				return 0.;
 			}
-		default:
-			// Shouldn't occur due to script parsing, but just to be sure...
-			return value;
 	}
+	
+	return value;
 }
 
 
@@ -154,7 +153,7 @@ bool IfProcessor::process(string* message) {
 			case ScriptIf::IfOperator::AND:
 				return m_ifs.first->process(nullptr) && m_ifs.second->process(nullptr);
 			case ScriptIf::IfOperator::OR:
-				return m_ifs.second->process(nullptr) || m_ifs.second->process(nullptr);
+				return m_ifs.first->process(nullptr) || m_ifs.second->process(nullptr);
 		}
 
 		return false;

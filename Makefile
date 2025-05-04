@@ -55,11 +55,11 @@ TEST_OBJS = $(patsubst $(TEST_DIR)/%.cpp, $(BUILD_DIR)/test/%.o, $(TEST_SRCS))
 
 $(BUILD_DIR)/googletest/gtest%.o: $(GTEST_DIR)/googletest/src/gtest%.cc
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(GTEST_DIR)/googletest/include -I$(GTEST_DIR)/googletest -c $< -o $@
+	$(CXX) $(GTEST_NO_ERROR_CXXFLAGS) -I$(GTEST_DIR)/googletest/include -I$(GTEST_DIR)/googletest -c $< -o $@
 
 $(BUILD_DIR)/googletest/gmock%.o: $(GTEST_DIR)/googlemock/src/gmock%.cc
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(GTEST_DIR)/googlemock/include -I$(GTEST_DIR)/googlemock -I$(GTEST_DIR)/googletest/include -c $< -o $@
+	$(CXX) $(GTEST_NO_ERROR_CXXFLAGS) -I$(GTEST_DIR)/googlemock/include -I$(GTEST_DIR)/googlemock -I$(GTEST_DIR)/googletest/include -c $< -o $@
 
 $(BUILD_DIR)/test/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(dir $@)
@@ -68,9 +68,14 @@ $(BUILD_DIR)/test/%.o: $(TEST_DIR)/%.cpp
 # If the Rack buildscript added the "-municode" flag to the CXXFLAGS (e.g. on Windows), remove that for the tests, since it will trigger a UI build instead of a commandline build.
 GTEST_CXXFLAGS := $(filter-out -municode, $(CXXFLAGS))
 
+# For the compilation of the actual google test code itself, remove the -Werror since there is a warning in there...
+GTEST_NO_ERROR_CXXFLAGS := $(filter-out -Werror, $(CXXFLAGS))
+
+# The google test library has a warning, so don't fail on warnings when compiling the tests...
 $(GTEST_TARGET): $(TEST_OBJS) $(OBJECTS) $(GTEST_OBJS)
 	$(CXX) $(GTEST_CXXFLAGS) $^ -o $(GTEST_TARGET) -pthread -L../.. -lRack -static-libgcc
 
+test: CXXFLAGS += -Werror
 test: all $(GTEST_TARGET)
 # Remove any possible remaining coverage files in case the previous run was a test-coverage run (otherwise, the metrics might accumulate over runs)
 	lcov --directory build --zerocounters
