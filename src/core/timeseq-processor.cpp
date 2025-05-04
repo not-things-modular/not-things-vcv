@@ -65,13 +65,19 @@ const float quantize_treshholds[][2] = {
 	{ (9.f / 12) + (1.f / 24), (9.f / 12) }, // A
 	{ (10.f / 12) + (1.f / 24), (10.f / 12) }, // Bb
 	{ (11.f / 12) + (1.f / 24), (11.f / 12) }, // B
+	{ 1.f, 1.f }, // C
 };
 
 double ValueProcessor::quantize(double value) {
 	double octave;
 	double note = std::modf(value, &octave);
 
-	for (int i = 0; i < 12; i++) {
+	if (note < 0.f) {
+		note += 1.f;
+		octave -= 1;
+	}
+
+	for (int i = 0; i < 13; i++) {
 		if (note < quantize_treshholds[i][0]) {
 			note = quantize_treshholds[i][1];
 			break;
