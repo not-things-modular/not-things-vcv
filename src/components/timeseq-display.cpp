@@ -18,7 +18,7 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 		nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 		nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 
-		int offset = 0;
+		int offset = 2.f;
 		for (std::vector<TimeSeqVoltagePoints>::iterator it = m_voltagePoints.begin(); it != m_voltagePoints.end(); it++) {
 			float v = std::min(std::max(it->voltage, -10.f), 10.f);
 			float factor = it->age < 31 ? (30.f - it->age) / 30.f : 0.f;
@@ -28,12 +28,12 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 			nvgBeginPath(args.vg);
 			nvgStrokeWidth(args.vg, 1.f);
-			nvgRoundedRect(args.vg, 1.f, 166.f - offset, 37.f, 9.f, 2.f);
+			nvgRoundedRect(args.vg, offset, 2.f, 9.f, box.getHeight() - 4.f, 2.f);
 			nvgStroke(args.vg);
 
 			nvgBeginPath(args.vg);
 			nvgStrokeWidth(args.vg, 0.f);
-			nvgRoundedRect(args.vg, 19.5f, 167.f - offset, 17.5f * (v / 10.f), 7.f, 1.f);
+			nvgRoundedRect(args.vg, offset + 1.f, 20.5, 7.f, 17.5f * (v / 10.f), 1.f);
 			nvgFill(args.vg);
 			nvgStroke(args.vg);
 

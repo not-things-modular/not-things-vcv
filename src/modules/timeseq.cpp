@@ -329,41 +329,44 @@ std::vector<std::string>& TimeSeqModule::getFailedAsserts() {
 
 
 TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "timeseq") {
-	float xIn = 24;
-	float xOut = 126.f+60.f+15.f-45.f+15.f;
-	float y = 41.5;
-	float yDelta = 40;
-	for (int i = 0; i < 8; i++) {
+	float xIn = 24.f;
+	float xOut = 127.f;
+	float y = 201.5f;
+	float xDelta = 44.f;
+	float yDelta = 40.f;
+	for (int i = 0; i < 4; i++) {
 		addInput(createInputCentered<NTPort>(Vec(xIn, y), module, TimeSeqModule::IN_INPUTS + i));
+		addInput(createInputCentered<NTPort>(Vec(xIn + xDelta, y), module, TimeSeqModule::IN_INPUTS + i + 4));
 		addOutput(createOutputCentered<NTPort>(Vec(xOut, y), module, TimeSeqModule::OUT_OUTPUTS + i));
+		addOutput(createOutputCentered<NTPort>(Vec(xOut + xDelta, y), module, TimeSeqModule::OUT_OUTPUTS + i + 4));
 		y += yDelta;
 	}
 
-	addInput(createInputCentered<NTPort>(Vec(68.f+7.5f, 66.5f), module, TimeSeqModule::IN_RUN));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(68.f+7.5f, 113.f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
-	addOutput(createOutputCentered<NTPort>(Vec(68.f+7.5f, 146.5f), module, TimeSeqModule::OUT_RUN));
-	addInput(createInputCentered<NTPort>(Vec(112.f+7.5f, 206.5f-140.f), module, TimeSeqModule::IN_RESET));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(112.f+7.5f, 253.f-140.f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
-	addOutput(createOutputCentered<NTPort>(Vec(112.f+7.5f, 286.5f-140.f), module, TimeSeqModule::OUT_RESET));
-	addInput(createInputCentered<NTPort>(Vec(68.f+7.5f, 66.5f+135.f), module, TimeSeqModule::IN_RATE));
-	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(68.f+7.5f, 112.f+135.f), module, TimeSeqModule::PARAM_RATE));
+	addInput(createInputCentered<NTPort>(Vec(24.f, 38.f), module, TimeSeqModule::IN_RUN));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(24.f, 80.f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
+	addOutput(createOutputCentered<NTPort>(Vec(24.f, 111.f), module, TimeSeqModule::OUT_RUN));
+	addInput(createInputCentered<NTPort>(Vec(68.f, 38.f), module, TimeSeqModule::IN_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(68.f, 80.f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
+	addOutput(createOutputCentered<NTPort>(Vec(68.f, 111.f), module, TimeSeqModule::OUT_RESET));
+	addInput(createInputCentered<NTPort>(Vec(130.f, 62.5f), module, TimeSeqModule::IN_RATE));
+	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(168.5f, 62.5f), module, TimeSeqModule::PARAM_RATE));
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(53.5f+7.5f, 90.f), module, TimeSeqModule::LightId::LIGHT_READY));
-	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(53.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_LANE_LOOPED));
-	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(68.f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
-	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(82.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
+	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(9.5f, 60.f), module, TimeSeqModule::LightId::LIGHT_READY));
+	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(86.f, 355.5f), module, TimeSeqModule::LightId::LIGHT_LANE_LOOPED));
+	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(97.5f, 355.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
+	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(109.f, 355.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
 
-	addChild(createParamCentered<VCVButton>(Vec(92.5f + 10.f -2.f + 23.f - 44.f + 7.5f, 315.f), module, TimeSeqModule::PARAM_RESET_CLOCK));
+	addChild(createParamCentered<VCVButton>(Vec(168.5f, 120.f), module, TimeSeqModule::PARAM_RESET_CLOCK));
 
-	TimeSeqDisplay* timeSeqDisplay = createWidget<TimeSeqDisplay>(Vec(92.5f+7.5f, 174.f));
-	timeSeqDisplay->setSize(Vec(39.f, 178.f));
+	TimeSeqDisplay* timeSeqDisplay = createWidget<TimeSeqDisplay>(Vec(8.5f, 134.5f));
+	timeSeqDisplay->setSize(Vec(178.f, 41.f));
 	addChild(timeSeqDisplay);
 	if (module != nullptr) {
 		module->m_timeSeqDisplay = timeSeqDisplay;
 	}
 
 	LEDDisplay* ledDisplay = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "88:88", 10, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, true);
-	ledDisplay->setPosition(Vec(47.5f+7.5f+.25, 284.f+.25));
+	ledDisplay->setPosition(Vec(112.5f, 111.f));
 	ledDisplay->setSize(Vec(41.f, 18.f));
 	addChild(ledDisplay);
 	if (module != nullptr) {
