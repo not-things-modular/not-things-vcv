@@ -27,7 +27,11 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 	ProcessorScriptParseContext context;
 
 	context.script = script;
-	context.validationErrors = validationErrors;
+	if (validationErrors != nullptr) {
+		context.validationErrors = validationErrors;
+	} else {
+		context.validationErrors = new vector<ValidationError>();
+	}
 
 	int count = 0;
 	location.push_back("timelines");

@@ -76,10 +76,13 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 
 	std::vector<std::string>& getFailedAsserts();
 
-	TimeSeqDisplay* m_timeSeqDisplay = nullptr;
-	LEDDisplay* m_ledDisplay = nullptr;
+	void setTimeSeqDisplay(TimeSeqDisplay* timeSeqDisplay);
+	void setLEDDisplay(LEDDisplay* ledDisplay);
 
 	private:
+		TimeSeqDisplay* m_timeSeqDisplay = nullptr;
+		LEDDisplay* m_ledDisplay = nullptr;
+
 		timeseq::TimeSeqCore *m_timeSeqCore;
 		std::shared_ptr<std::string> m_script;
 		std::list<std::string> m_lastScriptLoadErrors;
@@ -109,6 +112,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		void resetUi();
 		void resetOutputs();
 		void updateOutputs();
+		void setStatusMessage(std::string message);
 };
 
 struct TimeSeqWidget : NTModuleWidget {

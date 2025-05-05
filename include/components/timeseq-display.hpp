@@ -20,6 +20,9 @@ struct TimeSeqDisplay : widget::Widget {
 	void ageVoltages();
 	void reset();
 
+	void setMessage(std::string message);
+
 	private:
 		std::vector<TimeSeqVoltagePoints> m_voltagePoints;
+		std::string m_message;
 };

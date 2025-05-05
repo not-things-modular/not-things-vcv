@@ -37,7 +37,7 @@ TimeSeqModule::TimeSeqModule() {
 	pq->smoothEnabled = false;
 
 	m_portChannelChangeClockDivider.setDivision(48000 / 30);
-	m_failedAssertBlinkClockDivider.setDivision(40000);
+	m_failedAssertBlinkClockDivider.setDivision(48000);
 
 	resetUi();
 }
@@ -78,37 +78,34 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
 			m_startDelay = 10; // Introduce a 10 sample delay in the processing when a start is received from the data JSON to allow any other setup in the patch to complete.
 			m_timeSeqCore->start();
+			setStatusMessage("");
 		}
 	}
 }
 
 void TimeSeqModule::process(const ProcessArgs& args) {
-	// Process any triggers that may have happened
+	// Reset the timer if requested
 	if (m_buttonTrigger[TriggerId::TRIG_RESET_CLOCK].process(params[ParamId::PARAM_RESET_CLOCK].getValue())) {
 		m_timeSeqCore->resetElapsedSamples();
 	}
 
+	// If the core has a script loaded, perform the core processing
 	if (m_timeSeqCore->getStatus() != timeseq::TimeSeqCore::Status::EMPTY) {
 		bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
 		bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
 
 		// Change the run state if needed
 		if (runTriggered) {
-			switch (m_timeSeqCore->getStatus()) {
-				case timeseq::TimeSeqCore::Status::IDLE:
-				case timeseq::TimeSeqCore::Status::PAUSED:
-					m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
-					m_timeSeqCore->start();
-					m_runPulse.trigger(0.001f);
-					break;
-				case timeseq::TimeSeqCore::Status::RUNNING:
-					m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
-					m_timeSeqCore->pause();
-					m_runPulse.trigger(0.001f);
-					break;
-				case timeseq::TimeSeqCore::Status::EMPTY:
-					// Can't run if no script is loaded
-					break;
+			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
+			m_runPulse.trigger(0.001f);
+			if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+				// If the core is running, we should pause it now
+				m_timeSeqCore->pause();
+				setStatusMessage("");
+			} else {
+				// Otherwise (if it is paused or idle), we should start it
+				m_timeSeqCore->start();
+				setStatusMessage("");
 			}
 		}
 
@@ -119,35 +116,40 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 
 			resetUi();
 			m_timeSeqCore->reset();
-
-			m_failedAsserts.clear();
 		}
 
 		if (m_startDelay > 0) {
+			// We're still right after the load of a start, so wait another cycle before actually processing
 			m_startDelay--;
 		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+			// Check the rate to see how many process calls should actually be done on the core.
 			int rate = params[TimeSeqModule::ParamId::PARAM_RATE].getValue();
 			if (rate < -1) {
+				// We're running at slower-then-real-time, so check the rateDivision if we should advance by one cycle on the core
 				m_rateDivision++;
 				if (m_rateDivision >= -rate) {
 					m_rateDivision = 0;
 					m_timeSeqCore->process();
 				}
 			} else if (rate > 1) {
+				// We're going faster-then-real-time, so advance the core with multiple cycles.
 				m_rateDivision = 0;
 				for (int i = 0; i < rate; i++) {
 					m_timeSeqCore->process();
 				}
 			} else {
+				// anything from -1 to 1 is considered real-time, so advance a single cycle.
 				m_rateDivision = 0;
 				m_timeSeqCore->process();
 			}
 		}
 	}
 
+	// Check if we should update the UI visualization of the changed voltages in this cycle
 	if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_portChannelChangeClockDivider.process())) {
 		if (m_timeSeqDisplay != nullptr) {
 			if (m_changedPortChannelVoltages.size() > 0) {
+				// If there are changed voltages since the last time we checked, apply them now.
 				m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputVoltages);
 				m_changedPortChannelVoltages.clear();
 			} else {
@@ -157,6 +159,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		}
 	}
 
+	// If there are failed asserts, blink the reset light to indicate this.
 	if ((m_failedAsserts.size() > 0) && (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_failedAssertBlinkClockDivider.process())) {
 		lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
 	}
@@ -167,6 +170,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 }
 
 void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
+	// Update the event LEDs
 	lights[LightId::LIGHT_LANE_LOOPED].setBrightnessSmooth(m_laneLooped, .01f);
 	m_laneLooped = false;
 	lights[LightId::LIGHT_SEGMENT_STARTED].setBrightnessSmooth(m_segmentStarted, .01f);
@@ -174,33 +178,40 @@ void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
 	lights[LightId::LIGHT_TRIGGER_TRIGGERED].setBrightnessSmooth(m_triggerTriggered, .01f);
 	m_triggerTriggered = false;
 
+	// Update the status LEDs
 	lights[LightId::LIGHT_READY].setBrightnessSmooth((bool) m_script, .01f);
 	lights[LightId::LIGHT_NOT_READY].setBrightnessSmooth(!(bool) m_script, .01f);
 	lights[LightId::LIGHT_RUN].setBrightnessSmooth((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::RUNNING), .01f, 20.f);
 	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f, 20.f);
 
-	int sampleRate = getSampleRate();
-	uint32_t elapsedSamples = m_timeSeqCore->getElapsedSamples();
-	int seconds = elapsedSamples / sampleRate;
-	int minutes = seconds / 60;
-	seconds -= minutes * 60;
-	m_ledDisplay->setForegroundText(string::f("%02d:%02d", minutes, seconds));
+	// Update the time display
+	if (m_timeSeqCore->getStatus() != timeseq::TimeSeqCore::Status::EMPTY) {
+		int sampleRate = getSampleRate();
+		uint32_t elapsedSamples = m_timeSeqCore->getElapsedSamples();
+		int seconds = elapsedSamples / sampleRate;
+		int minutes = seconds / 60;
+		seconds -= minutes * 60;
+		m_ledDisplay->setForegroundText(string::f("%02d:%02d", minutes, seconds));
+	} else {
+		m_ledDisplay->setForegroundText("--:--");
+	}
 }
 
 void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
+	// If one of the output ports gets (dis)connected, re-apply the port polyphony and voltages in case they were reset.
 	updateOutputs();
 }
 
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
-	if (sampleRateChangeEvent.sampleRate != m_timeSeqCore->getSampleRate()) {
+	if (sampleRateChangeEvent.sampleRate != m_timeSeqCore->getCurrentSampleRate()) {
+		// Reload the script to recalculate based on the new sample rate and reset the UI
 		m_timeSeqCore->reloadScript();
 		resetUi();
 
-		m_portChannelChangeClockDivider.setDivision(sampleRateChangeEvent.sampleRate);
+		m_portChannelChangeClockDivider.setDivision(sampleRateChangeEvent.sampleRate / 30);
 		m_failedAssertBlinkClockDivider.setDivision(sampleRateChangeEvent.sampleRate);
 	}
 }
-
 
 float TimeSeqModule::getInputPortVoltage(int index, int channel) {
 	return inputs[InputId::IN_INPUTS + index].getVoltage(channel);
@@ -242,10 +253,12 @@ void TimeSeqModule::triggerTriggered() {
 }
 
 void TimeSeqModule::assertFailed(std::string name, std::string message, bool stop) {
+	// We'll only keep the first 25 assert failures in memory.
 	if (m_failedAsserts.size() < 25) {
 		m_failedAsserts.push_back(string::f("Assert '%s' failed due to expectation '%s'.", name.c_str(), message.c_str()));
 	}
 
+	// If it's an assert that also stops the running state, do so now.
 	if ((stop) && (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING)) {
 		m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
 		m_timeSeqCore->pause();
@@ -264,12 +277,15 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 	if (errors.size() == 0) {
 		m_script = script;
 		resetUi();
-		m_failedAsserts.clear();
+		// If we were running before the script was loaded, start running the new script
 		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
 			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
 			m_timeSeqCore->start();
 			m_runPulse.trigger(0.001f);
-}
+			setStatusMessage("");
+		} else {
+			setStatusMessage("Script  loaded");
+		}
 		return std::string();
 	} else {
 		std::ostringstream errorMessage;
@@ -283,6 +299,11 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 			}
 		}
 
+		if (m_timeSeqCore->getStatus() != timeseq::TimeSeqCore::Status::EMPTY) {
+			setStatusMessage("");
+		} else {
+			setStatusMessage("Script  failed  to  load");
+		}
 		return errorMessage.str();
 	}
 }
@@ -292,6 +313,7 @@ void TimeSeqModule::resetUi() {
 	if (m_timeSeqDisplay) {
 		m_timeSeqDisplay->reset();
 	}
+	m_failedAsserts.clear();
 }
 
 void TimeSeqModule::resetOutputs() {
@@ -312,11 +334,17 @@ void TimeSeqModule::updateOutputs() {
 	}
 }
 
+void TimeSeqModule::setStatusMessage(std::string message) {
+	if (m_timeSeqDisplay) {
+		m_timeSeqDisplay->setMessage(message);
+	}
+}
+
 void TimeSeqModule::clearScript() {
 	m_timeSeqCore->clearScript();
 	m_script.reset();
 	resetUi();
-	m_failedAsserts.clear();
+	setStatusMessage("No  script  loaded");
 }
 
 std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
@@ -325,6 +353,19 @@ std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
 
 std::vector<std::string>& TimeSeqModule::getFailedAsserts() {
 	return m_failedAsserts;
+}
+
+void TimeSeqModule::setTimeSeqDisplay(TimeSeqDisplay* timeSeqDisplay) {
+	m_timeSeqDisplay = timeSeqDisplay;
+	if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::EMPTY) {
+		setStatusMessage("No  script  loaded");
+	} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::IDLE) {
+		setStatusMessage("Script  loaded");
+	}
+}
+
+void TimeSeqModule::setLEDDisplay(LEDDisplay* ledDisplay) {
+	m_ledDisplay = ledDisplay;
 }
 
 
@@ -359,7 +400,7 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 	timeSeqDisplay->setSize(Vec(39.f, 178.f));
 	addChild(timeSeqDisplay);
 	if (module != nullptr) {
-		module->m_timeSeqDisplay = timeSeqDisplay;
+		module->setTimeSeqDisplay(timeSeqDisplay);
 	}
 
 	LEDDisplay* ledDisplay = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "88:88", 10, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, true);
@@ -367,7 +408,7 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 	ledDisplay->setSize(Vec(41.f, 18.f));
 	addChild(ledDisplay);
 	if (module != nullptr) {
-		module->m_ledDisplay = ledDisplay;
+		module->setLEDDisplay(ledDisplay);
 	}
 }
 

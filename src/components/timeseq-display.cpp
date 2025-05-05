@@ -5,6 +5,8 @@
 #define CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier >> 5)
 #define PORT_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier & 0xF)
 
+extern Plugin* pluginInstance;
+
 void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	if (layer != 1) {
 		return;
@@ -12,9 +14,27 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 	nvgSave(args.vg);
 
-	if (m_voltagePoints.size() > 0) {
+	if (m_message.length() > 0) {
+		nvgRotate(args.vg, nvgDegToRad(-90.f));
+		// nvgScissor(args.vg, 0, 0, box.getHeight(), box.getWidth());
 		nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 
+		std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
+		if (font && font->handle >= 0) {
+			nvgBeginPath(args.vg);
+			nvgFontFaceId(args.vg, font->handle);
+			nvgTextLetterSpacing(args.vg, 0.0);
+			nvgFontSize(args.vg, 10.f);
+			nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+
+			nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xAA));
+			nvgText(args.vg, -getBox().getHeight() / 2, getBox().getWidth() / 2, m_message.c_str(), NULL);
+			nvgFill(args.vg);
+		}
+
+		// nvgResetScissor(args.vg);
+		nvgResetTransform(args.vg);
+	} else if (m_voltagePoints.size() > 0) {
 		nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 		nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 
@@ -106,4 +126,8 @@ void TimeSeqDisplay::ageVoltages() {
 
 void TimeSeqDisplay::reset() {
 	m_voltagePoints.clear();
+}
+
+void TimeSeqDisplay::setMessage(std::string message) {
+	m_message = message;
 }

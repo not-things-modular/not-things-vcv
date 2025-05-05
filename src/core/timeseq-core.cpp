@@ -132,16 +132,16 @@ void TimeSeqCore::setVariable(std::string name, float value) {
 	}
 }
 
+std::vector<std::string>& TimeSeqCore::getTriggers() {
+	return m_triggers[m_triggerIdx];
+}
+
 void TimeSeqCore::setTrigger(std::string name) {
 	m_triggers[!m_triggerIdx].push_back(name);
 	m_eventListener->triggerTriggered();
 }
 
-std::vector<std::string>& TimeSeqCore::getTriggers() {
-	return m_triggers[m_triggerIdx];
-}
-
-uint32_t TimeSeqCore::getSampleRate() {
+uint32_t TimeSeqCore::getCurrentSampleRate() {
 	return m_sampleRate;
 }
 
