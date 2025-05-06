@@ -19,6 +19,7 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 	nvgSave(args.vg);
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
+	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
 	if (m_timeSeqCore) {
 		uint32_t tripSampleRate = m_timeSeqCore->getCurrentSampleRate() * 3;
@@ -44,32 +45,45 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 			}
 		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
 			nvgStrokeWidth(args.vg, 1.f);
-			float arcDelta = (box.getWidth() - 2.f) / 4;
-			float arcOffset = 1.f + arcDelta / 2;
+			float arcDelta = box.getWidth() / 4;
+			float arcOffset = 0.f + arcDelta / 2;
 
-			float offset1, offset2;
+			float offset1, offset2, offset3;
 			if (index == 0.f) {
 				offset1 = arcOffset;
 				offset2 = arcOffset + arcDelta * 3;
+				offset3 = arcOffset + arcDelta * 2;
 			} else if (index == 1.f) {
 				offset1 = arcOffset + arcDelta;
 				offset2 = arcOffset;
+				offset3 = arcOffset + arcDelta * 3;
 			} else if (index == 2.f) {
 				offset1 = arcOffset + arcDelta * 2;
 				offset2 = arcOffset + arcDelta;
+				offset3 = arcOffset;
 			} else {
 				offset1 = arcOffset + arcDelta * 3;
 				offset2 = arcOffset + arcDelta * 2;
+				offset3 = arcOffset + arcDelta;
 			}
 
 			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, (0x55 + 0x55)));
 			nvgBeginPath(args.vg);
+			// nvgCircle(args.vg, arcOffset + arcDelta * 0, 4.5, 3.5f);
+			// nvgCircle(args.vg, arcOffset + arcDelta * 1, 4.5, 3.5f);
+			// nvgCircle(args.vg, arcOffset + arcDelta * 2, 4.5, 3.5f);
+			// nvgCircle(args.vg, arcOffset + arcDelta * 3, 4.5, 3.5f);
 			nvgArc(args.vg, offset1, 4.5f, 3.5f, START_ARC, START_ARC + (END_ARC - START_ARC) * fraction, NVG_CW);
 			nvgStroke(args.vg);
 			nvgBeginPath(args.vg);
 			nvgArc(args.vg, offset2, 4.5f, 3.5f, START_ARC + (END_ARC - START_ARC) * fraction, END_ARC, NVG_CW);
 			nvgMoveTo(args.vg, offset2 - 3.5, 4.5f);
 			nvgLineTo(args.vg, offset2 - 3.5 + (arcDelta) * fraction, 4.5f);
+			nvgStroke(args.vg);
+			nvgBeginPath(args.vg);
+			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, (0x55 + 0x55) * (1 - fraction)));
+			nvgMoveTo(args.vg, offset3 - 3.5, 4.5f);
+			nvgLineTo(args.vg, offset3 - 3.5 + arcDelta, 4.5f);
 			nvgStroke(args.vg);
 		} else {
 			nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xDD));
@@ -114,8 +128,6 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 		nvgResetScissor(args.vg);
 		nvgResetTransform(args.vg);
 	} else */if (m_voltagePoints.size() > 0) {
-		nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
-
 		int offset = 0;
 		for (std::vector<TimeSeqVoltagePoints>::iterator it = m_voltagePoints.begin(); it != m_voltagePoints.end(); it++) {
 			float v = std::min(std::max(it->voltage, -10.f), 10.f);
@@ -137,10 +149,9 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 			offset += 11;
 		}
-
-		nvgResetScissor(args.vg);
 	}
 
+	nvgResetScissor(args.vg);
 	nvgRestore(args.vg);
 }
 
