@@ -78,7 +78,6 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
 			m_startDelay = 10; // Introduce a 10 sample delay in the processing when a start is received from the data JSON to allow any other setup in the patch to complete.
 			m_timeSeqCore->start();
-			setStatusMessage("");
 		}
 	}
 }
@@ -101,11 +100,9 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
 				// If the core is running, we should pause it now
 				m_timeSeqCore->pause();
-				setStatusMessage("");
 			} else {
 				// Otherwise (if it is paused or idle), we should start it
 				m_timeSeqCore->start();
-				setStatusMessage("");
 			}
 		}
 
@@ -213,6 +210,10 @@ void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateCh
 	}
 }
 
+void TimeSeqModule::onRemove(const RemoveEvent& e) {
+	m_timeSeqDisplay = nullptr;
+}
+
 float TimeSeqModule::getInputPortVoltage(int index, int channel) {
 	return inputs[InputId::IN_INPUTS + index].getVoltage(channel);
 }
@@ -275,6 +276,7 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 
 	m_lastScriptLoadErrors.clear();
 	if (errors.size() == 0) {
+		setDisplayScriptError(false);
 		m_script = script;
 		resetUi();
 		// If we were running before the script was loaded, start running the new script
@@ -282,9 +284,6 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
 			m_timeSeqCore->start();
 			m_runPulse.trigger(0.001f);
-			setStatusMessage("");
-		} else {
-			setStatusMessage("Script  loaded");
 		}
 		return std::string();
 	} else {
@@ -300,9 +299,9 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 		}
 
 		if (m_timeSeqCore->getStatus() != timeseq::TimeSeqCore::Status::EMPTY) {
-			setStatusMessage("");
+			setDisplayScriptError(false);
 		} else {
-			setStatusMessage("Script  failed  to  load");
+			setDisplayScriptError(true);
 		}
 		return errorMessage.str();
 	}
@@ -334,17 +333,18 @@ void TimeSeqModule::updateOutputs() {
 	}
 }
 
-void TimeSeqModule::setStatusMessage(std::string message) {
+void TimeSeqModule::setDisplayScriptError(bool error) {
+	m_scriptError = error;
 	if (m_timeSeqDisplay) {
-		m_timeSeqDisplay->setMessage(message);
+		m_timeSeqDisplay->setError(m_scriptError);
 	}
 }
 
 void TimeSeqModule::clearScript() {
+	setDisplayScriptError(false);
 	m_timeSeqCore->clearScript();
 	m_script.reset();
 	resetUi();
-	setStatusMessage("No  script  loaded");
 }
 
 std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {
@@ -357,11 +357,9 @@ std::vector<std::string>& TimeSeqModule::getFailedAsserts() {
 
 void TimeSeqModule::setTimeSeqDisplay(TimeSeqDisplay* timeSeqDisplay) {
 	m_timeSeqDisplay = timeSeqDisplay;
-	m_timeSeqDisplay->setTimeSeqCore(m_timeSeqCore);
-	if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::EMPTY) {
-		setStatusMessage("No  script  loaded");
-	} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::IDLE) {
-		setStatusMessage("Script  loaded");
+	if (m_timeSeqDisplay != nullptr) {
+		m_timeSeqDisplay->setTimeSeqCore(m_timeSeqCore);
+		m_timeSeqDisplay->setError(m_scriptError);
 	}
 }
 

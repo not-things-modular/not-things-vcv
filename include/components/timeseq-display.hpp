@@ -19,15 +19,19 @@ struct TimeSeqVoltagePoints {
 struct TimeSeqDisplay : widget::Widget {
 	void drawLayer(const DrawArgs& args, int layer) override;
 
+	// void onResize(const ResizeEvent& e) override;
+
 	void processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages);
 	void ageVoltages();
 	void reset();
 
-	void setMessage(std::string message);
+	void setError(bool error);
 	void setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore);
 
 	private:
 		timeseq::TimeSeqCore* m_timeSeqCore = nullptr;
 		std::vector<TimeSeqVoltagePoints> m_voltagePoints;
-		std::string m_message;
+		bool m_error = false;
+
+		float m_arcDelta = 0.f;
 };

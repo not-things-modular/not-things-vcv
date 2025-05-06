@@ -7,6 +7,9 @@
 #define CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier >> 5)
 #define PORT_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier & 0xF)
 
+float START_ARC = nvgDegToRad(225);
+float END_ARC = nvgDegToRad(540);
+
 extern Plugin* pluginInstance;
 
 void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
@@ -18,44 +21,63 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 
 	if (m_timeSeqCore) {
-		uint32_t doubleSampleRate = m_timeSeqCore->getCurrentSampleRate() * 2;
-		uint32_t sampleRemainder = m_timeSeqCore->getElapsedSamples() % doubleSampleRate * 2;
-		if (sampleRemainder > doubleSampleRate) {
-			sampleRemainder = doubleSampleRate - (sampleRemainder - doubleSampleRate);
-		}
-		float integral;
-		float pos = 4.5f + (box.getWidth() - 9.f) * std::modf((float) sampleRemainder / doubleSampleRate, &integral);
+		uint32_t tripSampleRate = m_timeSeqCore->getCurrentSampleRate() * 3;
+		uint32_t sampleRemainder = m_timeSeqCore->getElapsedSamples() % tripSampleRate * 4;
+		float pos = (float) sampleRemainder / tripSampleRate;
+		float index;
+		float fraction = std::modf(pos, &index);
 
 		nvgStrokeColor(args.vg, nvgRGBA(0x50, 0xAA, 0x50, 0x2A + 0x70));
 		nvgFillColor(args.vg, nvgRGBA(0x00, 0xFF, 0x00, 0x40));
 
 		if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::IDLE) || (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::PAUSED)) {
-			float size = std::modf(system::getTime(), &integral);
-			if (((int) integral) % 2) {
-				size = 1 - size;
+			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
+			if (font && font->handle >= 0) {
+				nvgBeginPath(args.vg);
+				nvgFontFaceId(args.vg, font->handle);
+				nvgTextLetterSpacing(args.vg, 0.0);
+				nvgFontSize(args.vg, 8.f);
+				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+				nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xAA));
+				nvgText(args.vg, (box.getWidth() / 2), 4.5f, "PAUSED", NULL);
+				nvgFill(args.vg);
+			}
+		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+			nvgStrokeWidth(args.vg, 1.f);
+			float arcDelta = (box.getWidth() - 2.f) / 4;
+			float arcOffset = 1.f + arcDelta / 2;
+
+			float offset1, offset2;
+			if (index == 0.f) {
+				offset1 = arcOffset;
+				offset2 = arcOffset + arcDelta * 3;
+			} else if (index == 1.f) {
+				offset1 = arcOffset + arcDelta;
+				offset2 = arcOffset;
+			} else if (index == 2.f) {
+				offset1 = arcOffset + arcDelta * 2;
+				offset2 = arcOffset + arcDelta;
+			} else {
+				offset1 = arcOffset + arcDelta * 3;
+				offset2 = arcOffset + arcDelta * 2;
 			}
 
+			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, (0x55 + 0x55)));
 			nvgBeginPath(args.vg);
-			nvgStrokeWidth(args.vg, 1.f);
-			nvgCircle(args.vg, pos, 5.f, 3.5f * size);
-			nvgFill(args.vg);
+			nvgArc(args.vg, offset1, 4.5f, 3.5f, START_ARC, START_ARC + (END_ARC - START_ARC) * fraction, NVG_CW);
 			nvgStroke(args.vg);
-		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
 			nvgBeginPath(args.vg);
-			nvgStrokeWidth(args.vg, 1.f);
-			nvgCircle(args.vg, pos, 5.f, 3.5f);
-			nvgFill(args.vg);
+			nvgArc(args.vg, offset2, 4.5f, 3.5f, START_ARC + (END_ARC - START_ARC) * fraction, END_ARC, NVG_CW);
+			nvgMoveTo(args.vg, offset2 - 3.5, 4.5f);
+			nvgLineTo(args.vg, offset2 - 3.5 + (arcDelta) * fraction, 4.5f);
 			nvgStroke(args.vg);
 		} else {
-			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0x55 + 0x55));
-			nvgFillColor(args.vg, nvgRGBA(0xFF, 0, 0, 0x20 + 0x20));
+			nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xDD));
 			nvgBeginPath(args.vg);
 			nvgStrokeWidth(args.vg, 1.f);
-			nvgCircle(args.vg, 4.5f, 5.f, 3.5f);
+			nvgRoundedRect(args.vg, 1.f, 1.f, 37.f, 9.f, 2.f);
 			nvgFill(args.vg);
-			nvgStroke(args.vg);
 
-			// std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/DSEG7ClassicMini-Regular.ttf");
 			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
 			if (font && font->handle >= 0) {
 				nvgBeginPath(args.vg);
@@ -64,14 +86,15 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 				nvgFontSize(args.vg, 8.f);
 				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
-				nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xAA));
-				nvgText(args.vg, 9.f + (box.getWidth() - 9.f) / 2, 4.5f, "N:SCR", NULL);
+				nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0x55 + 0x55));
+				nvgFillColor(args.vg, nvgRGBA(0x00, 0x00, 0x00, 0xAA));
+				nvgText(args.vg, box.getWidth() / 2, 5.5f, m_error ? "ERROR" : "NO:SCR", NULL);
 				nvgFill(args.vg);
 			}
 		}
 	}
 
-	if (m_message.length() > 0) {
+	/*if (m_message.length() > 0) {
 		nvgRotate(args.vg, nvgDegToRad(-90.f));
 		nvgScissor(args.vg, 0, 0, box.getHeight(), box.getWidth());
 
@@ -90,7 +113,7 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 		nvgResetScissor(args.vg);
 		nvgResetTransform(args.vg);
-	} else if (m_voltagePoints.size() > 0) {
+	} else */if (m_voltagePoints.size() > 0) {
 		nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
 		int offset = 0;
@@ -183,8 +206,8 @@ void TimeSeqDisplay::reset() {
 	m_voltagePoints.clear();
 }
 
-void TimeSeqDisplay::setMessage(std::string message) {
-	m_message = message;
+void TimeSeqDisplay::setError(bool error) {
+	m_error = error;
 }
 
 void TimeSeqDisplay::setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore) {

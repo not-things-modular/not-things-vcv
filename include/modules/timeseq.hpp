@@ -55,6 +55,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void draw(const widget::Widget::DrawArgs& args) override;
 	void onPortChange(const PortChangeEvent& e) override;
 	void onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) override;
+	void onRemove(const RemoveEvent& e) override;
 
 	float getInputPortVoltage(int index, int channel) override;
 	float getOutputPortVoltage(int index, int channel) override;
@@ -108,11 +109,13 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 
 		// Starting from a loaded data json introduces a processing delay to allow everything in the patch to be loaded.
 		int m_startDelay = 0;
+		// There was an error loading the latest script
+		bool m_scriptError = false;
 
 		void resetUi();
 		void resetOutputs();
 		void updateOutputs();
-		void setStatusMessage(std::string message);
+		void setDisplayScriptError(bool error);
 };
 
 struct TimeSeqWidget : NTModuleWidget {
