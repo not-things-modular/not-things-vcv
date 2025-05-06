@@ -1,6 +1,8 @@
 #include "components/timeseq-display.hpp"
+#include "core/timeseq-core.hpp"
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 #define CHANNEL_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier >> 5)
 #define PORT_FROM_CHANNEL_PORT_IDENTIFIER(identifier) (identifier & 0xF)
@@ -13,11 +15,65 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	}
 
 	nvgSave(args.vg);
+	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
+
+	if (m_timeSeqCore) {
+		uint32_t doubleSampleRate = m_timeSeqCore->getCurrentSampleRate() * 2;
+		uint32_t sampleRemainder = m_timeSeqCore->getElapsedSamples() % doubleSampleRate * 2;
+		if (sampleRemainder > doubleSampleRate) {
+			sampleRemainder = doubleSampleRate - (sampleRemainder - doubleSampleRate);
+		}
+		float integral;
+		float pos = 4.5f + (box.getWidth() - 9.f) * std::modf((float) sampleRemainder / doubleSampleRate, &integral);
+
+		nvgStrokeColor(args.vg, nvgRGBA(0x50, 0xAA, 0x50, 0x2A + 0x70));
+		nvgFillColor(args.vg, nvgRGBA(0x00, 0xFF, 0x00, 0x40));
+
+		if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::IDLE) || (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::PAUSED)) {
+			float size = std::modf(system::getTime(), &integral);
+			if (((int) integral) % 2) {
+				size = 1 - size;
+			}
+
+			nvgBeginPath(args.vg);
+			nvgStrokeWidth(args.vg, 1.f);
+			nvgCircle(args.vg, pos, 5.f, 3.5f * size);
+			nvgFill(args.vg);
+			nvgStroke(args.vg);
+		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+			nvgBeginPath(args.vg);
+			nvgStrokeWidth(args.vg, 1.f);
+			nvgCircle(args.vg, pos, 5.f, 3.5f);
+			nvgFill(args.vg);
+			nvgStroke(args.vg);
+		} else {
+			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0x55 + 0x55));
+			nvgFillColor(args.vg, nvgRGBA(0xFF, 0, 0, 0x20 + 0x20));
+			nvgBeginPath(args.vg);
+			nvgStrokeWidth(args.vg, 1.f);
+			nvgCircle(args.vg, 4.5f, 5.f, 3.5f);
+			nvgFill(args.vg);
+			nvgStroke(args.vg);
+
+			// std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/DSEG7ClassicMini-Regular.ttf");
+			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
+			if (font && font->handle >= 0) {
+				nvgBeginPath(args.vg);
+				nvgFontFaceId(args.vg, font->handle);
+				nvgTextLetterSpacing(args.vg, 0.0);
+				nvgFontSize(args.vg, 8.f);
+				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+
+				nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xAA));
+				nvgText(args.vg, 9.f + (box.getWidth() - 9.f) / 2, 4.5f, "N:SCR", NULL);
+				nvgFill(args.vg);
+			}
+		}
+	}
 
 	if (m_message.length() > 0) {
 		nvgRotate(args.vg, nvgDegToRad(-90.f));
-		// nvgScissor(args.vg, 0, 0, box.getHeight(), box.getWidth());
-		nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
+		nvgScissor(args.vg, 0, 0, box.getHeight(), box.getWidth());
 
 		std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
 		if (font && font->handle >= 0) {
@@ -32,11 +88,10 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 			nvgFill(args.vg);
 		}
 
-		// nvgResetScissor(args.vg);
+		nvgResetScissor(args.vg);
 		nvgResetTransform(args.vg);
 	} else if (m_voltagePoints.size() > 0) {
 		nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
-		nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 
 		int offset = 0;
 		for (std::vector<TimeSeqVoltagePoints>::iterator it = m_voltagePoints.begin(); it != m_voltagePoints.end(); it++) {
@@ -92,7 +147,7 @@ void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, s
 		// It's a new voltage point
 		if (!found)
 		{
-			if (m_voltagePoints.size() < 16) {
+			if (m_voltagePoints.size() < 15) {
 				// We haven't reached the limit of trackable voltages yet, so just add a new one to the list.
 				m_voltagePoints.emplace_back(*it);
 				TimeSeqVoltagePoints& voltagePoints = m_voltagePoints.back();
@@ -130,4 +185,8 @@ void TimeSeqDisplay::reset() {
 
 void TimeSeqDisplay::setMessage(std::string message) {
 	m_message = message;
+}
+
+void TimeSeqDisplay::setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore) {
+	m_timeSeqCore = timeSeqCore;
 }

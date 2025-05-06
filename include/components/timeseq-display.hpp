@@ -2,8 +2,11 @@
 #include <rack.hpp>
 using namespace rack;
 
-
 const int TIMESEQ_DISPLAY_WINDOW_SIZE = 256;
+
+namespace timeseq {
+	struct TimeSeqCore;
+}
 
 
 struct TimeSeqVoltagePoints {
@@ -21,8 +24,10 @@ struct TimeSeqDisplay : widget::Widget {
 	void reset();
 
 	void setMessage(std::string message);
+	void setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore);
 
 	private:
+		timeseq::TimeSeqCore* m_timeSeqCore = nullptr;
 		std::vector<TimeSeqVoltagePoints> m_voltagePoints;
 		std::string m_message;
 };

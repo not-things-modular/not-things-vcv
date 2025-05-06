@@ -357,6 +357,7 @@ std::vector<std::string>& TimeSeqModule::getFailedAsserts() {
 
 void TimeSeqModule::setTimeSeqDisplay(TimeSeqDisplay* timeSeqDisplay) {
 	m_timeSeqDisplay = timeSeqDisplay;
+	m_timeSeqDisplay->setTimeSeqCore(m_timeSeqCore);
 	if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::EMPTY) {
 		setStatusMessage("No  script  loaded");
 	} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::IDLE) {
@@ -546,7 +547,7 @@ void TimeSeqWidget::clearScript() {
 		dynamic_cast<TimeSeqModule *>(getModule())->clearScript();
 
 		h->newModuleJ = json_incref(toJson());
-		APP->history->push(h);	
+		APP->history->push(h);
 }
 }
 
