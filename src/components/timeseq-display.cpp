@@ -28,19 +28,17 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 		float index;
 		float fraction = std::modf(pos, &index);
 
-		nvgStrokeColor(args.vg, nvgRGBA(0x50, 0xAA, 0x50, 0x2A + 0x70));
-		nvgFillColor(args.vg, nvgRGBA(0x00, 0xFF, 0x00, 0x40));
-
 		if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::IDLE) || (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::PAUSED)) {
-			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
+			// std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/Nunito-Bold.ttf");
+			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/segment14.ttf"));
 			if (font && font->handle >= 0) {
 				nvgBeginPath(args.vg);
 				nvgFontFaceId(args.vg, font->handle);
 				nvgTextLetterSpacing(args.vg, 0.0);
-				nvgFontSize(args.vg, 8.f);
+				nvgFontSize(args.vg, 7.f);
 				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-				nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xAA));
-				nvgText(args.vg, (box.getWidth() / 2), 4.5f, "PAUSED", NULL);
+				nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
+				nvgText(args.vg, (box.getWidth() / 2), 5.f, "PAUSED", NULL);
 				nvgFill(args.vg);
 			}
 		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
@@ -67,12 +65,14 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 				offset3 = arcOffset + arcDelta;
 			}
 
-			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, (0x55 + 0x55)));
+			nvgLineCap(args.vg, NVG_ROUND);
 			nvgBeginPath(args.vg);
-			// nvgCircle(args.vg, arcOffset + arcDelta * 0, 4.5, 3.5f);
-			// nvgCircle(args.vg, arcOffset + arcDelta * 1, 4.5, 3.5f);
-			// nvgCircle(args.vg, arcOffset + arcDelta * 2, 4.5, 3.5f);
-			// nvgCircle(args.vg, arcOffset + arcDelta * 3, 4.5, 3.5f);
+			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF * (1 - fraction)));
+			nvgMoveTo(args.vg, offset3 - 3.5, 4.5f);
+			nvgLineTo(args.vg, offset3 - 3.5 + arcDelta, 4.5f);
+			nvgStroke(args.vg);
+			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
+			nvgBeginPath(args.vg);
 			nvgArc(args.vg, offset1, 4.5f, 3.5f, START_ARC, START_ARC + (END_ARC - START_ARC) * fraction, NVG_CW);
 			nvgStroke(args.vg);
 			nvgBeginPath(args.vg);
@@ -80,61 +80,37 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 			nvgMoveTo(args.vg, offset2 - 3.5, 4.5f);
 			nvgLineTo(args.vg, offset2 - 3.5 + (arcDelta) * fraction, 4.5f);
 			nvgStroke(args.vg);
-			nvgBeginPath(args.vg);
-			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, (0x55 + 0x55) * (1 - fraction)));
-			nvgMoveTo(args.vg, offset3 - 3.5, 4.5f);
-			nvgLineTo(args.vg, offset3 - 3.5 + arcDelta, 4.5f);
-			nvgStroke(args.vg);
 		} else {
-			nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xDD));
+			nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
 			nvgBeginPath(args.vg);
 			nvgStrokeWidth(args.vg, 1.f);
-			nvgRoundedRect(args.vg, 1.f, 1.f, 37.f, 9.f, 2.f);
+			nvgRoundedRect(args.vg, 0.f, 0.f, 39.f, 11.f, 2.f);
 			nvgFill(args.vg);
 
-			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
+			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/segment14.ttf"));
 			if (font && font->handle >= 0) {
 				nvgBeginPath(args.vg);
 				nvgFontFaceId(args.vg, font->handle);
 				nvgTextLetterSpacing(args.vg, 0.0);
-				nvgFontSize(args.vg, 8.f);
+				nvgFontSize(args.vg, 7.f);
 				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
-				nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0x55 + 0x55));
-				nvgFillColor(args.vg, nvgRGBA(0x00, 0x00, 0x00, 0xAA));
-				nvgText(args.vg, box.getWidth() / 2, 5.5f, m_error ? "ERROR" : "NO:SCR", NULL);
+				nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
+				nvgFillColor(args.vg, nvgRGBA(0x20, 0x20, 0x20, 0xFF));
+				nvgText(args.vg, box.getWidth() / 2, 5.5f, m_error ? "ERROR" : "EMPTY", NULL);
 				nvgFill(args.vg);
 			}
 		}
 	}
 
-	/*if (m_message.length() > 0) {
-		nvgRotate(args.vg, nvgDegToRad(-90.f));
-		nvgScissor(args.vg, 0, 0, box.getHeight(), box.getWidth());
-
-		std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG14ClassicMini-Bold.ttf"));
-		if (font && font->handle >= 0) {
-			nvgBeginPath(args.vg);
-			nvgFontFaceId(args.vg, font->handle);
-			nvgTextLetterSpacing(args.vg, 0.0);
-			nvgFontSize(args.vg, 10.f);
-			nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-
-			nvgFillColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0xAA));
-			nvgText(args.vg, -getBox().getHeight() / 2, getBox().getWidth() / 2, m_message.c_str(), NULL);
-			nvgFill(args.vg);
-		}
-
-		nvgResetScissor(args.vg);
-		nvgResetTransform(args.vg);
-	} else */if (m_voltagePoints.size() > 0) {
+	if (m_voltagePoints.size() > 0) {
 		int offset = 0;
 		for (std::vector<TimeSeqVoltagePoints>::iterator it = m_voltagePoints.begin(); it != m_voltagePoints.end(); it++) {
 			float v = std::min(std::max(it->voltage, -10.f), 10.f);
 			float factor = it->age < 31 ? (30.f - it->age) / 30.f : 0.f;
 
-			nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x50, 0x50, 0x55 + 0x55 * factor));
-			nvgFillColor(args.vg, nvgRGBA(0xFF, 0, 0, 0x20 + 0x20 * factor));
+			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF * factor));
+			nvgFillColor(args.vg, nvgRGBA(0x6D, 0x2D, 0x2D, 0xFF * factor));
 
 			nvgBeginPath(args.vg);
 			nvgStrokeWidth(args.vg, 1.f);
