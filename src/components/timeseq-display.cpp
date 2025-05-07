@@ -10,6 +10,10 @@
 float START_ARC = nvgDegToRad(225);
 float END_ARC = nvgDegToRad(540);
 
+NVGcolor LIGHT_RED = nvgRGBA(0xBB, 0x45, 0x45, 0xFF);
+NVGcolor DARK_RED = nvgRGBA(0x20, 0x20, 0x20, 0xFF);
+
+
 extern Plugin* pluginInstance;
 
 void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
@@ -22,82 +26,48 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
 	if (m_timeSeqCore) {
-		uint32_t tripSampleRate = m_timeSeqCore->getCurrentSampleRate() * 3;
-		uint32_t sampleRemainder = m_timeSeqCore->getElapsedSamples() % tripSampleRate * 4;
-		float pos = (float) sampleRemainder / tripSampleRate;
-		float index;
-		float fraction = std::modf(pos, &index);
+		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+			uint32_t tripSampleRate = m_timeSeqCore->getCurrentSampleRate() * 3; // Let each animation loop take 3 seconds
+			uint32_t sampleRemainder = m_timeSeqCore->getElapsedSamples() % tripSampleRate * 4; // Multiply by 4 so we can divide it over the four circles
+			float pos = (float) sampleRemainder / tripSampleRate; // How far along we are in the animation, between 0.f and 4.f
+			float index;
+			float fraction = std::modf(pos, &index); // How far along we are in the animation of the currently active circle
+			float *offsets = m_animCoords.m_offsetCircles[(int) index];
 
-		if ((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::IDLE) || (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::PAUSED)) {
-			// std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/Nunito-Bold.ttf");
-			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/segment14.ttf"));
-			if (font && font->handle >= 0) {
-				nvgBeginPath(args.vg);
-				nvgFontFaceId(args.vg, font->handle);
-				nvgTextLetterSpacing(args.vg, 0.0);
-				nvgFontSize(args.vg, 7.f);
-				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-				nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
-				nvgText(args.vg, (box.getWidth() / 2), 5.f, "PAUSED", NULL);
-				nvgFill(args.vg);
-			}
-		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
 			nvgStrokeWidth(args.vg, 1.f);
-			float arcDelta = box.getWidth() / 4;
-			float arcOffset = 0.f + arcDelta / 2;
-
-			float offset1, offset2, offset3;
-			if (index == 0.f) {
-				offset1 = arcOffset;
-				offset2 = arcOffset + arcDelta * 3;
-				offset3 = arcOffset + arcDelta * 2;
-			} else if (index == 1.f) {
-				offset1 = arcOffset + arcDelta;
-				offset2 = arcOffset;
-				offset3 = arcOffset + arcDelta * 3;
-			} else if (index == 2.f) {
-				offset1 = arcOffset + arcDelta * 2;
-				offset2 = arcOffset + arcDelta;
-				offset3 = arcOffset;
-			} else {
-				offset1 = arcOffset + arcDelta * 3;
-				offset2 = arcOffset + arcDelta * 2;
-				offset3 = arcOffset + arcDelta;
-			}
-
 			nvgLineCap(args.vg, NVG_ROUND);
 			nvgBeginPath(args.vg);
 			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF * (1 - fraction)));
-			nvgMoveTo(args.vg, offset3 - 3.5, 4.5f);
-			nvgLineTo(args.vg, offset3 - 3.5 + arcDelta, 4.5f);
+			nvgMoveTo(args.vg, offsets[2] - 3.5, 4.5f);
+			nvgLineTo(args.vg, offsets[2] - 3.5 + m_animCoords.m_arcDelta, 4.5f);
 			nvgStroke(args.vg);
-			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
+			nvgStrokeColor(args.vg, LIGHT_RED);
 			nvgBeginPath(args.vg);
-			nvgArc(args.vg, offset1, 4.5f, 3.5f, START_ARC, START_ARC + (END_ARC - START_ARC) * fraction, NVG_CW);
+			nvgArc(args.vg, offsets[0], 4.5f, 3.5f, START_ARC, START_ARC + (END_ARC - START_ARC) * fraction, NVG_CW);
 			nvgStroke(args.vg);
 			nvgBeginPath(args.vg);
-			nvgArc(args.vg, offset2, 4.5f, 3.5f, START_ARC + (END_ARC - START_ARC) * fraction, END_ARC, NVG_CW);
-			nvgMoveTo(args.vg, offset2 - 3.5, 4.5f);
-			nvgLineTo(args.vg, offset2 - 3.5 + (arcDelta) * fraction, 4.5f);
+			nvgArc(args.vg, offsets[1], 4.5f, 3.5f, START_ARC + (END_ARC - START_ARC) * fraction, END_ARC, NVG_CW);
+			nvgMoveTo(args.vg, offsets[1] - 3.5, 4.5f);
+			nvgLineTo(args.vg, offsets[1] - 3.5 + (m_animCoords.m_arcDelta) * fraction, 4.5f);
 			nvgStroke(args.vg);
 		} else {
-			nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
-			nvgBeginPath(args.vg);
-			nvgStrokeWidth(args.vg, 1.f);
-			nvgRoundedRect(args.vg, 0.f, 0.f, 39.f, 11.f, 2.f);
-			nvgFill(args.vg);
+			nvgFillColor(args.vg, LIGHT_RED);
+			if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::EMPTY) {
+				nvgBeginPath(args.vg);
+				nvgStrokeWidth(args.vg, 1.f);
+				nvgRoundedRect(args.vg, 0.f, 0.f, 39.f, 11.f, 2.f);
+				nvgFill(args.vg);
+				nvgFillColor(args.vg, DARK_RED);
+			}
 
-			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, "res/segment14.ttf"));
+			std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/Nunito-Bold.ttf");
 			if (font && font->handle >= 0) {
 				nvgBeginPath(args.vg);
 				nvgFontFaceId(args.vg, font->handle);
 				nvgTextLetterSpacing(args.vg, 0.0);
-				nvgFontSize(args.vg, 7.f);
+				nvgFontSize(args.vg, 11.5f);
 				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-
-				nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
-				nvgFillColor(args.vg, nvgRGBA(0x20, 0x20, 0x20, 0xFF));
-				nvgText(args.vg, box.getWidth() / 2, 5.5f, m_error ? "ERROR" : "EMPTY", NULL);
+				nvgText(args.vg, box.getWidth() / 2, 5.5f, m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::EMPTY ? (m_error ? "ERROR" : "EMPTY") : "PAUSED", NULL);
 				nvgFill(args.vg);
 			}
 		}
@@ -109,8 +79,8 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 			float v = std::min(std::max(it->voltage, -10.f), 10.f);
 			float factor = it->age < 31 ? (30.f - it->age) / 30.f : 0.f;
 
-			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF * factor));
-			nvgFillColor(args.vg, nvgRGBA(0x6D, 0x2D, 0x2D, 0xFF * factor));
+			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0x60 + 0x9F * factor));
+			nvgFillColor(args.vg, nvgRGBA(0x6D, 0x2D, 0x2D, 0x60 + 0x9F * factor));
 
 			nvgBeginPath(args.vg);
 			nvgStrokeWidth(args.vg, 1.f);
@@ -129,6 +99,23 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 	nvgResetScissor(args.vg);
 	nvgRestore(args.vg);
+}
+
+void TimeSeqDisplay::onResize(const ResizeEvent& e) {
+	m_animCoords.m_arcDelta = box.getWidth() / 4;
+	m_animCoords.m_arcOffset = m_animCoords.m_arcDelta / 2;
+	m_animCoords.m_offsetCircles[0][0] = m_animCoords.m_arcOffset;
+	m_animCoords.m_offsetCircles[0][1] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta * 3;
+	m_animCoords.m_offsetCircles[0][2] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta * 2;
+	m_animCoords.m_offsetCircles[1][0] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta;
+	m_animCoords.m_offsetCircles[1][1] = m_animCoords.m_arcOffset;
+	m_animCoords.m_offsetCircles[1][2] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta * 3;
+	m_animCoords.m_offsetCircles[2][0] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta * 2;
+	m_animCoords.m_offsetCircles[2][1] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta;
+	m_animCoords.m_offsetCircles[2][2] = m_animCoords.m_arcOffset;
+	m_animCoords.m_offsetCircles[3][0] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta * 3;
+	m_animCoords.m_offsetCircles[3][1] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta * 2;
+	m_animCoords.m_offsetCircles[3][2] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta;
 }
 
 void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages) {

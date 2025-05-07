@@ -29,8 +29,6 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		NUM_OUTPUTS
 	};
 	enum LightId {
-		LIGHT_READY,
-		LIGHT_NOT_READY,
 		LIGHT_RUN,
 		LIGHT_RESET,
 		LIGHT_LANE_LOOPED,

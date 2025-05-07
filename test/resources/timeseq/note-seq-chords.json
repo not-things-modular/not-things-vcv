@@ -81,174 +81,176 @@
 			]
 		}
 	],
-	"segment-blocks" : [
-		{
-			"id": "c-arp",
-			"repeat": 4,
-			"segments": [
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "C4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "E4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "G4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "C5" } }
-						}
-					]
-				}
-			]
-		},
-		{
-			"id": "f-arp",
-			"repeat": 4,
-			"segments": [
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "C4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "F4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "A4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "C5" } }
-						}
-					]
-				}
-			]
-		},
-		{
-			"id": "d-arp",
-			"repeat": 4,
-			"segments": [
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "D4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "F4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "A4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "D5" } }
-						}
-					]
-				}
-			]
-		},
-		{
-			"id": "g-arp",
-			"repeat": 4,
-			"segments": [
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "D4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "G4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "B4" } }
-						}
-					]
-				},
-				{
-					"duration": { "beats": 0.5 },
-					"actions": [
-						{
-							"timing": "start",
-							"set-value": { "output": { "index": 3 }, "value": { "note": "D5" } }
-						}
-					]
-				}
-			]
-		}
-	]
+	"component-pool": {
+		"segment-blocks" : [
+			{
+				"id": "c-arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "C4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "E4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "G4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "C5" } }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "f-arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "C4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "F4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "A4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "C5" } }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "d-arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "D4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "F4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "A4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "D5" } }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "g-arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "D4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "G4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "B4" } }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 3 }, "value": { "note": "D5" } }
+							}
+						]
+					}
+				]
+			}
+		]
+	}
 }

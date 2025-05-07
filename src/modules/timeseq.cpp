@@ -27,7 +27,6 @@ TimeSeqModule::TimeSeqModule() {
 	configOutput(OUT_RUN, "Run");
 	configOutput(OUT_RESET, "Reset");
 
-	configLight(LIGHT_READY, "Ready status");
 	configLight(LIGHT_LANE_LOOPED, "Lane loop");
 	configLight(LIGHT_SEGMENT_STARTED, "Segment start");
 	configLight(LIGHT_TRIGGER_TRIGGERED, "Trigger triggered");
@@ -36,7 +35,7 @@ TimeSeqModule::TimeSeqModule() {
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
 
-	m_portChannelChangeClockDivider.setDivision(48000 / 30);
+	m_portChannelChangeClockDivider.setDivision(48000 / 15);
 	m_failedAssertBlinkClockDivider.setDivision(48000);
 
 	resetUi();
@@ -65,7 +64,13 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 		if (json_is_string(ntTimeSeqScript)) {
 			const char* script = json_string_value(ntTimeSeqScript);
 			if (strlen(script) > 0) {
-				loadScript(std::make_shared<std::string>(json_string_value(ntTimeSeqScript)));
+				std::shared_ptr<std::string> script = std::make_shared<std::string>(json_string_value(ntTimeSeqScript));
+				std::string result = loadScript(script);
+				if ((result.length() > 0) && (!m_script)) {
+					// If the loading failed, and there is no script present yet, keep a copy of the script data so the user can copy it.
+					// It's most likely a script that was saved in a patch, and is no longer valid for some reason, and we shouldn't just dump it.
+					m_script = script;
+				}
 			} else {
 				clearScript();
 			}
@@ -176,8 +181,6 @@ void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
 	m_triggerTriggered = false;
 
 	// Update the status LEDs
-	lights[LightId::LIGHT_READY].setBrightnessSmooth((bool) m_script, .01f);
-	lights[LightId::LIGHT_NOT_READY].setBrightnessSmooth(!(bool) m_script, .01f);
 	lights[LightId::LIGHT_RUN].setBrightnessSmooth((m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::RUNNING), .01f, 20.f);
 	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f, 20.f);
 
@@ -388,7 +391,6 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 	addInput(createInputCentered<NTPort>(Vec(68.f+7.5f, 66.5f+135.f), module, TimeSeqModule::IN_RATE));
 	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(68.f+7.5f, 112.f+135.f), module, TimeSeqModule::PARAM_RATE));
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(53.5f+7.5f, 90.f), module, TimeSeqModule::LightId::LIGHT_READY));
 	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(53.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_LANE_LOOPED));
 	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(68.f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
 	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(82.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
