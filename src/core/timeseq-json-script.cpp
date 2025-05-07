@@ -14,11 +14,37 @@ bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
 	return false;
 }
 
+bool verifyAllowedProperties(const json& json, vector<string> propertyNames, vector<ValidationError> *validationErrors, vector<string> location) {
+	uint64_t count = 0;
+	std::string unexpectedKeys;
+
+	if (json.is_object()) {
+		for (json::const_iterator i = json.begin(); i != json.end(); i++) {
+			if ((i.key().substr(0, 2) != "x-") && (std::find(propertyNames.begin(), propertyNames.end(), i.key()) == propertyNames.end())) {
+				count++;
+				if (unexpectedKeys.length() > 0) {
+					unexpectedKeys += ", ";
+				}
+				unexpectedKeys += "'" + i.key() + "'";
+			}
+		}
+	}
+
+	if (count == 1) {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Unknown_Property, "Unknown property encountered: ", unexpectedKeys.c_str(), ".");
+	} else if (count > 1) {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Unknown_Property, "Unknown properties encountered: ", unexpectedKeys.c_str(), ".");
+	}
+
+	return count > 0;
+}
 
 JsonScriptParser::~JsonScriptParser() {}
 
 std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError> *validationErrors, vector<string> location) {
 	Script* script = new Script();
+
+	verifyAllowedProperties(scriptJson, { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" }, validationErrors, location);
 
 	json::const_iterator type = scriptJson.find("type");
 	if ((type == scriptJson.end()) || (!type->is_string())) {

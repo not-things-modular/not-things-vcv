@@ -15,6 +15,7 @@ enum ValidationErrorCode {
 	Id_Length = 7,
 	Id_NotAllowed = 8,
 	Id_Duplicate = 9,
+	Unknown_Property = 10,
 
 	Script_TypeMissing = 101,
 	Script_TypeUnsupported = 102,

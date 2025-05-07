@@ -146,3 +146,52 @@ TEST(TimeSeqJsonScript, ParseShouldFailOnInvalidJson) {
 	EXPECT_EQ(validationErrors[0].location, "/");
 	EXPECT_GT(validationErrors[0].message.size(), 0u);
 }
+
+TEST(TimeSeqJsonScript, ParseScriptWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "unknown-prop", "value" }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u) << validationErrors[0].message << " " << validationErrors[1].message << " " << validationErrors[2].message;
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScript, ParseScriptWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "unknown-prop-1", "value" },
+		{ "unknown-prop-2", { { "child", "object" } } }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScript, ParseScriptShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "x-unknown-prop-1", "value" },
+		{ "x-unknown-prop-2", { { "child", "object" } } },
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
