@@ -90,7 +90,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldFailOnTimeScaleWithNoKnownPro
 	json["timelines"] = json::array({
 		{
 			{ "lanes", json::array() },
-			{ "time-scale", json::object({ { "dummy", "value" }}) }
+			{ "time-scale", json::object() }
 		}
 	});
 
@@ -536,4 +536,103 @@ TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldParseLoopLockFalse) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "unknown-prop", "value" }, { "segments", json::array() } }
+		}) } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/timelines/0/lanes/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "unknown-prop-1", "value" }, { "unknown-prop-2", { { "child", "object" } } }, { "segments", json::array() } }
+		}) } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/timelines/0/lanes/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "x-unknown-prop-1", "value" }, { "x-unknown-prop-2", { { "child", "object" } } }, { "segments", json::array() } }
+		}) } }
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineWithUnknownPropertyOnTimeScaleShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "lanes", json::array({}) },
+			{ "time-scale", { { "sample-rate", 1 }, { "unknown-prop", "value" } } }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/timelines/0/time-scale");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineWithUnknownPropertiesOnTimeScaleShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "lanes", json::array({}) },
+			{ "time-scale", { { "sample-rate", 1 }, { "unknown-prop-1", "value" }, { "unknown-prop-2", { { "child", "object" } } } } }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/timelines/0/time-scale");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptTimeLine, ParseTimelineShouldAllowUnknownPropertyWithXPrefixOnTimeScale) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "lanes", json::array({}) },
+			{ "time-scale", { { "sample-rate", 1 }, { "x-unknown-prop-1", "value" }, { "x-unknown-prop-2", { { "child", "object" } } } } }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
 }

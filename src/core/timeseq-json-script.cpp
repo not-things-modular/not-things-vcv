@@ -5,7 +5,7 @@ using namespace timeseq;
 
 
 template<size_t N>
-bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
+bool hasOneOf(const json& json, const char* (&propertyNames)[N]) {
 	for (const char* propertyName : propertyNames) {
 		if (json.find(propertyName) != json.end()) {
 			return true;
@@ -14,13 +14,16 @@ bool hasOneOf(const json& json, const char* (&&propertyNames)[N]) {
 	return false;
 }
 
-bool verifyAllowedProperties(const json& json, vector<string> propertyNames, vector<ValidationError> *validationErrors, vector<string> location) {
+bool verifyAllowedProperties(const json& json, vector<string> propertyNames, bool allowRef, vector<ValidationError> *validationErrors, vector<string> location) {
 	uint64_t count = 0;
 	std::string unexpectedKeys;
 
 	if (json.is_object()) {
 		for (json::const_iterator i = json.begin(); i != json.end(); i++) {
 			if ((i.key().substr(0, 2) != "x-") && (std::find(propertyNames.begin(), propertyNames.end(), i.key()) == propertyNames.end())) {
+				if (allowRef && (i.key() == "ref" || i.key() == "id")) {
+					continue;
+				}
 				count++;
 				if (unexpectedKeys.length() > 0) {
 					unexpectedKeys += ", ";
@@ -39,12 +42,17 @@ bool verifyAllowedProperties(const json& json, vector<string> propertyNames, vec
 	return count > 0;
 }
 
+bool xverifyAllowedProperties(const json& json, vector<string> propertyNames, bool allowRef, vector<ValidationError> *validationErrors, vector<string> location) {
+	return verifyAllowedProperties(json, propertyNames, allowRef, validationErrors, location);
+}
+
 JsonScriptParser::~JsonScriptParser() {}
 
 std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError> *validationErrors, vector<string> location) {
+	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" };
 	Script* script = new Script();
 
-	verifyAllowedProperties(scriptJson, { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" }, validationErrors, location);
+	verifyAllowedProperties(scriptJson, scriptProperties, false, validationErrors, location);
 
 	json::const_iterator type = scriptJson.find("type");
 	if ((type == scriptJson.end()) || (!type->is_string())) {
@@ -142,8 +150,11 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 	json::const_iterator componentPool = scriptJson.find("component-pool");
 	if (componentPool != scriptJson.end()) {
 		if (componentPool->is_object()) {
+			static const vector<string> componentPoolProperties = { "segment-blocks", "segments", "inputs", "outputs", "calcs", "values", "actions" };
 			location.push_back("component-pool");
 			vector<string> ids;
+
+			verifyAllowedProperties(*componentPool, componentPoolProperties, false, validationErrors, location);
 
 			json::const_iterator segmentBlocks = componentPool->find("segment-blocks");
 			if (segmentBlocks != componentPool->end()) {
@@ -363,7 +374,10 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 }
 
 ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> timelineProperties = { "time-scale", "lanes", "loop-lock" };
 	ScriptTimeline timeline;
+
+	verifyAllowedProperties(timelineJson, timelineProperties, false, validationErrors, location);
 
 	json::const_iterator timeScale = timelineJson.find("time-scale");
 	if (timeScale != timelineJson.end()) {
@@ -413,7 +427,10 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::ve
 }
 
 ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> timeScaleProperties = { "sample-rate", "bpm", "bpb" };
 	ScriptTimeScale timeScale;
+
+	verifyAllowedProperties(timeScaleJson, timeScaleProperties, false, validationErrors, location);
 
 	json::const_iterator sampleRate = timeScaleJson.find("sample-rate");
 	if (sampleRate != timeScaleJson.end()) {
@@ -452,7 +469,10 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 }
 
 ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> laneProperties = { "auto-start", "loop", "repeat", "start-trigger", "restart-trigger", "stop-trigger", "segments", "disable-ui" };
 	ScriptLane lane;
+
+	xverifyAllowedProperties(laneJson, laneProperties, false, validationErrors, location);
 
 	json::const_iterator autoStart = laneJson.find("auto-start");
 	lane.autoStart = true;
@@ -556,15 +576,21 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, std::vector<Validat
 }
 
 ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const char* cSegmentProperties[] = { "duration", "actions", "disable-ui", "segment-block" };
+	static const vector<string> vSegmentProperties(begin(cSegmentProperties), end(cSegmentProperties));
 	ScriptSegment segment;
+
+	xverifyAllowedProperties(segmentJson, vSegmentProperties, true, validationErrors, location);
 
 	populateRef(segment, segmentJson, allowRefs, validationErrors, location);
 	if (segment.ref.length() > 0) {
-		if (hasOneOf(segmentJson, { "duration", "actions", "segment-block", "disable-ui" })) {
+		if (hasOneOf(segmentJson, cSegmentProperties)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_RefOrInstance, "A ref segment can not be combined other non-ref segment properties.");
 		}
 	} else {
-		if (!hasOneOf(segmentJson, { "segment-block" })) {
+		static const char* segmentBlockProperties[] = { "segment-block" };
+		static const char* nonSegmentBlockProperties[] = { "duration", "actions", "disable-ui" };
+		if (!hasOneOf(segmentJson, segmentBlockProperties)) {
 			json::const_iterator duration = segmentJson.find("duration");
 			if ((duration != segmentJson.end()) && (duration->is_object())) {
 				location.push_back("duration");
@@ -607,7 +633,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_DisableUiBoolean, "'disable-ui' must be a boolean.");
 				}
 			}
-		} else if (!hasOneOf(segmentJson, { "duration", "actions", "disable-ui" })) {
+		} else if (!hasOneOf(segmentJson, nonSegmentBlockProperties)) {
 			json::const_iterator segmentBlock = segmentJson.find("segment-block");
 			if (segmentBlock != segmentJson.end()) {
 				if (segmentBlock->is_string()) {
@@ -631,7 +657,10 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 }
 
 ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> segmentBlockProperties = { "repeat", "segments" };
 	ScriptSegmentBlock segmentBlock;
+
+	xverifyAllowedProperties(segmentBlockJson, segmentBlockProperties, true, validationErrors, location); // Refs aren't really allowed, but that will be caught by the populateRef method.
 
 	populateRef(segmentBlock, segmentBlockJson, false, validationErrors, location);
 
@@ -669,8 +698,11 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 }
 
 ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> durationProperties = { "samples", "millis", "bars", "beats", "hz" };
 	ScriptDuration duration;
 	int durationCount = 0;
+
+	xverifyAllowedProperties(durationJson, durationProperties, false, validationErrors, location);
 
 	json::const_iterator samples = durationJson.find("samples");
 	if (samples != durationJson.end()) {
@@ -739,11 +771,15 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 }
 
 ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const char* cActionProperties[] = { "timing", "set-value", "set-variable", "set-polyphony", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" };
+	static const vector<string> vActionProperties(begin(cActionProperties), end(cActionProperties));
 	ScriptAction action;
+
+	xverifyAllowedProperties(actionJson, vActionProperties, true, validationErrors, location);
 
 	populateRef(action, actionJson, allowRefs, validationErrors, location);
 	if (action.ref.length() > 0) {
-		if (hasOneOf(actionJson, { "timing", "set-value", "set-variable", "set-polyphony", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" })) {
+		if (hasOneOf(actionJson, cActionProperties)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
 		}
 	} else {
@@ -972,8 +1008,11 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 }
 
 ScriptIf JsonScriptParser::parseIf(const json& ifJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> ifProperties = { "eq", "ne", "lt", "lte", "gt", "gte", "and", "or", "tolerance" };
 	ScriptIf scriptIf;
 	int operatorCount = 0;
+
+	xverifyAllowedProperties(ifJson, ifProperties, true, validationErrors, location);
 
 	json::const_iterator eqValue = ifJson.find("eq");
 	if (eqValue != ifJson.end()) {
@@ -1139,7 +1178,10 @@ std::unique_ptr<std::pair<ScriptIf, ScriptIf>> JsonScriptParser::parseIfIfs(std:
 }
 
 ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> setValueProperties = { "output", "value" };
 	ScriptSetValue setValue;
+
+	xverifyAllowedProperties(setValueJson, setValueProperties, false, validationErrors, location);
 
 	json::const_iterator output = setValueJson.find("output");
 	if ((output != setValueJson.end()) && (output->is_object())) {
@@ -1163,7 +1205,10 @@ ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, std::ve
 }
 
 ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> setVariableProperties  = { "name", "value" };
 	ScriptSetVariable setVariable;
+
+	xverifyAllowedProperties(setVariableJson, setVariableProperties, false, validationErrors, location);
 
 	json::const_iterator name = setVariableJson.find("name");
 	if ((name != setVariableJson.end()) && (name->is_string())) {
@@ -1188,7 +1233,10 @@ ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson
 }
 
 ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> setPolyphonyProperties = { "index", "channels" };
 	ScriptSetPolyphony setPolyphony;
+
+	xverifyAllowedProperties(setPolyphonyJson, setPolyphonyProperties, false, validationErrors, location);
 
 	json::const_iterator index = setPolyphonyJson.find("index");
 	if ((index != setPolyphonyJson.end()) && (index->is_number_unsigned())) {
@@ -1214,7 +1262,10 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 }
 
 ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> assertProperties = { "name", "expect", "stop-on-fail" };
 	ScriptAssert scriptAssert;
+
+	xverifyAllowedProperties(assertJson, assertProperties, false, validationErrors, location);
 
 	json::const_iterator name = assertJson.find("name");
 	if (name != assertJson.end()) {
@@ -1257,11 +1308,15 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, std::vector<V
 }
 
 ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const char* cValueProperties[] = { "voltage", "note", "variable", "input", "output", "rand", "calc", "quantize" };
+	static const vector<string> vValueProperties(begin(cValueProperties), end(cValueProperties));
 	ScriptValue value;
+
+	xverifyAllowedProperties(valueJson, vValueProperties, true, validationErrors, location);
 
 	populateRef(value, valueJson, allowRefs, validationErrors, location);
 	if (value.ref.length() > 0) {
-		if (hasOneOf(valueJson, { "voltage", "note", "variable", "input", "output", "rand", "calc", "quantize" })) {
+		if (hasOneOf(valueJson, cValueProperties)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_RefOrInstance, "A ref value can not be combined other non-ref value properties.");
 		}
 	} else {
@@ -1405,11 +1460,15 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 }
 
 ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const char* cOutputProperties[] = { "index", "channel" };
+	static const vector<string> vOutputProperties(begin(cOutputProperties), end(cOutputProperties));
 	ScriptOutput output;
+
+	xverifyAllowedProperties(outputJson, vOutputProperties, true, validationErrors, location);
 
 	populateRef(output, outputJson, allowRefs, validationErrors, location);
 	if (output.ref.length() > 0) {
-		if (hasOneOf(outputJson, { "index", "channel" })) {
+		if (hasOneOf(outputJson, cOutputProperties)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_RefOrInstance, "A ref output can not be combined other non-ref output properties.");
 		}
 	} else {
@@ -1440,11 +1499,15 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 }
 
 ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const char* cInputProperties[] = { "index", "channel" };
+	static const vector<string> vInputProperties(begin(cInputProperties), end(cInputProperties));
 	ScriptInput input;
+
+	xverifyAllowedProperties(inputJson, vInputProperties, true, validationErrors, location);
 
 	populateRef(input, inputJson, allowRefs, validationErrors, location);
 	if (input.ref.length() > 0) {
-		if (hasOneOf(inputJson, { "index", "channel" })) {
+		if (hasOneOf(inputJson, cInputProperties)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_RefOrInstance, "A ref input can not be combined other non-ref input properties.");
 		}
 	} else {
@@ -1475,7 +1538,10 @@ ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, 
 }
 
 ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> randProperties = { "lower", "upper" };
 	ScriptRand rand;
+
+	xverifyAllowedProperties(randJson, randProperties, false, validationErrors, location);
 
 	json::const_iterator lower = randJson.find("lower");
 	if ((lower != randJson.end()) && (lower->is_object())) {
@@ -1501,11 +1567,15 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<Validat
 }
 
 ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const char* cCalcProperties[] = { "add", "sub", "div", "mult" };
+	static const vector<string> vCalcProperties(begin(cCalcProperties), end(cCalcProperties));
 	ScriptCalc calc;
+
+	xverifyAllowedProperties(calcJson, vCalcProperties, true, validationErrors, location);
 
 	populateRef(calc, calcJson, allowRefs, validationErrors, location);
 	if (calc.ref.length() > 0) {
-		if (hasOneOf(calcJson, { "add", "sub", "div", "mult" })) {
+		if (hasOneOf(calcJson, cCalcProperties)) {
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
 		}
 	} else {
@@ -1578,7 +1648,10 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 }
 
 ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> inputTriggerProperties = { "id", "input" };
 	ScriptInputTrigger inputTrigger;
+
+	xverifyAllowedProperties(inputTriggerJson, inputTriggerProperties, false, validationErrors, location);
 
 	json::const_iterator id = inputTriggerJson.find("id");
 	if ((id != inputTriggerJson.end()) && (id->is_string())) {

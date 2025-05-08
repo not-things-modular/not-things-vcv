@@ -158,7 +158,7 @@ TEST(TimeSeqJsonScript, ParseScriptWithUnknownPropertyShouldFail) {
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1u) << validationErrors[0].message << " " << validationErrors[1].message << " " << validationErrors[2].message;
+	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/");
 	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
 }
@@ -189,7 +189,62 @@ TEST(TimeSeqJsonScript, ParseScriptShouldAllowUnknownPropertyWithXPrefix) {
 		{ "version", "0.0.1" },
 		{ "timelines", json::array() },
 		{ "x-unknown-prop-1", "value" },
-		{ "x-unknown-prop-2", { { "child", "object" } } },
+		{ "x-unknown-prop-2", { { "child", "object" } } }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScript, ParseScriptComponentPoolWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "component-pool", json::object({
+			{ "unknown-prop", "value" }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScript, ParseScriptComponentPoolWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "component-pool", json::object({
+			{ "unknown-prop-1", "value" },
+			{ "unknown-prop-2", { { "child", "object" } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScript, ParseScriptComponentPoolShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "0.0.1" },
+		{ "timelines", json::array() },
+		{ "component-pool", json::object({
+			{ "x-unknown-prop-1", "value" },
+			{ "x-unknown-prop-2", { { "child", "object" } } }
+		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
