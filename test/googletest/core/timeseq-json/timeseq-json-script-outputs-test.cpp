@@ -438,3 +438,64 @@ TEST(TimeSeqJsonScriptOutput, ParseRefInputShouldNotAllowChannelProperty) {
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Output_RefOrInstance, "/component-pool/actions/0/set-value/output");
 }
+
+TEST(TimeSeqJsonScriptOutput, ParseOutputWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{
+				{ "id", "output-1" },
+				{ "index", 1 },
+				{ "unknown-prop", "value" }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/outputs/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptOutput, ParseOutputWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{
+				{ "id", "output-1" },
+				{ "index", 1 },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/outputs/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptOutput, ParseOutputShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{
+				{ "id", "output-1" },
+				{ "index", 1 },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}

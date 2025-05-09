@@ -254,3 +254,64 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldParseSegments) {
 	EXPECT_EQ(script->segmentBlocks[0].segments[1].ref, "");
 	EXPECT_TRUE(script->segmentBlocks[0].segments[1].duration.samples);
 }
+
+TEST(TimeSeqJsonScriptSegmentBlocks, ParseSegmentBlockWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segment-blocks", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "segments", json::array({}) },
+				{ "unknown-prop", "value" }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/segment-blocks/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptSegmentBlocks, ParseSegmentBlockWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segment-blocks", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "segments", json::array({}) },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/segment-blocks/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptSegmentBlocks, ParseSegmentBlockShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segment-blocks", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "segments", json::array({}) },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}

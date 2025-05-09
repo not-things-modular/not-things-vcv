@@ -1339,3 +1339,350 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGateActionWithGateHighRatio
 	ASSERT_TRUE(script->actions[0].output);
 	EXPECT_EQ(script->actions[0].output->ref, "ref-output");
 }
+
+TEST(TimeSeqJsonScriptAction, ParseActionWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "trigger", "trigger-name" },
+				{ "unknown-prop", "value" }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "trigger", "trigger-name" },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "trigger", "trigger-name" },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetValueActionWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-value", {
+					{ "value", { { "ref", "value-ref" } } },
+					{ "output", { { "ref", "output-ref" } } },
+					{ "unknown-prop", "value" }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/set-value");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetValueActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-value", {
+					{ "value", { { "ref", "value-ref" } } },
+					{ "output", { { "ref", "output-ref" } } },
+					{ "unknown-prop-1", "value" },
+					{ "unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/set-value");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetValueActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-value", {
+					{ "value", { { "ref", "value-ref" } } },
+					{ "output", { { "ref", "output-ref" } } },
+					{ "x-unknown-prop-1", "value" },
+					{ "x-unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetVariableActionWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-variable", {
+					{ "name", "variable-name" },
+					{ "value", { { "output", { { "ref", "output-ref" } } } } },
+					{ "unknown-prop", "value" }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/set-variable");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetVariableActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-variable", {
+					{ "name", "variable-name" },
+					{ "value", { { "output", { { "ref", "output-ref" } } } } },
+					{ "unknown-prop-1", "value" },
+					{ "unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/set-variable");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetVariableActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-variable", {
+					{ "name", "variable-name" },
+					{ "value", { { "output", { { "ref", "output-ref" } } } } },
+					{ "x-unknown-prop-1", "value" },
+					{ "x-unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetPolyphonyActionWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-polyphony", {
+					{ "index", 1 },
+					{ "channels", 1 },
+					{ "unknown-prop", "value" }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/set-polyphony");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetPolyphonyActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-polyphony", {
+					{ "index", 1 },
+					{ "channels", 1 },
+					{ "unknown-prop-1", "value" },
+					{ "unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/set-polyphony");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseSetPolyphonyActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "set-polyphony", {
+					{ "index", 1 },
+					{ "channels", 1 },
+					{ "x-unknown-prop-1", "value" },
+					{ "x-unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAssertActionWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "assert", {
+				{ "name", "assert-name" },
+				{ "expect", {
+					{ "eq", json::array({
+						{ { "ref", "value-ref-1" } },
+						{ { "ref", "value-ref-2" } }
+					}) }
+				} },
+				{ "unknown-prop", "value" }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/assert");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAssertActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "assert", {
+				{ "name", "assert-name" },
+				{ "expect", {
+					{ "eq", json::array({
+						{ { "ref", "value-ref-1" } },
+						{ { "ref", "value-ref-2" } }
+					}) }
+				} },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/assert");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAssertActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "assert", {
+				{ "name", "assert-name" },
+				{ "expect", {
+					{ "eq", json::array({
+						{ { "ref", "value-ref-1" } },
+						{ { "ref", "value-ref-2" } }
+					}) }
+				} },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}

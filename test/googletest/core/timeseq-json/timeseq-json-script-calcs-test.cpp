@@ -231,3 +231,64 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnRefWithOtherCalcProperties) {
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/2/calc/0");
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/3/calc/1");
 }
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{
+				{ "id", "calc-1" },
+				{ "add", { { "ref", "value-1" }} },
+				{ "unknown-prop", "value" }
+			},
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/calcs/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{
+				{ "id", "calc-1" },
+				{ "add", { { "ref", "value-1" }} },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			},
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/calcs/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{
+				{ "id", "calc-1" },
+				{ "add", { { "ref", "value-1" }} },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			},
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}

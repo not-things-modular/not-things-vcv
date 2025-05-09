@@ -648,3 +648,67 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldParseSegments) {
 	EXPECT_EQ(script->timelines[0].lanes[0].segments[1].ref, "segment-2");
 	EXPECT_EQ(script->timelines[0].lanes[0].segments[2].ref, "segment-3");
 }
+
+TEST(TimeSeqJsonScriptLane, ParseLaneWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "lanes", json::array({
+				{
+					{ "segments", json::array() },
+					{ "unknown-prop", "value" }
+				}
+			}) }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/timelines/0/lanes/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptLane, ParseLaneWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "lanes", json::array({
+				{
+					{ "segments", json::array() },
+					{ "unknown-prop-1", "value" },
+					{ "unknown-prop-2", { { "child", "object" } } }
+				}
+			}) }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/timelines/0/lanes/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptLane, ParseLaneShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{
+			{ "lanes", json::array({
+				{
+					{ "segments", json::array() },
+					{ "x-unknown-prop-1", "value" },
+					{ "x-unknown-prop-2", { { "child", "object" } } }
+				}
+			}) }
+		}
+	});
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}

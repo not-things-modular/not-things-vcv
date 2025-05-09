@@ -496,3 +496,70 @@ TEST(TimeSeqJsonScriptIf, ParseShouldFailWithMultipleOperators) {
 		expectError(validationErrors, ValidationErrorCode::If_MultpleOperations, "/component-pool/actions/" + std::to_string(i) + "/if");
 	}
 }
+
+TEST(TimeSeqJsonScriptIf, ParseIfWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "trigger", "trigger-name" },
+				{ "if", {
+					{ "eq", doubleValueArray },
+					{ "unknown-prop", "value" }
+				} } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/if");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptIf, ParseIfWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "trigger", "trigger-name" },
+				{ "if", {
+					{ "eq", doubleValueArray },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+				} } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/if");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptIf, ParseIfShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{
+				{ "id", "action-1" },
+				{ "trigger", "trigger-name" },
+				{ "if", {
+					{ "eq", doubleValueArray },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+				} } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}

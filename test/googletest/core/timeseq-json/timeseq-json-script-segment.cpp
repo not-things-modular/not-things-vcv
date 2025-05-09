@@ -984,3 +984,131 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseSegmentBlock) {
 	EXPECT_TRUE(script->segments[0].segmentBlock);
 	EXPECT_EQ(script->segments[0].segmentBlock.get()->ref, "segment-block-ref");
 }
+
+TEST(TimeSeqJsonScriptSegment, ParseSegmentWithUnknownPropertyShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "segment-block", "segment-block-ref" },
+				{ "unknown-prop", "value" }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/segments/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseSegmentWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "segment-block", "segment-block-ref" },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/segments/0");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseSegmentShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "segment-block", "segment-block-ref" },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseSegmentWithUnknownPropertyOnDurationShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "duration", {
+					{ "samples", 1 },
+					{ "unknown-prop", "value" }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/segments/0/duration");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseSegmentWithUnknownPropertiesOnDurationShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "duration", {
+					{ "samples", 1 },
+					{ "unknown-prop-1", "value" },
+					{ "unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/segments/0/duration");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseSegmentShouldAllowUnknownPropertyWithXPrefixOnDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{
+				{ "id", "segment-block-1" },
+				{ "duration", {
+					{ "samples", 1 },
+					{ "x-unknown-prop-1", "value" },
+					{ "x-unknown-prop-2", { { "child", "object" } } }
+				} }
+			}
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
