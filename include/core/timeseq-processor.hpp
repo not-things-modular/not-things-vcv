@@ -386,8 +386,8 @@ struct TriggerProcessor {
 struct Processor {
 	Processor(std::vector<std::shared_ptr<TimelineProcessor>> m_timelines, std::vector<std::shared_ptr<TriggerProcessor>> m_triggers, std::vector<std::shared_ptr<ActionProcessor>> startActions);
 
-	void reset();
-	void process();
+	virtual void reset();
+	virtual void process();
 
 	nt_private:
 		std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
@@ -447,8 +447,9 @@ struct ProcessorScriptParser {
 struct ProcessorLoader {
 	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
 	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, std::shared_ptr<RandValueGenerator> randomValueGenerator);
+	virtual ~ProcessorLoader();
 
-	std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
+	virtual std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 
 	nt_private:
 		ProcessorScriptParser m_processorScriptParser;

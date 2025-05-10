@@ -41,10 +41,10 @@ struct JsonScriptParser {
 
 struct JsonLoader {
 	JsonLoader();
-	~JsonLoader();
+	virtual ~JsonLoader();
 
-	std::shared_ptr<json> loadJson(std::istream& inputStream, std::vector<ValidationError> *validationErrors=nullptr);
-	std::shared_ptr<Script> loadScript(std::istream& inputStream, std::vector<ValidationError> *validationErrors);
+	virtual std::shared_ptr<json> loadJson(std::istream& inputStream, std::vector<ValidationError>* validationErrors=nullptr);
+	virtual std::shared_ptr<Script> loadScript(std::istream& inputStream, std::vector<ValidationError>* validationErrors);
 
 	private:
 		JsonScriptParser *m_jsonScriptParser;

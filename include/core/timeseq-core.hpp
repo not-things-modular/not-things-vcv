@@ -42,6 +42,7 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 	enum Status { EMPTY, IDLE, RUNNING, PAUSED };
 
 	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
+	TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, SampleRateReader* sampleRateReader, EventListener* eventListener);
 	virtual ~TimeSeqCore();
 
 	std::vector<timeseq::ValidationError> loadScript(std::string& scriptData);
@@ -67,14 +68,14 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 	uint32_t getElapsedSamples();
 	void resetElapsedSamples();
 	
-	private:
+	nt_private:
 		Status m_status = Status::EMPTY;
 		uint32_t m_elapsedSamples = 0;
 		uint32_t m_sampleRate = 48000;
 		uint32_t m_samplesPerHour = 48000 * 60 * 60;
 
-		JsonLoader* m_jsonLoader;
-		ProcessorLoader* m_processorLoader;
+		std::shared_ptr<JsonLoader> m_jsonLoader;
+		std::shared_ptr<ProcessorLoader> m_processorLoader;
 
 		std::shared_ptr<Script> m_script;
 		std::shared_ptr<Processor> m_processor;

@@ -747,6 +747,9 @@ ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseCon
 ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener, shared_ptr<RandValueGenerator>(new RandValueGenerator())) {}
 ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener, randomValueGenerator) {}
 
+ProcessorLoader::~ProcessorLoader() {
+}
+
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
 	return m_processorScriptParser.parseScript(script.get(), validationErrors, vector<string>());
 }

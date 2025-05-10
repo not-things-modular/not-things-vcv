@@ -212,6 +212,10 @@ struct ValidationError {
 
 	std::string location;
 	std::string message;
+
+	bool operator ==(const ValidationError& error) const {
+		return (error.location == location) && (error.message == message);
+	}
 };
 
 }

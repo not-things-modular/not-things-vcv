@@ -5,14 +5,16 @@
 #include <fstream>
 #include <sstream>
 
-extern rack::Plugin* pluginInstance;
-
 using namespace timeseq;
 
 
-TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) {
-	m_jsonLoader = new JsonLoader();
-	m_processorLoader = new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener, assertListener);
+TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) :
+		TimeSeqCore(std::shared_ptr<JsonLoader>(new JsonLoader()), std::shared_ptr<ProcessorLoader>(new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener, assertListener)), sampleRateReader, eventListener) {
+}
+
+TimeSeqCore::TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, SampleRateReader* sampleRateReader, EventListener* eventListener) {
+	m_jsonLoader = jsonLoader;
+	m_processorLoader = processorLoader;
 	m_eventListener = eventListener;
 	m_sampleRateReader = sampleRateReader;
 }
@@ -28,7 +30,7 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 	if ((validationErrors.size() == 0) && (script)) {
 		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
 
-		if (validationErrors.size() == 0) {
+		if ((validationErrors.size() == 0) && (processor)) {
 			m_sampleRate = m_sampleRateReader->getSampleRate();
 			m_samplesPerHour = m_sampleRate * 60 * 60;
 			m_script = script;
@@ -72,9 +74,6 @@ bool TimeSeqCore::canProcess() {
 void TimeSeqCore::start() {
 	if (m_processor) {
 		m_status = Status::RUNNING;
-		m_triggers[0].clear();
-		m_triggers[1].clear();
-		m_variables.clear();
 	} else {
 		m_status = Status::EMPTY;
 	}
