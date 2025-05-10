@@ -166,17 +166,19 @@ bool IfProcessor::process(string* message) {
 	} else {
 		// We'll need to return the details of the comparison if it failed, so we'll need to do some additional work...
 		std::ostringstream oss;
+		oss.precision(10);
 		if (m_scriptIf->ifOperator == ScriptIf::IfOperator::AND) {
 			string message1;
 			string message2;
 			bool if1 = m_ifs.first->process(&message1);
 			bool if2 = m_ifs.second->process(&message2);
 
+			oss << "(" << message1 << " and " << message2 << ")";
+			*message = oss.str();
+
 			if (if1 && if2) {
 				return true;
 			} else {
-				oss << "(" << message1 << " and " << message2 << ")";
-				*message = oss.str();
 				return false;
 			}
 		} else if (m_scriptIf->ifOperator == ScriptIf::IfOperator::OR) {
@@ -185,11 +187,12 @@ bool IfProcessor::process(string* message) {
 			bool if1 = m_ifs.first->process(&message1);
 			bool if2 = m_ifs.second->process(&message2);
 
+			oss << "(" << message1 << " or " << message2 << ")";
+			*message = oss.str();
+
 			if (if1 || if2) {
 				return true;
 			} else {
-				oss << "(" << message1 << " or " << message2 << ")";
-				*message = oss.str();
 				return false;
 			}
 		} else {
@@ -201,39 +204,39 @@ bool IfProcessor::process(string* message) {
 			switch (m_scriptIf->ifOperator) {
 				case ScriptIf::IfOperator::EQ: {
 					if (m_scriptIf->tolerance) {
-						result = std::fabs(m_values.first->process() - m_values.second->process()) <= *m_scriptIf->tolerance.get();
+						result = std::fabs(value1 - value2) <= *m_scriptIf->tolerance.get();
 					} else {
-						result = m_values.first->process() == m_values.second->process();
+						result = value1 == value2;
 					}
 					operatorName = " eq ";
 					break;
 				}
 				case ScriptIf::IfOperator::NE: {
 					if (m_scriptIf->tolerance) {
-						result = std::fabs(m_values.first->process() - m_values.second->process()) > *m_scriptIf->tolerance.get();
+						result = std::fabs(value1 - value2) > *m_scriptIf->tolerance.get();
 					} else {
-						result = m_values.first->process() != m_values.second->process();
+						result = value1 != value2;
 					}
 					operatorName = " ne ";
 					break;
 				}
 				case ScriptIf::IfOperator::LT: {
-					result = m_values.first->process() < m_values.second->process();
+					result = value1 < value2;
 					operatorName = " lt ";
 					break;
 				}
 				case ScriptIf::IfOperator::LTE: {
-					result = m_values.first->process() <= m_values.second->process();
+					result = value1 <= value2;
 					operatorName = " lte ";
 					break;
 				}
 				case ScriptIf::IfOperator::GT: {
-					result = m_values.first->process() > m_values.second->process();
+					result = value1 > value2;
 					operatorName = " gt ";
 					break;
 				}
 				case ScriptIf::IfOperator::GTE: {
-					result = m_values.first->process() >= m_values.second->process();
+					result = value1 >= value2;
 					operatorName = " gte ";
 					break;
 				}
@@ -244,10 +247,9 @@ bool IfProcessor::process(string* message) {
 				}
 			}
 
-			if (!result) {
-				oss << "(" << value1 << operatorName << value2 << ")";
-				*message = oss.str();
-			}
+			oss << "(" << value1 << operatorName << value2 << ")";
+			*message = oss.str();
+
 			return result;
 		}
 	}

@@ -1,112 +1,33 @@
 #include "timeseq-processor-shared.hpp"
+#include "string.hpp"
 
-TEST(TimeSeqProcessorIf, ActionWithIfShouldFailOnUnknownValueRef) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
-	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
-	vector<ValidationError> validationErrors;
-	json json = getMinimalJson();
-	json["timelines"] = json::array({
-		{ { "lanes", json::array({
-			{ { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
-				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "eq", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "unknown-value-ref" } }
-					}) } } }
-				}
-			}) } } }) } },
-		}) } }
-	});
+std::string formatAssert(float value1, float value2, std::string operatorName) {
+	std::ostringstream oss;
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/if/eq/1");
+	oss.precision(10);
+	oss << "(" << value1 << " " << operatorName << " " << value2 << ")";
+	return oss.str();
 }
 
-TEST(TimeSeqProcessorIf, ActionWithIfShouldFailOnInvalidValues) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithEqIfShouldCheckIfResult) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
-	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
-	vector<ValidationError> validationErrors;
-	json json = getMinimalJson();
-	json["timelines"] = json::array({
-		{ { "lanes", json::array({
-			{ { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
-				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "eq", json::array({
-						{ { "voltage", "1.f" } },
-						{ { "ref", "invalid-value-ref" } }
-					}) } } }
-				}
-			}) } } }) } },
-		}) } }
-	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["values"] = json::array({
-		{ { "id", "invalid-value-ref" }, { "note", "h4" } }
-	});
-
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 2u);
-	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/timelines/0/lanes/0/segments/0/actions/0/if/eq/0");
-	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/component-pool/values/0");
-}
-
-TEST(TimeSeqProcessorIf, ActionWithIfShouldDetectCircularRefInValues) {
+	MockAssertListener mockAssertListener;
 	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "eq", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
-				}
-			}) } } }) } },
-		}) } }
-	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["values"] = json::array({
-		{ { "id", "variable-value-id" }, { "variable", "input-variable" }, { "calc", json::array({ { { "add", { { "ref", "variable-value-id" } } } } }) } }
-	});
-
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/values/0/calc/0/add");
-	EXPECT_NE(validationErrors[0].message.find("'variable-value-id'"), std::string::npos);
-}
-
-
-TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResult) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
-	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
-	vector<ValidationError> validationErrors;
-	json json = getMinimalJson();
-	json["timelines"] = json::array({
-		{ { "lanes", json::array({
-			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
-				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "eq", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "eq", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -127,8 +48,8 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResult) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
-			if (i % 2 == 1) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			if (i % 2 != 1) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "eq").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -138,23 +59,25 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResult) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResultWithTolerance) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithEqIfShouldCheckIfResultWithTolerance) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "tolerance", .0001f }, { "eq", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "tolerance", .0001f }, { "eq", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -175,8 +98,8 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResultWithTolerance) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
-			if ((i % 2 == 1) || (i == 0) || (i == 4)) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			if ((i % 2 != 1) && (i != 0) && (i != 4)) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "eq").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -186,23 +109,25 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResultWithTolerance) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResultWithTolerance) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithNeIfShouldCheckIfResultWithTolerance) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "tolerance", .0001f }, { "ne", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "tolerance", .0001f }, { "ne", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -223,8 +148,8 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResultWithTolerance) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
-			if (i == 2) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			if (i != 2) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "ne").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -234,23 +159,25 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResultWithTolerance) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResult) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithNeIfShouldCheckIfResult) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "ne", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "ne", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -271,8 +198,8 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResult) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
-			if (i % 2 == 0) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			if (i % 2 != 0) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "ne").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -282,23 +209,25 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResult) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithGtShouldCheckIfResult) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithGtShouldCheckIfResult) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "gt", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "gt", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -319,8 +248,8 @@ TEST(TimeSeqProcessorIf, ActionWithGtShouldCheckIfResult) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
-			if (i == 0 || i == 2 || i == 4) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			if (i != 0 && i != 2 && i != 4) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "gt").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -330,71 +259,25 @@ TEST(TimeSeqProcessorIf, ActionWithGtShouldCheckIfResult) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithGteShouldCheckIfResult) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithGteShouldCheckIfResult) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "gte", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
-				}
-			}) } } }) } },
-		}) } }
-	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["values"] = json::array({
-		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
-	});
-
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
-	EXPECT_NO_ERRORS(validationErrors);
-
-	vector<string> emptyTriggers = {};
-	{
-		testing::InSequence inSequence;
-		float values[] = {0.9999999f, 1.f, -10.f, 5.f, -5.f, 1.0000001f };
-		for (int i = 0; i < 6; i++) {
-			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
-			if (i == 0 || i == 1 || i == 2 || i == 4) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
-			}
-		}
-	}
-
-	for (int i = 0; i < 6; i++) {
-		script.second->process();
-	}
-}
-
-TEST(TimeSeqProcessorIf, ActionWithLtShouldCheckIfResult) {
-	MockEventListener mockEventListener;
-	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
-	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
-	vector<ValidationError> validationErrors;
-	json json = getMinimalJson();
-	json["timelines"] = json::array({
-		{ { "lanes", json::array({
-			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
-				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "lt", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "gte", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -416,7 +299,7 @@ TEST(TimeSeqProcessorIf, ActionWithLtShouldCheckIfResult) {
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
 			if (i == 3 || i == 5) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "gte").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -426,23 +309,25 @@ TEST(TimeSeqProcessorIf, ActionWithLtShouldCheckIfResult) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithLteShouldCheckIfResult) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithLtShouldCheckIfResult) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "lte", json::array({
-						{ { "voltage", 1.f } },
-						{ { "ref", "variable-value-id" } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "lt", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -463,8 +348,8 @@ TEST(TimeSeqProcessorIf, ActionWithLteShouldCheckIfResult) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
-			if (i == 1 || i == 3 || i == 5) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			if (i != 3 && i != 5) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "lt").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -474,29 +359,81 @@ TEST(TimeSeqProcessorIf, ActionWithLteShouldCheckIfResult) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithAndShouldCheckIfResult) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithLteShouldCheckIfResult) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "and", json::array({
-						{ { "eq", json::array({
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "lte", json::array({
 							{ { "voltage", 1.f } },
-							{ { "ref", "variable-value-id-1" } }
-						}) } },
-						{ { "eq", json::array({
-							{ { "voltage", 1.f } },
-							{ { "ref", "variable-value-id-2" } }
-						}) } }
-					}) } } }
+							{ { "ref", "variable-value-id" } }
+						}) } } }
+					} }
+				}
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["values"] = json::array({
+		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+		float values[] = {0.9999999f, 1.f, -10.f, 5.f, -5.f, 1.0000001f };
+		for (int i = 0; i < 6; i++) {
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			if (i != 1 && i != 3 && i != 5) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "lte").c_str(), false)).Times(1);
+			}
+		}
+	}
+
+	for (int i = 0; i < 6; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorIfAssert, ActionWithAndShouldCheckIfResult) {
+	MockTriggerHandler mockTriggerHandler;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "and", json::array({
+							{ { "eq", json::array({
+								{ { "voltage", 1.f } },
+								{ { "ref", "variable-value-id-1" } }
+							}) } },
+							{ { "eq", json::array({
+								{ { "voltage", 1.f } },
+								{ { "ref", "variable-value-id-2" } }
+							}) } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -520,10 +457,9 @@ TEST(TimeSeqProcessorIf, ActionWithAndShouldCheckIfResult) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-1")).Times(1).WillOnce(testing::Return(values1[i]));
-			if ((i == 2) || (i == 3))
-				EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
-			if (i == 3) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
+			if (i != 3) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", (std::string("(") + formatAssert(1.f, values1[i], "eq") + " and " + formatAssert(1.f, values2[i], "eq") + ")").c_str(), false)).Times(1);
 			}
 		}
 	}
@@ -533,29 +469,31 @@ TEST(TimeSeqProcessorIf, ActionWithAndShouldCheckIfResult) {
 	}
 }
 
-TEST(TimeSeqProcessorIf, ActionWithOrShouldCheckIfResult) {
-	MockEventListener mockEventListener;
+TEST(TimeSeqProcessorIfAssert, ActionWithOrShouldCheckIfResult) {
 	MockTriggerHandler mockTriggerHandler;
-	MockSampleRateReader mockSampleRateReader;
+	MockAssertListener mockAssertListener;
+	MockEventListener mockEventListener;
+	testing::NiceMock<MockSampleRateReader> mockSampleRateReader;
 	MockVariableHandler mockVariableHandler;
-	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
 				{
-					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
-					{ "if", { { "or", json::array({
-						{ { "eq", json::array({
-							{ { "voltage", 1.f } },
-							{ { "ref", "variable-value-id-1" } }
-						}) } },
-						{ { "eq", json::array({
-							{ { "voltage", 1.f } },
-							{ { "ref", "variable-value-id-2" } }
-						}) } }
-					}) } } }
+					{ "assert", { { "name", "the-assert" }, { "stop-on-fail", false },
+						{ "expect", { { "or", json::array({
+							{ { "eq", json::array({
+								{ { "voltage", 1.f } },
+								{ { "ref", "variable-value-id-1" } }
+							}) } },
+							{ { "eq", json::array({
+								{ { "voltage", 1.f } },
+								{ { "ref", "variable-value-id-2" } }
+							}) } }
+						}) } } }
+					} }
 				}
 			}) } } }) } },
 		}) } }
@@ -579,10 +517,9 @@ TEST(TimeSeqProcessorIf, ActionWithOrShouldCheckIfResult) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-1")).Times(1).WillOnce(testing::Return(values1[i]));
-			if ((i == 0) || (i == 1))
-				EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
-			if (i != 0) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
+			if (i == 0) {
+				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", "((1 eq 0) or (1 eq 0))", false)).Times(1);
 			}
 		}
 	}

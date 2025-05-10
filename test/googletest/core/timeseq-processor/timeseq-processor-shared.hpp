@@ -34,6 +34,10 @@ struct MockEventListener : EventListener {
 	MOCK_METHOD(void, triggerTriggered, (), (override));
 };
 
+struct MockAssertListener : AssertListener {
+	MOCK_METHOD(void, assertFailed, (std::string, std::string, bool), (override));
+};
+
 struct MockRandValueGenerator : RandValueGenerator {
 	MOCK_METHOD(float, generate, (float, float), (override));
 };
