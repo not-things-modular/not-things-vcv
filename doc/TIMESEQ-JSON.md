@@ -63,7 +63,7 @@ The root item of the TimeSeq JSON script.
 | `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script |
 
 #### Example
-```jsonc
+```js
 {
 	"type": "not-things_timeseq_script",
 	"version": "1.0.0",
