@@ -58,12 +58,12 @@ The root item of the TimeSeq JSON script.
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
 | `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported |
 | `timelines` | no | [timeline](#timeline) array | An array of instances that will drive the sequencer |
-| `global-actions` | no | [action](#action) array | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `START` are allowed |
-| `input-triggers` | no | [input-trigger](#input-trigger) array | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers |
-| `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script |
+| <nobr>`global-actions`</nobr> | no | [action](#action) array | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `START` are allowed |
+| <nobr>`input-triggers`</nobr> | no | [input-trigger](#input-trigger) array | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers |
+| <nobr>`component-pool`</nobr> | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script |
 
 #### Example
-```json
+```
 {
 	"type": "not-things_timeseq_script",
 	"version": "1.0.0",
