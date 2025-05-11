@@ -59,7 +59,7 @@ The root item of the TimeSeq JSON script.
 | `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported |
 | `timelines` | no | [timeline](#timeline) array | An array of instances that will drive the sequencer |
 | <span style="white-space: nowrap;">`global-actions`</span> | no | [action](#action) array | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `START` are allowed |
-| <code><nobr>input-triggers</nobr></code> | no | [input-trigger](#input-trigger) array | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers |
+| <nobr><code>input-triggers</code></nobr> | no | [input-trigger](#input-trigger) array | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers |
 | <span style="white-space: nowrap;">`component-pool`</span> | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script |
 
 #### Example
