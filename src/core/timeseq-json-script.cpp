@@ -433,7 +433,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 		if ((sampleRate->is_number_unsigned()) && (sampleRate->get<int>() > 0)) {
 			timeScale.sampleRate.reset(new int(sampleRate->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_SampleRateNumber, "sample-rate must be a positive integer number.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_SampleRateNumber, "'sample-rate' must be a positive integer number.");
 		}
 	}
 
@@ -442,7 +442,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 		if ((bpm->is_number_unsigned()) && (bpm->get<int>() > 0)) {
 			timeScale.bpm.reset(new int(bpm->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpmNumber, "bpm must be a positive integer number.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpmNumber, "'bpm' must be a positive integer number.");
 		}
 	}
 
@@ -451,14 +451,14 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, std:
 		if ((bpb->is_number_unsigned()) && (bpb->get<int>() > 0)) {
 			timeScale.bpb.reset(new int(bpb->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbNumber, "bpb must be a positive integer number.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbNumber, "'bpb' must be a positive integer number.");
 		}
 	}
 
 	if (!(timeScale.sampleRate) && !(timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_Empty, "One of sample-rate or bpm is required.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_Empty, "One of 'sample-rate' or 'bpm' is required.");
 	} else if ((timeScale.bpb) && !(timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbRequiresBpm, "bpm  must be set if bpb is set.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::TimeScale_BpbRequiresBpm, "'bpm' must be set if 'bpb' is set.");
 	}
 
 	return timeScale;
