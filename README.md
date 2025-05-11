@@ -4,7 +4,7 @@
 ## Modules
 The list of modules in this plugin for [VCV Rack](https://github.com/VCVRack/Rack), a virtual Eurorack modular synthesizer platform:
 * [SOLIM](./doc/SOLIM.md): A set of modules with a core idea of limiting note values to an octave range and sorting them
-* [TIMESEQ](./doc.TIMESEQ.md): A scripted timeline processor. Run simple sequences, more complex behavior, or a mix of both via a JSON script
+* [TIMESEQ](./doc/TIMESEQ.md): A scripted timeline processor. Run simple sequences, more complex behavior, or a mix of both via a JSON script
 * [PI-PO](./doc/PIPO.md): A set of modules for splitting and merging polyphonic and monophonic signals
 * [P-SD](./doc/PSD.md): A module for determining the similarities and differences between two polyphonic signals
 
