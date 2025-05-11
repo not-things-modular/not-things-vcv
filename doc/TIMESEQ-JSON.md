@@ -5,6 +5,7 @@
 - Processing in script order
 - Triggers collected during run, become active on next cycle
 - Variables immediately available after set
+- terms: number, unsigned number, float number
 
 ## Overview
 ![TimeSeq JSON Script high level view](./timeseq-json-high-level.png)
@@ -59,11 +60,11 @@ The root item of the TimeSeq JSON script.
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
-| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported |
-| `timelines` | no | [timeline](#timeline) list | An list of instances that will drive the sequencer |
-| `global-actions` | no | [action](#action) list | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `START` are allowed |
-| `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers |
-| `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script |
+| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported. |
+| `timelines` | no | [timeline](#timeline) list | An list of instances that will drive the sequencer. |
+| `global-actions` | no | [action](#action) list | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `START` are allowed. |
+| `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers. |
+| `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script. |
 
 #### Example
 ```
@@ -90,7 +91,7 @@ The root item of the TimeSeq JSON script.
 
 
 ### input-trigger
-Identifies an input port (and optionally the channel for polyponic inputs) that will be monitored for trigger inputs.
+Identifies the input port that will be monitored for trigger inputs.
 
 An input will be considered to have 'triggered' if it went from low voltage (0V) to high voltage (more then 1V). After triggering, the input must first return back to low voltage (0V) before it can be triggered again.
 
@@ -99,8 +100,8 @@ When an input has been triggered, the internal trigger (identified by the `id` p
 #### Properties
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `id` | yes | string | The id of the trigger that will be set when the an input trigger is detected |
-| `input`| yes | [input](#input) | The input that will be monitored for input triggers |
+| `id` | yes | string | The id of the trigger that will be set when the an input trigger is detected. |
+| `input`| yes | [input](#input) | The *input* that will be monitored for input triggers. |
 
 #### Example
 ```
@@ -117,18 +118,18 @@ When an input has been triggered, the internal trigger (identified by the `id` p
 ### component-pool
 A pool of reusable script components. Objects defined in this pool aren't added into the script directly from here, but can instead be referenced throughout the script using the [ref](#referencing) mechanism.
 
-All objects defined in this pool **must** have an `id` property, since this will be used to reference them from within the script. It is allowed to use the same `id` value for different types of objects (e.g. for a `segment` and a `value`), but within one type of object, the `id` must be unique.
+All objects defined in this pool **must** have an `id` property, since this will be used to reference them from within the script. It is allowed to use the same `id` value for different types of objects (e.g. for a *segment* and a *value*), but within one type of object, the `id` must be unique.
 
 #### Properties
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `segment-blocks` | no | [segment-block](#segment-block) list | A list of reusable `segment-block` objects. |
-| `segments`| no | [segment](#segment) list | A list of reusable `segment` objects. |
-| `inputs` | no | [input](#input) list | A list of reusable `input` objects. |
-| `outputs` | no | [output](#output) list | A list of reusable `output` objects. |
-| `calcs` | no | [calc](#calc) list | A list of reusable `calc` objects. |
-| `values` | no | [value](#value) list | A list of reusable `value` objects. |
-| `actions` | no | [action](#action) list | A list of reusable `action` objects. |
+| `segment-blocks` | no | [segment-block](#segment-block) list | A list of reusable *segment-block* objects. |
+| `segments`| no | [segment](#segment) list | A list of reusable *segment* objects. |
+| `inputs` | no | [input](#input) list | A list of reusable *input* objects. |
+| `outputs` | no | [output](#output) list | A list of reusable *output* objects. |
+| `calcs` | no | [calc](#calc) list | A list of reusable *calc* objects. |
+| `values` | no | [value](#value) list | A list of reusable *value* objects. |
+| `actions` | no | [action](#action) list | A list of reusable *action* objects. |
 
 #### Example
 ```
@@ -152,19 +153,20 @@ All objects defined in this pool **must** have an `id` property, since this will
 }
 ```
 
+
 ### timeline
 A timeline is the container for the sequencing definitions of a script. It groups together one or more [lane](#lane)s.
 
-An optional [time-scale](#time-scale) property controls the timing calculations that will be performed for all `lane`s (and thus the duration of their `segment`s).
+An optional [time-scale](#time-scale) property controls the timing calculations that will be performed for all *lane*s (and thus the duration of their *segment*s).
 
-If there are looping `lane`s present in this timeline, the `loop-lock` property will define when the `lane`s loop: if `loop-lock` is enabled, any `lane` that reaches the end of its processing will not restart until all other `lane`s (looping or not-looping) have finished processing. Once all `lane`s have finished, those that should loop will loop together. If `loop-lock` is not enabled, any lane that finishes processing and is set to loop will do so immediately.
+If there are looping *lane*s present in this timeline, the `loop-lock` property will define when the *lane*s loop: if `loop-lock` is enabled, any *lane* that reaches the end of its processing will not restart until all other *lane*s (looping or not-looping) have finished processing. Once all *lane*s have finished, those that should loop will loop together. If `loop-lock` is not enabled, any lane that finishes processing and is set to loop will do so immediately.
 
 #### Properties
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations in this timeline |
-| `loop-lock`| no | boolean | If `true`, `lane`s will only loop once all other `lane`s have completed. If `false`, `lane`s loop immediately when finished. Defaults to `false` |
-| `lanes` | yes | [lane](#lane) list | The `lane`s that contain the sequences for this timeline |
+| `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations in this timeline. |
+| `loop-lock`| no | boolean | If `true`, *lane*s will only loop once all other *lane*s have completed. If `false`, *lane*s loop immediately when finished. Defaults to `false`. |
+| `lanes` | yes | [lane](#lane) list | The *lane*s that contain the sequences for this timeline. |
 
 #### Example
 ```
@@ -177,6 +179,40 @@ If there are looping `lane`s present in this timeline, the `loop-lock` property 
         { ... },
         { ... }
     ]
+}
+```
+
+
+### time-scale
+The *time-scale* object defines how certain timing calculations should be performed for a [timeline](#timeline). Although the properties of a *time-scale* are all optional, if a *time-scale* is added to a *timeline* then at least
+one of `sample-rate` or `bpm` must be provided.
+
+#### sample-rate
+Using samples is the most fine-grained scale to specify timing within TimeSeq. Since VCV Rack allows the active sample rate to be changed, the exact sample rate at which the script will be running may however not be known in advance. The `sample-rate` property allows you to specify that any *segment*s in this *timeline* that use `samples` for their `duration` have been configured to run at the specified sample rate. When parsing the script, TimeSeq will remap the provided duration of these *segment* so that they will last as long as they would have under the specified *sample-rate* E.g. if `sample-rate` is set to 48000, but VCV Rack is running a 96000 sample rate, a *segment* with a 250 samples duration will instead last 500 samples (since there are double the amount of samples per second).
+
+Note that a *segment* can never be shorter then one sample. Sample rate recalculation can not make a segment shorter then one sample.
+
+### Beats per minute and Beats per bar
+In order to facilitate the definition of musical sequences, the *time-scale* allows the beats per minute and beats per bar to be defined for all *segments* in this *timeline* through the `bpm` and `bpb` properties. When a `bpm` value is set, all *segment*s in this *timeline* can now specify their duration using the `beats` property. If the number of beats in a bar has also been specified through the `bpb` property, *segment*s can also specify a duration in `bars`.
+
+A `bpb` value can only be set if there is also a `bpm` value set.
+
+#### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `sample-rate` | no | unsigned number | The sample rate in which the `samples` duration of all *segment*s in the *timeline* are expressed. |
+| `bpm`| no | unsigned number | The number of Beats per Minute to use for all *segment*s in the *timeline* that use a *beats* duration. |
+| `bpb` | no | unsigned number | How many beats go into one bar for all *segment*s in the *timeline* that use a *bars* duration. Can only be set if `bpm` is also set. |
+
+#### Example
+```
+{
+    "time-scale": {
+		"sample-rate": 48000.
+		"bpm": 120,
+		"bpb": 4
+	},
+	...
 }
 ```
 
