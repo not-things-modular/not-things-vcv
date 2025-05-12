@@ -46,6 +46,28 @@ TEST(TimeSeqProcessorGateAction, GlideActionWithInvalidOutputShouldFail) {
 	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/timelines/0/lanes/0/segments/0/actions/0/output");
 }
 
+TEST(TimeSeqProcessorGateAction, GlideActionWithNoOutputShouldFail) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "timing", "gate" }
+				}
+			}) } } }) } },
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_GateOutput, "/timelines/0/lanes/0/segments/0/actions/0");
+}
+
 TEST(TimeSeqProcessorGateAction, GateActionWithoutGateHighRatioShouldRemainHighForHalfOfDuration) {
 	testing::NiceMock<MockEventListener> mockEventListener;
 	testing::NiceMock<MockTriggerHandler> mockTriggerHandler;

@@ -36,7 +36,7 @@ The root item of the TimeSeq JSON script.
 
 Sequencing is done through the *timeline* instances of the `timelines` list. For those cases where execution order might have an impact on script processing: on each processing cycle, the *timeline* instances are executed in the order that they appear in this list.
 
-If there are specific *action*s that should be executed when a script is started or reset (e.g. setting the number of channels on a polyphonic output), these *action*s can be added to the `global-actions` list. Only *action*s that have a `timing` set to `START` can be added to this list.
+If there are specific *action*s that should be executed when a script is started or reset (e.g. setting the number of channels on a polyphonic output), these *action*s can be added to the `global-actions` list. Only *action*s that have a `timing` set to `start` can be added to this list.
 
 If there is a need to generate internal TimeSeq triggers based on external trigger sources, the `input-triggers` property allows input ports to set up for receiving trigger signals.
 
@@ -48,7 +48,7 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
 | `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported. |
 | `timelines` | no | [timeline](#timeline) list | A list of instances that will drive the sequencer. |
-| `global-actions` | no | [action](#action) list | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `START` are allowed. |
+| `global-actions` | no | [action](#action) list | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `start` are allowed. |
 | `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers. |
 | `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script. |
 
@@ -81,12 +81,12 @@ Identifies the input port that will be monitored for trigger inputs.
 
 An input will be considered to have 'triggered' if it went from low voltage (0V) to high voltage (more then 1V). After triggering, the input must first return back to low voltage (0V) before it can be triggered again.
 
-When an input has been triggered, the internal trigger (identified by the `id` property) will be set, which can then influence the running state of a [Lane](#Lane) if it uses that trigger as `start-trigger`, `restart-trigger` or `stop-trigger`.
+When an input has been triggered, the internal trigger (identified by the `id` property) will be set, which can then influence the running state of a [Lane](#lane) if it uses that trigger as `start-trigger`, `restart-trigger` or `stop-trigger`.
 
 ### Properties
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `id` | yes | string | The id of the trigger that will be set when the an input trigger is detected. |
+| `id` | yes | string | The id of the trigger that will be set when an input trigger is detected. |
 | `input`| yes | [input](#input) | The *input* that will be monitored for input triggers. |
 
 ### Example
@@ -158,7 +158,7 @@ When running the script, each processing cycle will run through the *lane*s in t
 {
     "time-scale": {
         "bpm": 120
-    }
+    },
     "loop-lock": true,
     "lanes": [
         { "segments": [ { "ref": "segment-1" } ] },
@@ -264,9 +264,9 @@ The `segment-block` property provides a special version of a *segment*: if prese
 {
     "duration": { "beats": 2 },
     "actions": [
-		{ "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } }
-		{ "timing": "end", "set-output": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
-	]
+        { "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } }
+        { "timing": "end", "set-output": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
+    ]
 }
 ```
 
@@ -283,10 +283,10 @@ The duration section defines how long a [segment](#segment) will last. TimeSeq a
 
 Only one of the units can be used for a *segment* duration, except for `beats` and `bars`, which are related to each other and can thus be used together.
 
-Note that the *duration* of a *segment* can not be shorter then one sample. If any of the unit conversions result in a *duration* that is shorter then one sample, the *segment* will last one sample instead. TimeSeq does allow fractional durations above that however (e.g. a segment can end up lasting 1.2 samples), and TimeSeq will keep track of these fractions to try and void drifts over time between different *lane*s.
+Note that the *duration* of a *segment* can not be shorter then one sample. If any of the unit conversions result in a *duration* that is shorter then one sample, the *segment* will last one sample instead. TimeSeq does allow fractional durations above that however (e.g. a segment can end up lasting 1.2 samples), and TimeSeq will keep track of these fractions to try and avoid drifts over time between different *lane*s.
 
 ### samples
-Samples are the smalles time division in VCV Rack and thus in TimeSeq. The duration of a sample depends on the current sample rate of VCV Rack. E.g. if the current sample rate is 48Khz, there will be 48000 samples per second, and each sample will thus last 1/48000th of a second.
+Samples are the smallest time division in VCV Rack and thus in TimeSeq. The duration of a sample depends on the current sample rate of VCV Rack. E.g. if the current sample rate is 48Khz, there will be 48000 samples per second, and each sample will thus last 1/48000th of a second.
 
 Since the sample rate of VCV Rack (and thus the length of a sample) may not be known in advance, TimeSeq allows sample durations to be "re-mapped": if the [time-scale](#time-scale) of the [timeline](#timeline) in which the *segment* appears has a `sample-rate` property, that sample rate will be used instead to calculate the duration of the *segment*.
 
@@ -334,7 +334,7 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 ```json
 {
     "beats": 0,
-	"bars": 2
+    "bars": 2
 }
 ```
 
@@ -355,13 +355,68 @@ The `segments` in the block will be executed in the order that they appear in th
 ### Example
 ```json
 {
-	"id": "segment-block-1",
+    "id": "segment-block-1",
     "segments": [
-		{ "ref": "segment-1" },
-		{ "ref": "segment-2" },
-		{ "segment-block": "segment-block-2" },
-		{ "ref": "segment-3" }
-	],
-	"repeat": 3
+        { "ref": "segment-1" },
+        { "ref": "segment-2" },
+        { "segment-block": "segment-block-2" },
+        { "ref": "segment-3" }
+    ],
+    "repeat": 3
 }
 ```
+
+
+## action
+Actions provide the functional core of a TimeSeq script. When executed in a *segment*, actions can change output voltages, change output polyphony, set variables or fire internal triggers.
+
+An optional `if` property is available on actions that allows their execution to be made optional. If the condition specified by the [if](#if) is met, the action will be executed. If not, the action will be skipped.
+
+The `timing` property of an *action* identifies when the *action* will be executed by the *segment* that contains it. Based on the `timing` property, three major types of actions can be identified:
+* Actions that execute once, either at the start of the segment (`start` timing), or when the segment ends (`end` timing),
+* Actions that glide from a start value to an end value for the full duration of the segment (`glide` timing).
+* Actions that generate a gate signal while the segment is running (`gate` timing)
+
+If the order of the actions is important (e.g. when writing and reading variables), see the description of [segment](#segment) for how it will handle the action order.
+
+### Start and End actions
+Actions that have a `start` or an `end` `timing` will be executed one time at the appropriate time in the *segment*. If an `if` property is present on the action, the condition of that [if](#if) will be evaluated at the time that the *segment* wants to execute the action. If the condition of the *if* is not met, the action will not be executed.
+
+`start` and `end` actions can perform a number of operations, each with their own appropriate properties:
+* Set a voltage on an output port
+* Set the polyphony of an output port
+* Set a variable
+* Perform an assert
+* Fire an internal trigger (see #todo for more details about triggers)
+
+Each action must contain exactly one operation. If multiple operations need to be performed, separate actions will have to be created for each of them.
+
+#### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `timing` | no | string | Identifies the timing when this action will be executed. Can be either `start` or `end`. |
+| `set-value`| no | [set-value](#set-value) | Sets a voltage on an output port. |
+| `set-polyphony`| no | [set-polyphony](#set-polyphony) | Sets the polyphony of an output port. |
+| `set-variable`| no | [set-variable](#set-variable) | Sets a variable |
+| `assert`| no | [assert](#assert) | Performs an assert |
+| `trigger`| no | string | Fires an internal trigger with the specified name |
+
+#### Examples
+```json
+{
+    "timing": "start",
+	"set-value": {
+		"value": { "voltage": 6.9 },
+		"output": { "index": 4, "channel": 2 }
+	}
+}
+```
+
+```json
+{
+    "timing": "stop",
+	"trigger": "trigger-next-sequence"
+}
+```
+
+### Glide actions

@@ -134,6 +134,7 @@ enum ValidationErrorCode {
 	Action_NonGateProperties = 924,
 	Action_GateHighRatioFloat = 925,
 	Action_GateHighRatioRange = 926,
+	Action_GateOutput = 927,
 
 	SetValue_OutputObject = 1000,
 	SetValue_ValueObject = 1001,

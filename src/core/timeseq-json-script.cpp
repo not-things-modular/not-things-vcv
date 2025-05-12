@@ -967,17 +967,20 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert', 'trigger' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.startValue) || (!action.endValue)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when for 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when 'GLIDE' timing is used.");
 			}
 			if ((!action.output) && (action.variable.length() == 0)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideActions, "Either 'output' or 'variable' must be present when for 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideActions, "Either 'output' or 'variable' must be present when 'GLIDE' timing is used.");
 			}
 			if ((action.output) && (action.variable.length() > 0)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when for 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when 'GLIDE' timing is used.");
 			}
 		} else if (action.timing == ScriptAction::ActionTiming::GATE) {
 			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.assert) || (action.trigger.size() > 0) || (action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert', 'trigger', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
+			}
+			if (!action.output) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GateOutput, "'output' must be present when 'GATE' timing is used.");
 			}
 			if (action.variable.length() > 0) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'variable' can only be used in combination with 'GLIDE' timing.");
