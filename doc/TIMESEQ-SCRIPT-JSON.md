@@ -5,10 +5,10 @@
 The full object hierarchy of the TimeSeq JSON script looks as follows:
 * [script](#script)
     * [input-triggers](#input-trigger)
-    * global-actions ([action](#action))
+    * global-[action](#action)s
     * [component-pool](#component-pool)
     * [timeline](#timeline)
-        * [time-scales](#time-scale)
+        * [time-scale](#time-scale)
         * [lanes](#lane)
             * [segments](#segment)
                 * [duration](#duration)
@@ -200,7 +200,7 @@ A `bpb` value can only be set if there is also a `bpm` value set.
 
 
 ## lane
-A lane provides the core sequencing functionality of TimeSeq. The *lane* will activate the `segments` in the order that they appear in the list. Only one *segment* can be active within a *lane*, and when a *segment* completes, the *lane* will move on to the next *segment*.
+Lanes provide the core sequencing functionality of TimeSeq. A *lane* will activate the `segments` in the order that they appear in the list. Only one *segment* can be active within a *lane*, and when a *segment* completes, the *lane* will move on to the next *segment*.
 
 Several properties control how a *lane* executes:
 * `auto-start` defines if the *lane* should automatically be started when the script is started.
@@ -222,7 +222,7 @@ The running state of a *lane* can be controlled using triggers:
 | `start-trigger` | no | string | The name of the trigger that will cause this *lane* to start running. A start trigger on an already running *lane* has no impact on the state of the lane. Defaults to empty. |
 | `restart-trigger` | no | string | The name of the trigger that will cause this *lane* to restart. A restart trigger on an inactive *lane* will cause it to start running. A restart trigger on a running *lane* will cause it to restart from the first *segment*. Defaults to empty.|
 | `stop-trigger` | no | string | The name of the trigger that will cause this *lane* to stop running. A stop trigger on an an incative *lane* has no impact on the state of the lane. Defaults to empty. |
-| `disable-ui` | no | boolean | If set to `true`, the *S* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this *lane* will not cause the *S* LED on the TimeSeq panel to light up. Defaults to `true`. |
+| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this *lane* will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
 
 ### Example
 ```json
@@ -234,5 +234,134 @@ The running state of a *lane* can be controlled using triggers:
         { "ref": "segment-1" },
         { "ref": "segment-2" }
     ]
+}
+```
+
+
+## segment
+Segments provide the core timing functionality of TimeSeq. Through its `duration` property, the segment specifies how long it should last. And since [lane](#lane)s execute *segment*s in order one by one, this allows sequences with more complex timings.
+
+The actual output of a *segment* is determined by its list of `actions`. Differnt types of *action*s exist, with their `timing` specifying when they should be executed (See [action](#action) and its sub-types for more details).
+
+If the order that the actions is executed in is of importance (e.g. when writing and subsequently reading values), a segment groups the actions in three sets according to their timing: ***start*** actions, ***ongoing*** actions (with a `glide` or `gate` timing) and ***end*** actions. The processing order of the actions then becomes:
+* If the segment is starting, first execute all **start*** actions (in the order that they appear in the list)
+* Subsequently, execute all ***ongoing*** actions (in the order that they appear in the list)
+* Finally, if the segment is ending, execute all ***end*** actions (in the order that they appear in the list)
+
+The `segment-block` property provides a special version of a *segment*: if present, the `segment-block` must contain the ID of a *segment-block* in the `segment-blocks` section of the [component-pool](#component-pool). TimeSeq will then replace this *segment* instances with the *segment*s of the *segment-block*. The `segment-block` property can not be combined with the `duration` and `actions` properties within the same *segment* instance: either it is a stand-alone *segment* with a `duration` and `actions`, or it is a link to a `segment-block`.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `duration` | yes | [duratino](#duration) | Defines how long this segment will take to complete. |
+| `actions`| no | [action](#action) list | The actions that will be executed as part of this segment. See the description above for details about the timings of actions. |
+| `disable-ui` | no | boolean | If set to `true`, the *S* LED on the TimeSeq panel will light up when this *segment* starts. If set to `false`, a start of this *segment* will not cause the *S* LED on the TimeSeq panel to light up. Defaults to `true`. |
+| `segment-block` | no | string | The ID of a [segment-block](#segment-block) in the [component-pool](#component-pool) that will take the place of this segment. Can not be combined with the `duration`, `actions` and `disable-ui` properties. |
+
+### Example
+#### A "regular" action
+```json
+{
+    "duration": { "beats": 2 },
+    "actions": [
+		{ "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } }
+		{ "timing": "end", "set-output": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
+	]
+}
+```
+
+#### A link to a *segment-block*
+```json
+{
+    "segment-block": "three-notes-and-a-beat"
+}
+```
+
+
+## duration
+The duration section defines how long a [segment](#segment) will last. TimeSeq allows several units of time specification. Since TimeSeq works based on VCV Rack samples, all of these types of units will be converted into samples when loading the script.
+
+Only one of the units can be used for a *segment* duration, except for `beats` and `bars`, which are related to each other and can thus be used together.
+
+Note that the *duration* of a *segment* can not be shorter then one sample. If any of the unit conversions result in a *duration* that is shorter then one sample, the *segment* will last one sample instead. TimeSeq does allow fractional durations above that however (e.g. a segment can end up lasting 1.2 samples), and TimeSeq will keep track of these fractions to try and void drifts over time between different *lane*s.
+
+### samples
+Samples are the smalles time division in VCV Rack and thus in TimeSeq. The duration of a sample depends on the current sample rate of VCV Rack. E.g. if the current sample rate is 48Khz, there will be 48000 samples per second, and each sample will thus last 1/48000th of a second.
+
+Since the sample rate of VCV Rack (and thus the length of a sample) may not be known in advance, TimeSeq allows sample durations to be "re-mapped": if the [time-scale](#time-scale) of the [timeline](#timeline) in which the *segment* appears has a `sample-rate` property, that sample rate will be used instead to calculate the duration of the *segment*.
+
+E.g. if the *timeline* `sample-rate` is set to 48000, but VCV Rack is running at 96Khz, all `sample` values specified in the segment durations in that *timeline* will be multiplied by 2 (96000 / 48000 = 2). The end result will be that the segment will have the same duration independent of the actual VCV Rack sample rate.
+
+### millis
+Specifies the duration of a *segment* in milliseconds. Decimal values are allowed.
+
+### beats and bars
+If the [time-scale](#time-scale) of the [timeline](#timeline) in which the *segment* appears has a `bpm` configured, the duration of a *segment* can be expressed in `beats` relative to those Beats per Minute. Decimal values are allowed to express partials of beats (e.g. 8ths, 16ths, ...).
+
+If there is also a `bpb` configured in the *time-scale*, an additional `bars` property is available relative to those Beats per Bar. `bars` can not be decimal, and a `bars` property can not be used if no `beats` property is present. The `beats` can be `0` however to specify that the *segment* last exactly the length of a (number of) bar(s).
+
+### hz
+A Hertz duration indicates how often the *duration* of the *segment* should fit within one second. E.g. if `hz` is set to 5, the sample will last 1/5th of a second and thus 200 milliseconds. This value can be a decimal.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `samples` | no | unsigned number | The number of samples that the *segment* will last. Relative to the `sample-rate` of the [time-scale](#time-scale) of the current [timeline](#timeline), or to the active VCV Rack sample rate if none was specified on the *timeline*  |
+| `millis`| no | unsigned float | Number of seconds that the *segment* will last |
+| `beats` | no | unsigned float | Number of beats that the *segment* will last, Relative to the `bpm` of the [time-scale](#time-scale) of the current [timeline](#timeline) |
+| `bars` | no | unsigned number | Number of bars that the *segment* will last, Relative to the `bpb` of the [time-scale](#time-scale) of the current [timeline](#timeline). Can not be used without `beats` |
+| `hz` | no | unsigned float | Expresses the duration of the *segment* in Hertz, or fractions of a second |
+
+### Examples
+```json
+{
+    "millis": 1.25
+}
+```
+
+```json
+{
+    "hz": 174.61
+}
+```
+
+```json
+{
+    "beats": 0.25
+}
+```
+
+```json
+{
+    "beats": 0,
+	"bars": 2
+}
+```
+
+
+## segment-block
+A segment-block allows multiple segments to be grouped together so that they can easily be added in other places within the script.
+
+The `segments` in the block will be executed in the order that they appear in the list. The `repeat` property allows the full list to be repeated a number of times.
+
+`segments-blocks` are defined in the [component-pool](#component-pool), and used by referencing them by `id` in the `segment-block` property of a [segment](#segment).
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `segments` | yes | [segment](#segment) list | The list of segments in this *segment-block* |
+| `repeat`| no | unsigned number | The amount of times that the `segments` list should be repeated. |
+
+### Example
+```json
+{
+	"id": "segment-block-1",
+    "segments": [
+		{ "ref": "segment-1" },
+		{ "ref": "segment-2" },
+		{ "segment-block": "segment-block-2" },
+		{ "ref": "segment-3" }
+	],
+	"repeat": 3
 }
 ```

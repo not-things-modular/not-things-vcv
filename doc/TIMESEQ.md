@@ -30,4 +30,4 @@ To support this functionality, the scripting format includes features such as:
 * Internal trigger generation
 * Start, stop or restart script sections based on input and internal triggers
 
-Full details on the scripting language can be found in the [TimeSeq JSON script](TIMESEQ-JSON.md) documentation. For details on the module's UI and how it reflects script state, see the [TimeSeq UI](TIMESEQ-UI.md) page.
+Full details on the scripting language can be found in the [TimeSeq JSON script](TIMESEQ-SCRIPT.md) documentation, with the [TimeSeq JSON Script Format](TIMESEQ-SCRIPT-FORMAT.md) providing the detailed script syntax. For details on the module's UI and how it reflects script state, see the [TimeSeq UI](TIMESEQ-UI.md) page.
