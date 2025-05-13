@@ -711,3 +711,45 @@ TEST(TimeSeqProcessorValue, RandValueShouldRandomizeInRange) {
 		}
 	}
 }
+
+TEST(TimeSeqProcessorValue, RandValueShouldHandleEqualLowerAndUpper) {
+	testing::NiceMock<MockEventListener> mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	MockPortHandler mockPortHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({
+					{ { "duration", { { "samples", 1 } } }, { "actions", json::array({
+						{ { "set-variable", { { "name", "output-variable" }, { "value", { { "rand", {
+							{ "lower", { { "ref", "lower-value-id" } } },
+							{ "upper", { { "ref", "upper-value-id" } } }
+						} } } } } } }
+					}) } }
+			}) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["values"] = json::array({
+		{ { "id", "lower-value-id" }, { "variable", "lower-value" } },
+		{ { "id", "upper-value-id" }, { "variable", "upper-value" } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+
+	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100).WillRepeatedly(testing::ReturnRef(emptyTriggers));
+	EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(100).WillRepeatedly(testing::Return(1.f));
+	EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(100).WillRepeatedly(testing::Return(1.f));
+	EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(100);
+	for (int i = 0; i < 100; i++) {
+		script.second->process();
+	}
+
+}

@@ -115,8 +115,16 @@ RandValueGenerator::RandValueGenerator() : m_generator(chrono::steady_clock::now
 RandValueGenerator::~RandValueGenerator() {}
 
 float RandValueGenerator::generate(float lower, float upper) {
-	uniform_real_distribution<float> distribution(lower, upper);
-	return distribution(m_generator);
+	// std::uniform_real_distribution expects lower < upper, so make sure to handle possible edge cases.
+	if (lower == upper) {
+		return lower;
+	} else if (lower < upper) {
+		uniform_real_distribution<float> distribution(lower, upper);
+		return distribution(m_generator);
+	} else {
+		uniform_real_distribution<float> distribution(upper, lower);
+		return distribution(m_generator);
+	}
 }
 
 RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, shared_ptr<RandValueGenerator> randValueGenerator, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_lowerValue(lowerValue), m_upperValue(upperValue), m_randValueGenerator(randValueGenerator) {}

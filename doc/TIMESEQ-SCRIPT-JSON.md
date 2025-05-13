@@ -645,12 +645,14 @@ An example of a set-value within an action:
 ```
 
 
-## set-value
+## set-variable
 The *set-variable* is used within an [action](#action) to update an internal TimeSeq variable that can then be references by other [value](#value)s within the script.
 
 The voltage to use is determined by the `value` property, while the `name` property determines the name of the variable that should be updated.
 
 When a variable is set to a voltage using a *set-variable* *action*, that variable will keep that voltage value as long as the script keeps running. Pausing and resuming a script will not clear existing variables. Resetting a script, loading a new script or restarting VCV Rack will cause existing variables to be removed.
+
+Since unknown variables will default to 0V, setting a variable to 0V will be the same as removing that variable from the list of currently known variables.
 
 ### Properties
 | property | required | type | description |
@@ -727,5 +729,208 @@ An example of a set-value within an action:
 			"name": "input 3 to high"
 		}
 	}
+}
+```
+
+
+## value
+Throughout the TimeSeq script, whenever a voltage is needed, a value is used to provide different ways to determine that voltage value:
+* A constant voltage, either using an exact voltage number or using a note value that will be its corresponding 1V/Oct voltage,
+* Using a variable that was previousy set using a [set-variable](#set-variable) [action](#action),
+* Reading the current voltage from an [input](#input) port,
+* Reading the current voltage from an [output](#output) port or
+* Using a [rand](#rand)om voltage generator
+
+When the `note` property is used, it must be a 2 or 3 character string, where the first character specifies the note name (A-G), the second specifies the octave (0-9) and the third (optional) character can either use `+` to indicate a sharp, or `-` to indicate a flat. E.g: `C4+` will result in the 1V/Oct value of a middle C# t be used, while a `A3-` will result in an A flat below middle C.
+
+If a `variable` property is used and no variable with a matching name was previously set using a [set-variable](#set-variable) [action](#action), 0V will be used instead.
+
+Additional mathematical operations are possible on a value using the `calc` property. This allows simple [calc](#calc)ulations to be performed by either adding, subtracting, dividing or multiplying this value with another value. The `calc` property expects a list of [calc](#calc) objects. Even if only one calculation is to be performed, it should still be supplied as a list (with one element). The calculations in the list will be executed in the order that they appear in the list.
+
+Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** any *calc* has been applied to the voltage value.
+
+Exactly one of the `voltage`, `note`, `variable`, `input`, `output` or `rand` properties must be specified for a value.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `voltage` | no | float | An exact constant voltage value between `-10` and `10`. |
+| `note`| no | string | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. |
+| `variable`| no | string | The name of the variable to use. |
+| `input` | no | [input](#input) | Reads the current voltage from one of the TimeSeq inputs. |
+| `output` | no | [output](#output) | Reads the current voltage from one of the TimeSeq outputs. |
+| `rand` | no | [rand](#rand) | Uses a random voltage value (within a specified voltage range). |
+| `calc` | no | [calc](#calc) list | Allows mathematical operations to be applied to the voltage of this value, using the voltage of another value. |
+| `quantize` | no | boolean | If set to `true`, the voltage of this value will be quantized to the nearest 1V/Oct note value **after** any optional calculations have been performed. If set to `false`, the voltage value will be used as-is after any optional calculations have been performed. Defaults to `false`. |
+
+### Examples
+A constant voltage value:
+```json
+{ "voltage": 3.14 }
+```
+
+A constant voltage value expressed as a note:
+```json
+{ "note": "D5+" }
+```
+
+The voltage of channel 4 on input port 3, multiplied by 2:
+```json
+{
+	"input": { "index": 3, "channel": 4 },
+	"calc": [
+		{ "mult": { "voltage": 2 } }
+	]
+}
+```
+
+The voltage of channel 8 on output port 5, with a random value between 0.5 and 1 added to it, and subsequently multiplied by 2:
+```json
+{
+	"output": { "index": 5, "channel": 8 },
+	"calc": [
+		{
+			"add": {
+				"rand": {
+					"lower": 0.5,
+					"upper": 1
+				}
+			}
+		},
+		{ "mult": { "voltage": 2 } }
+	]
+}
+```
+
+
+## input
+An input identifies a channel on one of the input ports of TimeSeq, either to read a voltage from it in a [value](#value) or to monitor it for [input-trigger](#input-trigger)s.
+
+The input port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If to `channel` is specified, (e.g. since it is a monophonic input signal), the first channel of the port will be used. In VCV Rack, a monophonic signal can be seen as a signal containing one channel.
+
+Note that TimeSeq will not validate how many channels are present on the input port. If a channel is requested that is outside of the current polyphonic channel range of the input signal, TimeSeq will use whatever value VCV Rack returns for that channel (usually 0v).
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `index` | yes | unsigned number | The index of the port from which to retrieve a voltage. Must be between `1` and `8`. |
+| `channel`| no | unsigned number | The channel on the input port from which to retrieve the voltage, as a number between `1` and `16`. Defaults to `1` |
+
+### Examples
+The third input port, using channel 1 since no `channel` property is specified:
+```json
+{
+    "index": 3
+}
+```
+
+The fifth input port, using channel 15:
+```json
+{
+    "index": 5,
+    "channel": 15
+}
+```
+
+
+## output
+An output identifies a channel on one of the output ports of TimeSeq, either to assign a voltage to it through an [action](#action), or to read a voltage from it using a [value](#value).
+
+The output port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If to `channel` is specified, the first channel of the port will be used. In VCV Rack, a monophonic signal can be seen as a signal containing one channel.
+
+Note that TimeSeq will not validate how many channels are present on the output port. Assigning a value to a channel that is outside the current polyphonic channel count will not result in more channels becoming active on that output. TimeSeq will however remember any voltage updates done on all channels (even if they are outside of the current polyphonic channel count), and will assign those voltages to the channels if the channel count is changed using a [set-polyphony](#set-polyphony) *action*. Similarly, if a voltage is assigned to a channel that is outside of the current polyphonic channel count, a [value](#value) that uses that channel will still return the value that was assigned to it.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `index` | yes | unsigned number | The index of the port from which to retrieve or on which to set a voltage. Must be between `1` and `8`. |
+| `channel`| no | unsigned number | The channel on the output port from which to retrieve or on which to set the voltage, as a number between `1` and `16`. Defaults to `1` |
+
+### Examples
+The third output port, using channel 1 since no `channel` property is specified:
+```json
+{
+    "index": 3
+}
+```
+
+The fifth output port, using channel 15:
+```json
+{
+    "index": 5,
+    "channel": 15
+}
+```
+
+
+## rand
+The rand allows random voltages to be generated for usage in a [value](#value).
+
+The generated random value will be between the `lower` and `upper` [value](#value)s. If the runtime calculation of the *value*s results in a `upper` value that is below the `lower` value, the rand will swap their meaning for the random voltage generation.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `lower` | yes | [value](#value) | The lowest voltage that can be generated. |
+| `upper`| yes | [value](#value) | The generated random value will be below this voltage. |
+
+### Example
+```json
+{
+    "rand": {
+		"lower": { "voltage": -5 },
+		"upper": { "variable": "the-upper-bounds" }
+	}
+}
+```
+
+
+## calc
+Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, where each calculation either adds or subtracts another value from the current voltage, multiplies them, or divides the current voltage by the specified value.
+
+To safeguard against calculation errors, a division by zero will result in a 0V.
+
+The possible mathematical operations are available as:
+* `add` or adding a value to the current voltage,
+* `sub` for subtracting a value from the current voltage,
+* `mult` for multiplying the current voltage with a value,
+* `div` for dividing the current voltage by a value.
+
+Each calc must specify exactly one mathematical operation.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `add` | no | [value](#value) | Adds a value to the current voltage. |
+| `sub` | no | [value](#value) | Subtracts a value from the current voltage. |
+| `mult` | no | [value](#value) | Multiplies the current voltage with a value. |
+| `div` | no | [value](#value) | Divides the current voltage by a value. |
+
+### Examples
+The voltage of channel 4 on input port 3, multiplied by 2:
+```json
+{
+	"input": { "index": 3, "channel": 4 },
+	"calc": [
+		{ "mult": { "voltage": 2 } }
+	]
+}
+```
+
+The voltage of channel 8 on output port 5, with a random value between 0.5 and 1 added to it, and subsequently multiplied by 2:
+```json
+{
+	"output": { "index": 5, "channel": 8 },
+	"calc": [
+		{
+			"add": {
+				"rand": {
+					"lower": 0.5,
+					"upper": 1
+				}
+			}
+		},
+		{ "mult": { "voltage": 2 } }
+	]
 }
 ```
