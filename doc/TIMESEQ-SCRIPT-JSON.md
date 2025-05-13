@@ -400,6 +400,7 @@ Each action must contain exactly one operation. If multiple operations need to b
 | `set-variable`| no | [set-variable](#set-variable) | Sets a variable |
 | `assert`| no | [assert](#assert) | Performs an assert |
 | `trigger`| no | string | Fires an internal trigger with the specified name |
+| `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
 #### Examples
 ```json
@@ -420,3 +421,67 @@ Each action must contain exactly one operation. If multiple operations need to b
 ```
 
 ### Glide actions
+Actions with a `glide` timing gradually move from one value to another over the duration of a *segment*. The `start` *value* of the action will define at which voltage the glide starts, and the `end` *value* identifies the voltage the action will reach at the end of the *segment*.
+
+Using the `ease-factor` property, it is possible to influence the rate at which the glide moves from the `start` *value* to the `end` *value*. A positive `ease-factor` will cause the change to start slow and speed up towards the end, while a negative one will cause it to start changing quickly and ease out towards the end. If no `ease-factor` is specified (or it is set to zero), the glide will be executed in a linear fashion.
+The calculation of the easing factor supports two algorithms: using sigmoid function (`sig`) or based on power calculations (`pow`). The arc resulting from these altorithms differs slightly. By default, the `sig` algorithm will be used since it is less CPU intensive.
+
+Just like with other actions, a glide action can be made conditional by including an `if` property so that the action will only be executed if the [if](#if) condition is met.
+
+The exact values used for the `start`, `end` and `if` properties will be calculated when the *segment* that contains the action is started. They will not be re-evaluated while the *segment* is running, so any change that could influence these value calculations that happens while the *segment* is running will not be taken into account anymore. For example, if the action was determined to be disabled due to its `if` condition when the *segment* started, the action will not become active while the *segment* is running if the values for that `if` condition change afterwards. If the *segment* is started again at a later time (e.g. due to a looping *lane*), all values for the action will be re-evaluated when the *segment* restarts.
+
+A glide action has two possible targets to send its generated voltages to: either change an [output](#output) voltage or set a variable that can be used in other areas of the script. Only one of these targets can be used per glide action.
+
+#### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `start-value` | yes | [value](#value) | The *value* that the action should start the glide from. |
+| `end-value`| yes | [value](#value) | The *value* that the action should glide towards. |
+| `ease-factor`| no | float | Controls the rate at which the action will move from the `start` value to the `end` value. Must be between -5 and 5. Defaults to 0 |
+| `ease-algorithm`| no | string | The algorithm to use for easing calculations. Can be either `sig` or `pow`. Defaults to `sig` |
+| `output`| no | [output](#output) | The output port to which the calculcated value should be sent |
+| `variable`| no | string | The name of the variable that should be set based on the calculated value of the action. |
+| `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
+
+#### Example
+```json
+{
+    "timing": "glide",
+	"start-value": { "voltage": -3 },
+    "end-value": { "variable": "glide-end-value" },
+    "output": { "index": 9, "port": 6 },
+    "if": { "ne": [
+        { "voltage": 0 },
+        { "variable": "glide-condition" }
+    ] }
+}
+```
+
+
+### Gate actions
+An action with the `gate` timing can be used to generate a gate signal on one of the output ports: it will set the output port voltage to 10v when the action starts, and will change it to 0v as the action progresses. By default, the change to 0v will be done when the *segment* that contains the action has completed half of its *duration*. The `gate-high-ratio` property can be used to change this position, with `0` moving it to the start of the *segment*, `1` moving it to the end of the *segment* and `0.5` matching the halfway point of the *segment* *duration*.
+
+The voltage of a gate action must always be sent to an *output* port.
+
+Just like the other action types, a gate action can be made conditional using an [if](#if) property.
+
+#### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `gate-high-ratio` | no | unsigned float | The position when the gate signal should go from high to low. Must be a value between `0` and `1`, with `0.5` alligning with half of the *segment* duration. Defaults to `0.5` |
+| `output`| no | [output](#output) | The output port to which the calculcated value should be sent |
+| `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
+
+#### Example
+```json
+{
+    "timing": "glide",
+	"start-value": { "voltage": -3 },
+    "end-value": { "variable": "glide-end-value" },
+    "output": { "index": 9, "port": 6 },
+    "if": { "ne": [
+        { "voltage": 0 },
+        { "variable": "glide-condition" }
+    ] }
+}
+```
