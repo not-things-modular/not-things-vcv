@@ -391,6 +391,8 @@ Actions that have a `start` or an `end` `timing` will be executed one time at th
 
 Each action must contain exactly one operation. If multiple operations need to be performed, separate actions will have to be created for each of them.
 
+Except for the `trigger` action, all the action types have an action property that will contain a sub-object with the different parameters required for that action. Since `trigger` action only needs to identify the ID of the trigger that has to be fired, a plain string that identifies that trigger ID will be sufficient.
+
 #### Properties
 | property | required | type | description |
 | --- | --- | --- | --- |
@@ -483,5 +485,247 @@ Just like the other action types, a gate action can be made conditional using an
         { "voltage": 0 },
         { "variable": "glide-condition" }
     ] }
+}
+```
+
+
+## if
+The *if* object provides conditional functionality for *action*s and *assert*s either by comparing two [value](#value)s with each other or by checking the result of two child if conditionals using logical operators. A condition can either evaluate to *true* or *false*. The result of the condition can then either enable (if *true*) or disable (if *false*) an [action](#action), to trigger (if *true*) the [assert](#assert) that they were used in.
+
+Each *if* object must contain exactly one comparison or logical operator.
+
+
+### Comparison operators
+Using one of the following properties in the *if* object will cause the matching comparison to be performed:
+* `eq`: returns *true* if two *value*s are equal (with an optional `tolerance`),
+* `ne`: returns *true* if two *value*s are not equal (with an optional `tolerance`),
+* `lt`: returns *true* if the first provided *value* is less than the second provided *value*,
+* `lte`: returns *true* if the first provided *value* is less than or equal to the second provided *value*,
+* `gt`: returns *true* if the first provided *value* is greater than the second provided *value*,
+* `gte`: returns *true* if the first provided *value* is greater than or equal to the second provided *value*.
+
+The value of the comparison property must be set to an array of exactly two [value](#value) objects. When the *if* is triggered, the current voltage of the provided *value*s will be calculated, and the results will be compared with each other.
+
+For the `eq` and the `ne` comparisons, an optional `tolerance` can be can be provided. If provided, the two *value*s will be considered equal (or not equal) if the difference between the two *value*s falls within that tolerance. Since voltage calculations within VCV Rack can result in small rounding errors, providing a small `tolerance` value may be needed when comparing two *value*s for (in)equality.
+
+#### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `eq` | no | [value](#value) array with 2 *value*s | Checks that the two provided *value*s are equal, with an optional `tolerance` |
+| `ne` | no | [value](#value) array with 2 *value*s | Checks that the two provided *value*s are not equal, with an optional `tolerance` |
+| `lt` | no | [value](#value) array with 2 *value*s | Checks that the first provided *value* is less than the second. |
+| `lte` | no | [value](#value) array with 2 *value*s | Checks that the first provided *value* is less than or equal to the second. |
+| `gt` | no | [value](#value) array with 2 *value*s | Checks that the first provided *value* is greater than the second. |
+| `gte` | no | [value](#value) array with 2 *value*s | Checks that the first provided *value* is greater than or equal to the second. |
+| `tolerance` | no | unsigned float | Specifies how much the two *value*s are allowed to differ while still being considered equal (for an `eq` operator) or not equal (for an `ne` operator). |
+
+
+#### Examples
+Some examples of *if* usage within an action:
+```json
+{
+	"if": {
+		"eq": [
+			{ "voltage": 4.2 },
+			{ "variable": "my-input-variable"}
+		],
+		"tolerance": 0.00001
+	},
+	{ "set-variable": { "my-output-variable": 6.9 } }
+}
+```
+
+```json
+{
+	"if": {
+		"lt": [
+			{ "voltage": 4.2 },
+			{ "variable": "my-input-variable"}
+		]
+	},
+	{ "set-variable": { "my-output-variable": 6.9 } }
+}
+```
+
+
+### Logical operators
+A logical operator allows two child *if*s to be combined. Following logical operators can be used:
+* `and`: returns *true* if the two child *if*s both evaluate to *true*,
+* `or`: returns *true* if at least one of the child *if*s evaluates to *true*
+
+The value of the logical operator property must be set to an array of exactly two child *if* objects. If needed, multiple levels of logical *if* operators can be nested.
+
+#### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `and` | no | [if](#if) array with 2 *if*s | Checks that the two provided *if*s both evaluate to *true* |
+| `or` | no | [if](#if) array with 2 *if*s | Checks that at least one of the provided *if*s evaluates to *true* |
+
+#### Examples
+A single-level logical *if* in an action:
+```json
+{
+	"if": {
+		"and": [
+			{
+				"eq": [
+					{ "voltage": 4.2 },
+					{ "variable": "my-input-variable-1" }
+				]
+			},
+			{
+				"gt": [
+					{ "voltage": 3.45 },
+					{ "input": { "index": 6 } }
+				]
+			}
+		]
+	},
+	{ "set-variable": { "my-output-variable": 9.9 } }
+}
+```
+An `and` logical operator with a child `or` logical operator as first child conditional
+```json
+{
+	"if": {
+		"and": [
+			{
+				"or": [
+					{
+						"eq": [
+							{ "voltage": 2.1 },
+							{ "variable": "my-input-variable-1" }
+						]
+					},
+					{
+						"eq": [
+							{ "voltage": 4.2 },
+							{ "variable": "my-input-variable-1" }
+						]
+					}
+				]
+			}
+			{
+				"gt": [
+					{ "voltage": 3.45 },
+					{ "input": { "index": 6 } }
+				]
+			}
+		]
+	},
+	{ "set-variable": { "my-output-variable": 9.9 } }
+}
+```
+
+
+## set-value
+The *set-value* is used within an [action](#action) to update the voltage of one of the TimeSeq outputs.
+The root item of the TimeSeq JSON script.
+
+The voltage to use is determined by the `value` property, while the port (and channel) on which the voltage should be updated is determined by the `output` property.
+
+The voltage will be immediately assigned to the [output](#output) as part of the executed action, so any subsequent [value](#value) in the script that references that *output* will immediately receive the updated voltage.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `value` | yes | [value](#value) | The value that will determine the voltage to use. |
+| `output`| yes | [output](#output) | The output port (and channel) to which the voltage should be applied. |
+
+### Example
+An example of a set-value within an action:
+```json
+{
+    "timing": "end",
+    "set-value": {
+		"value": { "voltage": 5.6 },
+		"output": { "index": 7, "channel": 8 }
+	}
+}
+```
+
+
+## set-value
+The *set-variable* is used within an [action](#action) to update an internal TimeSeq variable that can then be references by other [value](#value)s within the script.
+
+The voltage to use is determined by the `value` property, while the `name` property determines the name of the variable that should be updated.
+
+When a variable is set to a voltage using a *set-variable* *action*, that variable will keep that voltage value as long as the script keeps running. Pausing and resuming a script will not clear existing variables. Resetting a script, loading a new script or restarting VCV Rack will cause existing variables to be removed.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `value` | yes | [value](#value) | The value that will determine the voltage to use. |
+| `variable`| yes | string | The name of the variable to which the voltage should be assigned. |
+
+### Example
+An example of a set-value within an action:
+```json
+{
+    "timing": "start",
+    "set-value": {
+		"value": { "voltage": 3.14 },
+		"variable": "a-piece-of-pi"
+	}
+}
+```
+
+
+## set-polyphony
+The *set-polyphony* is used within an [action](#action) to update the number of polyphonic channels of an output port.
+
+The port on which the number of channels should be updated is determined by the `index` property, while the number of channels that it should have is determined by the `channels` property. Setting the number of channels to `1` will make the port monophonic. One port can have up to `16` channels.
+
+The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8`
+
+When changing the number of channels on an output port, the voltages that were previously assigned to channels of that output will be remembered. Lowering the number of channels of a port and subsequently increasing the count again will not clear previously assigned voltages.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `index` | yes | unsigned number [1-8] | The output port on which the number of channels should be updated. |
+| `channels`| yes | unsigned number [1-16] | The number of channels that should be available on the output port. |
+
+### Example
+An example of a set-value within an action:
+```json
+{
+    "timing": "start",
+    "set-value": {
+		"value": { "voltage": 3.14 },
+		"variable": "a-piece-of-pi"
+	}
+}
+```
+
+
+## assert
+Asserts allow TimeSeq to be used as a module to test the behaviour of other modules. The assert action allows a check to be performed on an [if](#if) condition, and if that condition is not met, it will result in an assert warning becoming active on the module UI. By writing a script that sends varying voltages through the TimeSeq [output](#output)s to another module, and then sending the output of that other module back into the [input](#input)s of TimeSeq, the assert action can subsequently verify that the other module behaved as expected.
+
+The `expect` property will identify the [if](#if) condition that will be checked. If this condition evaluates to *false*, an assert with the specified `name` will be triggered on TimeSeq. The `stop-on-fail` property specifies if the occurance of a failed assert should also pause TimeSeq, or if the script should continue running.
+
+While the assert is mainly intended to be used to verify voltages on the input ports of TimeSeq, the `expect` condition can be used to compare any types of *value*s.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `expect` | yes | [if](#if) | The condition that must evaluate to *true*. If it evaluates to *false*, an assert will be triggered on TimeSeq. |
+| `name`| yes | string | The name of the assert that will be triggered on TimeSeq if the condition evaluates to *false*. |
+| `stop-on-fail`| no | boolean | When set to `true`, TimeSeq will pause the script execution if this assert is fired. Defaults to `true`. |
+
+### Example
+An example of a set-value within an action:
+```json
+{
+    "timing": "start",
+    "assert": {
+		"expect": {
+			"lt": [
+				{ "voltage": 4.2 },
+				{ "input": { "index": 3 }}
+			],
+			"name": "input 3 to high"
+		}
+	}
 }
 ```

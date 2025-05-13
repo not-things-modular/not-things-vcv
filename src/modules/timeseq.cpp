@@ -242,6 +242,10 @@ void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) 
 void TimeSeqModule::setOutputPortChannels(int index, int channels) {
 	m_outputChannels[index] = channels;
 	outputs[OutputId::OUT_OUTPUTS + index].setChannels(channels);
+
+	for (int j = 0; j < m_outputChannels[index]; j++) {
+		outputs[OutputId::OUT_OUTPUTS + index].setVoltage(m_outputVoltages[index][j], j);
+	}
 }
 
 void TimeSeqModule::laneLooped() {

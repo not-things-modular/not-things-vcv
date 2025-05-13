@@ -27,3 +27,4 @@ From a high-level view, a TimeSeq JSON script contains:
 ## Referencing
 - circular references
 - segments duration and timeline time-scale
+- all ports set to 1 channel, all ports and channels set to 0V on start/load/reset
