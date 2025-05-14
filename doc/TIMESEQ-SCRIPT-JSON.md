@@ -32,25 +32,35 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
     * [component-pool](#component-pool) - A pool of reusable JSON objects
 
 
+## JSON Property types
+Next to the JSON objects that are defined in this document, following property type definitions are used throughout the JSON format specification:
+* **string**: a sequence of characters
+* **boolean**: a value that can be either set to `true` or `false`
+* **usigned number**: A non-decimal number that is either 0 or positive
+* **float**: A decimal number that can be negative, 0 or positive
+* **unsigned float**: A decimal number that is either 0 or positive
+* **list**: When combined with the name of a JSON object, defines that a list of one or more of those JSON objects is expected (e.g. a list of *segment*s). A lists in JSON are written as comma-separated list surrounded by square brackets (`[]`).
+
+
 ## script
 The root item of the TimeSeq JSON script.
 
-Sequencing is done through the *timeline* instances of the `timelines` list. For those cases where execution order might have an impact on script processing: on each processing cycle, the *timeline* instances are executed in the order that they appear in this list.
+Sequencing is done by adding one or more *timeline* objects to the `timelines` list property. If execution order is important for the processing of the sequence, each processing cycle will go through the *timeline* objects in the order that they appear in this list.
 
-If there are specific *action*s that should be executed when a script is started or reset (e.g. setting the number of channels on a polyphonic output), these *action*s can be added to the `global-actions` list. Only *action*s that have a `timing` set to `start` can be added to this list.
+The `global-actions` property allows specific *action*s to be executed when a script is started or reset (e.g. setting the number of channels on a polyphonic output). Only *action*s that have a `timing` set to `start` can be added to this list.
 
-If there is a need to generate internal TimeSeq triggers based on external trigger sources, the `input-triggers` property allows input ports to set up for receiving trigger signals.
+If there is a need to generate internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers) based on external trigger sources, the `input-triggers` property allows input ports to set up for receiving external trigger signals.
 
-In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs.
+In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [component reuse](TIMESEQ-SCRIPT.md#component-reuse) section of the main TimeSeq script documentation file for more details.
 
 ### Properties
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
 | `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported. |
-| `timelines` | no | [timeline](#timeline) list | A list of instances that will drive the sequencer. |
-| `global-actions` | no | [action](#action) list | A list of actions that will be executed when the script starts or is reset. Only actions which have their `timing` set to `start` are allowed. |
-| `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing a trigger on input ports to be translated into internal TimeSeq triggers. |
+| `timelines` | no | [timeline](#timeline) list | A list of *timeline*s that will drive the sequencer. |
+| `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script starts or is reset. Only *action*s which have their `timing` set to `start` are allowed here. |
+| `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing a gate/trigger signal on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
 | `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script. |
 
 ### Example
@@ -73,6 +83,106 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
     "component-pool": {
         ...
     }
+}
+```
+
+
+## timeline
+A timeline is a container for the sequencing definitions of a script. It groups together one or more [lane](#lane)s.
+
+An optional [time-scale](#time-scale) property controls the timing calculations that will be performed for all *lane*s (and thus the duration of their *segment*s).
+
+If there are looping *lane*s present in this timeline, the `loop-lock` property will define when the *lane*s loop: if `loop-lock` is enabled, any *lane* that reaches the end of its processing will not restart until all other *lane*s (looping or not-looping) have finished processing. Once all *lane*s have finished, those that should loop will loop together. If `loop-lock` is not enabled, any *lane* that finishes processing and is set to loop will do so immediately.
+
+When running the script, each processing cycle will run through the *lane*s in the order that they appear in the `lanes` list.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations in this timeline. |
+| `loop-lock`| no | boolean | If `true`, *lane*s will only loop once all other *lane*s have completed. If `false`, *lane*s loop immediately when finished. Defaults to `false` if not set. |
+| `lanes` | yes | [lane](#lane) list | The *lane*s that contain the *segment* sequences for this timeline. |
+
+### Example
+```json
+{
+    "time-scale": {
+        "bpm": 120
+    },
+    "loop-lock": true,
+    "lanes": [
+        { "segments": [ { "ref": "segment-1" } ] },
+        { "segments": [ { "ref": "segment-2" } ] }
+    ]
+}
+```
+
+
+## time-scale
+The *time-scale* object defines how certain timing calculations should be performed for a [timeline](#timeline). Although the properties of a *time-scale* are all optional, if a *time-scale* is added to a *timeline* then at least one of `sample-rate` or `bpm` must be provided.
+
+### sample-rate
+Using samples is the most fine-grained scale to specify timing within TimeSeq. Since VCV Rack allows the active sample rate to be changed, the exact sample rate at which the script will be running may however not be known in advance. The `sample-rate` property allows you to specify that any *segment*s in this *timeline* that use `samples` for their `duration` have been configured to run at the specified sample rate. When parsing the script, TimeSeq will remap the provided duration of these *segment*s so that they will last as long as they would have under the specified *sample-rate* E.g. if `sample-rate` is set to 48000, but VCV Rack is running a 96000 (96Khz) sample rate, a *segment* with a 250 samples duration will instead last 500 samples (since there are double the amount of samples per second).
+
+Note that sample rate recalculation can not make a segment shorter then one sample. A *segment* can never last less then one sample.
+
+## Beats per Minute and Beats per Bar
+In order to facilitate the definition of musical sequences, the *time-scale* allows the Beats per Minute and Beats per Bar to be defined for all *segment*s in this *timeline* through the `bpm` and `bpb` properties. When a `bpm` value is set, all *segment*s in this *timeline* can specify their duration using the `beats` property. If the number of beats in a bar has also been specified through the `bpb` property, *segment*s can also specify a duration in `bars`.
+
+A `bpb` value can only be set if there is also a `bpm` value set.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `sample-rate` | no | unsigned number | The sample rate in which the `samples` duration of all *segment*s in the *timeline* are expressed. |
+| `bpm`| no | unsigned number | The number of Beats per Minute to use for all *segment*s in the *timeline* that specify their duration using *beats*. |
+| `bpb` | no | unsigned number | How many beats go into one bar for all *segment*s in the *timeline* that use a `bars` duration. `bpb` can only be set if `bpm` is also set. |
+
+### Example
+```json
+"time-scale": {
+    "sample-rate": 48000,
+    "bpm": 120,
+    "bpb": 4
+}
+```
+
+
+## lane
+Lanes provide the core sequencing functionality of TimeSeq. A *lane* will activate the `segments` in the order that they appear in the list. Only one *segment* can be active within a *lane*, and when a *segment* completes, the *lane* will move on to the next *segment*.
+
+Several properties control how a *lane* executes:
+* `auto-start` defines if the *lane* should automatically be started when the script is started.
+* `loop` defines if the *lane* should loop through the `segments`, activating the first *segment* again when the last *segment* of the list completes if looping is enabled.
+* `repeat` defines how many times the `segments` in the *lane* should be repeated. A value of 0 or 1 mean that the list of `segments` will only be executed once. A value of 2 results in running through the list twice, 3 results in three iterations, etc. If `loop` is enabled for the *lane*, the `segments` will be repeated indefinitely, so the `repeat` property will have no impact anymore in that case.
+
+The running state of a *lane* can be controlled using triggers:
+* If a trigger matching the `start-trigger` property fires, and the *lane* is not currently running, it will be started. Any previous progress of the *lane* will be reset, and it will start again from the first *segment*. If the *lane* was already running when the trigger was received, the trigger will have no impact on the *lane* status or position.
+* If a trigger matching the `restart-trigger` property fires, the *lane* will be restarted from the first *segment*. If the *lane* was paused or hadn't started yet, it will start running from the first *segment*. If the *lane* was already running, its position will be reset to that of the first *segment*.
+* If a trigger matching the `stop-trigger` property fires, the *lane* will stop running if it is currently running. If it is not running, the trigger will have no impact.
+
+### Properties
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `segments` | yes | [segment](#segment) list | The sequence of segments that will be executed for this *lane* |
+| `auto-start` | no | boolean | If set to `true`, the *lane* will start automatically when the script is loaded. If set to `false` the *lane* will remain stopped when the script is loaded. Defaults to `true` |
+| `loop`| no | boolean | If set to `true`, the *lane* will restart from the first segment once the last segment completes. Otherwise the lane will stop once the last segment completes. Defaults to `false` |
+| `repeat` | no | unsigned number | Specifies how many times the *lane* should be executed before stopping. Has no impact if `loop` is set to `true`. Defaults to `0` |
+| `start-trigger` | no | string | The name of the trigger that will cause this *lane* to start running. A start trigger on an already running *lane* has no impact on the state of the lane. Defaults to empty. |
+| `restart-trigger` | no | string | The name of the trigger that will cause this *lane* to restart. A restart trigger on an inactive *lane* will cause it to start running. A restart trigger on a running *lane* will cause it to restart from the first *segment*. Defaults to empty.|
+| `stop-trigger` | no | string | The name of the trigger that will cause this *lane* to stop running. A stop trigger on an an incative *lane* has no impact on the state of the lane. Defaults to empty. |
+| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this *lane* will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
+
+### Example
+```json
+{
+    "auto-start": true,
+    "loop": true,
+    "restart-trigger": "restart-chord-lane",
+    "segments": [
+        { "ref": "segment-1" },
+        { "ref": "segment-2" }
+    ]
 }
 ```
 
@@ -134,107 +244,6 @@ All objects defined in this pool **must** have an `id` property, since this will
             { "id": "full", "voltage": 10 }
         ]
     }
-}
-```
-
-
-## timeline
-A timeline is the container for the sequencing definitions of a script. It groups together one or more [lane](#lane)s.
-
-An optional [time-scale](#time-scale) property controls the timing calculations that will be performed for all *lane*s (and thus the duration of their *segment*s).
-
-If there are looping *lane*s present in this timeline, the `loop-lock` property will define when the *lane*s loop: if `loop-lock` is enabled, any *lane* that reaches the end of its processing will not restart until all other *lane*s (looping or not-looping) have finished processing. Once all *lane*s have finished, those that should loop will loop together. If `loop-lock` is not enabled, any lane that finishes processing and is set to loop will do so immediately.
-
-When running the script, each processing cycle will run through the *lane*s in the order that they appear in the `lanes` list.
-
-### Properties
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations in this timeline. |
-| `loop-lock`| no | boolean | If `true`, *lane*s will only loop once all other *lane*s have completed. If `false`, *lane*s loop immediately when finished. Defaults to `false`. |
-| `lanes` | yes | [lane](#lane) list | The *lane*s that contain the sequences for this timeline. |
-
-### Example
-```json
-{
-    "time-scale": {
-        "bpm": 120
-    },
-    "loop-lock": true,
-    "lanes": [
-        { "segments": [ { "ref": "segment-1" } ] },
-        { "segments": [ { "ref": "segment-2" } ] }
-    ]
-}
-```
-
-
-## time-scale
-The *time-scale* object defines how certain timing calculations should be performed for a [timeline](#timeline). Although the properties of a *time-scale* are all optional, if a *time-scale* is added to a *timeline* then at least
-one of `sample-rate` or `bpm` must be provided.
-
-### sample-rate
-Using samples is the most fine-grained scale to specify timing within TimeSeq. Since VCV Rack allows the active sample rate to be changed, the exact sample rate at which the script will be running may however not be known in advance. The `sample-rate` property allows you to specify that any *segment*s in this *timeline* that use `samples` for their `duration` have been configured to run at the specified sample rate. When parsing the script, TimeSeq will remap the provided duration of these *segment* so that they will last as long as they would have under the specified *sample-rate* E.g. if `sample-rate` is set to 48000, but VCV Rack is running a 96000 sample rate, a *segment* with a 250 samples duration will instead last 500 samples (since there are double the amount of samples per second).
-
-Note that a *segment* can never be shorter then one sample. Sample rate recalculation can not make a segment shorter then one sample.
-
-## Beats per minute and Beats per bar
-In order to facilitate the definition of musical sequences, the *time-scale* allows the beats per minute and beats per bar to be defined for all *segments* in this *timeline* through the `bpm` and `bpb` properties. When a `bpm` value is set, all *segment*s in this *timeline* can now specify their duration using the `beats` property. If the number of beats in a bar has also been specified through the `bpb` property, *segment*s can also specify a duration in `bars`.
-
-A `bpb` value can only be set if there is also a `bpm` value set.
-
-### Properties
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `sample-rate` | no | unsigned number | The sample rate in which the `samples` duration of all *segment*s in the *timeline* are expressed. |
-| `bpm`| no | unsigned number | The number of Beats per Minute to use for all *segment*s in the *timeline* that use a *beats* duration. |
-| `bpb` | no | unsigned number | How many beats go into one bar for all *segment*s in the *timeline* that use a *bars* duration. Can only be set if `bpm` is also set. |
-
-### Example
-```json
-"time-scale": {
-    "sample-rate": 48000,
-    "bpm": 120,
-    "bpb": 4
-}
-```
-
-
-## lane
-Lanes provide the core sequencing functionality of TimeSeq. A *lane* will activate the `segments` in the order that they appear in the list. Only one *segment* can be active within a *lane*, and when a *segment* completes, the *lane* will move on to the next *segment*.
-
-Several properties control how a *lane* executes:
-* `auto-start` defines if the *lane* should automatically be started when the script is started.
-* `loop` defines if the *lane* should loop through the `segments`, activating the first *segment* again when the last *segment* of the list completes if looping is enabled.
-* `repeat` defines how many times the `segments` in the *lane* should be repeated. A value of 0 or 1 mean that the list of `segments` will only be executed once. A value of 2 results in running through the list twice, 3 results in three iterations, etc. If `loop` is enabled for the *lane*, the `segments` will be repeated indefinitely, so the `repeat` property will have no impact anymore in that case.
-
-The running state of a *lane* can be controlled using triggers:
-* If a trigger matching the `start-trigger` property fires, and the *lane* is not currently running, it will be started. Any previous progress of the *lane* will be reset, and it will start again from the first *segment*. If the *lane* was already running when the trigger was received, the trigger will have no impact on the *lane* status or position.
-* If a trigger matching the `restart-trigger` property fires, the *lane* will be restarted from the first *segment*. If the *lane* was paused or hadn't started yet, it will start running from the first *segment*. If the *lane* was already running, its position will be reset to that of the first *segment*.
-* If a trigger matching the `stop-trigger` property fires, the *lane* will stop running if it is currently running. If it is not running, the trigger will have no impact.
-
-### Properties
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `segments` | yes | [segment](#segment) list | The sequence of segments that will be executed for this *lane* |
-| `auto-start` | no | boolean | If set to `true`, the *lane* will start automatically when the script is loaded. If set to `false` the *lane* will remain stopped when the script is loaded. Defaults to `true` |
-| `loop`| no | boolean | If set to `true`, the *lane* will restart from the first segment once the last segment completes. Otherwise the lane will stop once the last segment completes. Defaults to `false` |
-| `repeat` | no | unsigned number | Specifies how many times the *lane* should be executed before stopping. Has no impact if `loop` is set to `true`. Defaults to `0` |
-| `start-trigger` | no | string | The name of the trigger that will cause this *lane* to start running. A start trigger on an already running *lane* has no impact on the state of the lane. Defaults to empty. |
-| `restart-trigger` | no | string | The name of the trigger that will cause this *lane* to restart. A restart trigger on an inactive *lane* will cause it to start running. A restart trigger on a running *lane* will cause it to restart from the first *segment*. Defaults to empty.|
-| `stop-trigger` | no | string | The name of the trigger that will cause this *lane* to stop running. A stop trigger on an an incative *lane* has no impact on the state of the lane. Defaults to empty. |
-| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this *lane* will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
-
-### Example
-```json
-{
-    "auto-start": true,
-    "loop": true,
-    "restart-trigger": "restart-chord-lane",
-    "segments": [
-        { "ref": "segment-1" },
-        { "ref": "segment-2" }
-    ]
 }
 ```
 
