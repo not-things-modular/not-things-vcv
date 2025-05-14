@@ -1,34 +1,35 @@
 # TIMESEQ JSON SCRIPT FORMAT
-*Part of the set of [not-things VCV Rack](../README.md) modules.*
+*Specification of the JSON script schema for the not-things [TimeSeq](TIMESEQ.md) module.*
 
-## Full object hierarchy
-The full object hierarchy of the TimeSeq JSON script looks as follows:
-* [script](#script)
-    * [input-triggers](#input-trigger)
-    * global-[action](#action)s
-    * [component-pool](#component-pool)
-    * [timeline](#timeline)
-        * [time-scale](#time-scale)
-        * [lanes](#lane)
-            * [segments](#segment)
-                * [duration](#duration)
-                * [segment-block](#segment-block)
-                * [action](#action)
-                    * [if](#if)
-                        * `eq, ne, lt, lte, gt, gte, and, or`
-                    * [set-value](#set-value)
-                        * [output](#output)
-                        * [value](#value)
-                            * [input](#input)
-                            * [output](#output)
-                            * [rand](#rand)
-                            * [calc](#calc)
-                    * [set-variable](#set-variable)
-                        * [value](#value)
-                    * [set-polyphony](#set-polyphony)
-                    * [assert](#assert)
-                        * [if](#if)
-                    * `trigger`
+## Table of Contents
+Since the TimeSeq JSON schema uses a nested object structure, following hierarchical object overview can be used as TOC for navigating around:
+
+* [script](#script) - The root TimeSeq script object
+    * [timeline](#timeline) - Container for grouping *lanes* that use the same *time-scale*
+        * [time-scale](#time-scale) - Contains timing related settings
+        * [lanes](#lane) - The core sequencing object of TimeSeq
+            * [segments](#segment) - The core timing object of TimeSeq
+                * [duration](#duration) - Identify the length of a *segment*
+                * [segment-block](#segment-block) - Allow grouping of several *segment*s
+                * [action](#action) - The core functional component of TimeSeq
+                    * [if](#if) - Allow conditional executing of *action*s
+                        * `eq`, `ne`, `lt`, `lte`, `gt`, `gte`, `and`, `or`
+                    * [set-value](#set-value) - Allow *action*s to set output voltages
+                        * [output](#output) - Identifies an output port and channel
+                        * [value](#value) - Evaluates to a voltage
+                            * [input](#input) - Identifies an input port and channel
+                            * [output](#output) - Identifies an output port and channel
+                            * [rand](#rand) - Generates a random voltage
+                            * [calc](#calc) - Allows mathematical calculations with *value*s
+                    * [set-variable](#set-variable) - Set an internal variable
+                        * [value](#value) - Evaluates to a voltage
+                    * [set-polyphony](#set-polyphony) - Sets the number of channels on an output port
+                    * [assert](#assert) - Allows TimeSeq to be used as a test tool for other modules
+                        * expect ([if](#if)) - A condition that can trigger an assert
+                    * `trigger` - Fire an internal trigger
+    * [input-triggers](#input-trigger) - Fire internal triggers based on external trigger signals
+    * global-[action](#action) - *Action*s to perform during script start
+    * [component-pool](#component-pool) - A pool of reusable JSON objects
 
 
 ## script
