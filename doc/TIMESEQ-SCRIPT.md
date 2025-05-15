@@ -32,14 +32,14 @@ The *action* level of the TimeSeq script contains the functional part of the seq
 One-time actions are executed either at the start or at the end of a segment. In both cases, they follow the same execution logic:
 * Actions can have an optional `if` condition. Actions will only be executed if they have no `if` condition, or if the condition evaluates to `true`.
 * Actions contain exactly one operation that they can execute. This can be either a `set-variable`, a `set-value`, a `set-polyphony` or a `trigger`
-	* A `set-variable` operation will set a variable (identified by `name`) to a specific voltage. This variable can then be used by other actions or conditions. The voltage to use for the variable is determined by a `value`, which optionally has calculations applied to it (add, subtract, multiply or divide with another `value`). The voltage of a `value` is retrieved from either:
-		* An input port
-		* A previously assigned value
-		* An output port
-		* A random voltage generator
-	* A `set-value` operation will change the voltage on an output port. The voltage that is assigned to the output port is determined in the same way that the `value` of a `set-variable` operation is determined.
-	* A `set-polyphony` operation will change the number of channels on an output port (from 1 to 16).
-	* A `trigger` operation will fire an internal trigger (see [triggers](#triggers)).
+    * A `set-variable` operation will set a variable (identified by `name`) to a specific voltage. This variable can then be used by other actions or conditions. The voltage to use for the variable is determined by a `value`, which optionally has calculations applied to it (add, subtract, multiply or divide with another `value`). The voltage of a `value` is retrieved from either:
+        * An input port
+        * A previously assigned value
+        * An output port
+        * A random voltage generator
+    * A `set-value` operation will change the voltage on an output port. The voltage that is assigned to the output port is determined in the same way that the `value` of a `set-variable` operation is determined.
+    * A `set-polyphony` operation will change the number of channels on an output port (from 1 to 16).
+    * A `trigger` operation will fire an internal trigger (see [triggers](#triggers)).
 
 ### Glide actions
 Just like one-time actions, a glide action has an optional condition. If this condition does not evaluate to `true`, the glide action will not be executed.
@@ -71,44 +71,44 @@ Any component that has been defined in the *component-pool* can be used in other
 In the following JSON action, the value of channel 9 on output port 6 is set to the current voltage of channel 2 on input port 4:
 ```json
 {
-	"value": {
-		"input": {
-			"index": 4,
-			"channel": 2
-		}
-	},
-	"output": {
-		"index": 6,
-		"channel": 9
-	}
+    "value": {
+        "input": {
+            "index": 4,
+            "channel": 2
+        }
+    },
+    "output": {
+        "index": 6,
+        "channel": 9
+    }
 }
 ```
 
 Since *value*s, *input*s and *output*s can be defined in the *component-pool*, it's possible to define re-usable components for these:
 ```json
 {
-	"component-pool": {
-		"values": [
-			{
-				"id": "value-4.2",
-				"input": { "ref": "input-4.2" }
-			}
-		],
-		"inputs": [
-			{
-				"id": "input-4.2",
-				"index": 4,
-				"channel": 2
-			}
-		],
-		"outputs": [
-			{
-				"id": "output-6.9",
-				"index": 6,
-				"channel": 2
-			}
-		]
-	}
+    "component-pool": {
+        "values": [
+            {
+                "id": "value-4.2",
+                "input": { "ref": "input-4.2" }
+            }
+        ],
+        "inputs": [
+            {
+                "id": "input-4.2",
+                "index": 4,
+                "channel": 2
+            }
+        ],
+        "outputs": [
+            {
+                "id": "output-6.9",
+                "index": 6,
+                "channel": 2
+            }
+        ]
+    }
 }
 ```
 This definition already shows the first usage of a reference: the *value* doesn't define the full *input* object anymore inline, but instead references the newly defined `input-4.2` *input* object by using a `ref` towards it.
@@ -116,8 +116,8 @@ This definition already shows the first usage of a reference: the *value* doesn'
 Using the same `ref` mechanism, the original action JSON can now be written as:
 ```json
 {
-	"value": { "ref": "value-4.2" },
-	"output": { "ref": "output-6.9" }
+    "value": { "ref": "value-4.2" },
+    "output": { "ref": "output-6.9" }
 }
 ```
 
