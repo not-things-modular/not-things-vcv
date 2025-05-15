@@ -397,7 +397,7 @@ Actions that have a `start` or an `end` `timing` will be executed one time at th
 * Set the polyphony of an output port
 * Set a variable
 * Perform an assert
-* Fire an internal trigger (see #todo for more details about triggers)
+* Fire an internal trigger (see [here](TIMESEQ-SCRIPT.md#triggers) on the script overview page for more details about triggers)
 
 Each action must contain exactly one operation. If multiple operations need to be performed, separate actions will have to be created for each of them.
 
@@ -418,17 +418,17 @@ Except for the `trigger` action, all the action types have an action property th
 ```json
 {
     "timing": "start",
-	"set-value": {
-		"value": { "voltage": 6.9 },
-		"output": { "index": 4, "channel": 2 }
-	}
+    "set-value": {
+        "value": { "voltage": 6.9 },
+        "output": { "index": 4, "channel": 2 }
+    }
 }
 ```
 
 ```json
 {
     "timing": "stop",
-	"trigger": "trigger-next-sequence"
+    "trigger": "trigger-next-sequence"
 }
 ```
 
@@ -459,7 +459,7 @@ A glide action has two possible targets to send its generated voltages to: eithe
 ```json
 {
     "timing": "glide",
-	"start-value": { "voltage": -3 },
+    "start-value": { "voltage": -3 },
     "end-value": { "variable": "glide-end-value" },
     "output": { "index": 9, "port": 6 },
     "if": { "ne": [
@@ -488,7 +488,7 @@ Just like the other action types, a gate action can be made conditional using an
 ```json
 {
     "timing": "glide",
-	"start-value": { "voltage": -3 },
+    "start-value": { "voltage": -3 },
     "end-value": { "variable": "glide-end-value" },
     "output": { "index": 9, "port": 6 },
     "if": { "ne": [
@@ -534,26 +534,26 @@ For the `eq` and the `ne` comparisons, an optional `tolerance` can be can be pro
 Some examples of *if* usage within an action:
 ```json
 {
-	"if": {
-		"eq": [
-			{ "voltage": 4.2 },
-			{ "variable": "my-input-variable"}
-		],
-		"tolerance": 0.00001
-	},
-	{ "set-variable": { "my-output-variable": 6.9 } }
+    "if": {
+        "eq": [
+            { "voltage": 4.2 },
+            { "variable": "my-input-variable"}
+        ],
+        "tolerance": 0.00001
+    },
+    { "set-variable": { "my-output-variable": 6.9 } }
 }
 ```
 
 ```json
 {
-	"if": {
-		"lt": [
-			{ "voltage": 4.2 },
-			{ "variable": "my-input-variable"}
-		]
-	},
-	{ "set-variable": { "my-output-variable": 6.9 } }
+    "if": {
+        "lt": [
+            { "voltage": 4.2 },
+            { "variable": "my-input-variable"}
+        ]
+    },
+    { "set-variable": { "my-output-variable": 6.9 } }
 }
 ```
 
@@ -575,55 +575,55 @@ The value of the logical operator property must be set to an array of exactly tw
 A single-level logical *if* in an action:
 ```json
 {
-	"if": {
-		"and": [
-			{
-				"eq": [
-					{ "voltage": 4.2 },
-					{ "variable": "my-input-variable-1" }
-				]
-			},
-			{
-				"gt": [
-					{ "voltage": 3.45 },
-					{ "input": { "index": 6 } }
-				]
-			}
-		]
-	},
-	{ "set-variable": { "my-output-variable": 9.9 } }
+    "if": {
+        "and": [
+            {
+                "eq": [
+                    { "voltage": 4.2 },
+                    { "variable": "my-input-variable-1" }
+                ]
+            },
+            {
+                "gt": [
+                    { "voltage": 3.45 },
+                    { "input": { "index": 6 } }
+                ]
+            }
+        ]
+    },
+    { "set-variable": { "my-output-variable": 9.9 } }
 }
 ```
 An `and` logical operator with a child `or` logical operator as first child conditional
 ```json
 {
-	"if": {
-		"and": [
-			{
-				"or": [
-					{
-						"eq": [
-							{ "voltage": 2.1 },
-							{ "variable": "my-input-variable-1" }
-						]
-					},
-					{
-						"eq": [
-							{ "voltage": 4.2 },
-							{ "variable": "my-input-variable-1" }
-						]
-					}
-				]
-			}
-			{
-				"gt": [
-					{ "voltage": 3.45 },
-					{ "input": { "index": 6 } }
-				]
-			}
-		]
-	},
-	{ "set-variable": { "my-output-variable": 9.9 } }
+    "if": {
+        "and": [
+            {
+                "or": [
+                    {
+                        "eq": [
+                            { "voltage": 2.1 },
+                            { "variable": "my-input-variable-1" }
+                        ]
+                    },
+                    {
+                        "eq": [
+                            { "voltage": 4.2 },
+                            { "variable": "my-input-variable-1" }
+                        ]
+                    }
+                ]
+            }
+            {
+                "gt": [
+                    { "voltage": 3.45 },
+                    { "input": { "index": 6 } }
+                ]
+            }
+        ]
+    },
+    { "set-variable": { "my-output-variable": 9.9 } }
 }
 ```
 
@@ -648,9 +648,9 @@ An example of a set-value within an action:
 {
     "timing": "end",
     "set-value": {
-		"value": { "voltage": 5.6 },
-		"output": { "index": 7, "channel": 8 }
-	}
+        "value": { "voltage": 5.6 },
+        "output": { "index": 7, "channel": 8 }
+    }
 }
 ```
 
@@ -676,9 +676,9 @@ An example of a set-value within an action:
 {
     "timing": "start",
     "set-value": {
-		"value": { "voltage": 3.14 },
-		"variable": "a-piece-of-pi"
-	}
+        "value": { "voltage": 3.14 },
+        "variable": "a-piece-of-pi"
+    }
 }
 ```
 
@@ -704,9 +704,9 @@ An example of a set-value within an action:
 {
     "timing": "start",
     "set-value": {
-		"value": { "voltage": 3.14 },
-		"variable": "a-piece-of-pi"
-	}
+        "value": { "voltage": 3.14 },
+        "variable": "a-piece-of-pi"
+    }
 }
 ```
 
@@ -731,14 +731,14 @@ An example of a set-value within an action:
 {
     "timing": "start",
     "assert": {
-		"expect": {
-			"lt": [
-				{ "voltage": 4.2 },
-				{ "input": { "index": 3 }}
-			],
-			"name": "input 3 to high"
-		}
-	}
+        "expect": {
+            "lt": [
+                { "voltage": 4.2 },
+                { "input": { "index": 3 }}
+            ],
+            "name": "input 3 to high"
+        }
+    }
 }
 ```
 
@@ -787,28 +787,28 @@ A constant voltage value expressed as a note:
 The voltage of channel 4 on input port 3, multiplied by 2:
 ```json
 {
-	"input": { "index": 3, "channel": 4 },
-	"calc": [
-		{ "mult": { "voltage": 2 } }
-	]
+    "input": { "index": 3, "channel": 4 },
+    "calc": [
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```
 
 The voltage of channel 8 on output port 5, with a random value between 0.5 and 1 added to it, and subsequently multiplied by 2:
 ```json
 {
-	"output": { "index": 5, "channel": 8 },
-	"calc": [
-		{
-			"add": {
-				"rand": {
-					"lower": 0.5,
-					"upper": 1
-				}
-			}
-		},
-		{ "mult": { "voltage": 2 } }
-	]
+    "output": { "index": 5, "channel": 8 },
+    "calc": [
+        {
+            "add": {
+                "rand": {
+                    "lower": 0.5,
+                    "upper": 1
+                }
+            }
+        },
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```
 
@@ -888,9 +888,9 @@ The generated random value will be between the `lower` and `upper` [value](#valu
 ```json
 {
     "rand": {
-		"lower": { "voltage": -5 },
-		"upper": { "variable": "the-upper-bounds" }
-	}
+        "lower": { "voltage": -5 },
+        "upper": { "variable": "the-upper-bounds" }
+    }
 }
 ```
 
@@ -920,27 +920,27 @@ Each calc must specify exactly one mathematical operation.
 The voltage of channel 4 on input port 3, multiplied by 2:
 ```json
 {
-	"input": { "index": 3, "channel": 4 },
-	"calc": [
-		{ "mult": { "voltage": 2 } }
-	]
+    "input": { "index": 3, "channel": 4 },
+    "calc": [
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```
 
-The voltage of channel 8 on output port 5, with a random value between 0.5 and 1 added to it, and subsequently multiplied by 2:
+The voltage of channel 8 on output port 5, with a random value between 06.5 and 1 added to it, and subsequently multiplied by 2:
 ```json
 {
-	"output": { "index": 5, "channel": 8 },
-	"calc": [
-		{
-			"add": {
-				"rand": {
-					"lower": 0.5,
-					"upper": 1
-				}
-			}
-		},
-		{ "mult": { "voltage": 2 } }
-	]
+    "output": { "index": 5, "channel": 8 },
+    "calc": [
+        {
+            "add": {
+                "rand": {
+                    "lower": 0.5,
+                    "upper": 1
+                }
+            }
+        },
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```

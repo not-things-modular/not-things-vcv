@@ -3,31 +3,12 @@
 
 ![TimeSeq](./timeseq.png)
 
-TimeSeq is a scripted timeline processor. It uses an internal script engine that lets you define what voltages should appear on the eight polyphonic outputs over time. These can be based on values from the eight polyphonic inputs, combined with logic and calculations defined in a JSON script.
+TimeSeq is a sequencing module whose behaviour is defined by a user-supplied JSON script. At its core is a processor that is capable of executing multiple sequences in parallel, each with individual time-based segmentation.
 
-With the JSON script, you can create a wide range of behaviour, including:
-* Simple or complex chord and note sequences  
-* Clock or trigger signal generation  
-* Modulation sources via CV signal generation  
-* ...and more
+Scripts can make use of conditional logic, variables, internal triggers and mathematical operations, enabling a wide range of behaviours: from simple note sequences and clock signals to complex logic processing that responds to input voltages received through the module's eight polyphonic inputs. The sequence output voltages can be sent to the eight output ports. With scriptable control over their polyphony, each port can output up to 16 individually addressable polyphonic channels.
 
-To support this functionality, the scripting format includes features such as:
-* Multiple parallel timelines and lanes (each can run once, repeat or loop)
-* Timing units in samples, milliseconds, BPM (beats and bars), or Hz
-* Voltage values defined from:
-    * Fixed values (either by voltage or by note name)
-    * Current input voltages (by port and channel)
-    * Current output voltages (by port and channel)
-    * Random voltage generation (with upper/lower limits)
-    * Simple calculations combining values
-    * Quantization of values to nearest note voltage
-* Read/write voltages as named variables
-* Control over polyphony count per output
-* Output voltage control (per port and channel)
-* Gate generation (e.g. for clocks)
-* Conditional execution using `if` statements
-* Trigger input handling
-* Internal trigger generation
-* Start, stop or restart script sections based on input and internal triggers
-
-Full details on the scripting language can be found in the [TimeSeq JSON script](TIMESEQ-SCRIPT.md) documentation, with the [TimeSeq JSON Script Format](TIMESEQ-SCRIPT-FORMAT.md) providing the detailed script syntax. For details on the module's UI and how it reflects script state, see the [TimeSeq UI](TIMESEQ-UI.md) page.
+The documentation is organized into the following sections:
+* [UI Panel](#TIMESEQ-UI-PANEL.md): Overview of the controls on the TimeSeq panel and how they relate to script execution.
+* [Script Overview](TIMESEQ-SCRIPT.md): Conceptual introduction to the JSON script that drives TimeSeq.
+* [Script JSON Reference](TIMESEQ-JSON-SCRIPT.md): Technical reference detailing the structure and elements of the TimeSeq JSON script.
+* [Script Samples](TIMESEQ-SCRIPT-SAMPLES.md): A collection of script examples (including VCV Rack patches) illustrating different scripting techniques and some possible use cases.
