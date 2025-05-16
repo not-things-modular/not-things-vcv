@@ -411,6 +411,7 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 	LEDDisplay* ledDisplay = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "88:88", 10, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE, true);
 	ledDisplay->setPosition(Vec(47.5f+7.5f+.25, 284.f+.25));
 	ledDisplay->setSize(Vec(41.f, 18.f));
+	ledDisplay->setForegroundText("16:20");
 	addChild(ledDisplay);
 	if (module != nullptr) {
 		module->setLEDDisplay(ledDisplay);

@@ -16,66 +16,88 @@ NVGcolor DARK_RED = nvgRGBA(0x20, 0x20, 0x20, 0xFF);
 
 extern Plugin* pluginInstance;
 
+TimeSeqDisplay::TimeSeqDisplay() {
+	float voltages[15] = { 1.2, 1.2, 1.2, 4.8, -2.0, -5.0, 2.4, 2.4, 2.4, 5.1, -3.0, -3.0, -3.0, 1.0, 6.0 };
+	for (int i = 0; i < 15; i++) {
+		m_dummyVoltagePoints.emplace_back(TimeSeqVoltagePoints(i));
+		m_dummyVoltagePoints[i].voltage = voltages[i];
+	}
+
+}
+
 void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	if (layer != 1) {
 		return;
+	}
+
+	float animationPos;
+	timeseq::TimeSeqCore::Status status;
+	std::vector<TimeSeqVoltagePoints>* voltagePoints;
+	if (m_timeSeqCore) {
+		// If there is a TimeSeq core assigned, there is actual data to draw
+		status = m_timeSeqCore->getStatus();
+		uint32_t tripSampleRate = m_timeSeqCore->getCurrentSampleRate() * 3; // Let each animation loop take 3 seconds
+		uint32_t sampleRemainder = m_timeSeqCore->getElapsedSamples() % tripSampleRate * 4; // Multiply by 4 so we can divide it over the four circles
+		animationPos = (float) sampleRemainder / tripSampleRate; // How far along we are in the animation, between 0.f and 4.f
+
+		voltagePoints = &m_voltagePoints;
+	} else {
+		// There is no TimeSeq core, so we're in "screenshot" mode.
+		status = timeseq::TimeSeqCore::Status::RUNNING;
+		animationPos = 3.33;
+		voltagePoints = &m_dummyVoltagePoints;
 	}
 
 	nvgSave(args.vg);
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
-	if (m_timeSeqCore) {
-		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
-			uint32_t tripSampleRate = m_timeSeqCore->getCurrentSampleRate() * 3; // Let each animation loop take 3 seconds
-			uint32_t sampleRemainder = m_timeSeqCore->getElapsedSamples() % tripSampleRate * 4; // Multiply by 4 so we can divide it over the four circles
-			float pos = (float) sampleRemainder / tripSampleRate; // How far along we are in the animation, between 0.f and 4.f
-			float index;
-			float fraction = std::modf(pos, &index); // How far along we are in the animation of the currently active circle
-			float *offsets = m_animCoords.m_offsetCircles[(int) index];
+	if (status == timeseq::TimeSeqCore::Status::RUNNING) {
+		float index;
+		float fraction = std::modf(animationPos, &index); // How far along we are in the animation of the currently active circle
+		float *offsets = m_animCoords.m_offsetCircles[(int) index];
 
+		nvgStrokeWidth(args.vg, 1.f);
+		nvgLineCap(args.vg, NVG_ROUND);
+		nvgBeginPath(args.vg);
+		nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF * (1 - fraction)));
+		nvgMoveTo(args.vg, offsets[2] - 3.5, 4.5f);
+		nvgLineTo(args.vg, offsets[2] - 3.5 + m_animCoords.m_arcDelta, 4.5f);
+		nvgStroke(args.vg);
+		nvgStrokeColor(args.vg, LIGHT_RED);
+		nvgBeginPath(args.vg);
+		nvgArc(args.vg, offsets[0], 4.5f, 3.5f, START_ARC, START_ARC + (END_ARC - START_ARC) * fraction, NVG_CW);
+		nvgStroke(args.vg);
+		nvgBeginPath(args.vg);
+		nvgArc(args.vg, offsets[1], 4.5f, 3.5f, START_ARC + (END_ARC - START_ARC) * fraction, END_ARC, NVG_CW);
+		nvgMoveTo(args.vg, offsets[1] - 3.5, 4.5f);
+		nvgLineTo(args.vg, offsets[1] - 3.5 + (m_animCoords.m_arcDelta) * fraction, 4.5f);
+		nvgStroke(args.vg);
+	} else {
+		nvgFillColor(args.vg, LIGHT_RED);
+		if (status == timeseq::TimeSeqCore::Status::EMPTY) {
+			nvgBeginPath(args.vg);
 			nvgStrokeWidth(args.vg, 1.f);
-			nvgLineCap(args.vg, NVG_ROUND);
-			nvgBeginPath(args.vg);
-			nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF * (1 - fraction)));
-			nvgMoveTo(args.vg, offsets[2] - 3.5, 4.5f);
-			nvgLineTo(args.vg, offsets[2] - 3.5 + m_animCoords.m_arcDelta, 4.5f);
-			nvgStroke(args.vg);
-			nvgStrokeColor(args.vg, LIGHT_RED);
-			nvgBeginPath(args.vg);
-			nvgArc(args.vg, offsets[0], 4.5f, 3.5f, START_ARC, START_ARC + (END_ARC - START_ARC) * fraction, NVG_CW);
-			nvgStroke(args.vg);
-			nvgBeginPath(args.vg);
-			nvgArc(args.vg, offsets[1], 4.5f, 3.5f, START_ARC + (END_ARC - START_ARC) * fraction, END_ARC, NVG_CW);
-			nvgMoveTo(args.vg, offsets[1] - 3.5, 4.5f);
-			nvgLineTo(args.vg, offsets[1] - 3.5 + (m_animCoords.m_arcDelta) * fraction, 4.5f);
-			nvgStroke(args.vg);
-		} else {
-			nvgFillColor(args.vg, LIGHT_RED);
-			if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::EMPTY) {
-				nvgBeginPath(args.vg);
-				nvgStrokeWidth(args.vg, 1.f);
-				nvgRoundedRect(args.vg, 0.f, 0.f, 39.f, 11.f, 2.f);
-				nvgFill(args.vg);
-				nvgFillColor(args.vg, DARK_RED);
-			}
+			nvgRoundedRect(args.vg, 0.f, 0.f, 39.f, 11.f, 2.f);
+			nvgFill(args.vg);
+			nvgFillColor(args.vg, DARK_RED);
+		}
 
-			std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/Nunito-Bold.ttf");
-			if (font && font->handle >= 0) {
-				nvgBeginPath(args.vg);
-				nvgFontFaceId(args.vg, font->handle);
-				nvgTextLetterSpacing(args.vg, 0.0);
-				nvgFontSize(args.vg, 11.5f);
-				nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-				nvgText(args.vg, box.getWidth() / 2, 5.5f, m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::EMPTY ? (m_error ? "ERROR" : "EMPTY") : "PAUSED", NULL);
-				nvgFill(args.vg);
-			}
+		std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/Nunito-Bold.ttf");
+		if (font && font->handle >= 0) {
+			nvgBeginPath(args.vg);
+			nvgFontFaceId(args.vg, font->handle);
+			nvgTextLetterSpacing(args.vg, 0.0);
+			nvgFontSize(args.vg, 11.5f);
+			nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+			nvgText(args.vg, box.getWidth() / 2, 5.5f, status == timeseq::TimeSeqCore::Status::EMPTY ? (m_error ? "ERROR" : "EMPTY") : "PAUSED", NULL);
+			nvgFill(args.vg);
 		}
 	}
 
-	if (m_voltagePoints.size() > 0) {
+	if (voltagePoints->size() > 0) {
 		int offset = 0;
-		for (std::vector<TimeSeqVoltagePoints>::iterator it = m_voltagePoints.begin(); it != m_voltagePoints.end(); it++) {
+		for (std::vector<TimeSeqVoltagePoints>::iterator it = voltagePoints->begin(); it != voltagePoints->end(); it++) {
 			float v = std::min(std::max(it->voltage, -10.f), 10.f);
 			float factor = it->age < 31 ? (30.f - it->age) / 30.f : 0.f;
 

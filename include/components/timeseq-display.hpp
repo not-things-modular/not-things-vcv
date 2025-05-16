@@ -24,6 +24,8 @@ struct TimeSeqDisplayAnimCoords {
 };
 
 struct TimeSeqDisplay : widget::Widget {
+	TimeSeqDisplay();
+
 	void drawLayer(const DrawArgs& args, int layer) override;
 
 	void onResize(const ResizeEvent& e) override;
@@ -39,6 +41,7 @@ struct TimeSeqDisplay : widget::Widget {
 		TimeSeqDisplayAnimCoords m_animCoords;
 		timeseq::TimeSeqCore* m_timeSeqCore = nullptr;
 		std::vector<TimeSeqVoltagePoints> m_voltagePoints;
+		std::vector<TimeSeqVoltagePoints> m_dummyVoltagePoints;
 		bool m_error = false;
 
 		float m_arcDelta = 0.f;

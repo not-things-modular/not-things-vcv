@@ -1,5 +1,12 @@
 # TIMESEQ SCRIPT
-*Overview of the JSON script for the not-things [TimeSeq](TIMESEQ.md) module.*
+*An overview of the JSON script for the not-things [TimeSeq](TIMESEQ.md) module.*
+
+## Intro
+This page describes the concepts used in the TimeSeq script. It introduces the different object types that are used in the script and how they interact with each other, but does not give a detailed description of all properties of these objects. For a full detailed description of all the objects, see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page.
+
+For running the script, TimeSeq is tied to the active sample rate of VCV Rack. Each sample in VCV Rack will result in a processing cycle in TimeSeq (e.g. when set to 44.1Khz sample rate, there will be 44100 processing cycles per second in TimeSeq). During each such processing cycle, TimeSeq will check if any action should be performed for the running script. Since the TimeSeq processing is tied to the sample rate, the internal processor timing is also based on samples, with all other timing indication that the script provides being translated into the corresponding sample count.
+
+When it comes to the order of processing, a single processing cycle will execute all logic in the order that they appear in the script. The only exception is the execution of *action*s, where the `timing` of an action can have an influence on the processing order (see [action](TIMESEQ-SCRIPT-JSON.md#action) in the Script JSON Reference for more details).
 
 ## High Level Overview
 ![TimeSeq JSON Script high level view](./timeseq-json-high-level.png)
@@ -21,7 +28,7 @@ A script can also contain following items at the root level:
 * A *component-pool* that contains reusable definitions of objects that can be referenced throughout the script. This avoids having to declare identical objects in multiple places in a script and can help with structuring more complex scripts through the use of meaningful IDs (see [referencing](#referencing))
 
 ## Actions
-The *action* level of the TimeSeq script contains the functional part of the sequencer. It is here that the actual interactions and processing logic occur. Depending on the `timing` property, three types of *action*s can be distinguished:
+The *action* level of the TimeSeq script contains the functional part of the sequencer. It's where the actual interaction- and processing logic occurs. Depending on the `timing` property, three types of *action*s can be distinguished:
 * One-time actions (either at the `start` or the `end` of a *segment*)
 * Glide actions (that `glide` from one value to another for the whole duration of a *segment*)
 * Gate actions (that output a `gate` for the duration of a *segment*)
