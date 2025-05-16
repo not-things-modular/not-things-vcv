@@ -12,20 +12,20 @@ When it comes to the order of processing, a single processing cycle will execute
 ![TimeSeq JSON Script high level view](./timeseq-json-high-level.png)
 
 From a high-level sequencing view, a TimeSeq script contains:
-* One or more *timeline*s. Each *timeline* can contain a *time-scale*, which affects how time is calculated within that *timeline*.
-* A *timeline* contains one or more *lane*s.
+* One or more [timeline](TIMESEQ-SCRIPT-JSON.md#timeline)s. Each *timeline* can contain a [time-scale](TIMESEQ-SCRIPT-JSON.md#time-scale), which affects how time is calculated within that *timeline*.
+* A *timeline* contains one or more [lane](TIMESEQ-SCRIPT-JSON.md#lane)s.
 * A *lane* can loop or repeat, and may list the IDs of *trigger*s that start, restart or stop it. A *Lane* can also be configured to auto-start when the script is loaded.
-* Each *Lane* contains one or more *Segment*s.
-* A *Segment* has a *Duration* (in samples, milliseconds, beats/bars or hertz) and contains a list of *Action*s.
-* An *Action* can:
+* Each *Lane* contains one or more [segment](TIMESEQ-SCRIPT-JSON.md#segment)s.
+* A *segment* has a [duration](TIMESEQ-SCRIPT-JSON.md#duration) (in samples, milliseconds, beats/bars or hertz) and contains a list of [action](TIMESEQ-SCRIPT-JSON.md#action)s.
+* An *action* can:
     * Execute at the start or end of the *segment*,
     * Glide between a start and end value over the duration of the *segment*, transitioning smoothly over the duration of that *segment* or
     * Generate a gate: outputting 10V during the first part of the *segment* and 0V in the second part.
 
 A script can also contain following items at the root level:
 * A list of *global-actions*, which are executed when the script starts or resets (e.g. to initialize output polyphony)
-* *input-triggers* that define which input ports (and channels) should produce an internal *trigger* when transitioning from low to high voltage (see [triggers](#triggers))
-* A *component-pool* that contains reusable definitions of objects that can be referenced throughout the script. This avoids having to declare identical objects in multiple places in a script and can help with structuring more complex scripts through the use of meaningful IDs (see [referencing](#referencing))
+* [input-trigger](TIMESEQ-SCRIPT-JSON.md#input-trigger)s that define which input ports (and channels) should produce an internal *trigger* when transitioning from low to high voltage (see [triggers](#triggers))
+* A [component-pool](TIMESEQ-SCRIPT-JSON.md#component-pool) that contains reusable definitions of objects that can be referenced throughout the script. This avoids having to declare identical objects in multiple places in a script and can help with structuring more complex scripts through the use of meaningful IDs (see [referencing](#referencing))
 
 ## Actions
 The *action* level of the TimeSeq script contains the functional part of the sequencer. It's where the actual interaction- and processing logic occurs. Depending on the `timing` property, three types of *action*s can be distinguished:
@@ -37,15 +37,15 @@ The *action* level of the TimeSeq script contains the functional part of the seq
 ![TimeSeq JSON Script actions](./timeseq-json-action.png)
 
 One-time actions are executed either at the start or at the end of a *segment*. In both cases, they follow the same execution logic:
-* Actions can have an optional `if` condition. Actions will only be executed if the `if` condition evaluates to `true` (or if there is no `if` condition on the action).
+* Actions can have an optional [if](TIMESEQ-SCRIPT-JSON.md#if) condition. Actions will only be executed if the `if` condition evaluates to `true` (or if there is no `if` condition on the action).
 * Each action contains exactly one operation that it can execute. This can be either a `set-variable`, a `set-value`, a `set-polyphony` or a `trigger`:
-    * A `set-variable` operation will set a variable (identified by its `name`) to a specific voltage. This variable can then be used by other actions and conditions. The voltage to use for the variable is determined by a *value*, which optionally has *calc*ulations applied to it (add, subtract, multiply or divide with another *value*). The voltage of a *value* is retrieved from either:
-        * An *input* port
+    * A [set-variable](TIMESEQ-SCRIPT-JSON.md#set-variable) operation will set a variable (identified by its `name`) to a specific voltage. This variable can then be used by other actions and conditions. The voltage to use for the variable is determined by a [value](TIMESEQ-SCRIPT-JSON.md#value), which optionally has [calc](TIMESEQ-SCRIPT-JSON.md#calc)ulations applied to it (add, subtract, multiply or divide with another *value*). The voltage of a *value* is retrieved from either:
+        * An [input](TIMESEQ-SCRIPT-JSON.md#input) port
         * A previously assigned variable
-        * An *output* port
-        * A *rand*om voltage generator
-    * A `set-value` operation will change the voltage on an *output* port. The voltage that is assigned to the *output* port is determined in the same way that the *value* of a `set-variable` operation is determined.
-    * A `set-polyphony` operation will change the number of channels on an *output* port, making it polyphonic (when setting it between `2` and `16` channels) or monophonic (when setting it to `1` channel).
+        * An [output](TIMESEQ-SCRIPT-JSON.md#output) port
+        * A [rand](TIMESEQ-SCRIPT-JSON.md#rand)om voltage generator
+    * A [set-value](TIMESEQ-SCRIPT-JSON.md#set-value) operation will change the voltage on an *output* port. The voltage that is assigned to the *output* port is determined in the same way that the *value* of a `set-variable` operation is determined.
+    * A [set-polyphony](TIMESEQ-SCRIPT-JSON.md#set-polyphony) operation will change the number of channels on an *output* port, making it polyphonic (when setting it between `2` and `16` channels) or monophonic (when setting it to `1` channel).
     * A `trigger` operation will fire an internal trigger (see [triggers](#triggers)).
 
 ### Glide actions
@@ -74,7 +74,7 @@ The [component-pool](TIMESEQ-SCRIPT-JSON.md#component-pool) allows JSON objects 
 
 The *component-pool* allows re-usable instances to be defined for *segment*s, *segment-block*s, *action*s, *value*s, *calc*s, *input*s and *output*s. Next to the regular supported properties for each of these types, an additional `id` property is required if they are added to the *component-pool*. This `id` must be unique per object type, but two objects of different types are allowed to use the same `id`. E.g. there can be only one *segment* with the `id` **me-myself-and-id**, but it is allowed for a *segment* and a *value* to both have that `id`.
 
-Any component that has been defined in the *component-pool* can be used in other places in the TimeSeq script by using the `ref` property name and the `id` of the component in the place where you would normally write the full copmonent definition inline.
+Any component that has been defined in the *component-pool* can be used in other places in the TimeSeq script by using the `ref` property name and the `id` of the component in the place where you would normally write the full component definition inline.
 
 ### Example
 In the following JSON action, the value of channel 9 on output port 6 is set to the current voltage of channel 2 on input port 4:
