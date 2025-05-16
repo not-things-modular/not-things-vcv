@@ -5,60 +5,62 @@
 ![TimeSeq JSON Script high level view](./timeseq-json-high-level.png)
 
 From a high-level sequencing view, a TimeSeq script contains:
-* One or more *timeline*s. Each *timeline* can contain a *time-scale*, which affects how time is calculated within that *timeline*
-* A *timeline* contains one or more *lane*s
-* A *lane* can loop or repeat, and may list the IDs of *trigger*s that start, restart or stop it. A *Lane* can also be configured to auto-start
-* Each *Lane* contains one or more *Segment*s
-* A *Segment* has a *Duration* (in samples, milliseconds, beats/bars or hertz) and contains a list of *Action*s
-* An *Action* can: 
-    * Execute at the start or end of the segment or at the end,
-    * Glide between a start and end value over the duration of the segment, transitioning smoothly over the duration of the segment or
-    * Generate a gate: outputting 10V during the first part of the segment and 0V in the second part.
+* One or more *timeline*s. Each *timeline* can contain a *time-scale*, which affects how time is calculated within that *timeline*.
+* A *timeline* contains one or more *lane*s.
+* A *lane* can loop or repeat, and may list the IDs of *trigger*s that start, restart or stop it. A *Lane* can also be configured to auto-start when the script is loaded.
+* Each *Lane* contains one or more *Segment*s.
+* A *Segment* has a *Duration* (in samples, milliseconds, beats/bars or hertz) and contains a list of *Action*s.
+* An *Action* can:
+    * Execute at the start or end of the *segment*,
+    * Glide between a start and end value over the duration of the *segment*, transitioning smoothly over the duration of that *segment* or
+    * Generate a gate: outputting 10V during the first part of the *segment* and 0V in the second part.
 
 A script can also contain following items at the root level:
-* A list of *Global Actions*, which are executed when the script starts or resets (e.g. to initialize output polyphony)
-* *Input Triggers* that define which input ports (and channels) should produce a *trigger* when transitioning from low to high voltage (see [triggers](#triggers))
-* The *Component Pool* that reusable definitions of objects to be created that can be referenced throughout the script. This avoids duplicating identical objects and can help with structuring complex script through the use of meaningful IDs (see [referencing](#referencing))
+* A list of *global-actions*, which are executed when the script starts or resets (e.g. to initialize output polyphony)
+* *input-triggers* that define which input ports (and channels) should produce an internal *trigger* when transitioning from low to high voltage (see [triggers](#triggers))
+* A *component-pool* that contains reusable definitions of objects that can be referenced throughout the script. This avoids having to declare identical objects in multiple places in a script and can help with structuring more complex scripts through the use of meaningful IDs (see [referencing](#referencing))
 
 ## Actions
-The *action* level of the TimeSeq script contains the functional part of the sequencer. It is here that the actual interactions and processing logic occur. Depending on the `timing` property, three types of *actions* can be distinguished:
-* One-time actions (either at the `start` or the `end` of a segment)
-* Glide actions (that `glide` from one value to another for the whole duration of a segment)
-* Gate actions (that output a `gate` for the duration of a segment)
+The *action* level of the TimeSeq script contains the functional part of the sequencer. It is here that the actual interactions and processing logic occur. Depending on the `timing` property, three types of *action*s can be distinguished:
+* One-time actions (either at the `start` or the `end` of a *segment*)
+* Glide actions (that `glide` from one value to another for the whole duration of a *segment*)
+* Gate actions (that output a `gate` for the duration of a *segment*)
 
 ### One-time actions
 ![TimeSeq JSON Script actions](./timeseq-json-action.png)
 
-One-time actions are executed either at the start or at the end of a segment. In both cases, they follow the same execution logic:
-* Actions can have an optional `if` condition. Actions will only be executed if they have no `if` condition, or if the condition evaluates to `true`.
-* Actions contain exactly one operation that they can execute. This can be either a `set-variable`, a `set-value`, a `set-polyphony` or a `trigger`
-    * A `set-variable` operation will set a variable (identified by `name`) to a specific voltage. This variable can then be used by other actions or conditions. The voltage to use for the variable is determined by a `value`, which optionally has calculations applied to it (add, subtract, multiply or divide with another `value`). The voltage of a `value` is retrieved from either:
-        * An input port
-        * A previously assigned value
-        * An output port
-        * A random voltage generator
-    * A `set-value` operation will change the voltage on an output port. The voltage that is assigned to the output port is determined in the same way that the `value` of a `set-variable` operation is determined.
-    * A `set-polyphony` operation will change the number of channels on an output port (from 1 to 16).
+One-time actions are executed either at the start or at the end of a *segment*. In both cases, they follow the same execution logic:
+* Actions can have an optional `if` condition. Actions will only be executed if the `if` condition evaluates to `true` (or if there is no `if` condition on the action).
+* Each action contains exactly one operation that it can execute. This can be either a `set-variable`, a `set-value`, a `set-polyphony` or a `trigger`:
+    * A `set-variable` operation will set a variable (identified by its `name`) to a specific voltage. This variable can then be used by other actions and conditions. The voltage to use for the variable is determined by a *value*, which optionally has *calc*ulations applied to it (add, subtract, multiply or divide with another *value*). The voltage of a *value* is retrieved from either:
+        * An *input* port
+        * A previously assigned variable
+        * An *output* port
+        * A *rand*om voltage generator
+    * A `set-value` operation will change the voltage on an *output* port. The voltage that is assigned to the *output* port is determined in the same way that the *value* of a `set-variable` operation is determined.
+    * A `set-polyphony` operation will change the number of channels on an *output* port, making it polyphonic (when setting it between `2` and `16` channels) or monophonic (when setting it to `1` channel).
     * A `trigger` operation will fire an internal trigger (see [triggers](#triggers)).
 
 ### Glide actions
 Just like one-time actions, a glide action has an optional condition. If this condition does not evaluate to `true`, the glide action will not be executed.
-Also just like one-time actions, glide actions can set the voltage of either a variable or an output port. Unlike one-time actions however, glide actions don't just set one voltage `value`. Instead, a `start` value and an `end` value are defined, and the glide action will gradually move from the start value to the end value for the duration of the segment. By default, the glide action will move linearly between the two values, but an optional easing factor allows the action to change faster in the beginning and ease out towards the end, or start moving slowly at the start and speed up towards the end.
+Also like one-time actions, glide actions can set the voltage of either a variable or an *output* port. Unlike one-time actions however, glide actions don't just set one voltage *value*. Instead, a `start` *value* and an `end` *value* are defined, and the glide action will gradually move from the start *value* to the end *value* for the duration of the *segment*. By default, the glide action will move linearly between the two *value*s, but an optional easing factor allows the action to change faster in the beginning and ease out towards the end, or start moving slowly at the start and speed up towards the end.
 
 ### Gate actions
-A gate action allows a gate signal to be generated on an output port. A gate action will change the output port voltage to 10v at the start of a segment, and then change it to 0v at a later point in the segment. By default, the change to 0v will occur halfway through the duration of the segment, but it is possible to change this position using the `gate-high-ratio`, moving it more towards the start of the segment or more towards the end of the segment.
+A gate action allows a gate signal to be generated on an *output* port. It will change the *output* port voltage to 10v at the start of a *segment*, and change it to 0v as the *segment* progresses. By default, the change to 0v will occur halfway through the duration of the *segment*, but it is possible to change this position using the `gate-high-ratio`, moving it more towards the start of the *segment* or more towards the end of the *segment*.
 
 ## Triggers
 The TimeSeq core processor contains support for internal triggers. Internal triggers are always referenced by their `id` (as choosen by the user).
 
-Internal triggers can be either fired by a trigger *action* that is executed when a *segment* starts or ends, or because an external trigger or gate signal was detected on an input port that was monitored by an *input-trigger*.
+Internal triggers can either be fired by a trigger *action* that is executed when a *segment* starts or ends, or because an external trigger or gate signal was detected on an input port that was monitored by an *input-trigger*.
 
-All internal triggers that get fired during a processing cycle of TimeSeq will be collected. At the start of the next processing cycle, these triggers can then influence the running status of *lane*s: a *lane* can specify the ID of triggers that cause a status change of the *lane* if that trigger is fired:
+All internal triggers that get fired as part of a TimeSeq processing cycle of TimeSeq will be collected in a list. At the start of the next processing cycle, this list of collected triggers can then influence the running status of *lane*s: a *lane* can specify the ID of triggers that cause a status change of the *lane* if that trigger is fired:
 * The `start-trigger` identifies the trigger ID that will cause the *lane* to start if it is not running yet
 * The `restart-trigger` identifies the trigger ID that will cause the *lane* to start if it is not running yet, or restart if it is already running.
 * The `stop-trigger` identifies the trigger ID that will cause the *lane* to stop if it is running.
 
-This trigger mechanism can be used for multiple purposes. Sequences can be started or stopped based on input signals from other modules in a patch. Different sequences within the same script can be chained by placing them in different *lane*s/*timeline*s and letting them interact through triggers. But more complex logical setups can also be created by combining conditional actions and triggers.
+Once the states of the *lane*s has been updated, the triggers will be cleared and the processing of actions can fire new triggers, which can then influence the *lane* running states at the start of the next processing cycle.
+
+This trigger mechanism can be used for multiple purposes. Sequences can be started or stopped based on input signals from other modules in a patch. Different sequences within the same script can be chained by placing them in different *lane*s/*timeline*s and letting them interact with each other through triggers. More complex logical setups can also be created by combining conditional actions and triggers, resulting in more application-like functionality.
 
 ## Referencing
 The [component-pool](TIMESEQ-SCRIPT-JSON.md#component-pool) allows JSON objects to be defined which are not directly placed into the sequences of a script, but can instead be referenced from other parts of the scripts. This allows a single definition of an object to be re-used in multiple places in the script (avoiding the need to duplicate the same object multiple times in different places) and can help in bringing structure in more complex scripts.
