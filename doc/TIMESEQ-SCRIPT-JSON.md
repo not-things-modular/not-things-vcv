@@ -850,6 +850,8 @@ The output port is identified by the `index` property, using a number from `1` t
 
 Note that TimeSeq will not validate how many channels are present on the output port. Assigning a value to a channel that is outside the current polyphonic channel count will not result in more channels becoming active on that output. TimeSeq will however remember any voltage updates done on all channels (even if they are outside of the current polyphonic channel count), and will assign those voltages to the channels if the channel count is changed using a [set-polyphony](#set-polyphony) *action*. Similarly, if a voltage is assigned to a channel that is outside of the current polyphonic channel count, a [value](#value) that uses that channel will still return the value that was assigned to it.
 
+When a script is loaded or reset, all output ports of TimeSeq will be set to monophonic mode (i.e. have 1 channel), and all voltages on the output ports will be set to 0 volts.
+
 ### Properties
 | property | required | type | description |
 | --- | --- | --- | --- |

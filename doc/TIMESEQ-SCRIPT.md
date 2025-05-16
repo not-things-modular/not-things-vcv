@@ -1,8 +1,23 @@
 # TIMESEQ SCRIPT
 *An overview of the JSON script for the not-things [TimeSeq](TIMESEQ.md) module.*
 
+## Table of Contents
+* [Intro](#intro)
+* [High Level Overview](#high-level-overview)
+* [Actions](#actions)
+    * [One-time Actions](#one-time-actions)
+	* [Glide Actions](#glide-actions)
+	* [Gate Actions](#gate-actions)
+* [Triggers](#triggers)
+* [Referencing](#referencing)
+    * [Example](#example)
+	* [Circular References](#circular-references)
+	* [Segment References and Duration](#segment-references-and-duration)
+* [Script Errors](#script-errors)
+* [Documenting Scripts](#documenting-scripts)
+
 ## Intro
-This page describes the concepts used in the TimeSeq script. It introduces the different object types that are used in the script and how they interact with each other, but does not give a detailed description of all properties of these objects. For a full detailed description of all the objects, see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page.
+This page describes the concepts used in the TimeSeq script. It introduces the different object types that are used in the script and how they interact with each other, but does not give a detailed description of all properties of these objects. For a full detailed description of all the objects, see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page. When a new JSON object type is introduced on this page, it will also link to it's section with the full details on the JSON Reference page.
 
 For running the script, TimeSeq is tied to the active sample rate of VCV Rack. Each sample in VCV Rack will result in a processing cycle in TimeSeq (e.g. when set to 44.1Khz sample rate, there will be 44100 processing cycles per second in TimeSeq). During each such processing cycle, TimeSeq will check if any action should be performed for the running script. Since the TimeSeq processing is tied to the sample rate, the internal processor timing is also based on samples, with all other timing indication that the script provides being translated into the corresponding sample count.
 
@@ -33,7 +48,7 @@ The *action* level of the TimeSeq script contains the functional part of the seq
 * Glide actions (that `glide` from one value to another for the whole duration of a *segment*)
 * Gate actions (that output a `gate` for the duration of a *segment*)
 
-### One-time actions
+### One-time Actions
 ![TimeSeq JSON Script actions](./timeseq-json-action.png)
 
 One-time actions are executed either at the start or at the end of a *segment*. In both cases, they follow the same execution logic:
@@ -48,11 +63,11 @@ One-time actions are executed either at the start or at the end of a *segment*. 
     * A [set-polyphony](TIMESEQ-SCRIPT-JSON.md#set-polyphony) operation will change the number of channels on an *output* port, making it polyphonic (when setting it between `2` and `16` channels) or monophonic (when setting it to `1` channel).
     * A `trigger` operation will fire an internal trigger (see [triggers](#triggers)).
 
-### Glide actions
+### Glide Actions
 Just like one-time actions, a glide action has an optional condition. If this condition does not evaluate to `true`, the glide action will not be executed.
 Also like one-time actions, glide actions can set the voltage of either a variable or an *output* port. Unlike one-time actions however, glide actions don't just set one voltage *value*. Instead, a `start` *value* and an `end` *value* are defined, and the glide action will gradually move from the start *value* to the end *value* for the duration of the *segment*. By default, the glide action will move linearly between the two *value*s, but an optional easing factor allows the action to change faster in the beginning and ease out towards the end, or start moving slowly at the start and speed up towards the end.
 
-### Gate actions
+### Gate Actions
 A gate action allows a gate signal to be generated on an *output* port. It will change the *output* port voltage to 10v at the start of a *segment*, and change it to 0v as the *segment* progresses. By default, the change to 0v will occur halfway through the duration of the *segment*, but it is possible to change this position using the `gate-high-ratio`, moving it more towards the start of the *segment* or more towards the end of the *segment*.
 
 ## Triggers
@@ -136,3 +151,25 @@ Due to the hierarchical structure of the TimeSeq script, it is possible to creat
 ### Segment References and Duration
 If a *segment* is used by reference by `id` in multiple *timeline*s, the duration of that segment can be different in each *timeline* dependant on the *time-scale* of the *timeline*. E.g. if one *timeline* specifies a `bpm` of 120 in its *time-scale*, and the other a `bpm` of 90, then a *segment* that has a duration of 4 `beats` will have a different duration (in milliseconds/beats) when placed in those two *timeline*s.
 
+## Script Errors
+When loading a script, TimeSeq will validate the script before actually loading it. This validation is done in three phases:
+1. First a basic JSON validation is done. If the supplied data is not valid JSON, an error message will be provided that details what issue was encountered.
+2. If the basic JSON validation succeeded, TimeSeq will a script syntax validation against the TimeSeq JSON schema format (as detailed on the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page).
+3. If the script syntax validation succeeded, the script is prepared for usage by the TimeSeq core processor. During this preparation, certain functional errors can be encountered (e.g. a `ref` can not be resolved, a *segment* uses `beats` while the *time-scale* does not specify a `bpm`, ...).
+
+If an error is encountered during any of these phases, loading of the new script will be aborted. If a script was already loaded, TimeSeq will keep that old script loaded. Phases (2) and (3) of the script validation can detect multiple errors in a script. If that is the case, the error message popup will display the information of the first encountered error and the dialog will give the option of copying the full list of errors to the clipboard so they can be checked by pasting them elsewhere (e.g. in a text editor).
+
+The error messages try to provide as much relevant information as possible. Errors encountered during validation phase (1) will usually include a location indication with the line and column (=character position in the line) where the error was detected. Errors encountered during validation phases (2) and (3) will have following format:
+`<error location> : <error message> [<error code>]`
+* `<error location>`: Since these errors are encountered after initial JSON parsing has completed, the error location can identify the location within the JSON hierarchy where the error was encountered. The different levels within the JSON hierarchy are separated by a `/` and items within a list are identified by their 0-based index (i.e. the first item has index `0`, the second has index `1`, etc.).
+Error location `/timelines/1/lanes/3/segments/2` would indicate an error in the 3nd *segment* of the 4th *lane* of the 2nd *timeline*.
+* `<error message>`: A description detailing the exact error that was encountered
+* `<error code>`: An internal error code that details the type of validation check that resulted in the error.
+
+The JSON schema validation is performed using strict validation: not only known properties with unknown or invalid values are treated as errors, unknown properties will also result in an error duration validation. This avoids a scenario where a typo result in a script not behaving in the expected way. E.g. if the `auto-start` of a *lane* is accidentally mistyped as `auto-stort`, this could go by unnoticed if TimeSeq ignored unknown properties, but the relevant *lane* would not automatically start. Due to the strict validation, this will not go by unnoticed since it triggers an error during script validation.
+
+## Documenting Scripts
+
+One exception to this strict validation mentioned in [Script Errors](#script-errors) is that TimeSeq will ignore any properties that start with `x-` (e.g. `x-auto-start`). This exception has been introduced to:
+* Allow sections of the script to be disabled while writing or testing a script by prefixing properties with `x-` to temporarily make TimeSeq ignore them
+* Allow descriptions to be added to the script, e.g. if there is a need to add reminders about what the purpose is of certain parts of a more complex script. Using properties like `x-description` or `x-comment` which then contain some descriptive information about sections of the script can help in understanding the flow of a script if it is revisited at a later time.
