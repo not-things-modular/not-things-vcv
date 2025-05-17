@@ -45,7 +45,7 @@ TEST(TimeSeqJsonScript, ParseWithUnknownVersionShouldFail) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "-0.0.1" },
+		{ "version", "-1.0.0" },
 		{ "timelines", json::array() }
 	};
 
@@ -59,7 +59,7 @@ TEST(TimeSeqJsonScript, ParseWithNonObjectComponentPoolShouldFail) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", json::array() }
 	};
@@ -74,7 +74,7 @@ TEST(TimeSeqJsonScript, ParseWithEmptyComponentPoolShouldSucceed) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", json::object() }
 	};
@@ -88,7 +88,7 @@ TEST(TimeSeqJsonScript, ParseRefShouldFailOnNonString) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", { { "calcs", json::array({
 			{ { "id", "calc-id" }, { "add", { { "ref", 1 } } } }
@@ -105,7 +105,7 @@ TEST(TimeSeqJsonScript, ParseRefShouldFailOnEmptyString) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", { { "calcs", json::array({
 			{ { "id", "calc-id" }, { "add", { { "ref", "" } } } }
@@ -122,7 +122,7 @@ TEST(TimeSeqJsonScript, ParseRefShouldFailOnEmptyId) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", { { "calcs", json::array({
 			{ { "id", "" }, { "add", { { "ref", "value-ref" } } } }
@@ -152,7 +152,7 @@ TEST(TimeSeqJsonScript, ParseScriptWithUnknownPropertyShouldFail) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "unknown-prop", "value" }
 	};
@@ -168,7 +168,7 @@ TEST(TimeSeqJsonScript, ParseScriptWithUnknownPropertiesShouldFail) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "unknown-prop-1", "value" },
 		{ "unknown-prop-2", { { "child", "object" } } }
@@ -186,7 +186,7 @@ TEST(TimeSeqJsonScript, ParseScriptShouldAllowUnknownPropertyWithXPrefix) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "x-unknown-prop-1", "value" },
 		{ "x-unknown-prop-2", { { "child", "object" } } }
@@ -201,7 +201,7 @@ TEST(TimeSeqJsonScript, ParseScriptComponentPoolWithUnknownPropertyShouldFail) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", json::object({
 			{ "unknown-prop", "value" }
@@ -219,7 +219,7 @@ TEST(TimeSeqJsonScript, ParseScriptComponentPoolWithUnknownPropertiesShouldFail)
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", json::object({
 			{ "unknown-prop-1", "value" },
@@ -239,7 +239,7 @@ TEST(TimeSeqJsonScript, ParseScriptComponentPoolShouldAllowUnknownPropertyWithXP
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", "0.0.1" },
+		{ "version", "1.0.0" },
 		{ "timelines", json::array() },
 		{ "component-pool", json::object({
 			{ "x-unknown-prop-1", "value" },

@@ -67,7 +67,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 	}
 	else {
 		script->version = *version;
-		if (script->version != "0.0.1") {
+		if (script->version != "1.0.0") {
 			std::string versionValue = (*version);
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is not supported.");
 		}

@@ -8,7 +8,7 @@
 using namespace timeseq;
 using namespace std;
 
-#define SCRIPT_VERSION "0.0.1"
+#define SCRIPT_VERSION "1.0.0"
 
 
 shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<ValidationError> *validationErrors);
