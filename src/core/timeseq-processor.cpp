@@ -480,6 +480,18 @@ SegmentProcessor::SegmentProcessor(
 	EventListener* eventListener) :
 		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_ongoingActions(ongoingActions), m_eventListener(eventListener) {}
 
+void SegmentProcessor::pushStartActions(std::vector<std::shared_ptr<ActionProcessor>> startActions) {
+	m_startActions.insert(m_startActions.begin(), startActions.begin(), startActions.end());
+}
+
+void SegmentProcessor::pushEndActions(std::vector<std::shared_ptr<ActionProcessor>> endActions) {
+	m_endActions.insert(m_endActions.end(), endActions.begin(), endActions.end());
+}
+
+ScriptSegment* SegmentProcessor::getScriptSegment() {
+	return m_scriptSegment;
+}
+
 DurationProcessor::DurationState SegmentProcessor::getState() {
 	return m_duration->getState();
 }

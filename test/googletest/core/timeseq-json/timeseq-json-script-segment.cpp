@@ -907,19 +907,29 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnSegmentBlockCombinedWithDu
 	expectError(validationErrors, ValidationErrorCode::Segment_BlockOrSegment, "/component-pool/segments/0");
 }
 
-TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnSegmentBlockCombinedWithActions) {
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldAllowActionsWithSegmentBlock) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "segments", json::array({
-			{ { "id", "segment-block-1" }, { "segment-block", "segment-block-ref" }, { "actions", json::array() } }
+			{ { "id", "segment-block-1" }, { "segment-block", "segment-block-ref" }, { "actions", json::array({
+				{ { "ref", "action-1" } },
+				{ { "ref", "action-2" } }
+			}) } }
 		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Segment_BlockOrSegment, "/component-pool/segments/0");
+	expectNoErrors(validationErrors);
+
+	ASSERT_EQ(script->segments.size(), 1u);
+	EXPECT_EQ(script->segments[0].id, "segment-block-1");
+	EXPECT_TRUE(script->segments[0].segmentBlock);
+	EXPECT_EQ(script->segments[0].segmentBlock.get()->ref, "segment-block-ref");
+	ASSERT_EQ(script->segments[0].actions.size(), 2u);
+	EXPECT_EQ(script->segments[0].actions[0].ref, "action-1");
+	EXPECT_EQ(script->segments[0].actions[1].ref, "action-2");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnSegmentBlockCombinedWithDisableUi) {

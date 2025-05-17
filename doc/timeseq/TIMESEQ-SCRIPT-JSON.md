@@ -71,23 +71,23 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 
 ```js
 {
-  "type": "not-things_timeseq_script",
-  "version": "1.0.0",
-  "timelines": [
-    { ... },
-    { ... }
-  ],
-  "global-actions": [
-    { ... },
-    { ... }
-  ],
-  "input-triggers": [
-    { ... },
-    { ... }
-  ],
-  "component-pool": {
-    ...
-  }
+    "type": "not-things_timeseq_script",
+    "version": "1.0.0",
+    "timelines": [
+        { ... },
+        { ... }
+    ],
+    "global-actions": [
+        { ... },
+        { ... }
+    ],
+    "input-triggers": [
+        { ... },
+        { ... }
+    ],
+    "component-pool": {
+        ...
+    }
 }
 ```
 
@@ -113,14 +113,14 @@ When running the script, each processing cycle will run through the *lane*s in t
 
 ```json
 {
-  "time-scale": {
-    "bpm": 120
-  },
-  "loop-lock": true,
-  "lanes": [
-    { "segments": [ { "ref": "segment-1" } ] },
-    { "segments": [ { "ref": "segment-2" } ] }
-  ]
+    "time-scale": {
+        "bpm": 120
+    },
+    "loop-lock": true,
+    "lanes": [
+        { "segments": [ { "ref": "segment-1" } ] },
+        { "segments": [ { "ref": "segment-2" } ] }
+    ]
 }
 ```
 
@@ -152,9 +152,9 @@ A `bpb` value can only be set if there is also a `bpm` value set.
 
 ```json
 "time-scale": {
-  "sample-rate": 48000,
-  "bpm": 120,
-  "bpb": 4
+    "sample-rate": 48000,
+    "bpm": 120,
+    "bpb": 4
 }
 ```
 
@@ -191,13 +191,13 @@ The running state of a *lane* can be controlled using triggers:
 
 ```json
 {
-  "auto-start": true,
-  "loop": true,
-  "restart-trigger": "restart-chord-lane",
-  "segments": [
-    { "ref": "segment-1" },
-    { "ref": "segment-2" }
-  ]
+    "auto-start": true,
+    "loop": true,
+    "restart-trigger": "restart-chord-lane",
+    "segments": [
+        { "ref": "segment-1" },
+        { "ref": "segment-2" }
+    ]
 }
 ```
 
@@ -220,11 +220,11 @@ When an input has been triggered, the internal trigger (identified by the `id` p
 
 ```json
 {
-  "id": "start-chord-sequence",
-  "input": {
-    "index": 5,
-    "channel": 2
-  }
+    "id": "start-chord-sequence",
+    "input": {
+        "index": 5,
+        "channel": 2
+    }
 }
 ```
 
@@ -250,19 +250,19 @@ All objects defined in this pool **must** have an `id` property, since this will
 
 ```json
 {
-  "component-pool": {
-    "inputs": [
-      {
-        "id": "status-input",
-        "index": 3,
-        "channel": 5
-      }
-    ],
-    "values": [
-      { "id": "one-and-a-half", "voltage": 1.5 },
-      { "id": "full", "voltage": 10 }
-    ]
-  }
+    "component-pool": {
+        "inputs": [
+            {
+                "id": "status-input",
+                "index": 3,
+                "channel": 5
+            }
+        ],
+        "values": [
+              { "id": "one-and-a-half", "voltage": 1.5 },
+              { "id": "full", "voltage": 10 }
+        ]
+    }
 }
 ```
 
@@ -295,11 +295,11 @@ The `segment-block` property provides a special version of a *segment*: if prese
 
 ```json
 {
-  "duration": { "beats": 2 },
-  "actions": [
-    { "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } }
-    { "timing": "end", "set-output": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
-  ]
+    "duration": { "beats": 2 },
+    "actions": [
+        { "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } }
+        { "timing": "end", "set-output": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
+    ]
 }
 ```
 
@@ -307,7 +307,7 @@ The `segment-block` property provides a special version of a *segment*: if prese
 
 ```json
 {
-  "segment-block": "three-notes-and-a-beat"
+    "segment-block": "three-notes-and-a-beat"
 }
 ```
 
@@ -355,26 +355,26 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 
 ```json
 {
-  "millis": 1.25
+    "millis": 1.25
 }
 ```
 
 ```json
 {
-  "hz": 174.61
+    "hz": 174.61
 }
 ```
 
 ```json
 {
-  "beats": 0.25
+    "beats": 0.25
 }
 ```
 
 ```json
 {
-  "beats": 0,
-  "bars": 2
+    "beats": 0,
+    "bars": 2
 }
 ```
 
@@ -397,14 +397,14 @@ The `segments` in the block will be executed in the order that they appear in th
 
 ```json
 {
-  "id": "segment-block-1",
-  "segments": [
-    { "ref": "segment-1" },
-    { "ref": "segment-2" },
-    { "segment-block": "segment-block-2" },
-    { "ref": "segment-3" }
-  ],
-  "repeat": 3
+    "id": "segment-block-1",
+    "segments": [
+        { "ref": "segment-1" },
+        { "ref": "segment-2" },
+        { "segment-block": "segment-block-2" },
+        { "ref": "segment-3" }
+    ],
+    "repeat": 3
 }
 ```
 
@@ -454,18 +454,18 @@ Except for the `trigger` action, all the action types have an action property th
 
 ```json
 {
-  "timing": "start",
-  "set-value": {
-    "value": { "voltage": 6.9 },
-    "output": { "index": 4, "channel": 2 }
-  }
+    "timing": "start",
+    "set-value": {
+      "value": { "voltage": 6.9 },
+      "output": { "index": 4, "channel": 2 }
+    }
 }
 ```
 
 ```json
 {
-  "timing": "stop",
-  "trigger": "trigger-next-sequence"
+    "timing": "stop",
+    "trigger": "trigger-next-sequence"
 }
 ```
 
@@ -498,14 +498,14 @@ A glide action has two possible targets to send its generated voltages to: eithe
 
 ```json
 {
-  "timing": "glide",
-  "start-value": { "voltage": -3 },
-  "end-value": { "variable": "glide-end-value" },
-  "output": { "index": 9, "port": 6 },
-  "if": { "ne": [
-    { "voltage": 0 },
-    { "variable": "glide-condition" }
-  ] }
+    "timing": "glide",
+    "start-value": { "voltage": -3 },
+    "end-value": { "variable": "glide-end-value" },
+    "output": { "index": 9, "port": 6 },
+    "if": { "ne": [
+        { "voltage": 0 },
+        { "variable": "glide-condition" }
+    ] }
 }
 ```
 
@@ -529,14 +529,14 @@ Just like the other action types, a gate action can be made conditional using an
 
 ```json
 {
-  "timing": "glide",
-  "start-value": { "voltage": -3 },
-  "end-value": { "variable": "glide-end-value" },
-  "output": { "index": 9, "port": 6 },
-  "if": { "ne": [
-    { "voltage": 0 },
-    { "variable": "glide-condition" }
-  ] }
+    "timing": "glide",
+    "start-value": { "voltage": -3 },
+    "end-value": { "variable": "glide-end-value" },
+    "output": { "index": 9, "port": 6 },
+    "if": { "ne": [
+        { "voltage": 0 },
+        { "variable": "glide-condition" }
+    ] }
 }
 ```
 
@@ -579,26 +579,26 @@ Some examples of *if* usage within an action:
 
 ```json
 {
-  "if": {
-    "eq": [
-      { "voltage": 4.2 },
-      { "variable": "my-input-variable"}
-    ],
-    "tolerance": 0.00001
-  },
-  { "set-variable": { "my-output-variable": 6.9 } }
+    "if": {
+        "eq": [
+            { "voltage": 4.2 },
+            { "variable": "my-input-variable"}
+        ],
+        "tolerance": 0.00001
+    },
+    { "set-variable": { "my-output-variable": 6.9 } }
 }
 ```
 
 ```json
 {
-  "if": {
-    "lt": [
-      { "voltage": 4.2 },
-      { "variable": "my-input-variable"}
-    ]
-  },
-  { "set-variable": { "my-output-variable": 6.9 } }
+    "if": {
+        "lt": [
+              { "voltage": 4.2 },
+              { "variable": "my-input-variable"}
+        ]
+    },
+    { "set-variable": { "my-output-variable": 6.9 } }
 }
 ```
 
@@ -624,23 +624,23 @@ A single-level logical *if* in an action:
 
 ```json
 {
-  "if": {
-    "and": [
-      {
-        "eq": [
-          { "voltage": 4.2 },
-          { "variable": "my-input-variable-1" }
+    "if": {
+        "and": [
+            {
+                "eq": [
+                    { "voltage": 4.2 },
+                    { "variable": "my-input-variable-1" }
+                ]
+            },
+            {
+                "gt": [
+                    { "voltage": 3.45 },
+                    { "input": { "index": 6 } }
+                ]
+            }
         ]
-      },
-      {
-        "gt": [
-          { "voltage": 3.45 },
-          { "input": { "index": 6 } }
-        ]
-      }
-    ]
-  },
-  { "set-variable": { "my-output-variable": 9.9 } }
+    },
+    { "set-variable": { "my-output-variable": 9.9 } }
 }
 ```
 
@@ -648,33 +648,33 @@ An `and` logical operator with a child `or` logical operator as first child cond
 
 ```json
 {
-  "if": {
-    "and": [
-      {
-        "or": [
-          {
-            "eq": [
-              { "voltage": 2.1 },
-              { "variable": "my-input-variable-1" }
-            ]
-          },
-          {
-            "eq": [
-              { "voltage": 4.2 },
-              { "variable": "my-input-variable-1" }
-            ]
-          }
+    "if": {
+        "and": [
+            {
+                "or": [
+                    {
+                        "eq": [
+                            { "voltage": 2.1 },
+                            { "variable": "my-input-variable-1" }
+                        ]
+                    },
+                    {
+                        "eq": [
+                            { "voltage": 4.2 },
+                            { "variable": "my-input-variable-1" }
+                        ]
+                    }
+                ]
+            },
+            {
+                "gt": [
+                    { "voltage": 3.45 },
+                    { "input": { "index": 6 } }
+                ]
+            }
         ]
-      }
-      {
-        "gt": [
-          { "voltage": 3.45 },
-          { "input": { "index": 6 } }
-        ]
-      }
-    ]
-  },
-  { "set-variable": { "my-output-variable": 9.9 } }
+    },
+    { "set-variable": { "my-output-variable": 9.9 } }
 }
 ```
 
@@ -700,11 +700,11 @@ An example of a set-value within an action:
 
 ```json
 {
-  "timing": "end",
-  "set-value": {
-    "value": { "voltage": 5.6 },
-    "output": { "index": 7, "channel": 8 }
-  }
+    "timing": "end",
+    "set-value": {
+        "value": { "voltage": 5.6 },
+        "output": { "index": 7, "channel": 8 }
+    }
 }
 ```
 
@@ -723,19 +723,19 @@ Since unknown variables will default to 0V, setting a variable to 0V will be the
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `value` | yes | [value](#value) | The value that will determine the voltage to use. |
-| `variable`| yes | string | The name of the variable to which the voltage should be assigned. |
+| `name`| yes | string | The name of the variable to which the voltage should be assigned. |
 
 ### Example
 
-An example of a set-value within an action:
+An example of a set-variable within an action:
 
 ```json
 {
-  "timing": "start",
-  "set-value": {
-    "value": { "voltage": 3.14 },
-    "variable": "a-piece-of-pi"
-  }
+    "timing": "start",
+    "set-value": {
+        "value": { "voltage": 3.14 },
+        "name": "a-piece-of-pi"
+    }
 }
 ```
 
@@ -762,11 +762,11 @@ An example of a set-value within an action:
 
 ```json
 {
-  "timing": "start",
-  "set-value": {
-    "value": { "voltage": 3.14 },
-    "variable": "a-piece-of-pi"
-  }
+    "timing": "start",
+    "set-value": {
+        "value": { "voltage": 3.14 },
+        "variable": "a-piece-of-pi"
+    }
 }
 ```
 
@@ -792,16 +792,16 @@ An example of a set-value within an action:
 
 ```json
 {
-  "timing": "start",
-  "assert": {
-    "expect": {
-      "lt": [
-        { "voltage": 4.2 },
-        { "input": { "index": 3 }}
-      ],
-      "name": "input 3 to high"
+    "timing": "start",
+    "assert": {
+        "expect": {
+            "lt": [
+                { "voltage": 4.2 },
+                { "input": { "index": 3 }}
+            ],
+            "name": "input 3 to high"
+        }
     }
-  }
 }
 ```
 
@@ -824,6 +824,8 @@ Additional mathematical operations are possible on a value using the `calc` prop
 Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** any *calc* has been applied to the voltage value.
 
 Exactly one of the `voltage`, `note`, `variable`, `input`, `output` or `rand` properties must be specified for a value.
+
+Note: values always resolve into a voltage, which is then used by the object that contains the value. The source of the value voltage will not be tied to the target of that value. E.g. if an action set the voltage of an *output* using a value that is based on the voltage of an *input* port, the voltage to use will be determined when the action is executed. If the voltage on the *input*  port changes afterwards, the voltage of the *output* port will **not** be changes automatically. The *set-value* action will have to be re-executed in order for the *output* port to update again.
 
 ### Properties
 
@@ -856,10 +858,10 @@ The voltage of channel 4 on input port 3, multiplied by 2:
 
 ```json
 {
-  "input": { "index": 3, "channel": 4 },
-  "calc": [
-    { "mult": { "voltage": 2 } }
-  ]
+    "input": { "index": 3, "channel": 4 },
+    "calc": [
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```
 
@@ -867,18 +869,18 @@ The voltage of channel 8 on output port 5, with a random value between 0.5 and 1
 
 ```json
 {
-  "output": { "index": 5, "channel": 8 },
-  "calc": [
-    {
-      "add": {
-        "rand": {
-          "lower": 0.5,
-          "upper": 1
-        }
-      }
-    },
-    { "mult": { "voltage": 2 } }
-  ]
+    "output": { "index": 5, "channel": 8 },
+    "calc": [
+        {
+            "add": {
+                "rand": {
+                    "lower": 0.5,
+                    "upper": 1
+                }
+            }
+        },
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```
 
@@ -903,7 +905,7 @@ The third input port, using channel 1 since no `channel` property is specified:
 
 ```json
 {
-  "index": 3
+    "index": 3
 }
 ```
 
@@ -911,8 +913,8 @@ The fifth input port, using channel 15:
 
 ```json
 {
-  "index": 5,
-  "channel": 15
+    "index": 5,
+    "channel": 15
 }
 ```
 
@@ -939,7 +941,7 @@ The third output port, using channel 1 since no `channel` property is specified:
 
 ```json
 {
-  "index": 3
+    "index": 3
 }
 ```
 
@@ -947,8 +949,8 @@ The fifth output port, using channel 15:
 
 ```json
 {
-  "index": 5,
-  "channel": 15
+    "index": 5,
+    "channel": 15
 }
 ```
 
@@ -969,10 +971,10 @@ The generated random value will be between the `lower` and `upper` [value](#valu
 
 ```json
 {
-  "rand": {
-    "lower": { "voltage": -5 },
-    "upper": { "variable": "the-upper-bounds" }
-  }
+    "rand": {
+        "lower": { "voltage": -5 },
+        "upper": { "variable": "the-upper-bounds" }
+    }
 }
 ```
 
@@ -1006,10 +1008,10 @@ The voltage of channel 4 on input port 3, multiplied by 2:
 
 ```json
 {
-  "input": { "index": 3, "channel": 4 },
-  "calc": [
-    { "mult": { "voltage": 2 } }
-  ]
+    "input": { "index": 3, "channel": 4 },
+    "calc": [
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```
 
@@ -1017,17 +1019,17 @@ The voltage of channel 8 on output port 5, with a random value between 06.5 and 
 
 ```json
 {
-  "output": { "index": 5, "channel": 8 },
-  "calc": [
-    {
-      "add": {
-        "rand": {
-          "lower": 0.5,
-          "upper": 1
-        }
-      }
-    },
-    { "mult": { "voltage": 2 } }
-  ]
+    "output": { "index": 5, "channel": 8 },
+    "calc": [
+        {
+            "add": {
+                "rand": {
+                    "lower": 0.5,
+                    "upper": 1
+                }
+            }
+        },
+        { "mult": { "voltage": 2 } }
+    ]
 }
 ```

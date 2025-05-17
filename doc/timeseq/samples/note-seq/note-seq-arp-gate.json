@@ -1,12 +1,6 @@
 {
 	"type": "not-things_timeseq_script",
-	"version": "0.0.1",
-	"global-actions": [
-		{
-			"timing": "start",
-			"set-polyphony": { "index": 2, "channels": 4 }
-		}
-	],
+	"version": "1.0.0",
 	"timelines": [
 		{
 			"time-scale": {
@@ -82,6 +76,14 @@
 		}
 	],
 	"component-pool": {
+        "actions": [
+            {
+                "id": "arp-gate-action",
+				"x-description": "",
+                "timing": "gate",
+                "output": { "index": 3 }
+            }
+        ],
 		"segment-blocks" : [
 			{
 				"id": "c-arp",
@@ -92,8 +94,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "C4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -101,8 +106,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "E4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "E4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -110,8 +118,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "G4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -119,8 +130,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "C5" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C5" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					}
 				]
@@ -134,8 +148,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "C4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -143,8 +160,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "F4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "F4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -152,8 +172,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "A4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "A4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -161,8 +184,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "C5" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C5" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					}
 				]
@@ -176,8 +202,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "D4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -185,8 +214,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "F4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "F4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -194,8 +226,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "A4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "A4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -203,8 +238,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "D5" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "D5" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					}
 				]
@@ -218,8 +256,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "D4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -227,8 +268,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "G4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -236,8 +280,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "B4" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "B4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					},
 					{
@@ -245,8 +292,11 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 3 }, "value": { "note": "D5" } }
-							}
+								"set-value": { "output": { "index": 2 }, "value": { "note": "D5" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
 						]
 					}
 				]

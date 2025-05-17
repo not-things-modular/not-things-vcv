@@ -177,7 +177,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(Process
 			// It's a segment-block segment
 			vector<shared_ptr<SegmentProcessor>> blockSegments;
 			location.push_back("segment-block");
-			blockSegments = parseSegmentBlock(context, scriptSegment->segmentBlock.get(), timeScale, location, segmentStack);
+			blockSegments = parseSegmentBlock(context, scriptSegment->segmentBlock.get(), timeScale, scriptSegment->actions, location, segmentStack);
 			location.pop_back();
 			return blockSegments;
 		}
@@ -244,21 +244,70 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(Process
 	return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener));
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<ScriptAction>& actions, vector<string> location, vector<string> segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
 		location.push_back("segments");
-		vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(context, &scriptSegmentBlock->segments, timeScale, location, segmentStack);
+
+		// Build the full list of segments for the segment block
+		vector<shared_ptr<SegmentProcessor>> blockSegmentProcessors = parseSegments(context, &scriptSegmentBlock->segments, timeScale, location, segmentStack);
+		vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 		location.pop_back();
 		if (!scriptSegmentBlock->repeat) {
-			return segmentProcessors;
+			segmentProcessors = blockSegmentProcessors;
 		} else {
-			vector<shared_ptr<SegmentProcessor>> result;
 			for (int i = 0; i < *scriptSegmentBlock->repeat.get(); i++) {
-				result.insert(result.end(), segmentProcessors.begin(), segmentProcessors.end());
+				segmentProcessors.insert(segmentProcessors.end(), blockSegmentProcessors.begin(), blockSegmentProcessors.end());
 			}
-			return result;
 		}
+
+		if ((segmentProcessors.size() > 0) && (context->validationErrors->size() == 0)) {
+			// Build the lists of start and end actions defined on the segment block.
+			vector<shared_ptr<ActionProcessor>> startActions;
+			vector<shared_ptr<ActionProcessor>> endActions;
+			int count = 0;
+
+			location.push_back("actions");
+			for (std::vector<ScriptAction>::iterator it = actions.begin(); it != actions.end(); it++) {
+				location.push_back(to_string(count));
+
+				vector<string> actionLocation;
+				ScriptAction& scriptAction = *it;
+				ScriptAction* resolvedAction = resolveScriptAction(context, &scriptAction, location, actionLocation);
+
+				if (resolvedAction) {
+					if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
+						startActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
+					} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
+						endActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
+					} else {
+						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_SegmentBlockActionTimings, "The 'timing' of actions on a segment with a 'segment-block' reference can only be 'start' or 'end'.");
+					}
+				} else {
+					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
+				}
+
+				location.pop_back();
+			}
+			location.pop_back();
+
+			// If there are start or end actions, they will have to be added to the first and/or the last segments of the block (but only if there are no current validation errors, since we assume a correctly loaded segment here)
+			if ((context->validationErrors->size() == 0) && ((startActions.size() > 0) || (endActions.size() > 0))) {
+				if ((!scriptSegmentBlock->repeat) || ((*scriptSegmentBlock->repeat.get()) < 2)) {
+					// If the segment block is not repeating, we can assign the additional actions directly on the relevant segments
+					segmentProcessors.front()->pushStartActions(startActions);
+					segmentProcessors.back()->pushEndActions(endActions);
+				} else {
+					// Otherwise, we'll have to create new instances of the first and last segments, since the same instance is repeated multiple times in the list, and we only want to update the first and last ones
+					*segmentProcessors.begin() = parseResolvedSegment(context, segmentProcessors.front()->getScriptSegment(), timeScale, location, segmentStack);
+					segmentProcessors.front()->pushStartActions(startActions);
+					*(segmentProcessors.end() - 1) = parseResolvedSegment(context, segmentProcessors.back()->getScriptSegment(), timeScale, location, segmentStack);
+					segmentProcessors.back()->pushEndActions(endActions);
+				}
+			}
+		}
+
+		return segmentProcessors;
 	} else {
 		if (find(segmentStack.begin(), segmentStack.end(), string("sb-") + scriptSegmentBlock->ref) == segmentStack.end()) {
 			int count = 0;
@@ -266,7 +315,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 				if (scriptSegmentBlock->ref.compare(it->id) == 0) {
 					vector<string> refLocation = { "component-pool",  "segment-blocks", to_string(count) };
 					segmentStack.push_back(string("sb-") + scriptSegmentBlock->ref);
-					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(context, &(*it), timeScale, refLocation, segmentStack);
+					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(context, &(*it), timeScale, actions, refLocation, segmentStack);
 					segmentStack.pop_back();
 					return segments;
 				}

@@ -584,9 +584,9 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_RefOrInstance, "A ref segment can not be combined other non-ref segment properties.");
 		}
 	} else {
-		static const char* segmentBlockProperties[] = { "segment-block" };
-		static const char* nonSegmentBlockProperties[] = { "duration", "actions", "disable-ui" };
-		if (!hasOneOf(segmentJson, segmentBlockProperties)) {
+		static const char* segmentBlockProperty[] = { "segment-block" };
+		static const char* nonSegmentBlockProperties[] = { "duration", "disable-ui" };
+		if (!hasOneOf(segmentJson, segmentBlockProperty)) {
 			json::const_iterator duration = segmentJson.find("duration");
 			if ((duration != segmentJson.end()) && (duration->is_object())) {
 				location.push_back("duration");
@@ -594,30 +594,6 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_DurationObject, "duration is required and must be an object.");
-			}
-
-			json::const_iterator actions = segmentJson.find("actions");
-			if (actions != segmentJson.end()) {
-				if (actions->is_array()) {
-					location.push_back("actions");
-
-					int count = 0;
-					std::vector<json> actionElements = (*actions);
-					for (const json& action : actionElements) {
-						location.push_back(std::to_string(count));
-						if (action.is_object()) {
-							segment.actions.push_back(parseAction(action, true, validationErrors, location));
-						} else {
-							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
-						}
-						location.pop_back();
-						count++;
-					}
-
-					location.pop_back();
-				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_ActionsArray, "actions must be an array.");
-				}
 			}
 
 			segment.disableUi = false;
@@ -645,7 +621,31 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				}
 			}
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference, but not both.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference and optional 'actions', but not both.");
+		}
+
+		json::const_iterator actions = segmentJson.find("actions");
+		if (actions != segmentJson.end()) {
+			if (actions->is_array()) {
+				location.push_back("actions");
+
+				int count = 0;
+				std::vector<json> actionElements = (*actions);
+				for (const json& action : actionElements) {
+					location.push_back(std::to_string(count));
+					if (action.is_object()) {
+						segment.actions.push_back(parseAction(action, true, validationErrors, location));
+					} else {
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
+					}
+					location.pop_back();
+					count++;
+				}
+
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Segment_ActionsArray, "actions must be an array.");
+			}
 		}
 	}
 

@@ -1,0 +1,294 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"timelines": [
+		{
+			"time-scale": {
+				"bpm": 120,
+				"bpb": 4
+			},
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "C3" }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "F3" }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "D3" }
+									}
+								}
+							]
+						},
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": { "index": 1 },
+										"value": { "note": "G3" }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{ "segment-block": "c-arp" },
+						{ "segment-block": "f-arp" },
+						{ "segment-block": "d-arp" },
+						{ "segment-block": "g-arp" }
+					]
+				}
+			]
+		}
+	],
+	"component-pool": {
+        "actions": [
+            {
+                "id": "arp-gate-action",
+                "timing": "gate",
+                "output": { "index": 3 }
+            }
+        ],
+		"segment-blocks" : [
+			{
+				"id": "c-arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "E4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C5" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					}
+				]
+			},
+			{
+				"id": "f-arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "F4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "A4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "C5" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					}
+				]
+			},
+			{
+				"id": "d-arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "F4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "A4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "D5" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					}
+				]
+			},
+			{
+				"id": "g-arp",
+				"x-description": "The G segment-block has been updated to play three half-note triplets instead of four eight notes",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.666 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.666 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.668 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": { "index": 2 }, "value": { "note": "B4" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					}
+				]
+			}
+		]
+	}
+}
