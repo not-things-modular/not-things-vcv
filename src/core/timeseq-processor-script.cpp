@@ -386,7 +386,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(Processor
 
 	if (scriptAction->condition) {
 		location.push_back("if");
-		ifProcessor = parseIf(context, scriptAction->condition.get(), location);
+		ifProcessor = parseIf(context, scriptAction->condition.get(), location, vector<string>());
 		location.pop_back();
 	}
 
@@ -422,7 +422,7 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction
 
 	if (scriptAction->condition) {
 		location.push_back("if");
-		ifProcessor = parseIf(context, scriptAction->condition.get(), location);
+		ifProcessor = parseIf(context, scriptAction->condition.get(), location, vector<string>());
 		location.pop_back();
 	}
 
@@ -462,7 +462,7 @@ shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(P
 
 	if (scriptAction->condition) {
 		location.push_back("if");
-		ifProcessor = parseIf(context, scriptAction->condition.get(), location);
+		ifProcessor = parseIf(context, scriptAction->condition.get(), location, vector<string>());
 		location.pop_back();
 	}
 
@@ -512,8 +512,8 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(Proce
 std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location) {
 	ScriptAssert* scriptAssert = scriptAction->assert.get();
 
-	location.push_back("if");
-	shared_ptr<IfProcessor> expect = parseIf(context, &scriptAssert->expect, location);
+	location.push_back("expect");
+	shared_ptr<IfProcessor> expect = parseIf(context, &scriptAssert->expect, location, vector<string>());
 	location.pop_back();
 
 	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor));
@@ -677,63 +677,85 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 	return shared_ptr<CalcProcessor>();
 }
 
-shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string> location) {
-	pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
-	pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs;
-	bool parseValues = true;
-	bool parseIfs = false;
+shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string> location, vector<string> ifStack) {
+	if (scriptIf->ref.length() == 0) {
+		pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
+		pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs;
+		bool parseValues = true;
+		bool parseIfs = false;
 
-	switch (scriptIf->ifOperator) {
-		case ScriptIf::IfOperator::EQ:
-			location.push_back("eq");
-			break;
-		case ScriptIf::IfOperator::NE:
-			location.push_back("ne");
-			break;
-		case ScriptIf::IfOperator::LT:
-			location.push_back("lt");
-			break;
-		case ScriptIf::IfOperator::LTE:
-			location.push_back("lte");
-			break;
-		case ScriptIf::IfOperator::GT:
-			location.push_back("gt");
-			break;
-		case ScriptIf::IfOperator::GTE:
-			location.push_back("gte");
-			break;
-		case ScriptIf::IfOperator::AND:
-			parseValues = false;
-			parseIfs = true;
-			location.push_back("and");
-			break;
-		case ScriptIf::IfOperator::OR:
-			parseValues = false;
-			parseIfs = true;
-			location.push_back("or");
-			break;
+		switch (scriptIf->ifOperator) {
+			case ScriptIf::IfOperator::EQ:
+				location.push_back("eq");
+				break;
+			case ScriptIf::IfOperator::NE:
+				location.push_back("ne");
+				break;
+			case ScriptIf::IfOperator::LT:
+				location.push_back("lt");
+				break;
+			case ScriptIf::IfOperator::LTE:
+				location.push_back("lte");
+				break;
+			case ScriptIf::IfOperator::GT:
+				location.push_back("gt");
+				break;
+			case ScriptIf::IfOperator::GTE:
+				location.push_back("gte");
+				break;
+			case ScriptIf::IfOperator::AND:
+				parseValues = false;
+				parseIfs = true;
+				location.push_back("and");
+				break;
+			case ScriptIf::IfOperator::OR:
+				parseValues = false;
+				parseIfs = true;
+				location.push_back("or");
+				break;
+		}
+
+		if (parseValues) {
+			location.push_back("0");
+			values.first = parseValue(context, &scriptIf->values.get()->first, location, vector<string>());
+			location.pop_back();
+			location.push_back("1");
+			values.second = parseValue(context, &scriptIf->values.get()->second, location, vector<string>());
+			location.pop_back();
+		}
+		if (parseIfs) {
+			location.push_back("0");
+			ifs.first = parseIf(context, &scriptIf->ifs.get()->first, location, ifStack);
+			location.pop_back();
+			location.push_back("1");
+			ifs.second = parseIf(context, &scriptIf->ifs.get()->second, location, ifStack);
+			location.pop_back();
+		}
+
+		location.pop_back();
+
+		return shared_ptr<IfProcessor>(new IfProcessor(scriptIf, values, ifs));
+	} else {
+		if (find(ifStack.begin(), ifStack.end(), scriptIf->ref) == ifStack.end()) {
+			int count = 0;
+			for (vector<ScriptIf>::iterator it = context->script->ifs.begin(); it != context->script->ifs.end(); it++) {
+				if (scriptIf->ref.compare(it->id) == 0) {
+					vector<string> refLocation = { "component-pool",  "ifs", to_string(count) };
+					ifStack.push_back(scriptIf->ref);
+					return parseIf(context, &(*it), refLocation, ifStack);
+					ifStack.pop_back();
+				}
+				count++;
+			}
+
+			// Couldn't find the referenced if...
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced if with id '", scriptIf->ref.c_str(), "' in the script ifs.");
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular if reference while processing the if with the id '", scriptIf->ref.c_str(), "'. Circular references can not be resolved.");
+		}
 	}
 
-	if (parseValues) {
-		location.push_back("0");
-		values.first = parseValue(context, &scriptIf->values.get()->first, location, vector<string>());
-		location.pop_back();
-		location.push_back("1");
-		values.second = parseValue(context, &scriptIf->values.get()->second, location, vector<string>());
-		location.pop_back();
-	}
-	if (parseIfs) {
-		location.push_back("0");
-		ifs.first = parseIf(context, &scriptIf->ifs.get()->first, location);
-		location.pop_back();
-		location.push_back("1");
-		ifs.second = parseIf(context, &scriptIf->ifs.get()->second, location);
-		location.pop_back();
-	}
-
-	location.pop_back();
-
-	return shared_ptr<IfProcessor>(new IfProcessor(scriptIf, values, ifs));
+	return shared_ptr<IfProcessor>();
 }
 
 pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, vector<string> location) {

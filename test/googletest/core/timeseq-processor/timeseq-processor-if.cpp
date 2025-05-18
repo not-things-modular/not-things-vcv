@@ -89,6 +89,78 @@ TEST(TimeSeqProcessorIf, ActionWithIfShouldDetectCircularRefInValues) {
 	EXPECT_NE(validationErrors[0].message.find("'variable-value-id'"), std::string::npos);
 }
 
+TEST(TimeSeqProcessorIf, ActionWithUnknownIfRefShouldFail) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
+					{ "if", { { "ref", "an-unknown-id" } } }
+				}
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["values"] = json::array({
+		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
+	});
+	json["component-pool"]["ifs"] = json::array({
+		{ { "id", "not-the-id" }, { "eq", json::array({
+			{ { "voltage", 1.f } },
+			{ { "ref", "variable-value-id" } }
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/if");
+	EXPECT_NE(validationErrors[0].message.find("'an-unknown-id'"), std::string::npos);
+}
+
+TEST(TimeSeqProcessorIf, ActionWithCircularIfRefShouldFail) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
+					{ "if", { { "ref", "if-id-1" } } }
+				}
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["values"] = json::array({
+		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
+	});
+	json["component-pool"]["ifs"] = json::array({
+		{ { "id", "if-id-1" }, { "and", json::array({
+			{ { "eq", json::array({
+				{ { "voltage", 1.f } },
+				{ { "voltage", 2.f } }
+			}) } },
+			{ { "ref", "if-id-1" } }
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/ifs/0/and/1");
+	EXPECT_NE(validationErrors[0].message.find("'if-id-1'"), std::string::npos);
+}
 
 TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResult) {
 	MockEventListener mockEventListener;
@@ -114,6 +186,57 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResult) {
 	json["component-pool"] = json::object();
 	json["component-pool"]["values"] = json::array({
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+		float values[] = { 0.9999999f, 1.f, -10.f, 1.f, 1.0000001f, 1.f };
+		for (int i = 0; i < 6; i++) {
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			if (i % 2 == 1) {
+				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+			}
+		}
+	}
+
+	for (int i = 0; i < 6; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckRefIfResult) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
+					{ "if", { { "ref", "ref-id" } } }
+				}
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["values"] = json::array({
+		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
+	});
+	json["component-pool"]["ifs"] = json::array({
+		{ { "id", "ref-id" }, {"eq", json::array({
+			{ { "voltage", 1.f } },
+			{ { "ref", "variable-value-id" } }
+		}) } }
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);

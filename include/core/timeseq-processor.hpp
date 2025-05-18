@@ -431,7 +431,7 @@ struct ProcessorScriptParser {
 	std::shared_ptr<ValueProcessor> parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location, std::vector<std::string> valueStack);
 	std::shared_ptr<CalcProcessor> parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, std::vector<std::string> location, std::vector<std::string> valueStack);
-	std::shared_ptr<IfProcessor> parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, std::vector<std::string> location);
+	std::shared_ptr<IfProcessor> parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, std::vector<std::string> location, std::vector<std::string> ifStack);
 
 	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string> location);
 	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);

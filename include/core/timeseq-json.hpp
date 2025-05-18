@@ -32,7 +32,7 @@ struct JsonScriptParser {
 	ScriptCalc parseCalc(const json& calcJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptInputTrigger parseInputTrigger(const json& inputTriggerJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 
-	ScriptIf parseIf(const json& ifJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptIf parseIf(const json& ifJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::pair<ScriptValue, ScriptValue> parseIfValues(std::string ifOperator, const json& valuesJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> parseIfIfs(std::string ifOperator, const json& ifsJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 

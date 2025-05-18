@@ -4,6 +4,81 @@ json singleValueArray = json::array({ { { "ref", "value-ref-1" } } });
 json doubleValueArray = json::array({ { { "ref", "value-ref-1" } }, { { "ref", "value-ref-2" } } });
 json doubleValueArray2 = json::array({ { { "ref", "value-ref-3" } }, { { "ref", "value-ref-4" } } });
 
+TEST(TimeSeqJsonScriptIf, ParseShouldSucceedWithoutIfs) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	EXPECT_EQ(script->ifs.size(), 0u);
+}
+
+TEST(TimeSeqJsonScriptIf, ParseShouldSucceedWithEmptyIfs) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", json::array() }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	EXPECT_EQ(script->ifs.size(), 0u);
+}
+
+TEST(TimeSeqJsonScriptIf, ParseIfsShouldNotAllowRefAndRequireIdOnRoot) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", {
+			{ { "ref", "if-ref" } }
+		} }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/ifs/0");
+	expectError(validationErrors, ValidationErrorCode::Ref_NotAllowed, "/component-pool/ifs/0");
+}
+
+TEST(TimeSeqJsonScriptIf, ParseIfsShouldFailOnNonArrayIfs) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", "not-an-array" }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Script_IfsArray, "/component-pool");
+}
+
+TEST(TimeSeqJsonScriptIf, ParseIfsShouldFailOnNonObjectIf) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", json::array({
+			{ { "id", "if-1" }, { "eq", json::array({
+				{ { "voltage", 1 } },
+				{ { "voltage", 2 } }
+			}) } },
+			"not-an-object",
+			{ { "id", "if-2" }, { "eq", json::array({
+				{ { "voltage", 2 } },
+				{ { "voltage", 1 } }
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Script_IfObject, "/component-pool/ifs/1");
+}
+
 TEST(TimeSeqJsonScriptIf, ParseActionWithoutIfShouldWork) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -530,8 +605,8 @@ TEST(TimeSeqJsonScriptIf, ParseIfWithUnknownPropertiesShouldFail) {
 				{ "trigger", "trigger-name" },
 				{ "if", {
 					{ "eq", doubleValueArray },
-				{ "unknown-prop-1", "value" },
-				{ "unknown-prop-2", { { "child", "object" } } }
+					{ "unknown-prop-1", "value" },
+					{ "unknown-prop-2", { { "child", "object" } } }
 				} } }
 		}) }
 	};
@@ -554,12 +629,69 @@ TEST(TimeSeqJsonScriptIf, ParseIfShouldAllowUnknownPropertyWithXPrefix) {
 				{ "trigger", "trigger-name" },
 				{ "if", {
 					{ "eq", doubleValueArray },
-				{ "x-unknown-prop-1", "value" },
-				{ "x-unknown-prop-2", { { "child", "object" } } }
+					{ "x-unknown-prop-1", "value" },
+					{ "x-unknown-prop-2", { { "child", "object" } } }
 				} } }
 		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptIf, ParseIfShouldFailOnDuplicateIds) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", json::array({
+			{ { "id", "if-1" }, { "eq", json::array({ { { "ref", "value-1" } }, { { "ref", "value-2" } } }) } },
+			{ { "id", "if-1" }, { "eq", json::array({ { { "ref", "value-1" } }, { { "ref", "value-2" } } }) } },
+			{ { "id", "if-2" }, { "eq", json::array({ { { "ref", "value-1" } }, { { "ref", "value-2" } } }) } },
+			{ { "id", "if-3" }, { "eq", json::array({ { { "ref", "value-1" } }, { { "ref", "value-2" } } }) } },
+			{ { "id", "if-2" }, { "eq", json::array({ { { "ref", "value-1" } }, { { "ref", "value-2" } } }) } },
+			{ { "id", "if-1" }, { "eq", json::array({ { { "ref", "value-1" } }, { { "ref", "value-2" } } }) } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/ifs/1");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/ifs/4");
+	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/ifs/5");
+	EXPECT_NE(validationErrors[0].message.find("'if-1'"), std::string::npos);
+	EXPECT_NE(validationErrors[1].message.find("'if-2'"), std::string::npos);
+	EXPECT_NE(validationErrors[2].message.find("'if-1'"), std::string::npos);
+}
+
+TEST(TimeSeqJsonScriptIf, ParseScriptRefIfCanNotHaveOtherProperties) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	// A ref segment is not possible under the root segments array, so test this inside a segment-block instead.
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "eq", json::array({}) } } } },
+			{ { "id", "action-2" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "ne", json::array({}) } } } },
+			{ { "id", "action-3" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "lt", json::array({}) } } } },
+			{ { "id", "action-4" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "lte", json::array({}) } } } },
+			{ { "id", "action-5" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "gt", json::array({}) } } } },
+			{ { "id", "action-6" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "gte", json::array({}) } } } },
+			{ { "id", "action-7" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "and", json::array({}) } } } },
+			{ { "id", "action-8" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "or", json::array({}) } } } },
+			{ { "id", "action-9" }, { "trigger", "trigger-id" }, { "if", { { "ref", "if-id" }, { "tolerance", 0.1f } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 9u);
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/0/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/1/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/2/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/3/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/4/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/5/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/6/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/7/if");
+	expectError(validationErrors, ValidationErrorCode::If_RefOrinstance, "/component-pool/actions/8/if");
 }

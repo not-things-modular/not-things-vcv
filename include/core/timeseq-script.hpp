@@ -122,7 +122,7 @@ struct ScriptSetPolyphony {
 	int channels;
 };
 
-struct ScriptIf {
+struct ScriptIf : ScriptRefObject {
 	enum IfOperator {EQ, NE, LT, LTE, GT, GTE, AND, OR };
 
 	IfOperator ifOperator;
@@ -226,6 +226,7 @@ struct Script {
 	std::vector<ScriptCalc> calcs;
 	std::vector<ScriptValue> values;
 	std::vector<ScriptAction> actions;
+	std::vector<ScriptIf> ifs;
 };
 
 }
