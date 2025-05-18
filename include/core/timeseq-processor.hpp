@@ -291,6 +291,7 @@ struct DurationProcessor {
 };
 
 struct SegmentProcessor {
+	SegmentProcessor(SegmentProcessor& segmentProcessor);
 	SegmentProcessor(
 		ScriptSegment* scriptSegment,
 		std::shared_ptr<DurationProcessor> durationProcessor,
@@ -302,7 +303,6 @@ struct SegmentProcessor {
 
 	void pushStartActions(std::vector<std::shared_ptr<ActionProcessor>> startActions);
 	void pushEndActions(std::vector<std::shared_ptr<ActionProcessor>> endActions);
-	ScriptSegment* getScriptSegment();
 
 	DurationProcessor::DurationState getState();
 
@@ -414,7 +414,7 @@ struct ProcessorScriptParser {
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegments(ProcessorScriptParseContext* context, std::vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
 	std::vector<std::shared_ptr<SegmentProcessor>> parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
 	std::shared_ptr<SegmentProcessor> parseResolvedSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> location, std::vector<std::string> segmentStack);
-	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<ScriptAction>& actions, std::vector<std::string> location, std::vector<std::string> segmentStack);
+	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<ScriptAction>& actions, std::vector<std::string> location, std::vector<std::string> actionsLocation, std::vector<std::string> segmentStack);
 	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);
 	std::shared_ptr<ActionGlideProcessor> parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string> location);

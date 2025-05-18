@@ -139,8 +139,8 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithOnlyStartAndEndValueShouldGlide
 			{ { "segments", json::array({ { { "duration", { { "samples", 10 } } }, { "actions", json::array({
 				{
 					{ "timing", "glide" },
-					{ "start-value", { { "voltage", 1.f } } },
-					{ "end-value", { { "voltage", 6.f } } },
+					{ "start-value", { { "voltage", 0.f } } },
+					{ "end-value", { { "voltage", 4.5f } } },
 					{ "variable", "output-variable" }
 				}
 			}) } } }) } },
@@ -154,18 +154,10 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithOnlyStartAndEndValueShouldGlide
 	{
 		testing::InSequence inSequence;
 
-		// The first process should start on the exact start value.
-		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
-
-		for (int i = 1; i < 9; i++) {
+		for (int i = 0; i < 10; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", (float) 1 + i / 2.f)).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", (float) i / 2.f)).Times(1);
 		}
-
-		// The last process should end on the exact end value.
-		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -191,8 +183,8 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithOnlyStartAndEndValueShouldGlide
 			{ { "segments", json::array({ { { "duration", { { "samples", 10 } } }, { "actions", json::array({
 				{
 					{ "timing", "glide" },
-					{ "start-value", { { "voltage", 1.f } } },
-					{ "end-value", { { "voltage", 6.f } } },
+					{ "start-value", { { "voltage", 0.f } } },
+					{ "end-value", { { "voltage", 4.5f } } },
 					{ "output", { { "index", 8 }, { "channel", 16 } } }
 				}
 			}) } } }) } },
@@ -206,18 +198,10 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithOnlyStartAndEndValueShouldGlide
 	{
 		testing::InSequence inSequence;
 
-		// The first process should start on the exact start value.
-		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockPortHandler, setOutputPortVoltage(7, 15, 1.f)).Times(1);
-
-		for (int i = 1; i < 9; i++) {
+		for (int i = 0; i < 10; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(7, 15, (float) 1 + i / 2.f)).Times(1);
+			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(7, 15, (float) i / 2.f)).Times(1);
 		}
-
-		// The last process should end on the exact end value.
-		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockPortHandler, setOutputPortVoltage(7, 15, 6.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -570,8 +554,8 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithPositiveIfConditionShouldGlideV
 						{ { "voltage", 1.f } },
 						{ { "variable", "if-variable" } }
 					}) } } },
-					{ "start-value", { { "voltage", 1.f } } },
-					{ "end-value", { { "voltage", 6.f } } },
+					{ "start-value", { { "voltage", 0.f } } },
+					{ "end-value", { { "voltage", 4.5f } } },
 					{ "variable", "output-variable" }
 				}
 			}) } } }) } },
@@ -585,19 +569,15 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithPositiveIfConditionShouldGlideV
 	{
 		testing::InSequence inSequence;
 
-		// The first process should check the condition, and start on the exact start value.
+		// The first process should check the condition and set the start value
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockVariableHandler, getVariable("if-variable")).Times(1).WillOnce(testing::Return(1.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 0.f)).Times(1);
 
-		for (int i = 1; i < 9; i++) {
+		for (int i = 1; i < 10; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", (float) 1 + i / 2.f)).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", (float) i / 2.f)).Times(1);
 		}
-
-		// The last process should end on the exact end value.
-		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));

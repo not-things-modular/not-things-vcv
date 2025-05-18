@@ -343,7 +343,7 @@ void ActionGlideProcessor::start(uint64_t glideLength) {
 		m_endValue = m_endValueProcessor->process();
 
 		m_valueDelta = m_endValue - m_startValue;
-		m_durationInverse = 1. / glideLength;
+		m_durationInverse = glideLength > 1. ? 1. / (glideLength - 1.) : 1.;
 	}
 }
 
@@ -471,6 +471,15 @@ void DurationProcessor::reset() {
 	m_position = 0;
 }
 
+SegmentProcessor::SegmentProcessor(SegmentProcessor& segmentProcessor) :
+	m_scriptSegment(segmentProcessor.m_scriptSegment),
+	m_duration(segmentProcessor.m_duration),
+	m_startActions(segmentProcessor.m_startActions),
+	m_endActions(segmentProcessor.m_endActions),
+	m_ongoingActions(segmentProcessor.m_ongoingActions),
+	m_eventListener(segmentProcessor.m_eventListener) {
+}
+
 SegmentProcessor::SegmentProcessor(
 	ScriptSegment* scriptSegment,
 	shared_ptr<DurationProcessor> duration,
@@ -486,10 +495,6 @@ void SegmentProcessor::pushStartActions(std::vector<std::shared_ptr<ActionProces
 
 void SegmentProcessor::pushEndActions(std::vector<std::shared_ptr<ActionProcessor>> endActions) {
 	m_endActions.insert(m_endActions.end(), endActions.begin(), endActions.end());
-}
-
-ScriptSegment* SegmentProcessor::getScriptSegment() {
-	return m_scriptSegment;
 }
 
 DurationProcessor::DurationState SegmentProcessor::getState() {
