@@ -1,6 +1,6 @@
 # TIMESEQ NOTE SEQUENCE SAMPLE SCRIPT
 
-*A Sample script for the not-things [TimeSeq](../TIMESEQ.md) module.*
+*A Sample script for the not-things [TimeSeq](../../TIMESEQ.md) module.*
 
 One of the basic functionalities of TimeSeq is to create repeating chord and note sequences. On this page, we'll start with a simple note sequence and gradually transform this into a sequence to a script that can drive a bass voice, chord voice and arpeggiated notes voice.
 
@@ -10,6 +10,8 @@ One of the basic functionalities of TimeSeq is to create repeating chord and not
 * [Adding Arpeggiated Chords](#adding-arpeggiated-chords)
 * [Adding Gates for Envelopes](#adding-gates-for-envelopes)
 * [Using Triplets](#using-triplets)
+* [Restructuring the Script](#restructuring-the-script)
+* [Adding in Some Chance](#adding-in-some-chance)
 
 ## A Basic Note Sequence
 
@@ -32,6 +34,8 @@ There will be four [segment](../TIMESEQ-SCRIPT-JSON.md#segment)s in the *lane*, 
 ```
 
 The other three *segment*s will look identical, except that the `note` will become `F3`, `G3` and `D3`.
+
+### Full Script and VCV Rack Patch
 
 The full script can be found [here](note-seq/note-seq-root-notes.json), and the [note-seq-root-notes.vcv](note-seq/note-seq-root-notes.vcv) patch will show it in action by playing the note sequence through a VCO after showing the current note on the Hot Tuna tuner.
 
@@ -131,6 +135,8 @@ Similar *segment-block*s will be defined for the F, G an D chords, and these seg
 }
 ```
 
+### Full Script and VCV Rack Patch
+
 The full script can be found [here](note-seq/note-seq-arp.json), and the [note-seq-arp.vcv](note-seq/note-seq-arp.vcv) patch contains a second VCO to play the arpeggiated chord notes.
 
 ## Adding Gates for Envelopes
@@ -169,6 +175,8 @@ This gate can now be used by reference on each of the arpeggiated chord notes:
     ]
 },
 ```
+
+### Full Script and VCV Rack Patch
 
 A script version with gate actions added to all the arpeggiated chord notes can be found [here](note-seq/note-seq-arp-gate.json), and the [note-seq-arp-gate.vcv](note-seq/note-seq-arp-gate.vcv) patch uses this gate for applying a volume envelope on those notes.
 
@@ -240,4 +248,221 @@ But while three of these triplets are expected to have the same duration as four
 
 The last `0.668` *duration* makes the whole *segment* run in sync with the others again. Note how the gate *action*s of these triplet notes also automatically adjusts to the new *segment* length.
 
-The updated script can be found [here](note-seq/note-seq-tripplets.json), with the [note-seq-arp-tripplets.vcv](note-seq/note-seq-arp-tripplets.vcv) patch playing it.
+### Full Script and VCV Rack Patch
+
+The updated script can be found [here](note-seq/note-seq-arp-triplets.json), with the [note-seq-arp-triplets.vcv](note-seq/note-seq-arp-triplets.vcv) patch playing it.
+
+## Restructuring the Script
+
+In this next step, we're going to go back to the version of the script from before the last chord was changed to triplets (so the result of [Adding Gates for Envelopes](#adding-gates-for-envelopes)). This script currenlty has a lot of actions in it: one for each arpeggiated note in each chord, and an additional one for each root note. We're going to rework the script using *segment-block*s and variables so that it becomes easier to work with in the next step.
+
+All of the `arp` segments in the current script perform a similar set of actions: set the voltage of output 2 to three chord notes with 0.5 beats, and finish with the first note one octave higher. At the same time, the first lane updates the voltage of output 1 to the root note of the chord.
+
+If we write this using variables in a segment-block, it would look like this:
+
+```json
+{
+    "id": "arp",
+    "repeat": 4,
+    "segments": [
+        {
+            "duration": { "beats": 0.5 },
+            "actions": [
+                {
+                    "timing": "start",
+                    "set-value": { "output": { "index": 1 }, "value": { "variable": "root-note" } }
+                },
+                {
+                    "timing": "start",
+                    "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-1" } }
+                },
+                {
+                    "ref": "arp-gate-action"
+                }
+            ]
+        },
+        {
+            "duration": { "beats": 0.5 },
+            "actions": [
+                {
+                    "timing": "start",
+                    "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-2" } }
+                },
+                {
+                    "ref": "arp-gate-action"
+                }
+            ]
+        },
+        {
+            "duration": { "beats": 0.5 },
+            "actions": [
+                {
+                    "timing": "start",
+                    "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-3" } }
+                },
+                {
+                    "ref": "arp-gate-action"
+                }
+            ]
+        },
+        {
+            "duration": { "beats": 0.5 },
+            "actions": [
+                {
+                    "timing": "start",
+                    "set-value": {
+                        "output": { "index": 2 },
+                        "value": {
+                            "variable": "chord-note-1",
+                            "calc": [
+                                { "add": { "voltage": 1 } }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "ref": "arp-gate-action"
+                }
+            ]
+        }
+    ]
+}
+```
+
+Instead of using fixed note values, this segment-block now uses
+
+* The `root-note` variable to set the root note on output 1 in the first segment,
+* The `chord-note-1` variable to set the first arpeggiated note on output 2 in the first segment,
+* The `chord-note-2` variable to set the second arpeggiated note on output 2 in the second segment,
+* The `chord-note-3` variable to set the third arpeggiated note on output 2 in the third segment,
+* Re-uses the `chord-note-1` variable, but adds 1V to it to make it one octave higher in the fourth segment
+
+The lane that contained segments that referenced the `c-arp`, `f-arp`, ... *segment-block*s can now be updated to reference this new `arp` *segment-block* instead. To set the variables, we'll leverage the fact that you can add *action*s to a segment that point to a *segment-block*. These actions will then be executed before (if they have a `start` `timing`) or after (if they have an `end` `timing`). We'll use the default `start` timing here to perform [set-variable](../TIMESEQ-SCRIPT-JSON.md#set-variable) *action*s:
+
+```json
+{
+    "actions": [
+        {
+            "set-variable": {
+                "name": "root-note",
+                "value": { "note": "C3" }
+            }
+        },
+        {
+            "set-variable": {
+                "name": "chord-note-1",
+                "value": { "note": "C4" }
+            }
+        },
+        {
+            "set-variable": {
+                "name": "chord-note-2",
+                "value": { "note": "E4" }
+            }
+        },
+        {
+            "set-variable": {
+                "name": "chord-note-3",
+                "value": { "note": "G4" }
+            }
+        }
+    ],
+    "segment-block": "arp"
+}
+```
+
+This fist segment contains the C4 chord: sets the `root-note` variable to a `C3`, the `chord-note-1` to a `C4`, the `chord-note-2` to an `E4`, the `chord-note-1` to a `G4` and points to the previously created `arp` *segment-block* that will use these variables.
+
+By using less newlines in the JSON, this can also be written a bit more compact, as this second segment for the F chord shows:
+
+```json
+{
+    "actions": [
+        { "set-variable": { "name": "root-note", "value": { "note": "F3" } } },
+        { "set-variable": { "name": "chord-note-1", "value": { "note": "C4" } } },
+        { "set-variable": { "name": "chord-note-2", "value": { "note": "F4" } } },
+        { "set-variable": { "name": "chord-note-3", "value": { "note": "A4" } } }
+    ],
+    "segment-block": "arp"
+}
+```
+
+### Full Script and VCV Rack Patch
+
+The full updated script can be found [here](note-seq/note-seq-arp-rework.json), and the [note-seq-arp-rework.vcv](note-seq/note-seq-arp-rework.vcv) patch has it loaded into TimeSeq.
+
+## Adding in Some Chance
+
+The final change we'll make to this script is to add some chance to the arpeggiated chord notes: on each *action* that causes a note to play, add a 1-in-4 chance that the note will not be played. This is why the script got reworked in the previous step: there are less places where this chance will have to be added.
+
+Adding chance to the execution of an *action* can be done using two steps: first generate a random value, and then make the action conditional based on that random value. To generate the random value that determines if an arpeggiated note *action* will be performed, following *action* is added to the `actions` list of the *component-pool*:
+
+```json
+{
+    "id": "determine-chance",
+    "timing": "start",
+    "set-variable": {
+        "name": "play-note",
+        "value": {
+            "rand": {
+                "lower": { "voltage": 0 },
+                "upper": { "voltage": 10 }
+            }
+        }
+    }
+}
+```
+
+This action will generate a random voltage between `0` and `10` and assign it to the `play-note` variable. In order to use this variable to make the note *action*s have a 1-in-4 chance of not playing, we'll need an [if](../TIMESEQ-SCRIPT-JSON.md#if). Since this *if* condition will be used multiple times, we'll add it to the `ifs` section of the *component-pool*:
+
+```json
+{
+    "component-pool": {
+        "ifs": [
+            {
+                "id": "should-play-note",
+                "gt": [
+                    { "variable": "play-note" },
+                    { "voltage": 2.5 }
+                ]
+            }
+        ]
+    }
+}
+```
+
+This `should-play-note` conditional will evaluate to `true` if the `play-note` variable (which contains the random value between `0` and `10`) is above `2.5`. When used as *if* condition on an *action*, this will give it a 3-in-4 chance of executing. We can now add this new *action* and the *if* condition to the *segment*s that cause the notes to play:
+
+```json
+{
+    "duration": { "beats": 0.5 },
+    "actions": [
+        { "ref": "determine-chance" },
+        {
+            "timing": "start",
+            "if": { "ref": "should-play-note" },
+            "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-2" } }
+        },
+        {
+            "ref": "arp-gate-action"
+        }
+    ]
+}
+```
+
+The actions are executed in order, so first the referenced `determine-chance` action will determine the chance that the note will play, then the second action will only play the note if the referenced `should-play-note` condition evaluates to `true`, and then the `arp-gate-action` will generate the gate that drives the note volume envelope. We'll also have to make this gate *action* conditional based on the same chance, so that action (which already existed in the *component-pool* now becomes:
+
+```json
+{
+    "id": "arp-gate-action",
+    "timing": "gate",
+    "if": { "ref": "should-play-note" },
+    "output": { "index": 3 }
+},
+```
+
+Note that the first *action* of the `arp` *segment-block* is the one that sets the root note on output port 1. This action should not be made conditional, since the root note should always update.
+
+### Full Script and VCV Rack Patch
+
+The full updated script for this step can be found [here](note-seq/note-seq-arp-chance.json), and the [note-seq-arp-chance.vcv](note-seq/note-seq-arp-chance.vcv) is the same patch as before, but now with the new script loaded.

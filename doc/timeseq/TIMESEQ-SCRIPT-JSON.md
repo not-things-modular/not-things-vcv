@@ -245,6 +245,7 @@ All objects defined in this pool **must** have an `id` property, since this will
 | `calcs` | no | [calc](#calc) list | A list of reusable *calc* objects. |
 | `values` | no | [value](#value) list | A list of reusable *value* objects. |
 | `actions` | no | [action](#action) list | A list of reusable *action* objects. |
+| `ifs` | no | [if](#if) list | A list of reusable *if* objects. |
 
 ### Example
 
@@ -278,7 +279,11 @@ If the order that the actions is executed in is of importance (e.g. when writing
 * Subsequently, execute all ***ongoing*** actions (in the order that they appear in the list)
 * Finally, if the segment is ending, execute all ***end*** actions (in the order that they appear in the list)
 
-The `segment-block` property provides a special version of a *segment*: if present, the `segment-block` must contain the ID of a *segment-block* in the `segment-blocks` section of the [component-pool](#component-pool). TimeSeq will then replace this *segment* instances with the *segment*s of the *segment-block*. The `segment-block` property can not be combined with the `duration` and `actions` properties within the same *segment* instance: either it is a stand-alone *segment* with a `duration` and `actions`, or it is a link to a `segment-block`.
+### segment-block segments
+
+The `segment-block` property provides a special version of a *segment*: if present, the `segment-block` must contain the ID of a *segment-block* in the `segment-blocks` section of the [component-pool](#component-pool). TimeSeq will then replace this *segment* instances with the *segment*s of the *segment-block*. The `segment-block` property can not be combined with the `duration` and property within the same *segment* instance: either it is a stand-alone *segment* with a `duration` and `actions`, or it is a link to a `segment-block`.
+
+The `actions` property can still be used together with the `segment-block` property, but it can only contain *action*s with a `start` or the `end` `timing`. The `start` actions will then be executed before the first segment of the *segment-block* starts. The `end` actions will be executed when the last segment of the *segment-block* has completed. If the *segment-block* has a `repeat` set, the *action*s will not be executed as when the *segment-block* repeats. They will only execute at the start of the first repeat, and after the last repeat has completed.
 
 ### Properties
 
