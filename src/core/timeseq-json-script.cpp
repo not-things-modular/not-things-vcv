@@ -1335,7 +1335,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 		scriptValue = parseFullValue(fullValueJson, allowRefs, true, validationErrors, location);
 		location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage);
+		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
 	return scriptValue;
@@ -1492,7 +1492,7 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 		json fullOutputJson = { { "index", outputJson } };
 		scriptOutput = parseFullOutput(fullOutputJson, allowRefs, true, validationErrors, location);
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage);
+		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
 	return scriptOutput;
@@ -1548,7 +1548,7 @@ ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, 
 		json fullInputJson = { { "index", inputJson } };
 		scriptInput = parseFullInput(fullInputJson, allowRefs, true, validationErrors, location);
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage);
+		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
 	return scriptInput;
