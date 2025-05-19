@@ -3,6 +3,7 @@
 json singleValueArray = json::array({ { { "ref", "value-ref-1" } } });
 json doubleValueArray = json::array({ { { "ref", "value-ref-1" } }, { { "ref", "value-ref-2" } } });
 json doubleValueArray2 = json::array({ { { "ref", "value-ref-3" } }, { { "ref", "value-ref-4" } } });
+json nonValueArray = json::array({ json::array({}), json::array({}) });
 
 TEST(TimeSeqJsonScriptIf, ParseShouldSucceedWithoutIfs) {
 	vector<ValidationError> validationErrors;
@@ -170,6 +171,22 @@ void testIfPairWithSingleValue(std::string compareOperator) {
 	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/" + compareOperator);
 }
 
+void testIfPairWithNonObjectNumberOrFloatValue(std::string compareOperator) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "if", { { compareOperator, nonValueArray } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::If_ValueObject, "/component-pool/actions/0/if/" + compareOperator + "/0");
+	expectError(validationErrors, ValidationErrorCode::If_ValueObject, "/component-pool/actions/0/if/" + compareOperator + "/1");
+}
+
 void testIfPairWithTwoValue(std::string compareOperator, ScriptIf::IfOperator ifOperator) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -230,6 +247,7 @@ TEST(TimeSeqJsonScriptIf, ParseIfForEq) {
 	testIfPairWithSingleValue("eq");
 	testIfPairWithTwoValue("eq", ScriptIf::IfOperator::EQ);
 	testIfPairWithThreeValue("eq");
+	testIfPairWithNonObjectNumberOrFloatValue("eq");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseIfForNe) {
@@ -240,6 +258,7 @@ TEST(TimeSeqJsonScriptIf, ParseIfForNe) {
 	testIfPairWithSingleValue("ne");
 	testIfPairWithTwoValue("ne", ScriptIf::IfOperator::NE);
 	testIfPairWithThreeValue("ne");
+	testIfPairWithNonObjectNumberOrFloatValue("ne");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseIfForLt) {
@@ -250,6 +269,7 @@ TEST(TimeSeqJsonScriptIf, ParseIfForLt) {
 	testIfPairWithSingleValue("lt");
 	testIfPairWithTwoValue("lt", ScriptIf::IfOperator::LT);
 	testIfPairWithThreeValue("lt");
+	testIfPairWithNonObjectNumberOrFloatValue("lt");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseIfForLte) {
@@ -260,6 +280,7 @@ TEST(TimeSeqJsonScriptIf, ParseIfForLte) {
 	testIfPairWithSingleValue("lte");
 	testIfPairWithTwoValue("lte", ScriptIf::IfOperator::LTE);
 	testIfPairWithThreeValue("lte");
+	testIfPairWithNonObjectNumberOrFloatValue("lte");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseIfForGt) {
@@ -270,6 +291,7 @@ TEST(TimeSeqJsonScriptIf, ParseIfForGt) {
 	testIfPairWithSingleValue("gt");
 	testIfPairWithTwoValue("gt", ScriptIf::IfOperator::GT);
 	testIfPairWithThreeValue("gt");
+	testIfPairWithNonObjectNumberOrFloatValue("gt");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseIfForGte) {
@@ -280,6 +302,7 @@ TEST(TimeSeqJsonScriptIf, ParseIfForGte) {
 	testIfPairWithSingleValue("gte");
 	testIfPairWithTwoValue("gte", ScriptIf::IfOperator::GTE);
 	testIfPairWithThreeValue("gte");
+	testIfPairWithNonObjectNumberOrFloatValue("gte");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseIfForAnd) {

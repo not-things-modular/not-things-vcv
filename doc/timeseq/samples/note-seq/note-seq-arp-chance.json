@@ -17,25 +17,25 @@
 								{
 									"set-variable": {
 										"name": "root-note",
-										"value": { "note": "C3" }
+										"value": "C3"
 									}
 								},
 								{
 									"set-variable": {
 										"name": "chord-note-1",
-										"value": { "note": "C4" }
+										"value": "C4"
 									}
 								},
 								{
 									"set-variable": {
 										"name": "chord-note-2",
-										"value": { "note": "E4" }
+										"value": "E4"
 									}
 								},
 								{
 									"set-variable": {
 										"name": "chord-note-3",
-										"value": { "note": "G4" }
+										"value": "G4"
 									}
 								}
 							],
@@ -43,28 +43,28 @@
 						},
 						{
 							"actions": [
-								{ "set-variable": { "name": "root-note", "value": { "note": "F3" } } },
-								{ "set-variable": { "name": "chord-note-1", "value": { "note": "C4" } } },
-								{ "set-variable": { "name": "chord-note-2", "value": { "note": "F4" } } },
-								{ "set-variable": { "name": "chord-note-3", "value": { "note": "A4" } } }
+								{ "set-variable": { "name": "root-note", "value": "F3" } },
+								{ "set-variable": { "name": "chord-note-1", "value": "C4" } },
+								{ "set-variable": { "name": "chord-note-2", "value": "F4" } },
+								{ "set-variable": { "name": "chord-note-3", "value": "A4" } }
 							],
 							"segment-block": "arp"
 						},
 						{
 							"actions": [
-								{ "set-variable": { "name": "root-note", "value": { "note": "D3" } } },
-								{ "set-variable": { "name": "chord-note-1", "value": { "note": "D4" } } },
-								{ "set-variable": { "name": "chord-note-2", "value": { "note": "F4" } } },
-								{ "set-variable": { "name": "chord-note-3", "value": { "note": "A4" } } }
+								{ "set-variable": { "name": "root-note", "value": "D3" } },
+								{ "set-variable": { "name": "chord-note-1", "value": "D4" } },
+								{ "set-variable": { "name": "chord-note-2", "value": "F4" } },
+								{ "set-variable": { "name": "chord-note-3", "value": "A4" } }
 							],
 							"segment-block": "arp"
 						},
 						{
 							"actions": [
-								{ "set-variable": { "name": "root-note", "value": { "note": "G3" } } },
-								{ "set-variable": { "name": "chord-note-1", "value": { "note": "D4" } } },
-								{ "set-variable": { "name": "chord-note-2", "value": { "note": "G4" } } },
-								{ "set-variable": { "name": "chord-note-3", "value": { "note": "B4" } } }
+								{ "set-variable": { "name": "root-note", "value": "G3" } },
+								{ "set-variable": { "name": "chord-note-1", "value": "D4" } },
+								{ "set-variable": { "name": "chord-note-2", "value": "G4" } },
+								{ "set-variable": { "name": "chord-note-3", "value": "B4" } }
 							],
 							"segment-block": "arp"
 						}
@@ -80,7 +80,7 @@
 				"x-description": "The addition of the 'if' condition will cause the gate to only trigger if the random 'play-note' variable is above 2.5.",
                 "timing": "gate",
 				"if": { "ref": "should-play-note" },
-                "output": { "index": 3 }
+                "output": 3
             },
 			{
 				"id": "determine-chance",
@@ -89,8 +89,8 @@
 					"name": "play-note",
 					"value": {
 						"rand": {
-							"lower": { "voltage": 0 },
-							"upper": { "voltage": 10 }
+							"lower": 0,
+							"upper": 10
 						}
 					}
 				}
@@ -102,7 +102,7 @@
 				"x-description": "A note should only be played if the randomized 'play-note' variable is above 2.5",
 				"gt": [
 					{ "variable": "play-note" },
-					{ "voltage": 2.5 }
+					2.5
 				]
 			}
 		],
@@ -116,14 +116,14 @@
 						"actions": [
 							{
 								"timing": "start",
-								"set-value": { "output": { "index": 1 }, "value": { "variable": "root-note" } }
+								"set-value": { "output": 1, "value": { "variable": "root-note" } }
 							},
 							{ "ref": "determine-chance" },
 							{
 								"timing": "start",
 								"x-description": "The addition of the 'if' condition will cause the note to only change if the random 'play-note' variable is above 2.5.",
 								"if": { "ref": "should-play-note" },
-								"set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-1" } }
+								"set-value": { "output": 2, "value": { "variable": "chord-note-1" } }
 							},
 					        {
             					"ref": "arp-gate-action"
@@ -137,7 +137,7 @@
 							{
 								"timing": "start",
 								"if": { "ref": "should-play-note" },
-								"set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-2" } }
+								"set-value": { "output": 2, "value": { "variable": "chord-note-2" } }
 							},
 					        {
             					"ref": "arp-gate-action"
@@ -151,7 +151,7 @@
 							{
 								"timing": "start",
 								"if": { "ref": "should-play-note" },
-								"set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-3" } }
+								"set-value": { "output": 2, "value": { "variable": "chord-note-3" } }
 							},
 					        {
             					"ref": "arp-gate-action"
@@ -166,11 +166,11 @@
 								"timing": "start",
 								"if": { "ref": "should-play-note" },
 								"set-value": {
-									"output": { "index": 2 },
+									"output": 2,
 									"value": {
 										"variable": "chord-note-1",
 										"calc": [
-											{ "add": { "voltage": 1 } }
+											{ "add": 1 }
 										]
 									}
 								}

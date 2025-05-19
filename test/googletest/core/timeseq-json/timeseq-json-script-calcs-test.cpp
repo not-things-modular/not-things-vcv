@@ -115,10 +115,10 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonObjectOperator) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "calcs", json::array({
-			{ { "id", "calc-1" }, { "add", "not-an-object" } },
-			{ { "id", "calc-2" }, { "sub", "not-an-object" } },
-			{ { "id", "calc-3" }, { "div", "not-an-object" } },
-			{ { "id", "calc-4" }, { "mult", "not-an-object" } }
+			{ { "id", "calc-1" }, { "add", json::array() } },
+			{ { "id", "calc-2" }, { "sub", json::array() } },
+			{ { "id", "calc-3" }, { "div", json::array() } },
+			{ { "id", "calc-4" }, { "mult", json::array() } }
 		}) }
 	};
 

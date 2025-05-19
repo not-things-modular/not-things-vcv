@@ -82,7 +82,8 @@ enum ValidationErrorCode {
 	If_NoOperation = 509,
 	If_MultpleOperations = 510,
 	If_TwoValues = 511,
-	If_ToleranceNumber = 512,
+	If_ValueObject = 512,
+	If_ToleranceNumber = 513,
 
 	Segment_RefOrInstance = 600,
 	Segment_DurationObject = 601,

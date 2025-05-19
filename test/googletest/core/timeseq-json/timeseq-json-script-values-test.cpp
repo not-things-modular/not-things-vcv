@@ -409,7 +409,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithNonObjectInput) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "values", json::array({
-			{ { "id", "value-1" }, { "input", 1 } },
+			{ { "id", "value-1" }, { "input", "1" } },
 		}) }
 	};
 
@@ -456,7 +456,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithNonObjectOutput) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "values", json::array({
-			{ { "id", "value-1" }, { "output", 1 } },
+			{ { "id", "value-1" }, { "output", "1" } },
 		}) }
 	};
 
@@ -533,7 +533,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandNonValueUpper) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "values", json::array({
-			{ { "id", "value-1" }, { "rand", { { "lower", { { "ref", "value-lower" } } }, { "upper", "1" } } } },
+			{ { "id", "value-1" }, { "rand", { { "lower", { { "ref", "value-lower" } } }, { "upper", json::array() } } } },
 		}) }
 	};
 
@@ -578,7 +578,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandNonValueLower) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "values", json::array({
-			{ { "id", "value-1" }, { "rand", { { "upper", { { "ref", "value-upper" } } }, { "lower", "1" } } } },
+			{ { "id", "value-1" }, { "rand", { { "upper", { { "ref", "value-upper" } } }, { "lower", json::array() } } } },
 		}) }
 	};
 

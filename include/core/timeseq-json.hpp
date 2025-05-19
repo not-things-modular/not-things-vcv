@@ -26,10 +26,11 @@ struct JsonScriptParser {
 	ScriptSetPolyphony parseSetPolyphony(const json& setPolyphonyJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptAssert parseAssert(const json& assertJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptValue parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
-	ScriptValue parseValue(const json& valueJson, bool allowRefs, bool fromFullValue, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	ScriptValue parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	ScriptOutput parseOutput(const json& outputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
-	ScriptInput parseInput(const json& inputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptValue parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptOutput parseOutput(const json& outputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
+	ScriptOutput parseFullOutput(const json& outputJson, bool allowRefs, bool fromShorthand, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptInput parseInput(const json& inputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
+	ScriptInput parseFullInput(const json& inputJson, bool allowRefs, bool fromShorthand, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptRand parseRand(const json& randJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptCalc parseCalc(const json& calcJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptInputTrigger parseInputTrigger(const json& inputTriggerJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);

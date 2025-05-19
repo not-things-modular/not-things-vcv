@@ -221,7 +221,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 					for (const json& input : inputElements) {
 						location.push_back(std::to_string(count));
 						if (input.is_object()) {
-							script->inputs.push_back(parseInput(input, false, validationErrors, location));
+							script->inputs.push_back(parseFullInput(input, false, false, validationErrors, location));
 							if (std::find(ids.begin(), ids.end(), script->inputs.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->inputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->inputs.back().id.size() > 0) {
@@ -251,7 +251,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 					for (const json& output : outputElements) {
 						location.push_back(std::to_string(count));
 						if (output.is_object()) {
-							script->outputs.push_back(parseOutput(output, false, validationErrors, location));
+							script->outputs.push_back(parseFullOutput(output, false, false, validationErrors, location));
 							if (std::find(ids.begin(), ids.end(), script->outputs.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->outputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->outputs.back().id.size() > 0) {
@@ -311,7 +311,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 					for (const json& value : valueElements) {
 						location.push_back(std::to_string(count));
 						if (value.is_object()) {
-							script->values.push_back(parseValue(value, false, validationErrors, location));
+							script->values.push_back(parseFullValue(value, false, false, validationErrors, location));
 							if (std::find(ids.begin(), ids.end(), script->values.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->values.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->values.back().id.size() > 0) {
@@ -946,14 +946,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 		json::const_iterator output = actionJson.find("output");
 		if (output != actionJson.end()) {
-			if (output->is_object()) {
-				location.push_back("output");
-				ScriptOutput *scriptOutput = new ScriptOutput(parseOutput(*output, true, validationErrors, location));
-				action.output.reset(scriptOutput);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_OutputObject, "'output' must be an object.");
-			}
+			ScriptOutput *scriptOutput = new ScriptOutput(parseOutput(*output, true, validationErrors, location, "output", ValidationErrorCode::Action_OutputObject, "'output' must be an object."));
+			action.output.reset(scriptOutput);
 		}
 
 		json::const_iterator variable = actionJson.find("variable");
@@ -1171,12 +1165,8 @@ std::pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(std::string 
 
 	std::vector<json> valueElements = valuesJson.get<std::vector<json>>();
 	if (valueElements.size() == 2) {
-		location.push_back("0");
-		valuePair.first = parseValue(valueElements[0], true, validationErrors, location);
-		location.pop_back();
-		location.push_back("1");
-		valuePair.second = parseValue(valueElements[1], true, validationErrors, location);
-		location.pop_back();
+		valuePair.first = parseValue(valueElements[0], true, validationErrors, location, "0", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
+		valuePair.second = parseValue(valueElements[1], true, validationErrors, location, "1", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
 	} else {
 		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator.c_str(), "' array");
 	}
@@ -1210,21 +1200,17 @@ ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, std::ve
 	verifyAllowedProperties(setValueJson, setValueProperties, false, validationErrors, location);
 
 	json::const_iterator output = setValueJson.find("output");
-	if ((output != setValueJson.end()) && (output->is_object())) {
-		location.push_back("output");
-		setValue.output = parseOutput(*output, true, validationErrors, location);
-		location.pop_back();
+	if (output != setValueJson.end()) {
+		setValue.output = parseOutput(*output, true, validationErrors, location, "output", ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be an object.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be a output object.");
 	}
 
 	json::const_iterator value = setValueJson.find("value");
-	if ((value != setValueJson.end()) && (value->is_object())) {
-		location.push_back("value");
-		setValue.value = parseValue(*value, true, validationErrors, location);
-		location.pop_back();
+	if (value != setValueJson.end()) {
+		setValue.value = parseValue(*value, true, validationErrors, location, "value", ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be an object.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	return setValue;
@@ -1247,12 +1233,10 @@ ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson
 	}
 
 	json::const_iterator value = setVariableJson.find("value");
-	if ((value != setVariableJson.end()) && (value->is_object())) {
-		location.push_back("value");
-		setVariable.value = parseValue(*value, true, validationErrors, location);
-		location.pop_back();
+	if (value != setVariableJson.end()) {
+		setVariable.value = parseValue(*value, true, validationErrors, location, "value", ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be an object.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	return setVariable;
@@ -1338,17 +1322,17 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 
 	if (valueJson.is_object()) {
 		location.push_back(subLocation);
-		scriptValue = parseValue(valueJson, allowRefs, true, validationErrors, location);
+		scriptValue = parseFullValue(valueJson, allowRefs, false, validationErrors, location);
 		location.pop_back();
 	} else if (valueJson.is_number()) {
 		json fullValueJson = { { "voltage", valueJson } };
 		location.push_back(subLocation);
-		scriptValue = parseValue(fullValueJson, allowRefs, false, validationErrors, location);
+		scriptValue = parseFullValue(fullValueJson, allowRefs, true, validationErrors, location);
 		location.pop_back();
 	} else if (valueJson.is_string()) {
 		json fullValueJson = { { "note", valueJson } };
 		location.push_back(subLocation);
-		scriptValue = parseValue(fullValueJson, allowRefs, false, validationErrors, location);
+		scriptValue = parseFullValue(fullValueJson, allowRefs, true, validationErrors, location);
 		location.pop_back();
 	} else {
 		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage);
@@ -1357,11 +1341,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 	return scriptValue;
 }
 
-ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
-	return parseValue(valueJson, allowRefs, true, validationErrors, location);
-}
-
-ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, bool fromFullValue, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	static const char* cValueProperties[] = { "voltage", "note", "variable", "input", "output", "rand", "calc", "quantize" };
 	static const vector<string> vValueProperties(begin(cValueProperties), end(cValueProperties));
 	ScriptValue value;
@@ -1382,7 +1362,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 			if (voltage->is_number()) {
 				value.voltage.reset(new float(voltage->get<float>()));
 				if ((*value.voltage < -10) || (*value.voltage > 10)) {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageRange, fromFullValue ? "'voltage' must be a decimal number between -10 and 10." : "A voltage value must be a decimal number between -10 and 10.");
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageRange, fromShorthand ? "A voltage value must be a decimal number between -10 and 10." : "'voltage' must be a decimal number between -10 and 10.");
 				}
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
@@ -1395,20 +1375,20 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 			if (note->is_string()) {
 				value.note.reset(new std::string(*note));
 				if ((value.note->size() < 2) || (value.note->size() > 3)) {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "A note value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A note value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 				} else {
 					char n = toupper((*value.note)[0]);
 					if (n < 'A' || n > 'G') {
-						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "'note' must start with a valid note name (A-G)." : "A note value must start with a valid note name (A-G).");
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A note value must start with a valid note name (A-G)." : "'note' must start with a valid note name (A-G).");
 					}
 					char s = (*value.note)[1];
 					if (s < '0' || s > '9') {
-						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "'note' must have a valid scale (0-9) as second character." : "A note value must have a valid scale (0-9) as second character.");
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A note value must have a valid scale (0-9) as second character." : "'note' must have a valid scale (0-9) as second character.");
 					}
 					if (value.note->size() == 3) {
 						char a = (*value.note)[2];
 						if (a != '+' && a != '-') {
-							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "The third character of 'note' must be a valid accidental (+ for sharp, - for flat)." : "The third character of a note value must be a valid accidental (+ for sharp, - for flat).");
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "The third character of a note value must be a valid accidental (+ for sharp, - for flat)." : "The third character of 'note' must be a valid accidental (+ for sharp, - for flat).");
 						}
 					}
 				}
@@ -1433,27 +1413,15 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 		json::const_iterator input = valueJson.find("input");
 		if (input != valueJson.end()) {
 			valueTypes++;
-			if (input->is_object()) {
-				location.push_back("input");
-				ScriptInput* scriptInput = new ScriptInput(parseInput(*input, true, validationErrors, location));
-				value.input.reset(scriptInput);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_InputObject, "'input' must be an object.");
-			}
+			ScriptInput* scriptInput = new ScriptInput(parseInput(*input, true, validationErrors, location, "input", ValidationErrorCode::Value_InputObject, "'input' must be an object."));
+			value.input.reset(scriptInput);
 		}
 
 		json::const_iterator output = valueJson.find("output");
 		if (output != valueJson.end()) {
 			valueTypes++;
-			if (output->is_object()) {
-				location.push_back("output");
-				ScriptOutput* scriptOutput = new ScriptOutput(parseOutput(*output, true, validationErrors, location));
-				value.output.reset(scriptOutput);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_OutputObject, "'output' must be an object.");
-			}
+			ScriptOutput* scriptOutput = new ScriptOutput(parseOutput(*output, true, validationErrors, location, "output", ValidationErrorCode::Value_OutputObject, "'output' must be an object."));
+			value.output.reset(scriptOutput);
 		}
 
 		json::const_iterator rand = valueJson.find("rand");
@@ -1513,7 +1481,24 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 	return value;
 }
 
-ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage) {
+	ScriptOutput scriptOutput;
+
+	if (outputJson.is_object()) {
+		location.push_back(subLocation);
+		scriptOutput = parseFullOutput(outputJson, allowRefs, false, validationErrors, location);
+		location.pop_back();
+	} else if (outputJson.is_number()) {
+		json fullOutputJson = { { "index", outputJson } };
+		scriptOutput = parseFullOutput(fullOutputJson, allowRefs, true, validationErrors, location);
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage);
+	}
+
+	return scriptOutput;
+}
+
+ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allowRefs, bool fromShorthand, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	static const char* cOutputProperties[] = { "index", "channel" };
 	static const vector<string> vOutputProperties(begin(cOutputProperties), end(cOutputProperties));
 	ScriptOutput output;
@@ -1530,10 +1515,10 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 		if ((index != outputJson.end()) && (index->is_number_unsigned())) {
 			output.index = index->get<int>();
 			if ((output.index < 1) || (output.index > 8)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_IndexRange, "'index' must be a number between 1 and 8.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_IndexRange, fromShorthand ? "The output index must be a number between 1 and 8." : "'index' must be a number between 1 and 8.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Output_IndexNumber, fromShorthand ? "The output index is required and must be a (non-decimal) number between 1 and 8." : "'index' is required and must be a (non-decimal) number between 1 and 8.");
 		}
 
 		json::const_iterator channel = outputJson.find("channel");
@@ -1552,7 +1537,24 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 	return output;
 }
 
-ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage) {
+	ScriptInput scriptInput;
+
+	if (inputJson.is_object()) {
+		location.push_back(subLocation);
+		scriptInput = parseFullInput(inputJson, allowRefs, false, validationErrors, location);
+		location.pop_back();
+	} else if (inputJson.is_number()) {
+		json fullInputJson = { { "index", inputJson } };
+		scriptInput = parseFullInput(fullInputJson, allowRefs, true, validationErrors, location);
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage);
+	}
+
+	return scriptInput;
+}
+
+ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRefs, bool fromShorthand, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	static const char* cInputProperties[] = { "index", "channel" };
 	static const vector<string> vInputProperties(begin(cInputProperties), end(cInputProperties));
 	ScriptInput input;
@@ -1569,10 +1571,10 @@ ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, 
 		if ((index != inputJson.end()) && (index->is_number_unsigned())) {
 			input.index = index->get<int>();
 			if ((input.index < 1) || (input.index > 8)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_IndexRange, "'index' must be a number between 1 and 8.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_IndexRange, fromShorthand ? "The input index must be a number between 1 and 8." : "'index' must be a number between 1 and 8.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Input_IndexNumber, fromShorthand ? "The input index is required and must be a (non-decimal) number between 1 and 8." : "'index' is required and must be a (non-decimal) number between 1 and 8.");
 		}
 
 		json::const_iterator channel = inputJson.find("channel");
@@ -1598,23 +1600,19 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<Validat
 	verifyAllowedProperties(randJson, randProperties, false, validationErrors, location);
 
 	json::const_iterator lower = randJson.find("lower");
-	if ((lower != randJson.end()) && (lower->is_object())) {
-		location.push_back("lower");
-		ScriptValue *scriptValue = new ScriptValue(parseValue(*lower, true, validationErrors, location));
+	if (lower != randJson.end()) {
+		ScriptValue *scriptValue = new ScriptValue(parseValue(*lower, true, validationErrors, location, "lower", ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be an object."));
 		rand.lower.reset(scriptValue);
-		location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be an object.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be a value object.");
 	}
 
 	json::const_iterator upper = randJson.find("upper");
-	if ((upper != randJson.end()) && (upper->is_object())) {
-		location.push_back("upper");
-		ScriptValue *scriptValue = new ScriptValue(parseValue(*upper, true, validationErrors, location));
+	if (upper != randJson.end()) {
+		ScriptValue *scriptValue = new ScriptValue(parseValue(*upper, true, validationErrors, location, "upper", ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be an object."));
 		rand.upper.reset(scriptValue);
-		location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be an object.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be a value object.");
 	}
 
 	return rand;
@@ -1638,57 +1636,33 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 		json::const_iterator add = calcJson.find("add");
 		if (add != calcJson.end()) {
 			count++;
-			if (add->is_object()) {
-				calc.operation = ScriptCalc::CalcOperation::ADD;
-				location.push_back("add");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*add, true, validationErrors, location));
-				calc.value.reset(scriptValue);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_AddObject, "'add' must be an object.");
-			}
+			calc.operation = ScriptCalc::CalcOperation::ADD;
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*add, true, validationErrors, location, "add", ValidationErrorCode::Calc_AddObject, "'add' must be an object."));
+			calc.value.reset(scriptValue);
 		}
 
 		json::const_iterator sub = calcJson.find("sub");
 		if (sub != calcJson.end()) {
 			count++;
-			if (sub->is_object()) {
-				calc.operation = ScriptCalc::CalcOperation::SUB;
-				location.push_back("sub");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*sub, true, validationErrors, location));
-				calc.value.reset(scriptValue);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_SubObject, "'sub' must be an object.");
-			}
+			calc.operation = ScriptCalc::CalcOperation::SUB;
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*sub, true, validationErrors, location, "sub", ValidationErrorCode::Calc_SubObject, "'sub' must be an object."));
+			calc.value.reset(scriptValue);
 		}
 
 		json::const_iterator div = calcJson.find("div");
 		if (div != calcJson.end()) {
 			count++;
-			if (div->is_object()) {
-				calc.operation = ScriptCalc::CalcOperation::DIV;
-				location.push_back("div");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*div, true, validationErrors, location));
-				calc.value.reset(scriptValue);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_DivObject, "'div' must be an object.");
-			}
+			calc.operation = ScriptCalc::CalcOperation::DIV;
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*div, true, validationErrors, location, "div", ValidationErrorCode::Calc_DivObject, "'div' must be an object."));
+			calc.value.reset(scriptValue);
 		}
 
 		json::const_iterator mult = calcJson.find("mult");
 		if (mult != calcJson.end()) {
 			count++;
-			if (mult->is_object()) {
-				calc.operation = ScriptCalc::CalcOperation::MULT;
-				location.push_back("mult");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*mult, true, validationErrors, location));
-				calc.value.reset(scriptValue);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_MultObject, "'mult' must be an object.");
-			}
+			calc.operation = ScriptCalc::CalcOperation::MULT;
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*mult, true, validationErrors, location, "mult", ValidationErrorCode::Calc_MultObject, "'mult' must be an object."));
+			calc.value.reset(scriptValue);
 		}
 
 		if (count == 0) {
@@ -1718,12 +1692,10 @@ ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJ
 	}
 
 	json::const_iterator input = inputTriggerJson.find("input");
-	if ((input != inputTriggerJson.end()) && (input->is_object())) {
-		location.push_back("input");
-		inputTrigger.input = parseInput(*input, true, validationErrors, location);
-		location.pop_back();
+	if (input != inputTriggerJson.end()) {
+		inputTrigger.input = parseInput(*input, true, validationErrors, location, "input", ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an object.");
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an input object.");
 	}
 
 	return inputTrigger;
