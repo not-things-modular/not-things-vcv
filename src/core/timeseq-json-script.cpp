@@ -895,26 +895,14 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 
 		json::const_iterator startValue = actionJson.find("start-value");
 		if (startValue != actionJson.end()) {
-			if (startValue->is_object()) {
-				location.push_back("start-value");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*startValue, true, validationErrors, location));
-				action.startValue.reset(scriptValue);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_StartValueObject, "'start-value' must be an object.");
-			}
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*startValue, true, validationErrors, location, "start-value", ValidationErrorCode::Action_StartValueObject, "'start-value' must be an object."));
+			action.startValue.reset(scriptValue);
 		}
 
 		json::const_iterator endValue = actionJson.find("end-value");
 		if (endValue != actionJson.end()) {
-			if (endValue->is_object()) {
-				location.push_back("end-value");
-				ScriptValue *scriptValue = new ScriptValue(parseValue(*endValue, true, validationErrors, location));
-				action.endValue.reset(scriptValue);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_EndValueObject, "'end-value' must be an object.");
-			}
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*endValue, true, validationErrors, location, "end-value", ValidationErrorCode::Action_EndValueObject, "'end-value' must be an object."));
+			action.endValue.reset(scriptValue);
 		}
 
 		json::const_iterator easeFactor = actionJson.find("ease-factor");
@@ -1345,7 +1333,35 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, std::vector<V
 	return scriptAssert;
 }
 
+ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage) {
+	ScriptValue scriptValue;
+
+	if (valueJson.is_object()) {
+		location.push_back(subLocation);
+		scriptValue = parseValue(valueJson, allowRefs, true, validationErrors, location);
+		location.pop_back();
+	} else if (valueJson.is_number()) {
+		json fullValueJson = { { "voltage", valueJson } };
+		location.push_back(subLocation);
+		scriptValue = parseValue(fullValueJson, allowRefs, false, validationErrors, location);
+		location.pop_back();
+	} else if (valueJson.is_string()) {
+		json fullValueJson = { { "note", valueJson } };
+		location.push_back(subLocation);
+		scriptValue = parseValue(fullValueJson, allowRefs, false, validationErrors, location);
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, validationErrorCode, validationErrorMessage);
+	}
+
+	return scriptValue;
+}
+
 ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	return parseValue(valueJson, allowRefs, true, validationErrors, location);
+}
+
+ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, bool fromFullValue, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
 	static const char* cValueProperties[] = { "voltage", "note", "variable", "input", "output", "rand", "calc", "quantize" };
 	static const vector<string> vValueProperties(begin(cValueProperties), end(cValueProperties));
 	ScriptValue value;
@@ -1366,7 +1382,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 			if (voltage->is_number()) {
 				value.voltage.reset(new float(voltage->get<float>()));
 				if ((*value.voltage < -10) || (*value.voltage > 10)) {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageRange, "'voltage' must be a decimal number between -10 and 10.");
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageRange, fromFullValue ? "'voltage' must be a decimal number between -10 and 10." : "A voltage value must be a decimal number between -10 and 10.");
 				}
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
@@ -1379,20 +1395,20 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 			if (note->is_string()) {
 				value.note.reset(new std::string(*note));
 				if ((value.note->size() < 2) || (value.note->size() > 3)) {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "A note value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 				} else {
 					char n = toupper((*value.note)[0]);
 					if (n < 'A' || n > 'G') {
-						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must start with a valid note name (A-G).");
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "'note' must start with a valid note name (A-G)." : "A note value must start with a valid note name (A-G).");
 					}
 					char s = (*value.note)[1];
 					if (s < '0' || s > '9') {
-						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "'note' must have a valid scale (0-9) as second character.");
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "'note' must have a valid scale (0-9) as second character." : "A note value must have a valid scale (0-9) as second character.");
 					}
 					if (value.note->size() == 3) {
 						char a = (*value.note)[2];
 						if (a != '+' && a != '-') {
-							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, "The third character of 'note' must be a valid accidental (+ for sharp, - for flat).");
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromFullValue ? "The third character of 'note' must be a valid accidental (+ for sharp, - for flat)." : "The third character of a note value must be a valid accidental (+ for sharp, - for flat).");
 						}
 					}
 				}

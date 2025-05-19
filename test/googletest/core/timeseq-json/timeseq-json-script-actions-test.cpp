@@ -716,13 +716,13 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseAssertStopOnFailTrue) {
 	EXPECT_EQ(script->actions[0].assert->expect.ifOperator, ScriptIf::IfOperator::EQ);
 }
 
-TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectStartValue) {
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectStringOrNumberStartValue) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "actions", json::array({
-			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", "not-an-object" }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "output-variable" } }
+			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", json::array({}) }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "output-variable" } }
 		} ) }
 	};
 
@@ -746,13 +746,13 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnInvalidStartValue) {
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/start-value");
 }
 
-TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectEndValue) {
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectStringOrNumberEndValue) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "actions", json::array({
-			{ { "id", "action-1" }, { "timing", "glide" }, { "end-value", "not-an-object" }, { "start-value", { { "ref", "ref-start-value" } } }, { "variable", "output-variable" } }
+			{ { "id", "action-1" }, { "timing", "glide" }, { "end-value", json::array({}) }, { "start-value", { { "ref", "ref-start-value" } } }, { "variable", "output-variable" } }
 		} ) }
 	};
 
