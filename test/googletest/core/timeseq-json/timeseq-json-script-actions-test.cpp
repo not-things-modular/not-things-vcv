@@ -266,6 +266,55 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetValue) {
 	EXPECT_EQ(script->actions[0].setValue->output.ref, "output-ref");
 }
 
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetValueWithShorthandOutput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", 3 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_TRUE(script->actions[0].setValue);
+	EXPECT_EQ(script->actions[0].setValue->value.ref, "value-ref");
+	EXPECT_EQ(script->actions[0].setValue->output.index, 3);
+	EXPECT_FALSE(script->actions[0].setValue->output.channel);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetValueWithFloatShorthandOutput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", 3.3 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/actions/0/set-value");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetvalueWithShorthandOutputOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", 9 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/actions/0/set-value");
+}
+
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetVariableName) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -804,6 +853,54 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithInvalidOutput) {
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/actions/0/output");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithFloatShorthandOutput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "output", 2.4 } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithShorthandOutputOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "output", 9 } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseShorthandOutput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "output", 7 } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_TRUE(script->actions[0].output);
+	EXPECT_EQ(script->actions[0].output->index, 7);
+	EXPECT_FALSE(script->actions[0].output->channel);
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailNonStringVariable) {

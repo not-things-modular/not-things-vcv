@@ -183,8 +183,8 @@ void testIfPairWithNonObjectNumberOrFloatValue(std::string compareOperator) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 2u);
-	expectError(validationErrors, ValidationErrorCode::If_ValueObject, "/component-pool/actions/0/if/" + compareOperator + "/0");
-	expectError(validationErrors, ValidationErrorCode::If_ValueObject, "/component-pool/actions/0/if/" + compareOperator + "/1");
+	expectError(validationErrors, ValidationErrorCode::If_ValueObject, "/component-pool/actions/0/if/" + compareOperator);
+	expectError(validationErrors, ValidationErrorCode::If_ValueObject, "/component-pool/actions/0/if/" + compareOperator);
 }
 
 void testIfPairWithTwoValue(std::string compareOperator, ScriptIf::IfOperator ifOperator) {
@@ -540,7 +540,7 @@ TEST(TimeSeqJsonScriptIf, ParseWithPositiveToleranceShouldSucceed) {
 }
 
 TEST(TimeSeqJsonScriptIf, ParseShouldFailWithMultipleOperators) {
-	json dualIf = json::array({ 
+	json dualIf = json::array({
 		{ { "eq", doubleValueArray } },
 		{ { "ne", doubleValueArray2 } }
 	});

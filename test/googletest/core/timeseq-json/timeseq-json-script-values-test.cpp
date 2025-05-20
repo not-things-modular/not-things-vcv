@@ -480,6 +480,36 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithInvalidOutput) {
 	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/values/0/output");
 }
 
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithFloatShorthandOutput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "output", 2.1 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/values/0");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithShorthandOutputOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "output", 9 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/values/0");
+}
+
 TEST(TimeSeqJsonScriptValue, ParseValueShouldParseOutput) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -496,6 +526,25 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldParseOutput) {
 	ASSERT_TRUE(script->values[0].output);
 	EXPECT_EQ(script->values[0].output.get()->ref, "output-ref");
 }
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldParseShorthandOutput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "output", 4 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->values.size(), 1u);
+	ASSERT_TRUE(script->values[0].output);
+	EXPECT_EQ(script->values[0].output->index, 4);
+	EXPECT_FALSE(script->values[0].output->channel);
+}
+
 
 TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithNonObjectRand) {
 	vector<ValidationError> validationErrors;
