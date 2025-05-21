@@ -33,6 +33,32 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithoutInput) {
 
 }
 
+TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithFloatShorthandInput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["input-triggers"] = {
+		json::object({ { "id", "my-trigger-id" }, { "input", 3.5 } })
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Input_IndexNumber, "/input-triggers/0");
+}
+
+TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithShorthandInputOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["input-triggers"] = {
+		json::object({ { "id", "my-trigger-id" }, { "input", 9 } })
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Input_IndexRange, "/input-triggers/0");
+}
+
 TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldFailWithoutId) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -144,7 +170,27 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldParseMultipleInputTr
 	EXPECT_EQ(script->inputTriggers[1].input.ref, "input-ref-2");
 }
 
-TEST(TimeSeqJsonScriptInputTrigger, ParseCalcWithUnknownPropertyShouldFail) {
+TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggersShouldParseShorthandInput) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["input-triggers"] = {
+		json::object({
+			{ "id", "input-id-1" },
+			{ "input", 5 } 
+		})
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+
+	ASSERT_EQ(script->inputTriggers.size(), 1u);
+	EXPECT_EQ(script->inputTriggers[0].id, "input-id-1");
+	EXPECT_EQ(script->inputTriggers[0].input.index, 5);
+	EXPECT_FALSE(script->inputTriggers[0].input.channel);
+}
+
+TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerWithUnknownPropertyShouldFail) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
@@ -162,7 +208,7 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseCalcWithUnknownPropertyShouldFail) {
 	EXPECT_NE(validationErrors[0].message.find("'unknown-prop'"), std::string::npos) << validationErrors[0].message;
 }
 
-TEST(TimeSeqJsonScriptInputTrigger, ParseCalcWithUnknownPropertiesShouldFail) {
+TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerWithUnknownPropertiesShouldFail) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
@@ -182,7 +228,7 @@ TEST(TimeSeqJsonScriptInputTrigger, ParseCalcWithUnknownPropertiesShouldFail) {
 	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
 }
 
-TEST(TimeSeqJsonScriptInputTrigger, ParseCalcShouldAllowUnknownPropertyWithXPrefix) {
+TEST(TimeSeqJsonScriptInputTrigger, ParseInputTriggerShouldAllowUnknownPropertyWithXPrefix) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
