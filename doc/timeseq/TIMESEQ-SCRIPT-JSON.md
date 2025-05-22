@@ -836,8 +836,8 @@ Note: values always resolve into a voltage, which is then used by the object tha
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `voltage` | no | float | An exact constant voltage value between `-10` and `10`. |
-| `note`| no | string | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. |
+| `voltage` | no | float | An exact constant voltage value between `-10` and `10`. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for voltage values |
+| `note`| no | string | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for note values |
 | `variable`| no | string | The name of the variable to use. |
 | `input` | no | [input](#input) | Reads the current voltage from one of the TimeSeq inputs. |
 | `output` | no | [output](#output) | Reads the current voltage from one of the TimeSeq outputs. |
@@ -889,6 +889,49 @@ The voltage of channel 8 on output port 5, with a random value between 0.5 and 1
 }
 ```
 
+### Shorthand Value Notation
+
+To allow easer writing of fixed values, the TimeSeq JSON script allows `voltage` and `note` values to be written using a shorthand notation:
+
+* A voltage value like `{ "voltage": 6.9 }` can be shortened to its float value instead: `6.9`
+* A note value like `{ "note": "E4" }` can be shortened to its string note value instead: `"E4"`
+
+This way, following [set-value](#set-value) actions:
+
+```json
+{
+    "set-value": {
+        "value": { "voltage": 3.14 },
+        "output": { "index": 6 }
+    }
+},
+{
+    "set-value": {
+        "value": { "note": "F4" },
+        "output": { "index": 7 }
+    }
+}
+```
+
+Can be shortened using both shorthand value and [shorthand output](#shorthand-output-notation) notation as:
+
+```json
+{
+    "set-value": {
+        "value": 3.14,
+        "output": 6
+    }
+},
+{
+    "set-value": {
+        "value": "F4",
+        "output": 7
+    }
+}
+```
+
+This shorthand notation can be used in all places where `voltage` or `note` values are used, except when declaring a re-usable variable as a direct child of the [component-pool](#component-pool) `values` list (where the full value notation must be used since an `id` must also be specified).
+
 ## input
 
 An input identifies a channel on one of the input ports of TimeSeq, either to read a voltage from it in a [value](#value) or to monitor it for [input-trigger](#input-trigger)s.
@@ -901,7 +944,7 @@ Note that TimeSeq will not validate how many channels are present on the input p
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `index` | yes | unsigned number | The index of the port from which to retrieve a voltage. Must be between `1` and `8`. |
+| `index` | yes | unsigned number | The index of the port from which to retrieve a voltage. Must be between `1` and `8`. See [Shorthand Input Notation](#shorthand-input-notation) for a shortened way to write inputs with only an `index` property. |
 | `channel`| no | unsigned number | The channel on the input port from which to retrieve the voltage, as a number between `1` and `16`. Defaults to `1` |
 
 ### Examples
@@ -923,6 +966,34 @@ The fifth input port, using channel 15:
 }
 ```
 
+### Shorthand Input Notation
+
+To allow easer writing of inputs, the TimeSeq JSON script allows outputs for which no `channel` is specified (i.e. monophonic outputs or channel `1` on polyphonic outputs) to be written using a shorthand notation: a full `{ "index": 5 }` or `{ "index": 5, "channel": 1 }` can be shortened to `5` (i.e. just the index value).
+
+This way, following [set-value](#set-value) action:
+
+```json
+{
+    "set-value": {
+        "value": { "input": { "index": 3 } },
+        "output": { "index": 6 }
+    }
+}
+```
+
+Can be shortened using both shorthand input and [shorthand output](#shorthand-output-notation) notation as:
+
+```json
+{
+    "set-value": {
+        "value": { "input": 3 },
+        "output": 6
+    }
+}
+```
+
+This shorthand notation can be used in all places where inputs are used, except when declaring a re-usable input as a direct child of the [component-pool](#component-pool) `inputs` list (where the full input notation must be used since an `id` must also be specified).
+
 ## output
 
 An output identifies a channel on one of the output ports of TimeSeq, either to assign a voltage to it through an [action](#action), or to read a voltage from it using a [value](#value).
@@ -937,7 +1008,7 @@ When a script is loaded or reset, all output ports of TimeSeq will be set to mon
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `index` | yes | unsigned number | The index of the port from which to retrieve or on which to set a voltage. Must be between `1` and `8`. |
+| `index` | yes | unsigned number | The index of the port from which to retrieve or on which to set a voltage. Must be between `1` and `8`. See [Shorthand Output Notation](#shorthand-output-notation) for a shortened way to write outputs with only an `index` property. |
 | `channel`| no | unsigned number | The channel on the output port from which to retrieve or on which to set the voltage, as a number between `1` and `16`. Defaults to `1` |
 
 ### Examples
@@ -958,6 +1029,34 @@ The fifth output port, using channel 15:
     "channel": 15
 }
 ```
+
+### Shorthand Output Notation
+
+To allow easer writing of outputs, the TimeSeq JSON script allows outputs for which no `channel` is specified (i.e. monophonic outputs or channel `1` on polyphonic outputs) to be written using a shorthand notation: a full `{ "index": 5 }` or `{ "index": 5, "channel": 1 }` can be shortened to `5` (i.e. just the index value).
+
+This way, following [set-value](#set-value) action:
+
+```json
+{
+    "set-value": {
+        "value": { "voltage": 3.14 },
+        "output": { "index": 6 }
+    }
+}
+```
+
+Can be shortened using both shorthand output and [shorthand value](#shorthand-value-notation) notation as:
+
+```json
+{
+    "set-value": {
+        "value": 3.14,
+        "output": 6
+    }
+}
+```
+
+This shorthand notation can be used in all places where outputs are used, except when declaring a re-usable output as a direct child of the [component-pool](#component-pool) `outputs` list (where the full output notation must be used since an `id` must also be specified).
 
 ## rand
 
