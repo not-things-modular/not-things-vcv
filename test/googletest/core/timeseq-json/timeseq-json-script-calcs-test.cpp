@@ -292,3 +292,101 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldAllowUnknownPropertyWithXPrefix) {
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	expectNoErrors(validationErrors);
 }
+
+
+
+
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnShorthandValueOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "add", 11.f } },
+			{ { "id", "calc-2" }, { "sub", 10.1f } },
+			{ { "id", "calc-3" }, { "mult", -10.1f } },
+			{ { "id", "calc-4" }, { "div", -11.f } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 4u);
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/calcs/0/add");
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/calcs/1/sub");
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/calcs/2/mult");
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/calcs/3/div");
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseFloatShorthandValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "add", 9.9f } },
+			{ { "id", "calc-2" }, { "sub", 3.4f } },
+			{ { "id", "calc-3" }, { "mult", -3.4f } },
+			{ { "id", "calc-4" }, { "div", -8.4f } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	EXPECT_EQ(script->calcs.size(), 4u);
+	EXPECT_TRUE(script->calcs[0].value->voltage);
+	EXPECT_EQ(*script->calcs[0].value->voltage, 9.9f);
+	EXPECT_TRUE(script->calcs[1].value->voltage);
+	EXPECT_EQ(*script->calcs[1].value->voltage, 3.4f);
+	EXPECT_TRUE(script->calcs[2].value->voltage);
+	EXPECT_EQ(*script->calcs[2].value->voltage, -3.4f);
+	EXPECT_TRUE(script->calcs[3].value->voltage);
+	EXPECT_EQ(*script->calcs[3].value->voltage, -8.4f);
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonNoteStringShorthandValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "add", "AA" } },
+			{ { "id", "calc-2" }, { "sub", "BB" } },
+			{ { "id", "calc-3" }, { "mult", "CC" } },
+			{ { "id", "calc-4" }, { "div", "DD" } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 4u);
+	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/component-pool/calcs/0/add");
+	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/component-pool/calcs/1/sub");
+	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/component-pool/calcs/2/mult");
+	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/component-pool/calcs/3/div");
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseNoteShorthandValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "add", "C4-" } },
+			{ { "id", "calc-2" }, { "sub", "D5+" } },
+			{ { "id", "calc-3" }, { "mult", "E3-" } },
+			{ { "id", "calc-4" }, { "div", "F6+" } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	EXPECT_EQ(script->calcs.size(), 4u);
+	EXPECT_TRUE(script->calcs[0].value->note);
+	EXPECT_EQ(*script->calcs[0].value->note, "C4-");
+	EXPECT_TRUE(script->calcs[1].value->note);
+	EXPECT_EQ(*script->calcs[1].value->note, "D5+");
+	EXPECT_TRUE(script->calcs[2].value->note);
+	EXPECT_EQ(*script->calcs[2].value->note, "E3-");
+	EXPECT_TRUE(script->calcs[3].value->note);
+	EXPECT_EQ(*script->calcs[3].value->note, "F6+");
+}

@@ -80,6 +80,84 @@ TEST(TimeSeqJsonScriptIf, ParseIfsShouldFailOnNonObjectIf) {
 	expectError(validationErrors, ValidationErrorCode::Script_IfObject, "/component-pool/ifs/1");
 }
 
+TEST(TimeSeqJsonScriptIf, ParseIfShouldFailOnShorthandVoltageOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", json::array({
+			{ { "id", "if-1" }, { "eq", json::array({
+				{ { "voltage", 1 } },
+				10.01
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/ifs/0/eq/1");
+}
+
+TEST(TimeSeqJsonScriptIf, ParseActionsShouldParseFloatShorthandEndValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", json::array({
+			{ { "id", "if-1" }, { "eq", json::array({
+				{ { "voltage", 1 } },
+				5.7
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->ifs.size(), 1u);
+	ASSERT_TRUE(script->ifs[0].values);
+	ASSERT_TRUE(script->ifs[0].values->second.voltage);
+	EXPECT_EQ(*script->ifs[0].values->second.voltage, 5.7f);
+}
+
+TEST(TimeSeqJsonScriptIf, ParseActionsShouldFailOnNonNoteStringShorthandEndValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", json::array({
+			{ { "id", "if-1" }, { "eq", json::array({
+				{ { "voltage", 1 } },
+				"H4+"
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/component-pool/ifs/0/eq/1");
+}
+
+TEST(TimeSeqJsonScriptIf, ParseActionsShouldParseNoteShorthandEndValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "ifs", json::array({
+			{ { "id", "if-1" }, { "eq", json::array({
+				{ { "voltage", 1 } },
+				"C2"
+			}) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->ifs.size(), 1u);
+	ASSERT_TRUE(script->ifs[0].values);
+	ASSERT_TRUE(script->ifs[0].values->second.note);
+	EXPECT_EQ(*script->ifs[0].values->second.note, "C2");
+}
+
 TEST(TimeSeqJsonScriptIf, ParseActionWithoutIfShouldWork) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
