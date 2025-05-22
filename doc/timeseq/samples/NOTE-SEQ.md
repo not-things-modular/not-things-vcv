@@ -1,4 +1,4 @@
-# TIMESEQ NOTE SEQUENCE SAMPLE SCRIPT
+# TimeSeq NOTE SEQUENCE sample script
 
 *A Sample script for the not-things [TimeSeq](../../TIMESEQ.md) module.*
 
@@ -33,7 +33,28 @@ There will be four [segment](../TIMESEQ-SCRIPT-JSON.md#segment)s in the *lane*, 
 }
 ```
 
-The other three *segment*s will look identical, except that the `note` will become `F3`, `G3` and `D3`.
+There is an opportunity for shortening this a bit however:
+
+* For *input*s, *output*s and fixed *value*s the less verbose shorthand notations can be used. We'll use them throughout the rest of this sample (see the [input](../TIMESEQ-SCRIPT-JSON.md#shorthand-input-notation), [output](../TIMESEQ-SCRIPT-JSON.md#shorthand-output-notation) and [value](../TIMESEQ-SCRIPT-JSON.md#shorthand-value-notation) shorthand sections of the TimeSeq Script JSON sepcification for more details)
+* If an *action* doesn't have a `timing` property, it will default to `start`. So it is not needed to specify the `timing` property for any *action*s that should trigger at the start of a segment. In the script, we'll only specify the `timing` property if it is different from the default `start` timing.
+
+The new *segment* notation will then become:
+
+```json
+{
+    "duration": { "millis": 2000 },
+    "actions": [
+        {
+            "set-value": {
+                "output": 1,
+                "value": "C3"
+            }
+        }
+    ]
+}
+```
+
+The other three *segment*s will look identical, except that the `value` notes will be `F3`, `G3` and `D3`.
 
 ### Full Script and VCV Rack Patch
 
@@ -59,10 +80,9 @@ The note sequence *segment*s can now express its duration in `beats` and `bars`,
     "duration": { "bars": 2, "beats": 0 },
     "actions": [
         {
-            "timing": "start",
             "set-value": {
-                "output": { "index": 1 },
-                "value": { "note": "C3" }
+                "output": 1,
+                "value": "C3"
             }
         }
     ]
@@ -82,8 +102,7 @@ For the arpeggiated notes, we'll use [segment-block](../TIMESEQ-SCRIPT-JSON.md#s
                         "duration": { "beats": 0.5 },
                         "actions": [
                             {
-                                "timing": "start",
-                                "set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+                                "set-value": { "output": 2, "value": "C4" }
                             }
                         ]
                     },
@@ -91,8 +110,7 @@ For the arpeggiated notes, we'll use [segment-block](../TIMESEQ-SCRIPT-JSON.md#s
                         "duration": { "beats": 0.5 },
                         "actions": [
                             {
-                                "timing": "start",
-                                "set-value": { "output": { "index": 2 }, "value": { "note": "E4" } }
+                                "set-value": { "output": 2, "value": "E4" }
                             }
                         ]
                     },
@@ -100,8 +118,7 @@ For the arpeggiated notes, we'll use [segment-block](../TIMESEQ-SCRIPT-JSON.md#s
                         "duration": { "beats": 0.5 },
                         "actions": [
                             {
-                                "timing": "start",
-                                "set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+                                "set-value": { "output": 2, "value": "G4" }
                             }
                         ]
                     },
@@ -109,8 +126,7 @@ For the arpeggiated notes, we'll use [segment-block](../TIMESEQ-SCRIPT-JSON.md#s
                         "duration": { "beats": 0.5 },
                         "actions": [
                             {
-                                "timing": "start",
-                                "set-value": { "output": { "index": 2 }, "value": { "note": "C5" } }
+                                "set-value": { "output": 2, "value": "C5" }
                             }
                         ]
                     }
@@ -150,7 +166,7 @@ The next step in this patch is to separate the arpeggiated chord notes using an 
             {
                 "id": "arp-gate-action",
                 "timing": "gate",
-                "output": { "index": 3 }
+                "output": 3
             }
         ]
     }
@@ -166,8 +182,7 @@ This gate can now be used by reference on each of the arpeggiated chord notes:
     "duration": { "beats": 0.5 },
     "actions": [
         {
-            "timing": "start",
-            "set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+            "set-value": { "output": 2, "value": "C4" }
         },
         {
             "ref": "arp-gate-action"
@@ -189,8 +204,7 @@ When there are multiple looping *lanes* in a *timeline* that are expected to sta
     "duration": { "beats": 0.666 },
     "actions": [
         {
-            "timing": "start",
-            "set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+            "set-value": { "output": 2, "value": "D4" }
         },
         {
             "ref": "arp-gate-action"
@@ -210,8 +224,7 @@ But while three of these triplets are expected to have the same duration as four
             "duration": { "beats": 0.666 },
             "actions": [
                 {
-                    "timing": "start",
-                    "set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+                    "set-value": { "output": 2, "value": "D4" }
                 },
                 {
                     "ref": "arp-gate-action"
@@ -222,8 +235,7 @@ But while three of these triplets are expected to have the same duration as four
             "duration": { "beats": 0.666 },
             "actions": [
                 {
-                    "timing": "start",
-                    "set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+                    "set-value": { "output": 2, "value": "G4" }
                 },
                 {
                     "ref": "arp-gate-action"
@@ -234,8 +246,7 @@ But while three of these triplets are expected to have the same duration as four
             "duration": { "beats": 0.668 },
             "actions": [
                 {
-                    "timing": "start",
-                    "set-value": { "output": { "index": 2 }, "value": { "note": "B4" } }
+                    "set-value": { "output": 2, "value": "B4" }
                 },
                 {
                     "ref": "arp-gate-action"
@@ -269,24 +280,10 @@ If we write this using variables in a segment-block, it would look like this:
             "duration": { "beats": 0.5 },
             "actions": [
                 {
-                    "timing": "start",
-                    "set-value": { "output": { "index": 1 }, "value": { "variable": "root-note" } }
+                    "set-value": { "output": 1, "value": { "variable": "root-note" } }
                 },
                 {
-                    "timing": "start",
-                    "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-1" } }
-                },
-                {
-                    "ref": "arp-gate-action"
-                }
-            ]
-        },
-        {
-            "duration": { "beats": 0.5 },
-            "actions": [
-                {
-                    "timing": "start",
-                    "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-2" } }
+                    "set-value": { "output": 2, "value": { "variable": "chord-note-1" } }
                 },
                 {
                     "ref": "arp-gate-action"
@@ -297,8 +294,7 @@ If we write this using variables in a segment-block, it would look like this:
             "duration": { "beats": 0.5 },
             "actions": [
                 {
-                    "timing": "start",
-                    "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-3" } }
+                    "set-value": { "output": 2, "value": { "variable": "chord-note-2" } }
                 },
                 {
                     "ref": "arp-gate-action"
@@ -309,13 +305,23 @@ If we write this using variables in a segment-block, it would look like this:
             "duration": { "beats": 0.5 },
             "actions": [
                 {
-                    "timing": "start",
+                    "set-value": { "output": 2, "value": { "variable": "chord-note-3" } }
+                },
+                {
+                    "ref": "arp-gate-action"
+                }
+            ]
+        },
+        {
+            "duration": { "beats": 0.5 },
+            "actions": [
+                {
                     "set-value": {
-                        "output": { "index": 2 },
+                        "output": 2,
                         "value": {
                             "variable": "chord-note-1",
                             "calc": [
-                                { "add": { "voltage": 1 } }
+                                { "add": 1 }
                             ]
                         }
                     }
@@ -345,25 +351,25 @@ The lane that contained segments that referenced the `c-arp`, `f-arp`, ... *segm
         {
             "set-variable": {
                 "name": "root-note",
-                "value": { "note": "C3" }
+                "value": "C3"
             }
         },
         {
             "set-variable": {
                 "name": "chord-note-1",
-                "value": { "note": "C4" }
+                "value": "C4"
             }
         },
         {
             "set-variable": {
                 "name": "chord-note-2",
-                "value": { "note": "E4" }
+                "value": "E4"
             }
         },
         {
             "set-variable": {
                 "name": "chord-note-3",
-                "value": { "note": "G4" }
+                "value": "G4"
             }
         }
     ],
@@ -378,10 +384,10 @@ By using less newlines in the JSON, this can also be written a bit more compact,
 ```json
 {
     "actions": [
-        { "set-variable": { "name": "root-note", "value": { "note": "F3" } } },
-        { "set-variable": { "name": "chord-note-1", "value": { "note": "C4" } } },
-        { "set-variable": { "name": "chord-note-2", "value": { "note": "F4" } } },
-        { "set-variable": { "name": "chord-note-3", "value": { "note": "A4" } } }
+        { "set-variable": { "name": "root-note", "value": "F3" } },
+        { "set-variable": { "name": "chord-note-1", "value": "C4" } },
+        { "set-variable": { "name": "chord-note-2", "value": "F4" } },
+        { "set-variable": { "name": "chord-note-3", "value": "A4" } }
     ],
     "segment-block": "arp"
 }
@@ -400,13 +406,12 @@ Adding chance to the execution of an *action* can be done using two steps: first
 ```json
 {
     "id": "determine-chance",
-    "timing": "start",
     "set-variable": {
         "name": "play-note",
         "value": {
             "rand": {
-                "lower": { "voltage": 0 },
-                "upper": { "voltage": 10 }
+                "lower": 0,
+                "upper": 10
             }
         }
     }
@@ -423,7 +428,7 @@ This action will generate a random voltage between `0` and `10` and assign it to
                 "id": "should-play-note",
                 "gt": [
                     { "variable": "play-note" },
-                    { "voltage": 2.5 }
+                    2.5
                 ]
             }
         ]
@@ -439,9 +444,8 @@ This `should-play-note` conditional will evaluate to `true` if the `play-note` v
     "actions": [
         { "ref": "determine-chance" },
         {
-            "timing": "start",
             "if": { "ref": "should-play-note" },
-            "set-value": { "output": { "index": 2 }, "value": { "variable": "chord-note-2" } }
+            "set-value": { "output": 2, "value": { "variable": "chord-note-2" } }
         },
         {
             "ref": "arp-gate-action"
@@ -457,7 +461,7 @@ The actions are executed in order, so first the referenced `determine-chance` ac
     "id": "arp-gate-action",
     "timing": "gate",
     "if": { "ref": "should-play-note" },
-    "output": { "index": 3 }
+    "output": 3
 },
 ```
 
