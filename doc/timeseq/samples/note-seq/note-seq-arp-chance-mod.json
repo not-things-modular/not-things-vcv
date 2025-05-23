@@ -13,7 +13,6 @@
 					"loop": true,
 					"segments": [
 						{
-							"x-description": "Set the variables for the root note and chord notes for the C chord using segment-block start actions, and let the 'arp' segment block use those to play the actual notes.",
 							"actions": [
 								{
 									"set-variable": {
@@ -43,7 +42,6 @@
 							"segment-block": "arp"
 						},
 						{
-							"x-description": "Do the same for the F chord, with the JSON written a bit more compact.",
 							"actions": [
 								{ "set-variable": { "name": "root-note", "value": "F3" } },
 								{ "set-variable": { "name": "chord-note-1", "value": "C4" } },
@@ -53,7 +51,6 @@
 							"segment-block": "arp"
 						},
 						{
-							"x-description": "The same as before, but for the D chord.",
 							"actions": [
 								{ "set-variable": { "name": "root-note", "value": "D3" } },
 								{ "set-variable": { "name": "chord-note-1", "value": "D4" } },
@@ -63,7 +60,6 @@
 							"segment-block": "arp"
 						},
 						{
-							"x-description": "The final G chord.",
 							"actions": [
 								{ "set-variable": { "name": "root-note", "value": "G3" } },
 								{ "set-variable": { "name": "chord-note-1", "value": "D4" } },
@@ -81,14 +77,41 @@
         "actions": [
             {
                 "id": "arp-gate-action",
-				"x-description": "",
                 "timing": "gate",
+				"if": { "ref": "should-play-note" },
                 "output": 3
-            }
+            },
+			{
+				"id": "determine-chance",
+				"timing": "start",
+				"set-variable": {
+					"name": "play-note",
+					"value": {
+						"rand": {
+							"lower": 0,
+							"upper": 10
+						}
+					}
+				}
+			}
         ],
+		"ifs": [
+			{
+				"id": "should-play-note",
+				"gt": [
+					{ "variable": "play-note" },
+					{
+						"input": 1,
+						"calc": [
+							{ "div": 2 },
+							{ "add": 2.5 }
+						]
+					}
+				]
+			}
+		],
 		"segment-blocks" : [
 			{
-				"x-description": "Instead of a segment-block for each chord, a single segment-block can handle all chords through the usage of variables.",
 				"id": "arp",
 				"repeat": 4,
 				"segments": [
@@ -96,10 +119,13 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"x-description": "The first action of the first segment will not only set the chord note, but also set the root/bass note of the chord.",
+								"timing": "start",
 								"set-value": { "output": 1, "value": { "variable": "root-note" } }
 							},
+							{ "ref": "determine-chance" },
 							{
+								"timing": "start",
+								"if": { "ref": "should-play-note" },
 								"set-value": { "output": 2, "value": { "variable": "chord-note-1" } }
 							},
 					        {
@@ -110,7 +136,10 @@
 					{
 						"duration": { "beats": 0.5 },
 						"actions": [
+							{ "ref": "determine-chance" },
 							{
+								"timing": "start",
+								"if": { "ref": "should-play-note" },
 								"set-value": { "output": 2, "value": { "variable": "chord-note-2" } }
 							},
 					        {
@@ -121,7 +150,10 @@
 					{
 						"duration": { "beats": 0.5 },
 						"actions": [
+							{ "ref": "determine-chance" },
 							{
+								"timing": "start",
+								"if": { "ref": "should-play-note" },
 								"set-value": { "output": 2, "value": { "variable": "chord-note-3" } }
 							},
 					        {
@@ -132,7 +164,10 @@
 					{
 						"duration": { "beats": 0.5 },
 						"actions": [
+							{ "ref": "determine-chance" },
 							{
+								"timing": "start",
+								"if": { "ref": "should-play-note" },
 								"set-value": {
 									"output": 2,
 									"value": {

@@ -12,10 +12,9 @@
 							"duration": { "millis": 2000 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "C3" }
+										"output": 1,
+										"value": "C3"
 									}
 								}
 							]
@@ -24,10 +23,9 @@
 							"duration": { "millis": 2000 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "F3" }
+										"output": 1,
+										"value": "F3"
 									}
 								}
 							]
@@ -36,10 +34,9 @@
 							"duration": { "millis": 2000 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "D3" }
+										"output": 1,
+										"value": "D3"
 									}
 								}
 							]
@@ -48,10 +45,9 @@
 							"duration": { "millis": 2000 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "G3" }
+										"output": 1,
+										"value": "G3"
 									}
 								}
 							]

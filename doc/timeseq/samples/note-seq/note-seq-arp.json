@@ -17,10 +17,9 @@
 							"duration": { "bars": 2, "beats": 0 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "C3" }
+										"output": 1,
+										"value": "C3"
 									}
 								}
 							]
@@ -29,10 +28,9 @@
 							"duration": { "bars": 2, "beats": 0 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "F3" }
+										"output": 1,
+										"value": "F3"
 									}
 								}
 							]
@@ -41,10 +39,9 @@
 							"duration": { "bars": 2, "beats": 0 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "D3" }
+										"output": 1,
+										"value": "D3"
 									}
 								}
 							]
@@ -53,10 +50,9 @@
 							"duration": { "bars": 2, "beats": 0 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "note": "G3" }
+										"output": 1,
+										"value": "G3"
 									}
 								}
 							]
@@ -88,8 +84,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+								"set-value": { "output": 2, "value": "C4" }
 							}
 						]
 					},
@@ -97,8 +92,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "E4" } }
+								"set-value": { "output": 2, "value": "E4" }
 							}
 						]
 					},
@@ -106,8 +100,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+								"set-value": { "output": 2, "value": "G4" }
 							}
 						]
 					},
@@ -115,8 +108,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "C5" } }
+								"set-value": { "output": 2, "value": "C5" }
 							}
 						]
 					}
@@ -131,8 +123,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "C4" } }
+								"set-value": { "output": 2, "value": "C4" }
 							}
 						]
 					},
@@ -140,8 +131,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "F4" } }
+								"set-value": { "output": 2, "value": "F4" }
 							}
 						]
 					},
@@ -149,8 +139,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "A4" } }
+								"set-value": { "output": 2, "value": "A4" }
 							}
 						]
 					},
@@ -158,8 +147,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "C5" } }
+								"set-value": { "output": 2, "value": "C5" }
 							}
 						]
 					}
@@ -174,8 +162,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+								"set-value": { "output": 2, "value": "D4" }
 							}
 						]
 					},
@@ -183,8 +170,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "F4" } }
+								"set-value": { "output": 2, "value": "F4" }
 							}
 						]
 					},
@@ -192,8 +178,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "A4" } }
+								"set-value": { "output": 2, "value": "A4" }
 							}
 						]
 					},
@@ -201,8 +186,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "D5" } }
+								"set-value": { "output": 2, "value": "D5" }
 							}
 						]
 					}
@@ -217,8 +201,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "D4" } }
+								"set-value": { "output": 2, "value": "D4" }
 							}
 						]
 					},
@@ -226,8 +209,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "G4" } }
+								"set-value": { "output": 2, "value": "G4" }
 							}
 						]
 					},
@@ -235,8 +217,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "B4" } }
+								"set-value": { "output": 2, "value": "B4" }
 							}
 						]
 					},
@@ -244,8 +225,7 @@
 						"duration": { "beats": 0.5 },
 						"actions": [
 							{
-								"timing": "start",
-								"set-value": { "output": { "index": 2 }, "value": { "note": "D5" } }
+								"set-value": { "output": 2, "value": "D5" }
 							}
 						]
 					}

@@ -12,6 +12,7 @@ One of the basic functionalities of TimeSeq is to create repeating chord and not
 * [Using Triplets](#using-triplets)
 * [Restructuring the Script](#restructuring-the-script)
 * [Adding in Some Chance](#adding-in-some-chance)
+* [Modulating the Chance](#modulating-the-chance)
 
 ## A Basic Note Sequence
 
@@ -73,7 +74,7 @@ In the second iteration of this script, we'll first move away from *millis* timi
 }
 ```
 
-The note sequence *segment*s can now express its duration in `beats` and `bars`, so we'll change them to two bars, which results in the same 2 second duration as before:
+The note sequence *segment*s can now express its duration in `beats` and `bars`. We'll change them to two bars, which results in the a total of 4 seconds for each (120bpm = 0.5 secs per beat; 0.5s \* 4 beats per bar \* 2 bars = 4s):
 
 ```json
 {
@@ -399,7 +400,7 @@ The full updated script can be found [here](note-seq/note-seq-arp-rework.json), 
 
 ## Adding in Some Chance
 
-The final change we'll make to this script is to add some chance to the arpeggiated chord notes: on each *action* that causes a note to play, add a 1-in-4 chance that the note will not be played. This is why the script got reworked in the previous step: there are less places where this chance will have to be added.
+To bring some variation in the script output, we'll add some chance to the arpeggiated chord notes: on each *action* that causes a note to play, add a 1-in-4 chance that the note will not be played. This is why the script got reworked in the previous step: there are less places where this chance will have to be added.
 
 Adding chance to the execution of an *action* can be done using two steps: first generate a random value, and then make the action conditional based on that random value. To generate the random value that determines if an arpeggiated note *action* will be performed, following *action* is added to the `actions` list of the *component-pool*:
 
@@ -454,7 +455,7 @@ This `should-play-note` conditional will evaluate to `true` if the `play-note` v
 }
 ```
 
-The actions are executed in order, so first the referenced `determine-chance` action will determine the chance that the note will play, then the second action will only play the note if the referenced `should-play-note` condition evaluates to `true`, and then the `arp-gate-action` will generate the gate that drives the note volume envelope. We'll also have to make this gate *action* conditional based on the same chance, so that action (which already existed in the *component-pool* now becomes:
+The actions are executed in order, so first the referenced `determine-chance` action will determine the chance that the note will play, then the second action will only play the note if the referenced `should-play-note` condition evaluates to `true`, and then the `arp-gate-action` will generate the gate that drives the note volume envelope. We'll also have to make this gate *action* conditional based on the same chance, so that action (which already existed in the *component-pool*) now becomes:
 
 ```json
 {
@@ -470,3 +471,35 @@ Note that the first *action* of the `arp` *segment-block* is the one that sets t
 ### Full Script and VCV Rack Patch
 
 The full updated script for this step can be found [here](note-seq/note-seq-arp-chance.json), and the [note-seq-arp-chance.vcv](note-seq/note-seq-arp-chance.vcv) is the same patch as before, but now with the new script loaded.
+
+## Modulating the Chance
+
+As a final step for this script, we'll allow the chance that was introduced in the previous step to be controlled by an external voltage. Instead of always having a 75% chance that a note will play, the external voltage should move that chance between 25% and 75%. We'll set it up so that a 0V to 10V signal moves between these two chance values. All that is needed for this is to update the `should-play-note` condition to:
+
+```json
+"ifs": [
+    {
+        "id": "should-play-note",
+        "gt": [
+            { "variable": "play-note" },
+            {
+                "input": 1,
+                "calc": [
+                    { "div": 2 },
+                    { "add": 2.5 }
+                ]
+            }
+        ]
+    }
+],
+```
+
+Instead of checking that the previously generated `play-note` random value is above 2.5V (=75% chance), this updated condition will (using an [input](../TIMESEQ-SCRIPT-JSON.md#input) and [calc](../TIMESEQ-SCRIPT-JSON.md#calc)ulations):
+
+* Capture the voltage on input port 1 (-> a value between 0V and 10V)
+* Divide this by `2` (-> a value between 0V and 5V)
+* Add `2.5` to this (-> a value between 2.5V and 7.5V)
+
+When checking that value with the randomly generated `play-note` variable (which will be between 0V and 10V), we get a 25% to 75% chance that a note will trigger, depending on the input voltage.
+
+The resulting script for this step can be found [here](note-seq/note-seq-arp-chance-mod.json), with the [note-seq-arp-chance-mod.vcv](note-seq/note-seq-arp-chance.vcv) patch using an LFO to generate the input voltage. A scope will also show the LFO output and the resulting gates coming from TimeSeq: as the LFO value is low, there is a higher chance of a note playing and when it is high, there is a lower chance.
