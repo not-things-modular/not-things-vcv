@@ -1,6 +1,6 @@
 {
 	"type": "not-things_timeseq_script",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"timelines": [
 		{
 			"lanes": [
@@ -13,48 +13,44 @@
 							"duration": { "millis": 500 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-variable": {
 										"name": "bernoulli-chance",
 										"value": {
 											"rand": {
-												"lower": { "voltage": 0 },
-												"upper": { "voltage": 10 }
+												"lower": -5,
+												"upper": 5
 											}
 										}
 									}
 								},
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 3 },
+										"output": 3,
 										"value": { "variable": "bernoulli-chance" }
 									}
 								},
 								{
-									"timing": "start",
 									"if": {
 										"gt": [
 											{ "variable": "bernoulli-chance" },
-											{ "voltage": 5 }
+											0
 										]
 									},
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "voltage": 10 }
+										"output": 1,
+										"value": 10
 									}
 								},
 								{
-									"timing": "start",
 									"if": {
 										"lte": [
 											{ "variable": "bernoulli-chance" },
-											{ "voltage": 5 }
+											0
 										]
 									},
 									"set-value": {
-										"output": { "index": 2 },
-										"value": { "voltage": 10 }
+										"output": 2,
+										"value": 10
 									}
 								}
 							]
@@ -63,17 +59,15 @@
 							"duration": { "samples": 1 },
 							"actions": [
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 1 },
-										"value": { "voltage": 0 }
+										"output": 1,
+										"value": 0
 									}
 								},
 								{
-									"timing": "start",
 									"set-value": {
-										"output": { "index": 2 },
-										"value": { "voltage": 0 }
+										"output": 2,
+										"value": 0
 									}
 								}
 							]
@@ -86,7 +80,7 @@
 	"input-triggers": [
 		{
 			"id": "determine-output",
-			"input": { "index": 1 }
+			"input": 1
 		}
 	]
 }
