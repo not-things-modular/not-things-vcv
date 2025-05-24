@@ -17,7 +17,7 @@ This page will give an example of simple script setup using a couple of *bpm*s a
 
 ## Set Up Polyphonic Output
 
-Since we want to send the clock outputs as polyphonic channels on the first output port, we'll have to set up this polyphony first. We'll do this using using the [global-actions](../TIMESEQ-SCRIPT-JSON.md#global-actions) of the TimeSeq script. These actions are executed when a script is loaded or reset, so setting up the polyphony here will make it available throughout the rest of the script processing:
+Since we want to send the clock outputs as polyphonic channels on the first output port, we'll have to set up this polyphony first. We'll do this using using the `global-actions` property of the TimeSeq [script](../TIMESEQ-SCRIPT-JSON.md#script). These actions are executed when a script is loaded or reset, so setting up the polyphony here will make it available throughout the rest of the script processing:
 
 ```json
 "global-actions": [
