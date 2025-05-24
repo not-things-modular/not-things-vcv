@@ -35,6 +35,7 @@ struct TimeSeqDisplay : widget::Widget {
 	void reset();
 
 	void setError(bool error);
+	void setAssert(bool assert);
 	void setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore);
 
 	private:
@@ -43,6 +44,7 @@ struct TimeSeqDisplay : widget::Widget {
 		std::vector<TimeSeqVoltagePoints> m_voltagePoints;
 		std::vector<TimeSeqVoltagePoints> m_dummyVoltagePoints;
 		bool m_error = false;
+		bool m_assert = false;
 
 		float m_arcDelta = 0.f;
 };

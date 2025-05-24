@@ -52,7 +52,7 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
-	if (status == timeseq::TimeSeqCore::Status::RUNNING) {
+	if ((status == timeseq::TimeSeqCore::Status::RUNNING) && (!m_assert)) {
 		float index;
 		float fraction = std::modf(animationPos, &index); // How far along we are in the animation of the currently active circle
 		float *offsets = m_animCoords.m_offsetCircles[(int) index];
@@ -90,7 +90,7 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 			nvgTextLetterSpacing(args.vg, 0.0);
 			nvgFontSize(args.vg, 11.5f);
 			nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-			nvgText(args.vg, box.getWidth() / 2, 5.5f, status == timeseq::TimeSeqCore::Status::EMPTY ? (m_error ? "ERROR" : "EMPTY") : "PAUSED", NULL);
+			nvgText(args.vg, box.getWidth() / 2, 5.5f, status == timeseq::TimeSeqCore::Status::EMPTY ? (m_error ? "ERROR" : "EMPTY") : (m_assert ? "ASSERT" : "PAUSED"), NULL);
 			nvgFill(args.vg);
 		}
 	}
@@ -204,6 +204,10 @@ void TimeSeqDisplay::reset() {
 
 void TimeSeqDisplay::setError(bool error) {
 	m_error = error;
+}
+
+void TimeSeqDisplay::setAssert(bool assert) {
+	m_assert = assert;
 }
 
 void TimeSeqDisplay::setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore) {

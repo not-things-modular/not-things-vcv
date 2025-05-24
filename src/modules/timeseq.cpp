@@ -36,7 +36,6 @@ TimeSeqModule::TimeSeqModule() {
 	pq->smoothEnabled = false;
 
 	m_portChannelChangeClockDivider.setDivision(48000 / 15);
-	m_failedAssertBlinkClockDivider.setDivision(48000);
 
 	resetUi();
 }
@@ -125,7 +124,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			m_startDelay--;
 		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
 			// Check the rate to see how many process calls should actually be done on the core.
-			int rate = params[TimeSeqModule::ParamId::PARAM_RATE].getValue();
+			int rate = getRate();
 			if (rate < -1) {
 				// We're running at slower-then-real-time, so check the rateDivision if we should advance by one cycle on the core
 				m_rateDivision++;
@@ -159,11 +158,6 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 				m_timeSeqDisplay->ageVoltages();
 			}
 		}
-	}
-
-	// If there are failed asserts, blink the reset light to indicate this.
-	if ((m_failedAsserts.size() > 0) && (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) && (m_failedAssertBlinkClockDivider.process())) {
-		lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
 	}
 
 	// Update the Run and Reset outputs
@@ -209,7 +203,6 @@ void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateCh
 		resetUi();
 
 		m_portChannelChangeClockDivider.setDivision(sampleRateChangeEvent.sampleRate / 30);
-		m_failedAssertBlinkClockDivider.setDivision(sampleRateChangeEvent.sampleRate);
 	}
 }
 
@@ -261,6 +254,11 @@ void TimeSeqModule::triggerTriggered() {
 }
 
 void TimeSeqModule::assertFailed(std::string name, std::string message, bool stop) {
+	// Update the display (if needed)
+	if (m_timeSeqDisplay != nullptr) {
+		m_timeSeqDisplay->setAssert(true);
+	}
+
 	// We'll only keep the first 25 assert failures in memory.
 	if (m_failedAsserts.size() < 25) {
 		m_failedAsserts.push_back(string::f("Assert '%s' failed due to expectation '%s'.", name.c_str(), message.c_str()));
@@ -316,10 +314,11 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 
 void TimeSeqModule::resetUi() {
 	resetOutputs();
+	m_failedAsserts.clear();
 	if (m_timeSeqDisplay) {
 		m_timeSeqDisplay->reset();
+		m_timeSeqDisplay->setAssert(false);
 	}
-	m_failedAsserts.clear();
 }
 
 void TimeSeqModule::resetOutputs() {
@@ -367,11 +366,27 @@ void TimeSeqModule::setTimeSeqDisplay(TimeSeqDisplay* timeSeqDisplay) {
 	if (m_timeSeqDisplay != nullptr) {
 		m_timeSeqDisplay->setTimeSeqCore(m_timeSeqCore);
 		m_timeSeqDisplay->setError(m_scriptError);
+		m_timeSeqDisplay->setAssert(m_failedAsserts.size() > 0);
 	}
 }
 
 void TimeSeqModule::setLEDDisplay(LEDDisplay* ledDisplay) {
 	m_ledDisplay = ledDisplay;
+}
+
+int TimeSeqModule::getRate() {
+	if (inputs[TimeSeqModule::InputId::IN_RATE].isConnected()) {
+		float rate = inputs[TimeSeqModule::InputId::IN_RATE].getVoltage();
+		if (rate < -10) {
+			return -10;
+		} else if (rate > 10) {
+			return 10;
+		} else {
+			return std::floor(rate);
+		}
+	} else {
+		return params[TimeSeqModule::ParamId::PARAM_RATE].getValue();
+	}
 }
 
 
