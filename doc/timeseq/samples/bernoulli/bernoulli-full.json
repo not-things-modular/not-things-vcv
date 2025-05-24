@@ -1,0 +1,129 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": false,
+					"loop": false,
+					"start-trigger": "determine-output",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-variable": {
+										"name": "bernoulli-chance",
+										"value": {
+											"rand": {
+												"lower": -5,
+												"upper": 5
+											}
+										}
+									}
+								},
+								{
+									"set-value": {
+										"output": 3,
+										"value": { "variable": "bernoulli-chance" }
+									}
+								},
+								{
+									"if": {
+										"gt": [
+											{ "variable": "bernoulli-chance" },
+											{
+												"input": 2,
+												"calc": [
+													{ "sub": 5 }
+												]
+											}
+										]
+									},
+									"set-value": {
+										"output": 1,
+										"value": 10
+									}
+								},
+								{
+									"if": {
+										"lte": [
+											{ "variable": "bernoulli-chance" },
+											{
+												"input": 2,
+												"calc": [
+													{ "sub": 5 }
+												]
+											}
+										]
+									},
+									"set-value": {
+										"output": 2,
+										"value": 10
+									}
+								},
+								{
+									"timing": "end",
+									"trigger": "reset-output"
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": false,
+					"loop": true,
+					"start-trigger": "reset-output",
+					"stop-trigger": "stop-reset-output",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"if": {
+										"lt": [
+											{ "input": 1 },
+											1
+										]
+									},
+									"set-value": {
+										"output": 1,
+										"value": 0
+									}
+								},
+								{
+									"if": {
+										"lt": [
+											{ "input": 1 },
+											1
+										]
+									},
+									"set-value": {
+										"output": 2,
+										"value": 0
+									}
+								},
+								{
+									"if": {
+										"lt": [
+											{ "input": 1 },
+											1
+										]
+									},
+									"trigger": "stop-reset-output"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"input-triggers": [
+		{
+			"id": "determine-output",
+			"input": { "index": 1 }
+		}
+	]
+}

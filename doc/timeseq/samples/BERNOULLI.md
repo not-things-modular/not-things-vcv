@@ -18,10 +18,16 @@ Throughout the script, we'll use short versions of notations where possible, e.g
   * [Set Output Gates](#set-output-gates)
   * [Reset the Outputs](#reset-the-outputs)
   * [Full Script and VCV Rack Patch](#full-script-and-vcv-rack-patch-for-basic-version)
+* [Full Bernoulli Gate Version](#full-bernoulli-gate-version)
+  * [Variable Probability](#variable-probability)
+  * [Output Gate Duration](#output-gate-duration)
+    * [Update the Output Chance Segment](#update-the-output-chance-segment)
+    * [Wait for Low Input Gate](#wait-for-low-input-gate)
+  * [Full Script and VCV Rack Patch](#full-script-and-vcv-rack-patch-for-full-version)
 
 ## Basic Bernoulli Gate Version
 
-The basic version of the Bernoulli Gate will accept an input trigger on an input port. Each time a trigger is detected, a 0.5 second gate is sent out on one of two output ports. Which of the two possible output gates is receiving that gate is determined by a fixed 50% chance.
+The basic version of the Bernoulli Gate will accept an input trigger on an input port. Each time a trigger is detected, a 0.5 second gate is sent out on one of two output ports. Which of the two possible output gates is receiving that gate is determined by a fixed 50% probability.
 
 ### Triggering the Gate
 
@@ -110,7 +116,7 @@ Using the generated `bernoulli-chance` variable, we can now set the gate signal 
 }
 ```
 
-The [if](../TIMESEQ-SCRIPT-JSON.md#if) condition will check if the `bernoulli-chance` variable is greater than (`gt`) 0V and set the first output to 10V if this is the case. This will result in a 50% chance since the variable is between -5V and 5V.
+The [if](../TIMESEQ-SCRIPT-JSON.md#if) condition will check if the `bernoulli-chance` variable is greater than (`gt`) 0V and set the first output to 10V if this is the case. This will result in a 50% probability since the variable is between -5V and 5V.
 
 The second output is set using a similar check:
 
@@ -169,3 +175,190 @@ The [bernoulli-basic.vcv](bernoulli/bernoulli-basic.vcv) patch shows this script
 * The first port/gate output is sent to the top (green) Scope, and through an ADSR Envelope will make a VCO sound out that plays a higher note
 * The second port/gate output is sent to the bottom (blue) Scope, and through another ADSR Envelope will make a VCO sound out that plays a lower note2
 * A third (red) scope will display the value of the `bernoulli-chance` variable that is used by the script to determine which of the two outputs should receive the generated gate signal.
+
+## Full Bernoulli Gate Version
+
+For the full Bernoulli Gate functionality, we need to extend the basic version with two features:
+
+* It should be possible to control the the likeliness of the output gate going to output 1 or output 2 instead of always having a 50% probability
+* Instead of sending a fixed 0.5 second gate to the output, the output gate should remain high as long as the input gate that started it is high.
+
+### Variable Probability
+
+To achieve the variable probability, we'll use a voltage from an [input](../TIMESEQ-SCRIPT-JSON.md#input) port.  We'll define that this input voltage is expected to be between 0V and 10V: 0V means that all gates should go to the first output, 10V means that all gates should go to the second output and any value in between should cause the probability to lean more towards the one or the other output, with 5V giving a 50% probability.
+
+An update of the *if* conditions on the *action*s that were previously created in the [Set Output Gates](#set-output-gates) section will give us this desired functionality:
+
+```json
+{
+    "if": {
+        "gt": [
+            { "variable": "bernoulli-chance" },
+            {
+                "input": 2,
+                "calc": [
+                    { "sub": 5 }
+                ]
+            }
+        ]
+    },
+    "set-value": {
+        "output": 1,
+        "value": 10
+    }
+}
+```
+
+Instead of comparing the `bernoulli-chance` variable (which is between -5V and 5V) with a fixed 0V value (Which resulted in a 50% probability), we compare it with the current voltage on *input* port 2 (which is expected to be between 0V and 10V). By subtracting 5V from this input value using a [calc](../TIMESEQ-SCRIPT-JSON.md#calc)ulation, it is moved into the same -5V to 5V range as the `bernoulli-chance` variable, so that a simple `gt` (greater than) compare is sufficient to determine if the output should be set to 10V.
+
+The same logic applies to the *if* condition of the second output, but with a `lte` (less than or equal) instead of a `gt` compare.
+
+## Output Gate Duration
+
+To get the output gate to last as long as the input gate that triggered it, some timing changes will have to be done, combined with an additional lane. The logic to implement in the script will be:
+
+* Remove the second *segment* that was used in the *basic* version to [Reset the Outputs](#reset-the-outputs)
+* Perform the output gate determination as before in the first *segment*, but let it last 1 sample (i.e. the minimum duration) instead of 0.5 seconds
+* At the end of that segment, fire an internal trigger (called `reset-output`)
+* Create another lane loops, and is started by the `reset-output` trigger
+* In this new lane, check if the input voltage has gone back below 1V (i.e. the input gate is no longer high), and reset both outputs if that is the case and stop the second lane from running
+
+### Update the Output Chance Segment
+
+Timing-wise, the first *segment* from the *basic* script will become (ommitting the existing actions for brevity) will become
+
+```json
+{
+    "duration": { "samples": 1 },
+    "actions": [
+        {
+            "set-variable": {
+                "name": "bernoulli-chance",
+                "value": {
+                    "rand": {
+                        "lower": -5,
+                        "upper": 5
+                    }
+                }
+            }
+        },
+        {
+            "set-value": {
+                "output": 3,
+                "value": { "variable": "bernoulli-chance" }
+            }
+        },
+        {
+            "if": {
+                "gt": [
+                    { "variable": "bernoulli-chance" },
+                    {
+                        "input": 2,
+                        "calc": [
+                            { "sub": 5 }
+                        ]
+                    }
+                ]
+            },
+            "set-value": {
+                "output": 1,
+                "value": 10
+            }
+        },
+        {
+            "if": {
+                "lte": [
+                    { "variable": "bernoulli-chance" },
+                    {
+                        "input": 2,
+                        "calc": [
+                            { "sub": 5 }
+                        ]
+                    }
+                ]
+            },
+            "set-value": {
+                "output": 2,
+                "value": 10
+            }
+        },
+        {
+            "timing": "end",
+            "trigger": "reset-output"
+        }
+    ]
+}
+```
+
+Next to the previously explained changes to the *if* conditions of the *set-value* *action*s, the *duration* of the segment has been changed to 1 sample, and an additional action has been added at the end of the action list. This action has an `end` timing (so it will be executed when the segment completes) and will cause an internal trigger to be fired with the `reset-output` name.
+
+Once this new version of the segment has completed, the relevant output port will be set to 10V (i.e. a high gate signal), and the `reset-output` trigger can be used to start waiting for the input gate to go low again.
+
+### Wait for Low Input Gate
+
+To wait for the input gate to go low again, we'll create a new lane that is started by the previously fired `reset-output` trigger and will loop a single 1-sample length segment that checks if the input voltage has gone below 1V (i.e. the gate went low again):
+
+```json
+{
+    "auto-start": false,
+    "loop": true,
+    "start-trigger": "reset-output",
+    "stop-trigger": "stop-reset-output",
+    "segments": [
+        {
+            "duration": { "samples": 1 },
+            "actions": [
+                {
+                    "if": {
+                        "lt": [
+                            { "input": 1 },
+                            1
+                        ]
+                    },
+                    "set-value": {
+                        "output": 1,
+                        "value": 0
+                    }
+                },
+                {
+                    "if": {
+                        "lt": [
+                            { "input": 1 },
+                            1
+                        ]
+                    },
+                    "set-value": {
+                        "output": 2,
+                        "value": 0
+                    }
+                },
+                {
+                    "if": {
+                        "lt": [
+                            { "input": 1 },
+                            1
+                        ]
+                    },
+                    "trigger": "stop-reset-output"
+                }
+            ]
+        }
+    ]
+}
+```
+
+This lane will not `auto-start` since it is expected to start based on the `reset-output` internal trigger, as specified by the `start-trigger` property. Sine the lane has to wait for the input gate to go low again, it will `loop`.
+
+The *segment* in this *lane* contains three actions that are all using the same *if* conditional: the voltage on *input* port 1 has to be below 1V again. When this happens, three actions will be performed:
+
+* Change the voltage on output 1 to 0V (in case it was previously set to 10V)
+* Change the voltage on output 2 to 0V (in case it was previously set to 10V)
+* Fire an internal `stop-reset-output` trigger that will stop the lane from running: since set both outputs to a low gate again, we no longer need to check for a low input gate anymore until a new input gate triggers the first *lane*.
+
+The `stop-reset-output` trigger will stop the second *lane* from looping since it is used in its `stop-trigger` property.
+
+### Full Script and VCV Rack Patch for Full Version
+
+The full script for the full Bernoulli Gate can be found [here](bernoulli/bernoulli-full.json).
+
+The [bernoulli-basic.vcv](bernoulli/bernoulli-full.vcv) patch shows this script in action. It adds an additional 8VERT module, on which the probability of the output gate selection can be set using a 0V-10V value.
