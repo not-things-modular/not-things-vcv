@@ -103,6 +103,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		dsp::ClockDivider m_portChannelChangeClockDivider;
 
 		std::vector<std::string> m_failedAsserts;
+		dsp::ClockDivider m_failedAssertBlinkClockDivider;
 
 		// Starting from a loaded data json introduces a processing delay to allow everything in the patch to be loaded.
 		int m_startDelay = 0;

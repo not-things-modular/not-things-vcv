@@ -10,6 +10,7 @@
 					"start-trigger": "determine-output",
 					"segments": [
 						{
+							"x-description": "Change the duration to 1 sample since the gate output no longer has a fixed duration, but depends on the input gate duration",
 							"duration": { "samples": 1 },
 							"actions": [
 								{
@@ -30,6 +31,7 @@
 									}
 								},
 								{
+									"x-description": "Update the condition to check against the incoming probability CV instead of a fixed 50% probability",
 									"if": {
 										"gt": [
 											{ "variable": "bernoulli-chance" },
@@ -47,6 +49,7 @@
 									}
 								},
 								{
+									"x-description": "Update the condition to check against the incoming probability CV instead of a fixed 50% probability",
 									"if": {
 										"lte": [
 											{ "variable": "bernoulli-chance" },
@@ -64,6 +67,7 @@
 									}
 								},
 								{
+									"x-description": "Fire an internal trigger that will cause the second lane to start, which will monitor the input gate duration",
 									"timing": "end",
 									"trigger": "reset-output"
 								}
@@ -74,13 +78,16 @@
 				{
 					"auto-start": false,
 					"loop": true,
+					"x-description": "New lane to monitor if the input gate went from high back to low",
 					"start-trigger": "reset-output",
 					"stop-trigger": "stop-reset-output",
 					"segments": [
 						{
+							"x-description": "This segment will be looped for every sample, checking if the input signal is below 1V (which is considered to be a low gate again)",
 							"duration": { "samples": 1 },
 							"actions": [
 								{
+									"x-description": "If the input gate is low again, set our first output back to 0V",
 									"if": {
 										"lt": [
 											{ "input": 1 },
@@ -93,6 +100,7 @@
 									}
 								},
 								{
+									"x-description": "If the input gate is low again, set our second output back to 0V",
 									"if": {
 										"lt": [
 											{ "input": 1 },
@@ -105,6 +113,7 @@
 									}
 								},
 								{
+									"x-description": "If the input gate is low again, this lane has completed its work, and we can fire the internal trigger that will stop it (as specified on its 'stop-trigger' property)",
 									"if": {
 										"lt": [
 											{ "input": 1 },

@@ -36,7 +36,6 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 			m_script = script;
 			m_processor = processor;
 
-			m_processor->reset();
 			m_status = Status::IDLE;
 
 			resetElapsedSamples();

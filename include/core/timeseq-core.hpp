@@ -67,7 +67,7 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 	uint32_t getCurrentSampleRate();
 	uint32_t getElapsedSamples();
 	void resetElapsedSamples();
-	
+
 	nt_private:
 		Status m_status = Status::EMPTY;
 		uint32_t m_elapsedSamples = 0;

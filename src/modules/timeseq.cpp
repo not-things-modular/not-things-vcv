@@ -199,8 +199,8 @@ void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
 	if (sampleRateChangeEvent.sampleRate != m_timeSeqCore->getCurrentSampleRate()) {
 		// Reload the script to recalculate based on the new sample rate and reset the UI
-		m_timeSeqCore->reloadScript();
 		resetUi();
+		m_timeSeqCore->reloadScript();
 
 		m_portChannelChangeClockDivider.setDivision(sampleRateChangeEvent.sampleRate / 30);
 	}
@@ -284,6 +284,7 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 		setDisplayScriptError(false);
 		m_script = script;
 		resetUi();
+		m_timeSeqCore->reset();
 		// If we were running before the script was loaded, start running the new script
 		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
 			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.

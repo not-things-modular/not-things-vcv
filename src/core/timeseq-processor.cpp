@@ -28,7 +28,7 @@ double CalcProcessor::calc(double value) {
 				return 0.;
 			}
 	}
-	
+
 	return value;
 }
 
@@ -427,7 +427,7 @@ void ActionGateProcessor::end() {
 		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, 0.f);
 	}
 }
-	
+
 
 DurationProcessor::DurationProcessor(uint64_t duration, double drift) : m_duration(duration), m_drift(drift) {}
 
