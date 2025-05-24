@@ -1,3 +1,6 @@
+## 2.0.3-timeseq-beta-01
+* **TimeSeq**: Initial beta version of TimeSeq
+
 ## 2.0.3
 * **Solim**: Fixed issue where Solim Output Octaver settings remained active on the main Solim module after disconnecting the Output Octaver expander.
 
