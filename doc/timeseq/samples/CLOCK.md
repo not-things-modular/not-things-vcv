@@ -172,7 +172,7 @@ The third timeline will be a bit more off-beat compared to the other timelines s
 
 ## Full Script and VCV Rack Patch
 
-The full clock script can be found [here](clock/clock.vcv).
+The full clock script can be found [here](clock/clock.json).
 
 The [clock.vcv](clock/clock.vcv) patch will split up the five clock signals from the polyphonic first output port and use each of the clock signals to generate a separate ADSR Envelope. This Envelope will be used to control the volume of five VCOs (each playing a different note).
 
