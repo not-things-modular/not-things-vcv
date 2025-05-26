@@ -115,7 +115,6 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 			lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
 			m_resetPulse.trigger(0.001f);
 
-			resetUi();
 			m_timeSeqCore->reset();
 		}
 
@@ -199,7 +198,6 @@ void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
 	if (sampleRateChangeEvent.sampleRate != m_timeSeqCore->getCurrentSampleRate()) {
 		// Reload the script to recalculate based on the new sample rate and reset the UI
-		resetUi();
 		m_timeSeqCore->reloadScript();
 
 		m_portChannelChangeClockDivider.setDivision(sampleRateChangeEvent.sampleRate / 30);
@@ -253,6 +251,10 @@ void TimeSeqModule::triggerTriggered() {
 	m_triggerTriggered = true;
 }
 
+void TimeSeqModule::scriptReset() {
+	resetUi();
+}
+
 void TimeSeqModule::assertFailed(std::string name, std::string message, bool stop) {
 	// Update the display (if needed)
 	if (m_timeSeqDisplay != nullptr) {
@@ -283,7 +285,6 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 	if (errors.size() == 0) {
 		setDisplayScriptError(false);
 		m_script = script;
-		resetUi();
 		m_timeSeqCore->reset();
 		// If we were running before the script was loaded, start running the new script
 		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
@@ -351,7 +352,6 @@ void TimeSeqModule::clearScript() {
 	setDisplayScriptError(false);
 	m_timeSeqCore->clearScript();
 	m_script.reset();
-	resetUi();
 }
 
 std::list<std::string>& TimeSeqModule::getLastScriptLoadErrors() {

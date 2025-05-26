@@ -64,6 +64,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void laneLooped() override;
 	void segmentStarted() override;
 	void triggerTriggered() override;
+	void scriptReset() override;
 
 	void assertFailed(std::string name, std::string message, bool stop) override;
 

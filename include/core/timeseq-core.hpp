@@ -36,6 +36,7 @@ struct EventListener {
 	virtual void laneLooped() = 0;
 	virtual void segmentStarted() = 0;
 	virtual void triggerTriggered() = 0;
+	virtual void scriptReset() = 0;
 };
 
 struct TimeSeqCore : VariableHandler, TriggerHandler {

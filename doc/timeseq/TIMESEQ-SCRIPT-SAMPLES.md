@@ -4,7 +4,7 @@
 
 This page provides a collection of script examples/tutorials and VCV Rack patches that use them to illustrate different aspects of the TimeSeq script and some ways in which they can be used.
 
-Each of the samples will contain a description of how the script is constructed, and include a link to the full JSON script and a VCV Rack patch that uses that script in a TimeSeq module.
+Each of the samples will contain a description of how the script is constructed, and include a link to the full JSON script and a VCV Rack patch that uses that script in a TimeSeq module. When loading one of the VCV Rack patches, remember to select your audio device on the Audio Output module.
 
 While each of the samples demonstrates separate pieces of functionality, the fact that a TimeSeq script can contain multiple *timeline*s with multiple *lane*s and has 8 polyphonic input and and output ports (each allowing up to 16 channels) means that several types of functionality can be combined into one script as needed, and be executed by a single TimeSeq module instance.
 
