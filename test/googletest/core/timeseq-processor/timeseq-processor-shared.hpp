@@ -32,6 +32,7 @@ struct MockEventListener : EventListener {
 	MOCK_METHOD(void, laneLooped, (), (override));
 	MOCK_METHOD(void, segmentStarted, (), (override));
 	MOCK_METHOD(void, triggerTriggered, (), (override));
+	MOCK_METHOD(void, scriptReset, (), (override));
 };
 
 struct MockAssertListener : AssertListener {

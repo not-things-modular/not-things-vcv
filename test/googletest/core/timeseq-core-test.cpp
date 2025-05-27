@@ -125,7 +125,8 @@ TEST(TimeSeqCore, LoadScriptShouldInitializeIdleOnInitialScriptLoad) {
 	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
 	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
 	MockSampleRateReader mockSampleRateReader;
-	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, nullptr);
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script(new Script());
 	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
@@ -150,7 +151,8 @@ TEST(TimeSeqCore, LoadScriptShouldReplaceExistingScriptOnNewSuccesfulLoad) {
 	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
 	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
 	MockSampleRateReader mockSampleRateReader;
-	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, nullptr);
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
 	std::shared_ptr<Script> script2(new Script());
@@ -196,7 +198,8 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
 	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
 	MockSampleRateReader mockSampleRateReader;
-	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, nullptr);
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
 	std::shared_ptr<Script> script2(new Script());
@@ -312,7 +315,8 @@ TEST(TimeSeqCore, ReloadScriptShouldReloadProcessorFromCurrentScript) {
 	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
 	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
 	MockSampleRateReader mockSampleRateReader;
-	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, nullptr);
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
 	std::shared_ptr<Processor> processor1(new Processor({}, {}, {}));
@@ -352,7 +356,8 @@ TEST(TimeSeqCore, ReloadScriptShouldReloadProcessorFromCurrentScript) {
 }
 
 TEST(TimeSeqCore, ClearScriptShouldDoNothingWhenNoScriptIsLoaded) {
-	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, nullptr);
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, &mockEventListener);
 
 	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
@@ -371,7 +376,8 @@ TEST(TimeSeqCore, PauseScriptShouldPauseWhenScriptLoaded) {
 	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
 	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
 	MockSampleRateReader mockSampleRateReader;
-	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, nullptr);
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
 	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
@@ -722,7 +728,8 @@ TEST(TimeSeqCore, ElapsedSamplesShouldLoopOnHourBoundary) {
 	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
 	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
 	MockSampleRateReader mockSampleRateReader;
-	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, nullptr);
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script(new Script());
 	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
