@@ -171,21 +171,24 @@ TEST(TimeSeqProcessorSegment, ScriptWithShouldLoadStartEndAndGlideSegmentActions
 
 	vector<string> emptyTriggers = {};
 	{
+		std::string var1 = "var-1";
+		std::string var2 = "var-2";
+
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("start-1")).Times(1);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("start-2")).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("var-1", 1)).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("var-2", 2)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(var1, 1)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(var2, 2)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("var-1", 1)).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("var-2", 2)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(var1, 1)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(var2, 2)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("var-1", 1)).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("var-2", 2)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(var1, 1)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(var2, 2)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("end-1")).Times(1);
 		EXPECT_CALL(mockTriggerHandler, setTrigger("end-2")).Times(1);
 	}

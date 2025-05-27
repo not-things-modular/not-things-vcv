@@ -198,9 +198,9 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i % 2 == 1) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -249,9 +249,9 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckRefIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i % 2 == 1) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -297,9 +297,9 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResultWithTolerance) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if ((i % 2 == 1) || (i == 0) || (i == 4)) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -345,9 +345,9 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResultWithTolerance) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i == 2) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -393,9 +393,9 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i % 2 == 0) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -441,9 +441,9 @@ TEST(TimeSeqProcessorIf, ActionWithGtShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i == 0 || i == 2 || i == 4) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -489,9 +489,9 @@ TEST(TimeSeqProcessorIf, ActionWithGteShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i == 0 || i == 1 || i == 2 || i == 4) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -537,9 +537,9 @@ TEST(TimeSeqProcessorIf, ActionWithLtShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i == 3 || i == 5) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -585,9 +585,9 @@ TEST(TimeSeqProcessorIf, ActionWithLteShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i == 1 || i == 3 || i == 5) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -642,11 +642,11 @@ TEST(TimeSeqProcessorIf, ActionWithAndShouldCheckIfResult) {
 		for (int i = 0; i < 4; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-1")).Times(1).WillOnce(testing::Return(values1[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
 			if ((i == 2) || (i == 3))
-				EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
 			if (i == 3) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}
@@ -701,11 +701,11 @@ TEST(TimeSeqProcessorIf, ActionWithOrShouldCheckIfResult) {
 		for (int i = 0; i < 4; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-1")).Times(1).WillOnce(testing::Return(values1[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
 			if ((i == 0) || (i == 1))
-				EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
 			if (i != 0) {
-				EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.45f)).Times(1);
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
 			}
 		}
 	}

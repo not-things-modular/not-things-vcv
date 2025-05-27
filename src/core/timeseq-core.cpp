@@ -121,7 +121,7 @@ void TimeSeqCore::process() {
 	}
 }
 
-float TimeSeqCore::getVariable(std::string name) {
+float TimeSeqCore::getVariable(std::string& name) {
 	std::unordered_map<std::string, float>::iterator it = m_variables.find(name);
 	if (it != m_variables.end()) {
 		return it->second;
@@ -130,7 +130,7 @@ float TimeSeqCore::getVariable(std::string name) {
 	}
 }
 
-void TimeSeqCore::setVariable(std::string name, float value) {
+void TimeSeqCore::setVariable(std::string& name, float value) {
 	if (value == 0.f) {
 		std::unordered_map<std::string, float>::iterator it = m_variables.find(name);
 		if (it != m_variables.end()) {

@@ -47,7 +47,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithEqIfShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i % 2 != 1) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "eq").c_str(), false)).Times(1);
 			}
@@ -97,7 +97,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithEqIfShouldCheckIfResultWithTolerance) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if ((i % 2 != 1) && (i != 0) && (i != 4)) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "eq").c_str(), false)).Times(1);
 			}
@@ -147,7 +147,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithNeIfShouldCheckIfResultWithTolerance) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i != 2) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "ne").c_str(), false)).Times(1);
 			}
@@ -197,7 +197,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithNeIfShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i % 2 != 0) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "ne").c_str(), false)).Times(1);
 			}
@@ -247,7 +247,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithGtShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i != 0 && i != 2 && i != 4) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "gt").c_str(), false)).Times(1);
 			}
@@ -297,7 +297,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithGteShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i == 3 || i == 5) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "gte").c_str(), false)).Times(1);
 			}
@@ -347,7 +347,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithLtShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i != 3 && i != 5) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "lt").c_str(), false)).Times(1);
 			}
@@ -397,7 +397,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithLteShouldCheckIfResult) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i]));
 			if (i != 1 && i != 3 && i != 5) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", formatAssert(1.f, values[i], "lte").c_str(), false)).Times(1);
 			}
@@ -456,8 +456,8 @@ TEST(TimeSeqProcessorIfAssert, ActionWithAndShouldCheckIfResult) {
 		for (int i = 0; i < 4; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-1")).Times(1).WillOnce(testing::Return(values1[i]));
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
 			if (i != 3) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", (std::string("(") + formatAssert(1.f, values1[i], "eq") + " and " + formatAssert(1.f, values2[i], "eq") + ")").c_str(), false)).Times(1);
 			}
@@ -516,8 +516,8 @@ TEST(TimeSeqProcessorIfAssert, ActionWithOrShouldCheckIfResult) {
 		for (int i = 0; i < 4; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-1")).Times(1).WillOnce(testing::Return(values1[i]));
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable-2")).Times(1).WillOnce(testing::Return(values2[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
 			if (i == 0) {
 				EXPECT_CALL(mockAssertListener, assertFailed("the-assert", "((1 eq 0) or (1 eq 0))", false)).Times(1);
 			}

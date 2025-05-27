@@ -27,8 +27,8 @@ TEST(TimeSeqProcessorValueQuantize, VariableValueShouldQuantizeToNoteValue) {
 		for (int i = 0; i < 6; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(values[i] + ((-0.0005) * (i + 1))));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(values[i]))).Times(1);
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(values[i] + ((-0.0005) * (i + 1))));
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(values[i]))).Times(1);
 		}
 	}
 
@@ -66,7 +66,7 @@ TEST(TimeSeqProcessorValueQuantize, InputValueShouldQuantizeToNoteValue) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(values[i] + ((-0.0005) * (i + 1))));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(values[i]))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(values[i]))).Times(1);
 		}
 	}
 
@@ -104,7 +104,7 @@ TEST(TimeSeqProcessorValueQuantize, OutputValueShouldQuantizeToNoteValue) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockPortHandler, getOutputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(values[i] + ((-0.0005) * (i + 1))));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(values[i]))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(values[i]))).Times(1);
 		}
 	}
 
@@ -143,7 +143,7 @@ TEST(TimeSeqProcessorValueQuantize, RandValueShouldQuantizeToNoteValue) {
 	vector<string> emptyTriggers = {};
 
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1000).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockVariableHandler, setVariable("output-variable", IsQuantized())).Times(1000);
+	EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, IsQuantized())).Times(1000);
 
 	for (int i = 0; i < 1000; i++) {
 		script.second->process();
@@ -183,7 +183,7 @@ TEST(TimeSeqProcessorValueQuantize, NoteValueShouldNeedNoQuantize) {
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		for (int i = 0; i < 6; i++) {
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(values[i]))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(values[i]))).Times(1);
 		}
 	}
 

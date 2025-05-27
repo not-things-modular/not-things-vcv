@@ -6,6 +6,11 @@ using namespace timeseq;
 
 #define DUMMY_TIMESEQ_SCRIPT "the timeseq script data";
 
+std::string var1 = "var1";
+std::string var2 = "var2";
+std::string var3 = "var3";
+std::string var4 = "var4";
+
 struct MockJsonLoader : JsonLoader {
 	MOCK_METHOD(std::shared_ptr<Script>, loadScript, (std::istream&, std::vector<ValidationError>*), (override));
 };
@@ -478,8 +483,8 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 5u);
 
 	// Enter some triggers and variables
-	timeSeqCore.setVariable("var1", 1.f);
-	timeSeqCore.setVariable("var2", 2.f);
+	timeSeqCore.setVariable(var1, 1.f);
+	timeSeqCore.setVariable(var2, 2.f);
 	timeSeqCore.setTrigger("trigger-1");
 	timeSeqCore.process(); // A process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-1" }));
@@ -487,8 +492,8 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	timeSeqCore.process(); // Another process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2" }));
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
 
 	// Start the core again
 	timeSeqCore.start();
@@ -498,8 +503,8 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	
 	// Check that the variables and triggers are still there
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2" }));
 	// And the progress should have been maintained, and continue from where it left off
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
@@ -544,8 +549,8 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 5u);
 
 	// Enter some triggers and variables
-	timeSeqCore.setVariable("var1", 1.f);
-	timeSeqCore.setVariable("var2", 2.f);
+	timeSeqCore.setVariable(var1, 1.f);
+	timeSeqCore.setVariable(var2, 2.f);
 	timeSeqCore.setTrigger("trigger-1");
 	timeSeqCore.process(); // A process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-1" }));
@@ -553,8 +558,8 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	timeSeqCore.process(); // Another process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2" }));
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
 
 	// Reset the core
 
@@ -570,8 +575,8 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	
 	// Check that the variables and triggers are cleared
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 0.f);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({}));
 	// Progress should start again from the beginning
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
@@ -582,58 +587,58 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 TEST(TimeSeqCore, SetVariableShouldUpdateVariable) {
 	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, nullptr);
 
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var2", 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var2, 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var1", 2.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 2.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var1, 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var3", 3.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 2.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 3.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var3, 3.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 3.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var3", 4.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 2.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 4.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var3, 4.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 4.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var3", 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 2.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var3, 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 2.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var1", 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var1, 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var4", 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var4, 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 
-	timeSeqCore.setVariable("var3", 5.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var1"), 0.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var2"), 1.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var3"), 5.f);
-	EXPECT_EQ(timeSeqCore.getVariable("var4"), 0.f);
+	timeSeqCore.setVariable(var3, 5.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var2), 1.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var3), 5.f);
+	EXPECT_EQ(timeSeqCore.getVariable(var4), 0.f);
 }
 
 TEST(TimeSeqCore, ProcessShouldDoNothingWhenNoScriptLoaded) {

@@ -1,5 +1,8 @@
 #include "timeseq-processor-shared.hpp"
 
+std::string lowerVariableName = "lower-value";
+std::string upperVariableName = "upper-value";
+
 TEST(TimeSeqProcessorValue, ScriptWithValueRefButNoComponentPoolShouldFail) {
 	MockEventListener mockEventListener;
 	MockTriggerHandler mockTriggerHandler;
@@ -116,7 +119,7 @@ TEST(TimeSeqProcessorValue, ScriptWithActionRefShouldUseAction) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 4.2f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 4.2f)).Times(1);
 	}
 
 	script.second->process();
@@ -152,7 +155,7 @@ TEST(TimeSeqProcessorValue, VoltageValueShouldUseExactValue) {
 		for (int i = 0; i < 5; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", values[i])).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, values[i])).Times(1);
 		}
 	}
 
@@ -205,7 +208,7 @@ TEST(TimeSeqProcessorValue, NoteValueShouldUseExactValue) {
 		for (int i = 0; i < 14; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(values[i]))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(values[i]))).Times(1);
 		}
 	}
 
@@ -281,27 +284,27 @@ TEST(TimeSeqProcessorValue, InputValueShouldReadInputVoltage) {
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 14)).Times(1).WillOnce(testing::Return(2.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 2.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 2.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(7, 0)).Times(1).WillOnce(testing::Return(3.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(2, 5)).Times(1).WillOnce(testing::Return(4.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 4.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 4.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(5, 8)).Times(1).WillOnce(testing::Return(5.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 5.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 5.f)).Times(1);
 	}
 
 	for (int i = 0; i < 5; i++) {
@@ -376,27 +379,27 @@ TEST(TimeSeqProcessorValue, OutputValueShouldReadOutputVoltage) {
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(0, 14)).Times(1).WillOnce(testing::Return(2.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 2.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 2.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(7, 0)).Times(1).WillOnce(testing::Return(3.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 3.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(2, 5)).Times(1).WillOnce(testing::Return(4.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 4.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 4.f)).Times(1);
 		
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(5, 8)).Times(1).WillOnce(testing::Return(5.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 5.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 5.f)).Times(1);
 	}
 
 	for (int i = 0; i < 5; i++) {
@@ -612,31 +615,31 @@ TEST(TimeSeqProcessorValue, RandValueShouldUseProvidedValues) {
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(1).WillOnce(testing::Return(1.f));
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(1).WillOnce(testing::Return(9.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(1).WillOnce(testing::Return(1.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(1).WillOnce(testing::Return(9.f));
 		EXPECT_CALL(*mockRandValueGenerator.get(), generate(1.f, 9.f)).Times(1).WillOnce(testing::Return(5.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 5.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 5.f)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(1).WillOnce(testing::Return(3.f));
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(1).WillOnce(testing::Return(6.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(1).WillOnce(testing::Return(3.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(1).WillOnce(testing::Return(6.f));
 		EXPECT_CALL(*mockRandValueGenerator.get(), generate(3.f, 6.f)).Times(1).WillOnce(testing::Return(6.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.f)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(1).WillOnce(testing::Return(-1.f));
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(1).WillOnce(testing::Return(5.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(1).WillOnce(testing::Return(-1.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(1).WillOnce(testing::Return(5.f));
 		EXPECT_CALL(*mockRandValueGenerator.get(), generate(-1.f, 5.f)).Times(1).WillOnce(testing::Return(-5.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", -5.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, -5.f)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(1).WillOnce(testing::Return(-5.1f));
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(1).WillOnce(testing::Return(0.1f));
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(1).WillOnce(testing::Return(-5.1f));
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(1).WillOnce(testing::Return(0.1f));
 		EXPECT_CALL(*mockRandValueGenerator.get(), generate(-5.1f, 0.1f)).Times(1).WillOnce(testing::Return(9.6f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 9.6f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 9.6f)).Times(1);
 
 	}
 
@@ -679,33 +682,33 @@ TEST(TimeSeqProcessorValue, RandValueShouldRandomizeInRange) {
 
 	for (int j = 0; j < 5; j++) {
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2000).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(2000).WillRepeatedly(testing::Return(1.f));
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(2000).WillRepeatedly(testing::Return(9.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::AllOf(testing::Ge(1.f), testing::Le(9.f)))).Times(2000);
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(2000).WillRepeatedly(testing::Return(1.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(2000).WillRepeatedly(testing::Return(9.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::AllOf(testing::Ge(1.f), testing::Le(9.f)))).Times(2000);
 		for (int i = 0; i < 2000; i++) {
 			script.second->process();
 		}
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2000).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(2000).WillRepeatedly(testing::Return(6.f)); // Reverse the lower/higher order tho check
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(2000).WillRepeatedly(testing::Return(3.f)); // that the range also works in reverse
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::AllOf(testing::Ge(3.f), testing::Le(6.f)))).Times(2000);
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(2000).WillRepeatedly(testing::Return(6.f)); // Reverse the lower/higher order tho check
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(2000).WillRepeatedly(testing::Return(3.f)); // that the range also works in reverse
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::AllOf(testing::Ge(3.f), testing::Le(6.f)))).Times(2000);
 		for (int i = 0; i < 2000; i++) {
 			script.second->process();
 		}
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2000).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(2000).WillRepeatedly(testing::Return(-1.f));
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(2000).WillRepeatedly(testing::Return(5.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::AllOf(testing::Ge(-1.f), testing::Le(5.1f)))).Times(2000);
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(2000).WillRepeatedly(testing::Return(-1.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(2000).WillRepeatedly(testing::Return(5.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::AllOf(testing::Ge(-1.f), testing::Le(5.1f)))).Times(2000);
 		for (int i = 0; i < 2000; i++) {
 			script.second->process();
 		}
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2000).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(2000).WillRepeatedly(testing::Return(0.1f));  // Reverse the lower/higher order tho check
-		EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(2000).WillRepeatedly(testing::Return(-5.1f)); // that the range also works in reverse
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::AllOf(testing::Ge(-5.1f), testing::Le(0.1f)))).Times(2000);
+		EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(2000).WillRepeatedly(testing::Return(0.1f));  // Reverse the lower/higher order tho check
+		EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(2000).WillRepeatedly(testing::Return(-5.1f)); // that the range also works in reverse
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::AllOf(testing::Ge(-5.1f), testing::Le(0.1f)))).Times(2000);
 		for (int i = 0; i < 2000; i++) {
 			script.second->process();
 		}
@@ -745,9 +748,9 @@ TEST(TimeSeqProcessorValue, RandValueShouldHandleEqualLowerAndUpper) {
 	vector<string> emptyTriggers = {};
 
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockVariableHandler, getVariable("lower-value")).Times(100).WillRepeatedly(testing::Return(1.f));
-	EXPECT_CALL(mockVariableHandler, getVariable("upper-value")).Times(100).WillRepeatedly(testing::Return(1.f));
-	EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(100);
+	EXPECT_CALL(mockVariableHandler, getVariable(lowerVariableName)).Times(100).WillRepeatedly(testing::Return(1.f));
+	EXPECT_CALL(mockVariableHandler, getVariable(upperVariableName)).Times(100).WillRepeatedly(testing::Return(1.f));
+	EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(100);
 	for (int i = 0; i < 100; i++) {
 		script.second->process();
 	}

@@ -15,8 +15,8 @@ struct PortHandler {
 };
 
 struct VariableHandler {
-	virtual float getVariable(std::string name) = 0;
-	virtual void setVariable(std::string name, float value) = 0;
+	virtual float getVariable(std::string& name) = 0;
+	virtual void setVariable(std::string& name, float value) = 0;
 };
 
 struct TriggerHandler {
@@ -59,8 +59,8 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 
 	void process();
 
-	float getVariable(std::string name) override;
-	void setVariable(std::string name, float value) override;
+	float getVariable(std::string& name) override;
+	void setVariable(std::string& name, float value) override;
 
 	std::vector<std::string>& getTriggers() override;
 	void setTrigger(std::string name) override;

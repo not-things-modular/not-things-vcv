@@ -74,7 +74,7 @@ TEST(TimeSeqProcessorSetValueAction, SetValueActionShouldSetProcessedRefValue) {
 		for (int i = 0; i < 5; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(i));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(i));
 			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(4, 0, i)).Times(1);
 		}
 	}
@@ -111,7 +111,7 @@ TEST(TimeSeqProcessorSetValueAction, SetValueActionShouldSetProcessedValueOnPort
 		for (int i = 0; i < 5; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(i));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(i));
 			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(3, 0, i)).Times(1);
 		}
 	}
@@ -148,7 +148,7 @@ TEST(TimeSeqProcessorSetValueAction, SetValueActionShouldSetProcessedValueOnPort
 		for (int i = 0; i < 5; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockVariableHandler, getVariable("input-variable")).Times(1).WillOnce(testing::Return(i));
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariableName)).Times(1).WillOnce(testing::Return(i));
 			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(2, 5, i)).Times(1);
 		}
 	}

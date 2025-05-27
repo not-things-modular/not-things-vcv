@@ -156,7 +156,7 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithOnlyStartAndEndValueShouldGlide
 
 		for (int i = 0; i < 10; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", (float) i / 2.f)).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, (float) i / 2.f)).Times(1);
 		}
 
 		// No further calls should happen after that
@@ -246,16 +246,16 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositivePowEaseValue
 
 		// The first process should start on the exact start value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 
 		for (int i = 1; i < 9; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
 		}
 
 		// The last process should end on the exact end value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -300,16 +300,16 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositivePowEaseValue
 
 		// The first process should start on the exact start value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.f)).Times(1);
 
 		for (int i = 1; i < 9; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", DecreasingInRangeExclMatcher(6.f, 1.f, &lastValue))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, DecreasingInRangeExclMatcher(6.f, 1.f, &lastValue))).Times(1);
 		}
 
 		// The last process should end on the exact end value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -354,16 +354,16 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndNegativePowEaseValue
 
 		// The first process should start on the exact start value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 
 		for (int i = 1; i < 9; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
 		}
 
 		// The last process should end on the exact end value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -408,16 +408,16 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositiveSigEaseValue
 
 		// The first process should start on the exact start value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 
 		for (int i = 1; i < 9; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
 		}
 
 		// The last process should end on the exact end value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -462,16 +462,16 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndPositiveSigEaseValue
 
 		// The first process should start on the exact start value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.f)).Times(1);
 
 		for (int i = 1; i < 9; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", DecreasingInRangeExclMatcher(6.f, 1.f, &lastValue))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, DecreasingInRangeExclMatcher(6.f, 1.f, &lastValue))).Times(1);
 		}
 
 		// The last process should end on the exact end value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -516,16 +516,16 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithStartEndAndNegativeSigEaseValue
 
 		// The first process should start on the exact start value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 1.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
 
 		for (int i = 1; i < 9; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, IncreasingInRangeExclMatcher(1.f, 6.f, &lastValue))).Times(1);
 		}
 
 		// The last process should end on the exact end value.
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.f)).Times(1);
 
 		// No further calls should happen after that
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
@@ -568,15 +568,16 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithPositiveIfConditionShouldGlideV
 	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
+		std::string ifVariableName = "if-variable";
 
 		// The first process should check the condition and set the start value
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, getVariable("if-variable")).Times(1).WillOnce(testing::Return(1.f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 0.f)).Times(1);
+		EXPECT_CALL(mockVariableHandler, getVariable(ifVariableName)).Times(1).WillOnce(testing::Return(1.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 0.f)).Times(1);
 
 		for (int i = 1; i < 10; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockVariableHandler, setVariable("output-variable", (float) i / 2.f)).Times(1);
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, (float) i / 2.f)).Times(1);
 		}
 
 		// No further calls should happen after that
@@ -620,10 +621,11 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithNegativeIfConditionShouldDoNoth
 	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
+		std::string ifVariableName = "if-variable";
 
 		// The first process should check the condition, and not execute the glide action
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockVariableHandler, getVariable("if-variable")).Times(1).WillOnce(testing::Return(2.f));
+		EXPECT_CALL(mockVariableHandler, getVariable(ifVariableName)).Times(1).WillOnce(testing::Return(2.f));
 		EXPECT_CALL(mockVariableHandler, setVariable).Times(0);
 		EXPECT_CALL(mockVariableHandler, getVariable).Times(0);
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(10).WillRepeatedly(testing::ReturnRef(emptyTriggers));

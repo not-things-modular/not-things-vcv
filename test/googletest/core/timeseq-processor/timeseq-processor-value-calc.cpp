@@ -92,7 +92,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldAddValue) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 6.9f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 6.9f));
 	}
 
 	script.second->process();
@@ -124,7 +124,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldSubtractValue) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 4.2f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 4.2f));
 	}
 
 	script.second->process();
@@ -156,7 +156,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldMultiplyValue) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(-6.3f)));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(-6.3f)));
 	}
 
 	script.second->process();
@@ -188,7 +188,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldDivideValueByNonZero) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(-3.2f)));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(-3.2f)));
 	}
 
 	script.second->process();
@@ -220,7 +220,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldDivideValueByZero) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", 0.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 0.f));
 	}
 
 	script.second->process();
@@ -258,11 +258,12 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcsShouldExecuteCalcsInOrder) {
 
 	vector<string> emptyTriggers = {};
 	{
+		std::string calcVariableName = "calc-variable";
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockVariableHandler, getVariable("calc-variable")).Times(1).WillOnce(testing::Return(6.9f));
-		EXPECT_CALL(mockVariableHandler, setVariable("output-variable", testing::FloatEq(-2.076)));
+		EXPECT_CALL(mockVariableHandler, getVariable(calcVariableName)).Times(1).WillOnce(testing::Return(6.9f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(-2.076)));
 	}
 
 	script.second->process();

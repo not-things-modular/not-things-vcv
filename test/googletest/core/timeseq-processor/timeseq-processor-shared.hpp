@@ -15,8 +15,8 @@ struct MockPortHandler : PortHandler {
 };
 
 struct MockVariableHandler : VariableHandler {
-	MOCK_METHOD(float, getVariable, (std::string), (override));
-	MOCK_METHOD(void, setVariable, (std::string, float), (override));
+	MOCK_METHOD(float, getVariable, (std::string&), (override));
+	MOCK_METHOD(void, setVariable, (std::string&, float), (override));
 };
 
 struct MockTriggerHandler : TriggerHandler {
@@ -49,3 +49,8 @@ static std::vector<std::string> mockDefaultTriggerHandlerEmptyTriggers;
 
 
 pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, json& json, vector<ValidationError> *validationErrors);
+
+static std::string inputVariableName = "input-variable";
+static std::string outputVariableName = "output-variable";
+static std::string inputVariable1 = "input-variable-1";
+static std::string inputVariable2 = "input-variable-2";

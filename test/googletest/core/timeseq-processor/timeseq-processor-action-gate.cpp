@@ -318,12 +318,13 @@ TEST(TimeSeqProcessorGateAction, GateActionWithShouldRunBasedOnIfCondition) {
  	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
+		std::string variableName = "if-variable";
 
 		for (int i = 0; i < 3; i++) {
 			if (i != 1) {
 				// The first segment should go high on the first process
 				EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-				EXPECT_CALL(mockVariableHandler, getVariable("if-variable")).Times(1).WillOnce(testing::Return(1.f)); // The variable should only be requested once at the start of the segment.
+				EXPECT_CALL(mockVariableHandler, getVariable(variableName)).Times(1).WillOnce(testing::Return(1.f)); // The variable should only be requested once at the start of the segment.
 				EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 10.f)).Times(1);
 				// The gate should remain high for the next 4 calls
 				EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(4).WillRepeatedly(testing::ReturnRef(emptyTriggers));
@@ -335,7 +336,7 @@ TEST(TimeSeqProcessorGateAction, GateActionWithShouldRunBasedOnIfCondition) {
 			} else {
 				// In the second loop, the condition will be false, so the gate should not activate
 				EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-				EXPECT_CALL(mockVariableHandler, getVariable("if-variable")).Times(1).WillOnce(testing::Return(1.1f));
+				EXPECT_CALL(mockVariableHandler, getVariable(variableName)).Times(1).WillOnce(testing::Return(1.1f));
 				EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(9).WillRepeatedly(testing::ReturnRef(emptyTriggers));
 			}
 		}
