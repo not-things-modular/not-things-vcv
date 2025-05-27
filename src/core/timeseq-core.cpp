@@ -34,6 +34,7 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 			m_sampleRate = m_sampleRateReader->getSampleRate();
 			m_samplesPerHour = m_sampleRate * 60 * 60;
 			m_script = script;
+			m_danglingProcessor = m_processor;
 			m_processor = processor;
 
 			m_status = Status::IDLE;
@@ -47,6 +48,7 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 
 void TimeSeqCore::reloadScript() {
 	if (m_script) {
+		m_danglingProcessor = m_processor;
 		m_processor = m_processorLoader->loadScript(m_script, nullptr);
 		m_sampleRate = m_sampleRateReader->getSampleRate();
 
@@ -100,10 +102,17 @@ void TimeSeqCore::reset() {
 }
 
 void TimeSeqCore::process() {
-	if (m_processor) {
+	std::shared_ptr<Processor> processor = m_processor;
+
+	// If there is an old processor still dangling, it can be released now
+	if (m_danglingProcessor) {
+		m_danglingProcessor = nullptr;
+	}
+
+	if (processor) {
 		m_triggerIdx = !m_triggerIdx; // Triggers that were set in the previous process become the active triggers now
 		m_triggers[!m_triggerIdx].clear();
-		m_processor->process();
+		processor->process();
 
 		m_elapsedSamples++;
 		if (m_elapsedSamples >= m_samplesPerHour) {

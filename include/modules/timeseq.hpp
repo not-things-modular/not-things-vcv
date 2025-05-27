@@ -123,6 +123,7 @@ struct TimeSeqWidget : NTModuleWidget {
 	TimeSeqWidget(TimeSeqModule* module);
 
 	virtual void appendContextMenu(Menu* menu) override;
+	virtual void onRemove(const RemoveEvent& e) override;
 
 	private:
 		void loadScript();

@@ -456,6 +456,14 @@ void TimeSeqWidget::appendContextMenu(Menu* menu) {
 	menu->addChild(createMenuItem("Copy failed assertions", "", [this]() { this->copyAssertions(); }, !hasAsserts));
 }
 
+void TimeSeqWidget::onRemove(const RemoveEvent& e) {
+	engine::Module* module = getModule();
+	if (module != nullptr) {
+		TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(module);
+		timeSeqModule->setTimeSeqDisplay(nullptr);
+	}
+}
+
 void TimeSeqWidget::loadScript() {
 	// If a script is already loaded, first confirm if it should be replaced.
 	if ((!hasScript()) || (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, "A script is already loaded. Are you sure you want to load a new script?") == 1)) {
