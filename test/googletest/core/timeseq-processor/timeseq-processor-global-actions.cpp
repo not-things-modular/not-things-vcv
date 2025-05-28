@@ -55,7 +55,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 	// A reset should trigger the actions
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 1.5f)).Times(1);
 	EXPECT_CALL(mockVariableHandler, setVariable(variableName, 4.1)).Times(1);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-name")).Times(1);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(striggerName)).Times(1);
 	script.second->reset();
 	testing::Mock::VerifyAndClearExpectations(&mockPortHandler);
 	testing::Mock::VerifyAndClearExpectations(&mockVariableHandler);
@@ -71,7 +71,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 	// A re-reset should re-trigger the actions
 	EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 1.5f)).Times(1);
 	EXPECT_CALL(mockVariableHandler, setVariable(variableName, 4.1)).Times(1);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-name")).Times(1);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(striggerName)).Times(1);
 	script.second->reset();
 }
 

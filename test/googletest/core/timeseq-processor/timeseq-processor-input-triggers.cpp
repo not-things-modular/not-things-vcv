@@ -14,7 +14,7 @@ void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler&
 	// Nothing should happen if none of the inputs are triggered
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(0.f));
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(1).WillOnce(testing::Return(0.f));
 		EXPECT_CALL(mockTriggerHandler, setTrigger).Times(0);
@@ -26,9 +26,9 @@ void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler&
 	// One trigger should be sent out as long as the voltage remains hight (> 1.f)
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.1f)); // Five total invocations for the first trigger > 1.f, followed by 1 0.f response
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.1f));
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(2).WillRepeatedly(testing::Return(5.f));
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.1f));
@@ -36,9 +36,9 @@ void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler&
 	}
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(1).WillOnce(testing::Return(1.1f)); // Four total invocations for the second trigger >1.f, followed by 2 0.f responses
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(3).WillRepeatedly(testing::Return(1.1f)); // Four total invocations for the second trigger >1.f, followed by 2 0.f responses
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(2).WillRepeatedly(testing::Return(0.f)); // Four total invocations for the second trigger >1.f, followed by 2 0.f responses
 	}
@@ -52,14 +52,14 @@ void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler&
 	// A new trigger should be sent out for the first trigger again if that voltage goes up again, while the second input remains low
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.1f));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(0.f));
 	}
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(2).WillRepeatedly(testing::Return(0.f));
 	}
 	// Do the two expected process calls
@@ -70,14 +70,14 @@ void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler&
 	// The same again, but this time with the second trigger high
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(1).WillOnce(testing::Return(1.1f));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(1).WillRepeatedly(testing::Return(0.f));
 	}
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(2).WillRepeatedly(testing::Return(0.f));
 	}
 	// Do the two expected process calls
@@ -86,8 +86,8 @@ void testTriggerInvocation(MockPortHandler& mockPortHandler, MockTriggerHandler&
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
 
 	// Any further process invocation should do nothing as long as the input voltage remains low
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
 	EXPECT_CALL(mockPortHandler, getInputPortVoltage(4, 1)).Times(6).WillRepeatedly(testing::Return(0.f));
 	EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(6).WillRepeatedly(testing::Return(0.f));
 	for (int i = 0; i < 6; i++) {

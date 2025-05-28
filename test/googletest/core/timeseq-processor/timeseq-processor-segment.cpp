@@ -96,7 +96,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithRefSegmentShouldLoadRefScript) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 	}
 
 	script.second->process();
@@ -132,7 +132,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithInlineSegmentShouldLoadSegmentScript) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 	}
 
 	script.second->process();
@@ -173,12 +173,16 @@ TEST(TimeSeqProcessorSegment, ScriptWithShouldLoadStartEndAndGlideSegmentActions
 	{
 		std::string var1 = "var-1";
 		std::string var2 = "var-2";
+		std::string start1 = "start-1";
+		std::string start2 = "start-2";
+		std::string end1 = "end-1";
+		std::string end2 = "end-2";
 
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("start-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("start-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(start1)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(start2)).Times(1);
 		EXPECT_CALL(mockVariableHandler, setVariable(var1, 1)).Times(1);
 		EXPECT_CALL(mockVariableHandler, setVariable(var2, 2)).Times(1);
 
@@ -189,8 +193,8 @@ TEST(TimeSeqProcessorSegment, ScriptWithShouldLoadStartEndAndGlideSegmentActions
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockVariableHandler, setVariable(var1, 1)).Times(1);
 		EXPECT_CALL(mockVariableHandler, setVariable(var2, 2)).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("end-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("end-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(end1)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(end2)).Times(1);
 	}
 
 	for (int i = 0; i < 3; i++) {

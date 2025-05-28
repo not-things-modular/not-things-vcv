@@ -1,5 +1,29 @@
 #include "timeseq-processor-shared.hpp"
 
+std::string trigger01 = "trigger-0.1";
+std::string trigger02 = "trigger-0.2";
+std::string trigger11 = "trigger-1.1";
+std::string trigger12 = "trigger-1.2";
+std::string trigger13 = "trigger-1.3";
+std::string trigger21 = "trigger-2.1";
+std::string trigger22 = "trigger-2.2";
+std::string trigger23 = "trigger-2.3";
+std::string trigger31 = "trigger-3.1";
+std::string trigger32 = "trigger-3.2";
+std::string trigger33 = "trigger-3.3";
+std::string triggerbst1 = "block-start-trigger-1";
+std::string triggerbst2 = "block-start-trigger-2";
+std::string triggerbet1 = "block-end-trigger-1";
+std::string triggerbet2 = "block-end-trigger-2";
+std::string triggers111 = "start-trigger-1.1.1";
+std::string triggers112 = "start-trigger-1.1.2";
+std::string triggere111 = "end-trigger-1.1.1";
+std::string triggere112 = "end-trigger-1.1.2";
+std::string triggers131 = "start-trigger-1.3.1";
+std::string triggers132 = "start-trigger-1.3.2";
+std::string triggere131 = "end-trigger-1.3.1";
+std::string triggere132 = "end-trigger-1.3.2";
+
 TEST(TimeSeqProcessorSegmentBlock, ScriptWithUnknownSegmentBlockRefFromOtherSegmentBlockShouldFail) {
 	MockEventListener mockEventListener;
 	MockTriggerHandler mockTriggerHandler;
@@ -246,17 +270,17 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlocksInlineInLaneShouldExec
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 
 	for (int i = 0; i < 6; i++) {
@@ -315,17 +339,17 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlocksFromSegmentsPoolLaneSh
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 
 	for (int i = 0; i < 6; i++) {
@@ -397,27 +421,27 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithTwoLanesWithSegmentBlocksShouldExec
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger11)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger12)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger22)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger13)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger23)).Times(1);
 	}
 
 	for (int i = 0; i < 6; i++) {
@@ -482,27 +506,27 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithMixOfSegmentBlocksAndSingleSegments
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger01)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger02)).Times(1);
 	}
 
 	for (int i = 0; i < 12; i++) {
@@ -567,29 +591,29 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockShouldRepleatI
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger01)).Times(1);
 
 		for (int i = 0; i < 3; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+			EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+			EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+			EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 		}
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger02)).Times(1);
 	}
 
 	for (int i = 0; i < 24; i++) {
@@ -698,8 +722,8 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentAndSegmentBlocksWithSameIdsS
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(6).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(6);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(6);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(6);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(6);
 	for (int i = 0; i < 6; i++) {
 		script.second->process();
 	}
@@ -770,7 +794,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithSingleS
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger01)).Times(1);
 
 		// Then the segment-block gets executed
 		// The segment-block segment takes up 5 process calls
@@ -782,11 +806,11 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithSingleS
 
 			// The first time the first segment gets executed, the block start actions should get executed, and then the segment start actions
 			if (j == 0) {
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-start-trigger-1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-start-trigger-2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbst1)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbst2)).Times(1);
 
-				EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.1.1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.1.2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggers111)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggers112)).Times(1);
 			}
 
 			// The segment glide actions should get executed
@@ -794,11 +818,11 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithSingleS
 
 			// If this is the last time the segment is executed, the segment end actions should get executed, followed by the block end actions
 			if (j == 4) {
-				EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.1.1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.1.2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggere111)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggere112)).Times(1);
 
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-end-trigger-1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-end-trigger-2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbet1)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbet2)).Times(1);
 			}
 		}
 
@@ -806,7 +830,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithSingleS
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger02)).Times(1);
 	}
 
 	int processCount =
@@ -898,7 +922,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger01)).Times(1);
 
 		// Then the segment-block gets executed
 		// The first segment-block segment takes up 5 process calls
@@ -910,11 +934,11 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 
 			// The first time the first segment gets executed, the block start actions should get executed, and then the segment start actions
 			if (j == 0) {
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-start-trigger-1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-start-trigger-2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbst1)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbst2)).Times(1);
 
-				EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.1.1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.1.2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggers111)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggers112)).Times(1);
 			}
 
 			// The segment glide actions should get executed
@@ -922,8 +946,8 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 
 			// If this is the last time the segment is executed, the segment end actions should get executed
 			if (j == 4) {
-				EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.1.1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.1.2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggere111)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggere112)).Times(1);
 			}
 		}
 
@@ -932,7 +956,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 		// The last segment-block segment takes up another 5 process calls
 		for (int j = 0; j < 5; j++) {
@@ -943,8 +967,8 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 
 			// If this is the first time the segment is executed, the segment start actions should get executed
 			if (j == 0) {
-				EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.3.1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.3.2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggers131)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggers132)).Times(1);
 			}
 
 			// The segment glide actions should get executed (for the last invocation, the exact end value should be used)
@@ -952,11 +976,11 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 			
 			// If this is the last time the segment is executed, the segment end actions should get executed and then the segment-block end actions
 			if (j == 4) {
-				EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.3.1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.3.2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggere131)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggere132)).Times(1);
 
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-end-trigger-1")).Times(1);
-				EXPECT_CALL(mockTriggerHandler, setTrigger("block-end-trigger-2")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbet1)).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbet2)).Times(1);
 			}
 		}
 
@@ -964,7 +988,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger02)).Times(1);
 	}
 
 	int processCount =
@@ -1060,7 +1084,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger01)).Times(1);
 
 		// Then the segment-block gets executed
 		for (int i = 0; i < 3; i++) {
@@ -1073,14 +1097,14 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 
 				// If this is the first repeat of the segment-block, and the first time the first segment gets executed, the block start actions should get executed
 				if ((i == 0) && (j == 0)) {
-					EXPECT_CALL(mockTriggerHandler, setTrigger("block-start-trigger-1")).Times(1);
-					EXPECT_CALL(mockTriggerHandler, setTrigger("block-start-trigger-2")).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbst1)).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbst2)).Times(1);
 				}
 
 				// If this is the first time the segment is executed, the segment start actions should get executed
 				if (j == 0) {
-					EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.1.1")).Times(1);
-					EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.1.2")).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggers111)).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggers112)).Times(1);
 				}
 
 				// The segment glide actions should get executed
@@ -1088,8 +1112,8 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 
 				// If this is the last time the segment is executed, the segment end actions should get executed
 				if (j == 4) {
-					EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.1.1")).Times(1);
-					EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.1.2")).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggere111)).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggere112)).Times(1);
 				}
 			}
 
@@ -1098,7 +1122,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-			EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+			EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 			// The last segment-block segment takes up another 5 process calls
 			for (int j = 0; j < 5; j++) {
@@ -1109,8 +1133,8 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 
 				// If this is the first time the segment is executed, the segment start actions should get executed
 				if (j == 0) {
-					EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.3.1")).Times(1);
-					EXPECT_CALL(mockTriggerHandler, setTrigger("start-trigger-1.3.2")).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggers131)).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggers132)).Times(1);
 				}
 
 				// The segment glide actions should get executed (for the last invocation, the exact end value should be used)
@@ -1118,14 +1142,14 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 				
 				// If this is the last time the segment is executed, the segment end actions should get executed
 				if (j == 4) {
-					EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.3.1")).Times(1);
-					EXPECT_CALL(mockTriggerHandler, setTrigger("end-trigger-1.3.2")).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggere131)).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggere132)).Times(1);
 				}
 
 				// If this is the last repeat of the segment-block, and the last time the last segment gets executed, the block end actions should get executed
 				if ((i == 2) && (j == 4)) {
-					EXPECT_CALL(mockTriggerHandler, setTrigger("block-end-trigger-1")).Times(1);
-					EXPECT_CALL(mockTriggerHandler, setTrigger("block-end-trigger-2")).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbet1)).Times(1);
+					EXPECT_CALL(mockTriggerHandler, setTrigger(triggerbet2)).Times(1);
 				}
 			}
 		}
@@ -1134,7 +1158,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-0.2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger02)).Times(1);
 	}
 
 	int processCount =

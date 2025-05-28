@@ -141,7 +141,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoAutoStartShouldAutoStart) {
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(2);
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(2);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(2);
 
 	script.second->process();
 	script.second->process();
@@ -175,7 +175,7 @@ TEST(TimeSeqProcessorLane, LaneWithAutoStartTrueShouldAutoStart) {
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(2);
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(2);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(2);
 
 	script.second->process();
 	script.second->process();
@@ -209,7 +209,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoAutoStartFalseShouldNotStartUntilStartTrigg
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(0);
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
 
 	script.second->process();
 	script.second->process();
@@ -221,7 +221,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoAutoStartFalseShouldNotStartUntilStartTrigg
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(2).WillOnce(testing::ReturnRef(startTrigger)).WillOnce(testing::ReturnRef(emptyTrigger));
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(2);
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(2);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(2);
 
 	script.second->process();
 	script.second->process();

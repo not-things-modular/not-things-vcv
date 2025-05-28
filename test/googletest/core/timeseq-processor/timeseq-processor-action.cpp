@@ -114,7 +114,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionRefShouldUseAction) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 	}
 
 	script.second->process();
@@ -143,7 +143,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionWithoutConditionShouldWork) {
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 	}
 
 	script.second->process();
@@ -184,13 +184,13 @@ TEST(TimeSeqProcessorAction, ScriptWithActionWithConditionShouldCheckCondition) 
 			for (int i = 0; i < 5; i++) {
 				EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 				EXPECT_CALL(mockVariableHandler, getVariable(variableName)).Times(1).WillOnce(testing::Return(1.0f));
-				EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 			}
 
 			for (int i = 0; i < 5; i++) {
 				EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 				EXPECT_CALL(mockVariableHandler, getVariable(variableName)).Times(1).WillOnce(testing::Return(2.0f));
-				EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
+				EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
 			}
 		}
 	}

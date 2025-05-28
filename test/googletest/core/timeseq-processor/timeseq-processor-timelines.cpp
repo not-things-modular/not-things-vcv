@@ -106,11 +106,11 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 	{
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
 	script.second->process();
@@ -123,9 +123,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -137,11 +137,11 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -153,11 +153,11 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 	script.second->process();
 }
@@ -204,9 +204,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockFals
 	// The first process should trigger the start actions of the segments all three lanes
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -216,9 +216,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockFals
 	// the second lane will move to its second (and thus last) sample, the third lane will move to its second sample
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -228,9 +228,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockFals
 	// The third lane will move to its third (and last) sample
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -240,9 +240,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockFals
 	// The second lane will move to its second sample (for the second time)
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 	script.second->process();
 }
@@ -290,11 +290,11 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	{
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
 	script.second->process();
@@ -305,9 +305,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// The first lane should not have looped yet
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
 	script.second->process();
@@ -318,9 +318,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// The other two lanes should not have looped yet
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
 	script.second->process();
@@ -333,13 +333,13 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 		testing::InSequence inSequence;
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
 		EXPECT_CALL(mockEventListener, laneLooped()).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -348,9 +348,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// Complete another loop to verify that the actions get re-triggered
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
 	script.second->process();
@@ -359,9 +359,9 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 	EXPECT_CALL(mockEventListener, laneLooped()).Times(0);
 	script.second->process();
@@ -415,10 +415,10 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// The first process should trigger the end action of the first lane
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -427,10 +427,10 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// The first lane should not have looped yet
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger4Name)).Times(1);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -439,10 +439,10 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// The other two lanes should not have looped yet
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger4Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -451,10 +451,10 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// The first lane should end again, the second and third should have looped, and the fourth should not loop
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger4Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -462,20 +462,20 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	// Complete another loop to verify that the actions get re-triggered, but the fourth lane should not loop
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger4Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
 
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(0);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(0);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger4Name)).Times(0);
 	}
 	script.second->process();
 	testing::Mock::VerifyAndClearExpectations(&mockTriggerHandler);
@@ -551,12 +551,12 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers1));
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, laneLooped).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 	}
 	for (int i = 0; i < 6; i++) {
 		script.second->process();
@@ -618,15 +618,15 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 
 		// 3.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers3));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-4")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger4Name)).Times(1);
 
 		// 4.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers4));
 		EXPECT_CALL(mockEventListener, laneLooped).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
 
 		// 5.
@@ -636,14 +636,14 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 
 		// 6.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers6));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-5")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger5Name)).Times(1);
 
 		// 7.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers7));
 		EXPECT_CALL(mockEventListener, laneLooped).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 		// 8.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers7));
@@ -652,21 +652,21 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 
 		// 9.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers8));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
 
 		// 10.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers7));
 		EXPECT_CALL(mockEventListener, laneLooped).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 		// 11.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers9));
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1); // Restart of first lane
 		EXPECT_CALL(mockEventListener, laneLooped).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1); // Loop of second lane
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 
 		// 12.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers7));
@@ -675,8 +675,8 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 
 		// 13.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers7));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 
 		// 14.
 		EXPECT_CALL(mockTriggerHandler, getTriggers).Times(1).WillOnce(testing::ReturnRef(triggers7));
@@ -684,7 +684,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
 		EXPECT_CALL(mockEventListener, laneLooped).Times(1);
 		EXPECT_CALL(mockEventListener, segmentStarted).Times(1);
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 	for (int i = 0; i < 14; i++) {
 		script.second->process();
@@ -784,21 +784,31 @@ TEST(TimeSeqProcessorTimelines, ScriptWithMutlipleTimelinesWithLanesAndLoopLockM
 	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[1]->m_scriptLane->loop, true);
 	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[2]->m_scriptLane->loop, true);
 
+	std::string trigger11 = "trigger-1.1";
+	std::string trigger12 = "trigger-1.2";
+	std::string trigger13 = "trigger-1.3";
+	std::string trigger21 = "trigger-2.1";
+	std::string trigger22 = "trigger-2.2";
+	std::string trigger23 = "trigger-2.3";
+	std::string trigger31 = "trigger-3.1";
+	std::string trigger32 = "trigger-3.2";
+	std::string trigger33 = "trigger-3.3";
+
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
 	{
 		testing::InSequence inSequence;
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3.1"));
- 		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.3")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3.2"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.3"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3.3"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.3")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.2"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3.1"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.3")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3.2"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.3")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3.3"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1"));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1.3")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.1")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.2")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2.3")); EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3.1"));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger11)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger12)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger22)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger31));
+ 		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger13)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger32));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger11)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger22)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger23));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger12)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger33));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger13)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger22));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger11)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger31));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger12)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger22)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger23)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger32));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger13)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger11)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger22)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger33));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger12)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21));
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger13)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger21)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger22)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger23)); EXPECT_CALL(mockTriggerHandler, setTrigger(trigger31));
 	}
 
 	for (int i = 0; i < 12; i++) {
@@ -839,8 +849,8 @@ TEST(TimeSeqProcessorTimelines, ScriptWithLoopingLaneAndRepeatingLaneShouldWork)
 
 	vector<string> emptyTrigger = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillRepeatedly(testing::ReturnRef(emptyTrigger));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(5); // Should keep repeating
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(5); // Should keep repeating
 
 	for (int i = 0; i < 15; i++) {
 		script.second->process();
@@ -850,8 +860,8 @@ TEST(TimeSeqProcessorTimelines, ScriptWithLoopingLaneAndRepeatingLaneShouldWork)
 	// After a start trigger, the first lane should repeat the same amount again
 	vector<string> startTrigger = { "start-1" };
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(5); // Should keep repeating
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(5); // Should keep repeating
 
 	for (int i = 0; i < 15; i++) {
 		script.second->process();
@@ -891,8 +901,8 @@ TEST(TimeSeqProcessorTimelines, ScriptWithTwoRepeatingLanesShouldLoopSeparate) {
 
 	vector<string> emptyTrigger = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillRepeatedly(testing::ReturnRef(emptyTrigger));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(3);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(3);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(3);
 
 	for (int i = 0; i < 15; i++) {
 		script.second->process();
@@ -902,7 +912,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithTwoRepeatingLanesShouldLoopSeparate) {
 	// After a start trigger, the first lane should repeat the same amount again
 	vector<string> startTrigger1 = { "start-1" };
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger1)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(3); // Should stop repeating after 3 times
 
 	for (int i = 0; i < 15; i++) {
 		script.second->process();
@@ -911,7 +921,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithTwoRepeatingLanesShouldLoopSeparate) {
 	// After a start trigger, the second lane should repeat the same amount again
 	vector<string> startTrigger2 = { "start-2" };
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger2)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(3); // Should stop repeating after 3 times
 
 	for (int i = 0; i < 15; i++) {
 		script.second->process();
@@ -920,8 +930,8 @@ TEST(TimeSeqProcessorTimelines, ScriptWithTwoRepeatingLanesShouldLoopSeparate) {
 	// After a start trigger for both, the both lanes should repeat the same amount again
 	vector<string> startTrigger3 = { "start-1", "start-2" };
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(15).WillOnce(testing::ReturnRef(startTrigger3)).WillRepeatedly(testing::ReturnRef(emptyTrigger));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(3); // Should stop repeating after 3 times
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(3); // Should stop repeating after 3 times
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(3); // Should stop repeating after 3 times
 
 	for (int i = 0; i < 15; i++) {
 		script.second->process();
@@ -954,7 +964,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithTwoLoopAndRepeatShouldKeepLooping) {
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(10);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(10);
 
 	for (int i = 0; i < 20; i++) {
 		script.second->process();

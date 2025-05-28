@@ -10,7 +10,7 @@ TEST(TimeSeqProcessorTrigger, TriggerActionShouldTrigger) {
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
-				{ { "trigger", "the-trigger-id" } } 
+				{ { "trigger", "trigger-1" } } 
 			}) } } }) } },
 		}) } }
 	});
@@ -25,7 +25,7 @@ TEST(TimeSeqProcessorTrigger, TriggerActionShouldTrigger) {
 		for (int i = 0; i < 5; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-			EXPECT_CALL(mockTriggerHandler, setTrigger("the-trigger-id"));
+			EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name));
 		}
 	}
 	for (int i = 0; i < 5; i++) {

@@ -21,7 +21,7 @@ struct MockVariableHandler : VariableHandler {
 
 struct MockTriggerHandler : TriggerHandler {
 	MOCK_METHOD(std::vector<std::string>&, getTriggers, (), (override));
-	MOCK_METHOD(void, setTrigger, (std::string), (override));
+	MOCK_METHOD(void, setTrigger, (std::string&), (override));
 };
 
 struct MockSampleRateReader : SampleRateReader {
@@ -54,3 +54,10 @@ static std::string inputVariableName = "input-variable";
 static std::string outputVariableName = "output-variable";
 static std::string inputVariable1 = "input-variable-1";
 static std::string inputVariable2 = "input-variable-2";
+
+static std::string trigger1Name = "trigger-1";
+static std::string trigger2Name = "trigger-2";
+static std::string trigger3Name = "trigger-3";
+static std::string trigger4Name = "trigger-4";
+static std::string trigger5Name = "trigger-5";
+static std::string striggerName = "trigger-name";

@@ -38,11 +38,11 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithNoSampleScaleRateShouldUsePr
 		vector<string> emptyTriggers = {};
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(240).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(540).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 
 	for (int i = 0; i < 240 + 540 + 100; i++) {
@@ -90,11 +90,11 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithTimeScaleWithoutSampleRateSh
 		vector<string> emptyTriggers = {};
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(240).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(540).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 
 	for (int i = 0; i < 240 + 540 + 100; i++) {
@@ -142,11 +142,11 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateSameAsRealSam
 		vector<string> emptyTriggers = {};
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(240).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(540).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 
 	for (int i = 0; i < 240 + 540 + 100; i++) {
@@ -194,11 +194,11 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateDoubleOfRealS
 		vector<string> emptyTriggers = {};
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(240 / 2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(540 / 2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100 / 2).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 
 	for (int i = 0; i < (240 + 540 + 100) / 2; i++) {
@@ -246,18 +246,18 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldLimitD
 		vector<string> emptyTriggers = {};
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(1);
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
-		EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1);
+		EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1);
 	}
 
 	for (int i = 0; i < 6; i++) {
@@ -301,9 +301,9 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldHandle
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3495).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(2330);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(2796);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(1500);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(2330);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(2796);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(1500);
 
 	for (int i = 0; i < 3495; i++) { // Use the least common multiple of the scaled sample rates (1.5, 1.25 and 2.33)
 		script.second->process();

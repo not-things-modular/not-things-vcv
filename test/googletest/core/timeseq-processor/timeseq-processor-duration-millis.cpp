@@ -39,9 +39,9 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithIntegerMillisAndNoPartialSamp
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(69 * 480).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(690);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(69);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(10);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(690);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(69);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(10);
 
 	for (int i = 0; i < 690 * 48; i++) {
 		script.second->process();
@@ -87,9 +87,9 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithIntegerMillisAndPartialSample
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(91287).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(2070);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(230);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(30);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(2070);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(230);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(30);
 
 	for (int i = 0; i < 91287; i++) {
 		script.second->process();
@@ -135,9 +135,9 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithFractionalMillisAndNoPartialS
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(46662 * 48).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(66660);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(4620);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(7070);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(66660);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(4620);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(7070);
 
 	for (int i = 0; i < 46662 * 48; i++) {
 		script.second->process();
@@ -183,9 +183,9 @@ TEST(TimeSeqProcessorDuration, DurationInMillisWithFractionalMillisAndPartialSam
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(3333 * 441).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(66660);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-2")).Times(3300);
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-3")).Times(5050);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(66660);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger2Name)).Times(3300);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger3Name)).Times(5050);
 
 	for (int i = 0; i < 3333 * 441; i++) {
 		script.second->process();
@@ -221,7 +221,7 @@ TEST(TimeSeqProcessorDuration, DurationInMillisShouldNotGoBelowOneSample) {
 
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(100).WillRepeatedly(testing::ReturnRef(emptyTriggers));
-	EXPECT_CALL(mockTriggerHandler, setTrigger("trigger-1")).Times(100);
+	EXPECT_CALL(mockTriggerHandler, setTrigger(trigger1Name)).Times(100);
 
 	for (int i = 0; i < 100; i++) {
 		script.second->process();

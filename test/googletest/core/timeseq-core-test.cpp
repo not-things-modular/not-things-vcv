@@ -485,13 +485,13 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	// Enter some triggers and variables
 	timeSeqCore.setVariable(var1, 1.f);
 	timeSeqCore.setVariable(var2, 2.f);
-	timeSeqCore.setTrigger("trigger-1");
+	timeSeqCore.setTrigger(trigger1Name);
 	timeSeqCore.process(); // A process call will switch "current" and "next" trigger pool
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-1" }));
-	timeSeqCore.setTrigger("trigger-2");
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name }));
+	timeSeqCore.setTrigger(trigger2Name);
 	timeSeqCore.process(); // Another process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2" }));
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name }));
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
 	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
 
@@ -505,7 +505,7 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	// Check that the variables and triggers are still there
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
 	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2" }));
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name }));
 	// And the progress should have been maintained, and continue from where it left off
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
 	timeSeqCore.process();
@@ -551,13 +551,13 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	// Enter some triggers and variables
 	timeSeqCore.setVariable(var1, 1.f);
 	timeSeqCore.setVariable(var2, 2.f);
-	timeSeqCore.setTrigger("trigger-1");
+	timeSeqCore.setTrigger(trigger1Name);
 	timeSeqCore.process(); // A process call will switch "current" and "next" trigger pool
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-1" }));
-	timeSeqCore.setTrigger("trigger-2");
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name }));
+	timeSeqCore.setTrigger(trigger2Name);
 	timeSeqCore.process(); // Another process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2" }));
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name }));
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
 	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
 
@@ -704,20 +704,20 @@ TEST(TimeSeqCore, ProcessShouldAdvanceScriptAndHandleTriggers) {
 		EXPECT_EQ(timeSeqCore.getElapsedSamples(), i + 1);
 	}
 
-	timeSeqCore.setTrigger("trigger-1");
+	timeSeqCore.setTrigger(trigger1Name);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>()); // The trigger gets active after calling the process method.
 	timeSeqCore.process();
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-1" })); // The trigger should have become active now.
-	timeSeqCore.setTrigger("trigger-2");
-	timeSeqCore.setTrigger("trigger-3");
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-1" })); // The trigger gets active after calling the process method.
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name })); // The trigger should have become active now.
+	timeSeqCore.setTrigger(trigger2Name);
+	timeSeqCore.setTrigger(trigger3Name);
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name })); // The trigger gets active after calling the process method.
 	timeSeqCore.process();
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2", "trigger-3" })); // The trigger should have become active now.
-	timeSeqCore.setTrigger("trigger-3");
-	timeSeqCore.setTrigger("trigger-4");
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-2", "trigger-3" })); // The trigger gets active after calling the process method.
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name, trigger3Name })); // The trigger should have become active now.
+	timeSeqCore.setTrigger(trigger3Name);
+	timeSeqCore.setTrigger(trigger4Name);
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name, trigger3Name })); // The trigger gets active after calling the process method.
 	timeSeqCore.process();
-	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ "trigger-3", "trigger-4" })); // The trigger should have become active now.
+	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger3Name, trigger4Name })); // The trigger should have become active now.
 
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 8u);
 

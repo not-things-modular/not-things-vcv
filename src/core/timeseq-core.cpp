@@ -145,7 +145,7 @@ std::vector<std::string>& TimeSeqCore::getTriggers() {
 	return m_triggers[m_triggerIdx];
 }
 
-void TimeSeqCore::setTrigger(std::string name) {
+void TimeSeqCore::setTrigger(std::string& name) {
 	m_triggers[!m_triggerIdx].push_back(name);
 	m_eventListener->triggerTriggered();
 }

@@ -21,7 +21,7 @@ struct VariableHandler {
 
 struct TriggerHandler {
 	virtual std::vector<std::string>& getTriggers() = 0;
-	virtual void setTrigger(std::string name) = 0;
+	virtual void setTrigger(std::string& name) = 0;
 };
 
 struct AssertListener {
@@ -63,7 +63,7 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 	void setVariable(std::string& name, float value) override;
 
 	std::vector<std::string>& getTriggers() override;
-	void setTrigger(std::string name) override;
+	void setTrigger(std::string& name) override;
 
 	uint32_t getCurrentSampleRate();
 	uint32_t getElapsedSamples();
