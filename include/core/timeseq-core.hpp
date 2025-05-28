@@ -40,7 +40,7 @@ struct EventListener {
 };
 
 struct TimeSeqCore : VariableHandler, TriggerHandler {
-	enum Status { EMPTY, IDLE, RUNNING, PAUSED };
+	enum Status { EMPTY, IDLE, RUNNING, PAUSED, LOADING };
 
 	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
 	TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, SampleRateReader* sampleRateReader, EventListener* eventListener);
@@ -51,13 +51,12 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 	void clearScript();
 
 	Status getStatus();
-	bool canProcess();
 
-	void start();
+	void start(int sapmleDelay);
 	void pause();
 	void reset();
 
-	void process();
+	void process(int rate);
 
 	float getVariable(std::string& name) override;
 	void setVariable(std::string& name, float value) override;
@@ -71,6 +70,7 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 
 	nt_private:
 		Status m_status = Status::EMPTY;
+		int m_startSampleDelay = 0;
 		uint32_t m_elapsedSamples = 0;
 		uint32_t m_sampleRate = 48000;
 		uint32_t m_samplesPerHour = 48000 * 60 * 60;
@@ -90,6 +90,8 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 
 		EventListener* m_eventListener;
 		SampleRateReader* m_sampleRateReader;
+
+		void processReset();
 };
 
 }

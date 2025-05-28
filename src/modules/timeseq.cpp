@@ -80,8 +80,7 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 	if (ntTimeSeqStatus) {
 		json_int_t status = json_integer_value(ntTimeSeqStatus);
 		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
-			m_startDelay = 10; // Introduce a 10 sample delay in the processing when a start is received from the data JSON to allow any other setup in the patch to complete.
-			m_timeSeqCore->start();
+			m_timeSeqCore->start(10); // Introduce a 10 sample delay in the processing when a start is received from the data JSON to allow any other setup in the patch to complete.
 		}
 	}
 }
@@ -92,57 +91,46 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		m_timeSeqCore->resetElapsedSamples();
 	}
 
-	// If the core has a script loaded, perform the core processing
-	if (m_timeSeqCore->getStatus() != timeseq::TimeSeqCore::Status::EMPTY) {
-		bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
-		bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
+	bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
+	bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
 
-		// Change the run state if needed
-		if (runTriggered) {
-			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
-			m_runPulse.trigger(0.001f);
-			if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
-				// If the core is running, we should pause it now
-				m_timeSeqCore->pause();
-			} else {
-				// Otherwise (if it is paused or idle), we should start it
-				m_timeSeqCore->start();
-			}
+	// Change the run state if needed
+	if (runTriggered) {
+		m_runPulse.trigger(0.001f);
+		if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
+			// If the core is running, we should pause it now
+			m_timeSeqCore->pause();
+		} else {
+			// Otherwise (if it is paused or idle), we should start it
+			m_timeSeqCore->start(0);
 		}
+	}
 
-		// Perform a reset
-		if (resetTriggered) {
-			lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
-			m_resetPulse.trigger(0.001f);
+	// Perform a reset
+	if (resetTriggered) {
+		lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
+		m_resetPulse.trigger(0.001f);
 
-			m_timeSeqCore->reset();
+		m_timeSeqCore->reset();
+	}
+
+	// Check the rate to see how many process calls should actually be done on the core.
+	int rate = getRate();
+	if (rate < -1) {
+		// We're running at slower-then-real-time, so check the rateDivision if we should advance by one cycle on the core
+		m_rateDivision++;
+		if (m_rateDivision >= -rate) {
+			m_rateDivision = 0;
+			m_timeSeqCore->process(1);
 		}
-
-		if (m_startDelay > 0) {
-			// We're still right after the load of a start, so wait another cycle before actually processing
-			m_startDelay--;
-		} else if (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING) {
-			// Check the rate to see how many process calls should actually be done on the core.
-			int rate = getRate();
-			if (rate < -1) {
-				// We're running at slower-then-real-time, so check the rateDivision if we should advance by one cycle on the core
-				m_rateDivision++;
-				if (m_rateDivision >= -rate) {
-					m_rateDivision = 0;
-					m_timeSeqCore->process();
-				}
-			} else if (rate > 1) {
-				// We're going faster-then-real-time, so advance the core with multiple cycles.
-				m_rateDivision = 0;
-				for (int i = 0; i < rate; i++) {
-					m_timeSeqCore->process();
-				}
-			} else {
-				// anything from -1 to 1 is considered real-time, so advance a single cycle.
-				m_rateDivision = 0;
-				m_timeSeqCore->process();
-			}
-		}
+	} else if (rate > 1) {
+		// We're going faster-then-real-time, so advance the core with multiple cycles.
+		m_rateDivision = 0;
+		m_timeSeqCore->process(rate);
+	} else {
+		// anything from -1 to 1 is considered real-time, so advance a single cycle.
+		m_rateDivision = 0;
+		m_timeSeqCore->process(1);
 	}
 
 	// Check if we should update the UI visualization of the changed voltages in this cycle
@@ -199,13 +187,14 @@ void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateCh
 	if (sampleRateChangeEvent.sampleRate != m_timeSeqCore->getCurrentSampleRate()) {
 		// Reload the script to recalculate based on the new sample rate and reset the UI
 		m_timeSeqCore->reloadScript();
-
+		// Recalculate how many samples to leave between updates of the voltage display (to get 30fps)
 		m_portChannelChangeClockDivider.setDivision(sampleRateChangeEvent.sampleRate / 30);
 	}
 }
 
 void TimeSeqModule::onRemove(const RemoveEvent& e) {
 	m_timeSeqDisplay = nullptr;
+	m_ledDisplay = nullptr;
 }
 
 float TimeSeqModule::getInputPortVoltage(int index, int channel) {
@@ -268,7 +257,6 @@ void TimeSeqModule::assertFailed(std::string name, std::string message, bool sto
 
 	// If it's an assert that also stops the running state, do so now.
 	if ((stop) && (m_timeSeqCore->getStatus() == timeseq::TimeSeqCore::Status::RUNNING)) {
-		m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
 		m_timeSeqCore->pause();
 	}
 }
@@ -278,20 +266,12 @@ std::shared_ptr<std::string> TimeSeqModule::getScript() {
 }
 
 std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
-	timeseq::TimeSeqCore::Status status = m_timeSeqCore->getStatus();
 	std::vector<timeseq::ValidationError> errors = m_timeSeqCore->loadScript(*script);
 
 	m_lastScriptLoadErrors.clear();
 	if (errors.size() == 0) {
 		setDisplayScriptError(false);
 		m_script = script;
-		m_timeSeqCore->reset();
-		// If we were running before the script was loaded, start running the new script
-		if (status == timeseq::TimeSeqCore::Status::RUNNING) {
-			m_startDelay = 0; // If there was a start delay from the loading of JSON data, we can reset that now.
-			m_timeSeqCore->start();
-			m_runPulse.trigger(0.001f);
-		}
 		return std::string();
 	} else {
 		std::ostringstream errorMessage;
@@ -461,6 +441,7 @@ void TimeSeqWidget::onRemove(const RemoveEvent& e) {
 	if (module != nullptr) {
 		TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(module);
 		timeSeqModule->setTimeSeqDisplay(nullptr);
+		timeSeqModule->setLEDDisplay(nullptr);
 	}
 }
 
@@ -531,7 +512,7 @@ void TimeSeqWidget::pasteScript() {
 	const char* clipboardString = glfwGetClipboardString(APP->window->win);
 	if (clipboardString) {
 		// If a script is already loaded, first confirm if it should be replaced.
-		if ((!hasScript()) || (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, "A script is already loaded. Are you sure you want to replace it?") == 1)) {
+		// if ((!hasScript()) || (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, "A script is already loaded. Are you sure you want to replace it?") == 1)) {
 			std::string json = clipboardString;
 			TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
 			if (timeSeqModule != nullptr) {
@@ -552,7 +533,7 @@ void TimeSeqWidget::pasteScript() {
 					APP->history->push(h);
 				}
 			}
-		}
+		// }
 	}
 }
 

@@ -51,7 +51,6 @@ TEST(TimeSeqCore, LoadScriptWithInvalidJsonScriptShouldHandleValidationErrors) {
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 
 	EXPECT_EQ(resultValidationErrors, returningValidationErrors);
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -68,7 +67,6 @@ TEST(TimeSeqCore, LoadScriptShouldNotLoadProcessorIfThereIsNoScript) {
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -94,7 +92,6 @@ TEST(TimeSeqCore, LoadScriptShouldNotLoadProcessorOnInvalidProcessorScript) {
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 
 	EXPECT_EQ(resultValidationErrors, returningValidationErrors);
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -120,7 +117,6 @@ TEST(TimeSeqCore, LoadScriptShouldNotLoadProcessorWhenNoProcessorParsed) {
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -144,7 +140,6 @@ TEST(TimeSeqCore, LoadScriptShouldInitializeIdleOnInitialScriptLoad) {
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
@@ -179,18 +174,16 @@ TEST(TimeSeqCore, LoadScriptShouldReplaceExistingScriptOnNewSuccesfulLoad) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	// The core should have become idle again
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script2);
@@ -243,19 +236,17 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core so we can verify that it keeps running
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 
 	// Check failure scenario (1)
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors, returningValidationErrors1);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
@@ -264,7 +255,6 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 	// Check failure scenario (2)
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
@@ -273,7 +263,6 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 	// Check failure scenario (3)
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors, returningValidationErrors2);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
@@ -282,7 +271,6 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 	// Check failure scenario (4)
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
@@ -291,7 +279,6 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 	// And make sure that a valid script can still be loaded
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	// The core should have become idle again
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script2);
@@ -303,14 +290,12 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 TEST(TimeSeqCore, ReloadScriptShouldDoNothingWhenNoScriptIsLoaded) {
 	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, nullptr);
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
 
 	timeSeqCore.reloadScript();
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -341,17 +326,15 @@ TEST(TimeSeqCore, ReloadScriptShouldReloadProcessorFromCurrentScript) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 
 	timeSeqCore.reloadScript();
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	// The core should have become idle again
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
@@ -364,14 +347,12 @@ TEST(TimeSeqCore, ClearScriptShouldDoNothingWhenNoScriptIsLoaded) {
 	testing::NiceMock<MockEventListener> mockEventListener;
 	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, &mockEventListener);
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
 
 	timeSeqCore.clearScript();
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -398,13 +379,12 @@ TEST(TimeSeqCore, PauseScriptShouldPauseWhenScriptLoaded) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 
 	timeSeqCore.pause();
@@ -417,14 +397,12 @@ TEST(TimeSeqCore, PauseScriptShouldPauseWhenScriptLoaded) {
 TEST(TimeSeqCore, PauseScriptShouldDoNothingWhenNoScriptIsLoaded) {
 	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, nullptr);
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
 
 	timeSeqCore.pause();
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -433,14 +411,12 @@ TEST(TimeSeqCore, PauseScriptShouldDoNothingWhenNoScriptIsLoaded) {
 TEST(TimeSeqCore, StartScriptShouldDoNothingWhenNoScriptIsLoaded) {
 	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, nullptr);
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
 
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
@@ -467,18 +443,17 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 
 	// Let the script make some progress
 	for (int i = 0; i < 5; i++) {
-		timeSeqCore.process();
+		timeSeqCore.process(1);
 	}
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 5u);
 
@@ -486,17 +461,17 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	timeSeqCore.setVariable(var1, 1.f);
 	timeSeqCore.setVariable(var2, 2.f);
 	timeSeqCore.setTrigger(trigger1Name);
-	timeSeqCore.process(); // A process call will switch "current" and "next" trigger pool
+	timeSeqCore.process(1); // A process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name }));
 	timeSeqCore.setTrigger(trigger2Name);
-	timeSeqCore.process(); // Another process call will switch "current" and "next" trigger pool
+	timeSeqCore.process(1); // Another process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name }));
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
 	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
 
 	// Start the core again
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
@@ -508,7 +483,7 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name }));
 	// And the progress should have been maintained, and continue from where it left off
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
-	timeSeqCore.process();
+	timeSeqCore.process(1);
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 8u);
 }
 
@@ -533,18 +508,17 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 
 	// Let the script make some progress
 	for (int i = 0; i < 5; i++) {
-		timeSeqCore.process();
+		timeSeqCore.process(1);
 	}
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 5u);
 
@@ -552,10 +526,10 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	timeSeqCore.setVariable(var1, 1.f);
 	timeSeqCore.setVariable(var2, 2.f);
 	timeSeqCore.setTrigger(trigger1Name);
-	timeSeqCore.process(); // A process call will switch "current" and "next" trigger pool
+	timeSeqCore.process(1); // A process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name }));
 	timeSeqCore.setTrigger(trigger2Name);
-	timeSeqCore.process(); // Another process call will switch "current" and "next" trigger pool
+	timeSeqCore.process(1); // Another process call will switch "current" and "next" trigger pool
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 7u);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name }));
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
@@ -580,7 +554,7 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({}));
 	// Progress should start again from the beginning
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
-	timeSeqCore.process();
+	timeSeqCore.process(1);
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 1u);
 }
 
@@ -644,12 +618,10 @@ TEST(TimeSeqCore, SetVariableShouldUpdateVariable) {
 TEST(TimeSeqCore, ProcessShouldDoNothingWhenNoScriptLoaded) {
 	TimeSeqCore timeSeqCore(nullptr, nullptr, nullptr, nullptr);
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
 
-	timeSeqCore.process();
+	timeSeqCore.process(1);
 
-	EXPECT_FALSE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
 }
 
@@ -674,13 +646,12 @@ TEST(TimeSeqCore, ProcessShouldAdvanceScriptAndHandleTriggers) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_TRUE(timeSeqCore.canProcess());
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core
-	timeSeqCore.start();
+	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
 
@@ -700,30 +671,30 @@ TEST(TimeSeqCore, ProcessShouldAdvanceScriptAndHandleTriggers) {
 	}
 
 	for (unsigned int i = 0; i < 5; i++) {
-		timeSeqCore.process();
+		timeSeqCore.process(1);
 		EXPECT_EQ(timeSeqCore.getElapsedSamples(), i + 1);
 	}
 
 	timeSeqCore.setTrigger(trigger1Name);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>()); // The trigger gets active after calling the process method.
-	timeSeqCore.process();
+	timeSeqCore.process(1);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name })); // The trigger should have become active now.
 	timeSeqCore.setTrigger(trigger2Name);
 	timeSeqCore.setTrigger(trigger3Name);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger1Name })); // The trigger gets active after calling the process method.
-	timeSeqCore.process();
+	timeSeqCore.process(1);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name, trigger3Name })); // The trigger should have become active now.
 	timeSeqCore.setTrigger(trigger3Name);
 	timeSeqCore.setTrigger(trigger4Name);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger2Name, trigger3Name })); // The trigger gets active after calling the process method.
-	timeSeqCore.process();
+	timeSeqCore.process(1);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({ trigger3Name, trigger4Name })); // The trigger should have become active now.
 
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 8u);
 
 	// The triggers should be cleared now
 	for (unsigned int i = 0; i < 5; i++)  {
-		timeSeqCore.process();
+		timeSeqCore.process(1);
 		EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>());
 		EXPECT_EQ(timeSeqCore.getElapsedSamples(), 9 + i);
 	}
@@ -750,7 +721,7 @@ TEST(TimeSeqCore, ElapsedSamplesShouldLoopOnHourBoundary) {
 	for (int i = 0; i < 10; i++) {
 		for (unsigned int j = 0; j < 12 * 60 * 60; j++) {
 			ASSERT_EQ(timeSeqCore.getElapsedSamples(), j);
-			timeSeqCore.process();
+			timeSeqCore.process(1);
 		}
 	}
 }
