@@ -583,13 +583,14 @@ bool LaneProcessor::process() {
 				break;
 			}
 			case DurationProcessor::DurationState::STATE_END: {
-				// The active segment is finished, so reset it and move to the next segment
-				(*segment)->reset();
+				// The active segment is finished, so move to the next segment
 				m_activeSegment++;
 				segment++;
 
 				// Check that we haven't reached the end of the segment list
 				if (segment != m_segments.end()) {
+					// Reset the newly activated segment so it is at its start position (e.g. if a reset occurred)
+					(*segment)->reset();
 					// Invoke process on the newly activated segment.
 					m_drift = (*segment)->process(m_drift);
 				} else {
@@ -613,6 +614,11 @@ void LaneProcessor::loop() {
 			m_activeSegment = 0;
 			m_state = LaneState::STATE_PROCESSING;
 
+			// If there is a first segment, make sure it is at its starting position
+			if (m_segments.size() > 0) {
+				m_segments[0]->reset();
+			}
+
 			if (!m_scriptLane->disableUi) {
 				m_eventListener->laneLooped();
 			}
@@ -627,6 +633,7 @@ void LaneProcessor::reset() {
 	m_activeSegment = 0;
 	m_drift = 0.;
 
+	// If there is a first segment, make sure it is at its starting position
 	if (m_segments.size() > 0) {
 		m_segments[0]->reset();
 	}
