@@ -26,6 +26,7 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
           * [set-variable](#set-variable) - Set an internal variable
             * [value](#value) - Evaluates to a voltage
           * [set-polyphony](#set-polyphony) - Sets the number of channels on an output port
+          * [set-label](#set-label) - Sets the tooltip label of an output port
           * [assert](#assert) - Allows TimeSeq to be used as a test tool for other modules
             * expect ([if](#if)) - A condition that can trigger an assert
           * `trigger` - Fire an internal trigger
@@ -763,14 +764,43 @@ When changing the number of channels on an output port, the voltages that were p
 
 ### Example
 
-An example of a set-value within an action:
+An example of a set-polyphony within an action:
 
 ```json
 {
     "timing": "start",
-    "set-value": {
-        "value": { "voltage": 3.14 },
-        "variable": "a-piece-of-pi"
+    "set-polyphony": {
+        "index": 3,
+        "channels": 12
+    }
+}
+```
+
+## set-label
+
+The *set-label* is used within an [action](#action) to update label of the output port in the tooltip when moving the mouse over it. This is a purely aesthetic action to allow easier identification of output ports in the VCV Rack UI. Since setting the label of an output port in VCV Rack requires memory allocations (i.e. has a minor performance overhead), this action should not be executed repeatedly in a script. This action is intended to be used during script setup (e.g. in the *global-actions* of the [script](#script) element).
+
+The port on which the label should be updated is determined by the `index` property. The `label` property should contain the value to use.
+
+The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8`
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `index` | yes | unsigned number [1-8] | The output port on which the label should be updated. |
+| `label`| yes | string | The label to assign to the output port. |
+
+### Example
+
+An example of a set-label within an action:
+
+```json
+{
+    "timing": "start",
+    "set-label": {
+        "index": 5,
+        "label": "My Fifth Script Output"
     }
 }
 ```

@@ -203,6 +203,21 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectSetPolyphony) {
 	expectError(validationErrors, ValidationErrorCode::Action_SetPolyphonyObject, "/component-pool/actions/0");
 }
 
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectSetLabel) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", "not-an-object" } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Action_SetLabelObject, "/component-pool/actions/0");
+}
+
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectAssert) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -666,6 +681,140 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetPolyphony) {
 		ASSERT_TRUE(script->actions[i].setPolyphony);
 		ASSERT_EQ(script->actions[i].setPolyphony->channels, 16 - i);
 		ASSERT_EQ(script->actions[i].setPolyphony->index, (i / 2) + 1);
+	}
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetLabelIndex) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "label", "the-label" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SetLabel_IndexNumber, "/component-pool/actions/0/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonNumericSetLabelIndex) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "index", "not-a-number" }, { "label", "the-label" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SetLabel_IndexNumber, "/component-pool/actions/0/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetLabelIndexOutOfRange) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "index", 0 }, { "label", "the-label-1" } } } },
+			{ { "id", "action-2" }, { "set-label", { { "index", 9 }, { "label", "the-label-2" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::SetLabel_IndexRange, "/component-pool/actions/0/set-label");
+	expectError(validationErrors, ValidationErrorCode::SetLabel_IndexRange, "/component-pool/actions/1/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonIntegerLabelIndex) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "index", 1.1 }, { "label", "the-label" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SetLabel_IndexNumber, "/component-pool/actions/0/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetLabelLabel) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "index", 1 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SetLabel_LabelString, "/component-pool/actions/0/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonNumericSetLabelLabel) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "label", 3 }, { "index", 1 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SetLabel_LabelString, "/component-pool/actions/0/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetLabelEmptyLabel) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "label", "" }, { "index", 1 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SetLabel_LabelLength, "/component-pool/actions/0/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetLabel) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "index", 8 }, { "label", "label-8" } } } },
+			{ { "id", "action-2" }, { "set-label", { { "index", 7 }, { "label", "label-7" } } } },
+			{ { "id", "action-3" }, { "set-label", { { "index", 6 }, { "label", "label-6" } } } },
+			{ { "id", "action-4" }, { "set-label", { { "index", 5 }, { "label", "label-5" } } } },
+			{ { "id", "action-5" }, { "set-label", { { "index", 4 }, { "label", "label-4" } } } },
+			{ { "id", "action-6" }, { "set-label", { { "index", 3 }, { "label", "label-3" } } } },
+			{ { "id", "action-7" }, { "set-label", { { "index", 2 }, { "label", "label-2" } } } },
+			{ { "id", "action-8" }, { "set-label", { { "index", 1 }, { "label", "label-1" } } } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->actions.size(), 8u);
+	for (int i = 0; i < 8; i++) {
+		ASSERT_TRUE(script->actions[i].setLabel);
+		ASSERT_EQ(script->actions[i].setLabel->index, 8 - i);
+		ASSERT_EQ(script->actions[i].setLabel->label, "label-" + to_string(8 - i));
 	}
 }
 
