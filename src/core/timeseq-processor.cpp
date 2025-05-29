@@ -291,6 +291,12 @@ void ActionSetPolyphonyProcessor::processAction() {
 	m_portHandler->setOutputPortChannels(m_outputPort, m_channelCount);
 }
 
+ActionSetLabelProcessor::ActionSetLabelProcessor(int outputPort, string label, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_outputPort(outputPort), m_label(label), m_portHandler(portHandler) {}
+
+void ActionSetLabelProcessor::processAction() {
+	m_portHandler->setOutputPortLabel(m_outputPort, m_label);
+}
+
 ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
 
 void ActionAssertProcessor::processAction() {

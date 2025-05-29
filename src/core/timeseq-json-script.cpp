@@ -797,7 +797,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, std::ve
 }
 
 ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
-	static const char* cActionProperties[] = { "timing", "set-value", "set-variable", "set-polyphony", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" };
+	static const char* cActionProperties[] = { "timing", "set-value", "set-variable", "set-polyphony", "set-label", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" };
 	static const vector<string> vActionProperties(begin(cActionProperties), end(cActionProperties));
 	ScriptAction action;
 
@@ -864,6 +864,19 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_SetPolyphonyObject, "'set-polyphony' must be an object.");
+			}
+		}
+
+		json::const_iterator setLabel = actionJson.find("set-label");
+		if (setLabel != actionJson.end()) {
+			actionCount++;
+			if (setLabel->is_object()) {
+				location.push_back("set-label");
+				ScriptSetLabel *scriptSetLabel = new ScriptSetLabel(parseSetLabel(*setLabel, validationErrors, location));
+				action.setLabel.reset(scriptSetLabel);
+				location.pop_back();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_SetLabelObject, "'set-label' must be an object.");
 			}
 		}
 
@@ -975,8 +988,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		}
 
 		if (action.timing == ScriptAction::ActionTiming::GLIDE) {
-			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.assert) || (action.trigger.size() > 0) || (action.gateHighRatio)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert', 'trigger' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
+			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.gateHighRatio)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.startValue) || (!action.endValue)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when 'GLIDE' timing is used.");
@@ -988,8 +1001,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when 'GLIDE' timing is used.");
 			}
 		} else if (action.timing == ScriptAction::ActionTiming::GATE) {
-			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.assert) || (action.trigger.size() > 0) || (action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert', 'trigger', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
+			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
 			}
 			if (!action.output) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GateOutput, "'output' must be present when 'GATE' timing is used.");
@@ -1004,13 +1017,13 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if ((action.output) || (action.variable.length() > 0)) {
 				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
 			}
-			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.assert) && (action.trigger.size() == 0)) {
+			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.setLabel) && (!action.assert) && (action.trigger.size() == 0)) {
 				std::string timingStr = timing != actionJson.end() ? *timing : "start";
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'assert' or 'trigger' must be present for '", timingStr.c_str(), "' timing.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert' or 'trigger' must be present for '", timingStr.c_str(), "' timing.");
 			}
 			if (actionCount > 1) {
 				std::string timingStr = timing != actionJson.end() ? *timing : "start";
-				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'assert' or 'trigger' can be used in the same '", timingStr.c_str(), "' action.");
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert' or 'trigger' can be used in the same '", timingStr.c_str(), "' action.");
 			}
 		}
 	}
@@ -1269,6 +1282,35 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 	}
 
 	return setPolyphony;
+}
+
+ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> setLabelProperties = { "index", "label" };
+	ScriptSetLabel setLabel;
+
+	verifyAllowedProperties(setLabelJson, setLabelProperties, false, validationErrors, location);
+
+	json::const_iterator index = setLabelJson.find("index");
+	if ((index != setLabelJson.end()) && (index->is_number_unsigned())) {
+		setLabel.index = index->get<int>();
+		if ((setLabel.index < 1) || (setLabel.index > 8)) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetLabel_IndexRange, "'index' must be a number between 1 and 8.");
+		}
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetLabel_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+	}
+
+	json::const_iterator label = setLabelJson.find("label");
+	if ((label != setLabelJson.end()) && (label->is_string())) {
+		setLabel.label = label->get<string>();
+		if (setLabel.label.size() == 0) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetLabel_LabelLength, "'label' can not be an empty string.");
+		}
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::SetLabel_LabelString, "'label' must be a non-empty string.");
+	}
+
+	return setLabel;
 }
 
 ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {

@@ -29,7 +29,9 @@ TEST(TimeSeqProcessorAssertAction, AssertActionWithNoStopOnFailShouldStopOnFail)
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-	EXPECT_CALL(mockAssertListener, assertFailed("the-assert", "(1 eq 0)", true)).Times(1);
+	string name = "the-assert";
+	string message = "(1 eq 0)";
+	EXPECT_CALL(mockAssertListener, assertFailed(name, message, true)).Times(1);
 
 	script.second->process();
 }
@@ -68,7 +70,9 @@ TEST(TimeSeqProcessorAssertAction, AssertActionShouldUseRefIf) {
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-	EXPECT_CALL(mockAssertListener, assertFailed("the-assert", "(1 eq 0)", true)).Times(1);
+	string name = "the-assert";
+	string message = "(1 eq 0)";
+	EXPECT_CALL(mockAssertListener, assertFailed(name, message, true)).Times(1);
 
 	script.second->process();
 }
@@ -173,7 +177,9 @@ TEST(TimeSeqProcessorAssertAction, AssertActionWithStopOnFailShouldStopOnFail) {
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-	EXPECT_CALL(mockAssertListener, assertFailed("the-assert", "(1 eq 0)", true)).Times(1);
+	string name = "the-assert";
+	string message = "(1 eq 0)";
+	EXPECT_CALL(mockAssertListener, assertFailed(name, message, true)).Times(1);
 
 	script.second->process();
 }
@@ -207,7 +213,9 @@ TEST(TimeSeqProcessorAssertAction, AssertActionWithStopOnFailFalseShouldNotStopO
 	vector<string> emptyTriggers = {};
 	EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
-	EXPECT_CALL(mockAssertListener, assertFailed("the-assert", "(1 eq 0)", false)).Times(1);
+	string name = "the-assert";
+	string message = "(1 eq 0)";
+	EXPECT_CALL(mockAssertListener, assertFailed(name, message, false)).Times(1);
 
 	script.second->process();
 }

@@ -122,6 +122,11 @@ struct ScriptSetPolyphony {
 	int channels;
 };
 
+struct ScriptSetLabel {
+	int index;
+	std::string label;
+};
+
 struct ScriptIf : ScriptRefObject {
 	enum IfOperator {EQ, NE, LT, LTE, GT, GTE, AND, OR };
 
@@ -149,6 +154,7 @@ struct ScriptAction : ScriptRefObject {
 	std::unique_ptr<ScriptSetValue> setValue;
 	std::unique_ptr<ScriptSetVariable> setVariable;
 	std::unique_ptr<ScriptSetPolyphony> setPolyphony;
+	std::unique_ptr<ScriptSetLabel> setLabel;
 	std::unique_ptr<ScriptAssert> assert;
 	std::string trigger;
 

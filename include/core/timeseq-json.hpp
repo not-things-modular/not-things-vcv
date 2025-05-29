@@ -24,6 +24,7 @@ struct JsonScriptParser {
 	ScriptSetValue parseSetValue(const json& setValueJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptSetVariable parseSetVariable(const json& setVariableJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptSetPolyphony parseSetPolyphony(const json& setPolyphonyJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	ScriptSetLabel parseSetLabel(const json& setLabelJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptAssert parseAssert(const json& assertJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	ScriptValue parseValue(const json& valueJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
 	ScriptValue parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);

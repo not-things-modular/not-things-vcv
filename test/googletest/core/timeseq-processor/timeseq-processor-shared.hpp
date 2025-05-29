@@ -12,6 +12,7 @@ struct MockPortHandler : PortHandler {
 	MOCK_METHOD(float, getOutputPortVoltage, (int, int), (override));
 	MOCK_METHOD(void, setOutputPortVoltage, (int, int, float), (override));
 	MOCK_METHOD(void, setOutputPortChannels, (int, int), (override));
+	MOCK_METHOD(void, setOutputPortLabel, (int, std::string&), (override));
 };
 
 struct MockVariableHandler : VariableHandler {
@@ -36,7 +37,7 @@ struct MockEventListener : EventListener {
 };
 
 struct MockAssertListener : AssertListener {
-	MOCK_METHOD(void, assertFailed, (std::string, std::string, bool), (override));
+	MOCK_METHOD(void, assertFailed, (std::string&, std::string&, bool), (override));
 };
 
 struct MockRandValueGenerator : RandValueGenerator {

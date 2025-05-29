@@ -402,6 +402,10 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(Processor
 		location.push_back("set-polyphony");
 		actionProcessor = parseSetPolyphonyAction(context, scriptAction, ifProcessor, location);
 		location.pop_back();
+	} else if (scriptAction->setLabel) {
+		location.push_back("set-label");
+		actionProcessor = parseSetLabelAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
 	} else if (scriptAction->assert) {
 		location.push_back("assert");
 		actionProcessor = parseAssertAction(context, scriptAction, ifProcessor, location);
@@ -507,6 +511,11 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Proces
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
 	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor));
+}
+
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+	ScriptSetLabel* scriptSetLabel = scriptAction->setLabel.get();
+	return shared_ptr<ActionProcessor>(new ActionSetLabelProcessor(scriptSetLabel->index - 1, scriptSetLabel->label, m_portHandler, ifProcessor));
 }
 
 std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location) {

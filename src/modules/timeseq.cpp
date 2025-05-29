@@ -13,7 +13,6 @@ TimeSeqModule::TimeSeqModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {
 		configInput(IN_INPUTS + i, string::f("Input %d", i + 1));
-		configOutput(OUT_OUTPUTS + i, string::f("Output %d", i + 1));
 	}
 
 	configInput(IN_RUN, "Run");
@@ -228,6 +227,10 @@ void TimeSeqModule::setOutputPortChannels(int index, int channels) {
 	}
 }
 
+void TimeSeqModule::setOutputPortLabel(int index, std::string& label) {
+	configOutput(OUT_OUTPUTS + index, label);
+}
+
 void TimeSeqModule::laneLooped() {
 	m_laneLooped = true;
 }
@@ -244,7 +247,7 @@ void TimeSeqModule::scriptReset() {
 	resetUi();
 }
 
-void TimeSeqModule::assertFailed(std::string name, std::string message, bool stop) {
+void TimeSeqModule::assertFailed(std::string& name, std::string& message, bool stop) {
 	// Update the display (if needed)
 	if (m_timeSeqDisplay != nullptr) {
 		m_timeSeqDisplay->setAssert(true);
@@ -310,6 +313,9 @@ void TimeSeqModule::resetOutputs() {
 	}
 	m_outputChannels.fill(1);
 	updateOutputs();
+	for (int i = 0; i < 8; i++) {
+		configOutput(OUT_OUTPUTS + i, string::f("Output %d", i + 1));
+	}
 }
 
 void TimeSeqModule::updateOutputs() {

@@ -181,6 +181,17 @@ struct ActionSetPolyphonyProcessor : ActionProcessor {
 		PortHandler* m_portHandler;
 };
 
+struct ActionSetLabelProcessor : ActionProcessor {
+	ActionSetLabelProcessor(int outputPort, std::string label, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
+
+	void processAction() override;
+
+	nt_private:
+		int m_outputPort;
+		std::string m_label;
+		PortHandler* m_portHandler;
+};
+
 struct ActionAssertProcessor : ActionProcessor {
 	ActionAssertProcessor(std::string name, std::shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, std::shared_ptr<IfProcessor> ifProcessor);
 
@@ -422,6 +433,7 @@ struct ProcessorScriptParser {
 	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseSetLabelAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::string> location, std::vector<std::string> valueStack);

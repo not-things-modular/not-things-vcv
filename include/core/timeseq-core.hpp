@@ -12,6 +12,8 @@ struct PortHandler {
 
 	virtual void setOutputPortVoltage(int index, int channel, float voltage) = 0;
 	virtual void setOutputPortChannels(int index, int channels) = 0;
+
+	virtual void setOutputPortLabel(int index, std::string& label) = 0;
 };
 
 struct VariableHandler {
@@ -25,7 +27,7 @@ struct TriggerHandler {
 };
 
 struct AssertListener {
-	virtual void assertFailed(std::string name, std::string message, bool stop) = 0;
+	virtual void assertFailed(std::string& name, std::string& message, bool stop) = 0;
 };
 
 struct SampleRateReader {
