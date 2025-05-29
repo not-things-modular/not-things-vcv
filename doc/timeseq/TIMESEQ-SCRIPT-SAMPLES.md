@@ -12,6 +12,7 @@ While each of the samples demonstrates separate pieces of functionality, the fac
 
 * [Building a Chord and Note Sequence](#building-a-chord-and-note-sequence)
 * [Creating Clock Signals](#creating-clock-signals)
+* [Sample and Hold](#sample-and-hold)
 * [A Bernoulli Gate](#a-bernoulli-gate)
 * [Oscillator](#oscillator)
 
@@ -37,7 +38,7 @@ The [clock](samples/CLOCK.md) script demonstrates the usage of TimeSeq as a cloc
 
 ## Sample and Hold
 
-The [Sample and Hold](samples/SAMPLE-AND-HOLD.md) script demonstrates how S&H functionality can be made in TimeSeq, starting from a basic multi-port Sample and Hold, and extending it with internal voltages, calculations and timings. This script demonstrates:
+The [sample and hold](samples/SAMPLE-AND-HOLD.md) script demonstrates how S&H functionality can be made in TimeSeq, starting from a basic multi-port Sample and Hold, and extending it with internal voltages, calculations and timings. This script demonstrates:
 
 * Defining reusable input and output definitions
 * Using input triggers and input voltages
@@ -48,12 +49,12 @@ The [Sample and Hold](samples/SAMPLE-AND-HOLD.md) script demonstrates how S&H fu
 
 ## A Bernoulli Gate
 
-The [Bernoulli Gate](samples/BERNOULLI.md) sample demonstrates how TimeSeq can be used to reproduce the functionality of the Bernoulli Gate (i.e. Mutable Instruments Branches) module. It is not intended to replace the Bernoulli Gate, but instead a demonstration of how the logic processing of TimeSeq can be used for more then just sequence generation.
+The [bernoulli gate](samples/BERNOULLI.md) sample demonstrates how TimeSeq can be used to reproduce the functionality of the Bernoulli Gate (i.e. Mutable Instruments Branches) module. It is not intended to replace the Bernoulli Gate, but instead a demonstration of how the logic processing of TimeSeq can be used for more then just sequence generation.
 
 The sample will start with a simplified version of the Bernoulli Gate, and then extend this functionality to the full version.
 
 ## Oscillator
 
-The [Oscillator](samples/OSCILLATOR.md) sample will set up a script that causes TimeSeq to generate several types of waveforms (square, sawtooth, triangle and Sine-like) that all produce a C3 note. Just like the [Bernoulli Gate](#a-bernoulli-gate) sample, this sample is not intended to demonstrate how TimeSeq can replace an Oscillator, but instead is intended to show what can be done. In this case, it also provides an opportunity to show different aspects of the *glide* actions.
+The [oscillator](samples/OSCILLATOR.md) sample will set up a script that causes TimeSeq to generate several types of waveforms (square, sawtooth, triangle and Sine-like) that all produce a C3 note. Just like the [bernoulli gate](#a-bernoulli-gate) sample, this sample is not intended to demonstrate how TimeSeq can replace an Oscillator, but instead is intended to show what can be done. In this case, it also provides an opportunity to show different aspects of the *glide* actions.
 
 As a bonus, this sample also throws in a random voltage generator output.
