@@ -122,7 +122,7 @@ TEST(TimeSeqCore, LoadScriptShouldNotLoadProcessorWhenNoProcessorParsed) {
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
 }
 
-TEST(TimeSeqCore, LoadScriptShouldInitializeIdleOnInitialScriptLoad) {
+TEST(TimeSeqCore, LoadScriptShouldInitializeLoadingOnInitialScriptLoad) {
 	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
 	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
 	MockSampleRateReader mockSampleRateReader;
@@ -139,12 +139,18 @@ TEST(TimeSeqCore, LoadScriptShouldInitializeIdleOnInitialScriptLoad) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 
+	EXPECT_CALL(mockEventListener, scriptReset()).Times(0);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	// The current sample rate should have been captured in the core
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
+
+	// Doing one processing cycle should set the processing state to paused and trigger a reset
+	EXPECT_CALL(mockEventListener, scriptReset()).Times(1);
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::PAUSED);
 }
 
 TEST(TimeSeqCore, LoadScriptShouldReplaceExistingScriptOnNewSuccesfulLoad) {
@@ -172,12 +178,17 @@ TEST(TimeSeqCore, LoadScriptShouldReplaceExistingScriptOnNewSuccesfulLoad) {
 		EXPECT_CALL(mockSampleRateReader, getSampleRate()).Times(1).WillOnce(testing::Return(69));
 	}
 
+	EXPECT_CALL(mockEventListener, scriptReset()).Times(0);
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
+	// Perform one processing cycle to complete the load
+	EXPECT_CALL(mockEventListener, scriptReset()).Times(1);
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::PAUSED);
 	// Start the core
 	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
@@ -185,9 +196,13 @@ TEST(TimeSeqCore, LoadScriptShouldReplaceExistingScriptOnNewSuccesfulLoad) {
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
 	// The core should have become idle again
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script2);
 	EXPECT_EQ(timeSeqCore.m_processor, processor2);
+	// Perform one processing cycle to complete the load
+	EXPECT_CALL(mockEventListener, scriptReset()).Times(1); // Another reset should happen
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::PAUSED);
 	// The current sample rate should have been re-captured in the core
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 69u);
 }
@@ -224,7 +239,7 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 		EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script1));
 		EXPECT_CALL(*mockProcessorLoader, loadScript).Times(1).WillOnce(AddValidationErrorAndReturnEmptyProcessor(returningValidationErrors2[0]));
 
-		// (4) Finally fail with an processor
+		// (4) Finally fail with a processor
 		EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script1));
 		EXPECT_CALL(*mockProcessorLoader, loadScript).Times(1).WillOnce(testing::Return(nullptr));
 
@@ -236,11 +251,13 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
 	// Start the core so we can verify that it keeps running
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::PAUSED);
 	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 
@@ -280,11 +297,14 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
 	// The core should have become idle again
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script2);
 	EXPECT_EQ(timeSeqCore.m_processor, processor2);
 	// The current sample rate should have been re-captured in the core
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 69u);
+	// And the core should become paused after one cycle
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::PAUSED);
 }
 
 TEST(TimeSeqCore, ReloadScriptShouldDoNothingWhenNoScriptIsLoaded) {
@@ -326,7 +346,7 @@ TEST(TimeSeqCore, ReloadScriptShouldReloadProcessorFromCurrentScript) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
@@ -336,11 +356,14 @@ TEST(TimeSeqCore, ReloadScriptShouldReloadProcessorFromCurrentScript) {
 
 	timeSeqCore.reloadScript();
 	// The core should have become idle again
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor2);
 	// The current sample rate should have been re-captured in the core
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 69u);
+	// One cycle should move the state to paused
+	timeSeqCore.process(0);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::PAUSED);
 }
 
 TEST(TimeSeqCore, ClearScriptShouldDoNothingWhenNoScriptIsLoaded) {
@@ -353,9 +376,11 @@ TEST(TimeSeqCore, ClearScriptShouldDoNothingWhenNoScriptIsLoaded) {
 
 	timeSeqCore.clearScript();
 
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, nullptr);
 	EXPECT_EQ(timeSeqCore.m_processor, nullptr);
+	timeSeqCore.process(0);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::EMPTY);
 }
 
 TEST(TimeSeqCore, PauseScriptShouldPauseWhenScriptLoaded) {
@@ -379,7 +404,7 @@ TEST(TimeSeqCore, PauseScriptShouldPauseWhenScriptLoaded) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
@@ -443,7 +468,7 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
@@ -508,7 +533,7 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
@@ -540,22 +565,26 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	{
 		testing::InSequence inSequence;
 		EXPECT_CALL(*processor, reset()).Times(1);
-		EXPECT_CALL(*processor, process()).Times(1);
+		EXPECT_CALL(*processor, process()).Times(2);
 	}
 	timeSeqCore.reset();
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
+
+	// The next process call will do the actual reset
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
 	
 	// Check that the variables and triggers are cleared
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
 	EXPECT_EQ(timeSeqCore.getVariable(var2), 0.f);
 	EXPECT_EQ(timeSeqCore.getTriggers(), std::vector<std::string>({}));
 	// Progress should start again from the beginning
-	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
-	timeSeqCore.process(1);
 	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 1u);
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 2u);
 }
 
 TEST(TimeSeqCore, SetVariableShouldUpdateVariable) {
@@ -646,7 +675,7 @@ TEST(TimeSeqCore, ProcessShouldAdvanceScriptAndHandleTriggers) {
 
 	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
-	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::IDLE);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
@@ -716,6 +745,7 @@ TEST(TimeSeqCore, ElapsedSamplesShouldLoopOnHourBoundary) {
 	EXPECT_CALL(mockSampleRateReader, getSampleRate()).Times(1).WillOnce(testing::Return(12));
 
 	timeSeqCore.loadScript(scriptData);
+	timeSeqCore.start(0);
 
 	// Do 10 loops of 12 smaples per sec = 12 * 60 * 60 samples per hour, and check that the elapsed samples loops on the hour
 	for (int i = 0; i < 10; i++) {
@@ -723,5 +753,134 @@ TEST(TimeSeqCore, ElapsedSamplesShouldLoopOnHourBoundary) {
 			ASSERT_EQ(timeSeqCore.getElapsedSamples(), j);
 			timeSeqCore.process(1);
 		}
+	}
+}
+
+TEST(TimeSeqCore, StartScriptShouldCauseImmediateProcessingOnZeroDelay) {
+	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
+	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
+	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
+
+	std::shared_ptr<Script> script1(new Script());
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
+
+	{
+		testing::InSequence inSequence;
+
+		EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script1));
+		EXPECT_CALL(*mockProcessorLoader, loadScript(script1, testing::_)).Times(1).WillOnce(testing::Return(processor));
+		EXPECT_CALL(mockSampleRateReader, getSampleRate()).Times(1).WillOnce(testing::Return(420));
+	}
+
+	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
+	EXPECT_EQ(resultValidationErrors.size(), 0u);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
+	EXPECT_EQ(timeSeqCore.m_script, script1);
+	EXPECT_EQ(timeSeqCore.m_processor, processor);
+	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
+	
+	// Start the core
+	timeSeqCore.start(0);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 1u);
+
+	// Do some more processing loops and verify we moved further
+	for (unsigned int i = 2; i < 20; i++) {
+		timeSeqCore.process(1);
+		EXPECT_EQ(timeSeqCore.getElapsedSamples(), i);
+	}
+}
+
+TEST(TimeSeqCore, StartScriptShouldDelayProcessingWhenStartedWithDelay) {
+	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
+	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
+	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
+
+	std::shared_ptr<Script> script1(new Script());
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
+
+	{
+		testing::InSequence inSequence;
+
+		EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script1));
+		EXPECT_CALL(*mockProcessorLoader, loadScript(script1, testing::_)).Times(1).WillOnce(testing::Return(processor));
+		EXPECT_CALL(mockSampleRateReader, getSampleRate()).Times(1).WillOnce(testing::Return(420));
+	}
+
+	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
+	EXPECT_EQ(resultValidationErrors.size(), 0u);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
+	EXPECT_EQ(timeSeqCore.m_script, script1);
+	EXPECT_EQ(timeSeqCore.m_processor, processor);
+	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
+	
+	// Start the core
+	timeSeqCore.start(10);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
+	timeSeqCore.process(1);
+	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
+
+	// The next 9 cycles should still delay
+	for (unsigned int i = 0; i < 9; i++) {
+		timeSeqCore.process(1);
+		EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
+	}
+
+	// Do some more processing loops and verify we actually started
+	for (unsigned int i = 1; i < 20; i++) {
+		timeSeqCore.process(1);
+		EXPECT_EQ(timeSeqCore.getElapsedSamples(), i);
+	}
+}
+
+TEST(TimeSeqCore, StartScriptShouldDelayProcessingWhenStartedWithDelayAndProcessMultipleCyclesAfterwards) {
+	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
+	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
+	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
+
+	std::shared_ptr<Script> script1(new Script());
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
+
+	{
+		testing::InSequence inSequence;
+
+		EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script1));
+		EXPECT_CALL(*mockProcessorLoader, loadScript(script1, testing::_)).Times(1).WillOnce(testing::Return(processor));
+		EXPECT_CALL(mockSampleRateReader, getSampleRate()).Times(1).WillOnce(testing::Return(420));
+	}
+
+	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
+	EXPECT_EQ(resultValidationErrors.size(), 0u);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::LOADING);
+	EXPECT_EQ(timeSeqCore.m_script, script1);
+	EXPECT_EQ(timeSeqCore.m_processor, processor);
+	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
+	
+	// Start the core
+	timeSeqCore.start(10);
+	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
+	timeSeqCore.process(20);
+	EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
+
+	// The next 9 cycles should still delay
+	for (unsigned int i = 0; i < 9; i++) {
+		timeSeqCore.process(20); // Even asking for multiple cycles should do nothing
+		EXPECT_EQ(timeSeqCore.getElapsedSamples(), 0u);
+	}
+
+	// Do some more processing loops and verify we actually started and completes as many cycles as requested
+	for (unsigned int i = 1; i < 20; i++) {
+		timeSeqCore.process(20);
+		EXPECT_EQ(timeSeqCore.getElapsedSamples(), i * 20);
 	}
 }

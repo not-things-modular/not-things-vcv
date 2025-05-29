@@ -40,7 +40,7 @@ struct EventListener {
 };
 
 struct TimeSeqCore : VariableHandler, TriggerHandler {
-	enum Status { EMPTY, IDLE, RUNNING, PAUSED, LOADING };
+	enum Status { EMPTY, LOADING, RUNNING, PAUSED };
 
 	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
 	TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, SampleRateReader* sampleRateReader, EventListener* eventListener);
@@ -52,7 +52,7 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 
 	Status getStatus();
 
-	void start(int sapmleDelay);
+	void start(int sampleDelay);
 	void pause();
 	void reset();
 
