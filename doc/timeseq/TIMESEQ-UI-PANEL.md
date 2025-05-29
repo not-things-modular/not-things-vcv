@@ -7,6 +7,7 @@
 * [TimeSeq Controls](#timeseq-controls)
 * [Script Loading](#script-loading)
 * [Status Display](#status-display)
+* [Input Ports and Channels](#input-and-output-ports-and-channels)
 * [Rate Control](#rate-control)
 * [Asserts](#asserts)
 
@@ -47,7 +48,7 @@ In the `Script` sub-menu, there are options to:
 * **Paste script** from the clipboard
 * **Clear script** to remove the current script from TimeSeq
 
-Any script that is loaded or pasted will first be valiated. See [Script Errors](TIMESEQ-SCRIPT.md#script-errors) on the *TimeSeq Script* page for more details about error handling.
+Any script that is loaded or pasted will first be validated. See [Script Errors](TIMESEQ-SCRIPT.md#script-errors) on the *TimeSeq Script* page for more details about error handling.
 
 The **Paste** option allows for faster edit-paste-and-test iterations when working on a script when compared to going through a save-load-and-test file flow.
 
@@ -64,6 +65,12 @@ The status display that can be found in the lower section of TimeSeq will provid
 Below this, some visual feedback about output voltages is given. Each line can show the output voltage of a channel on an output port. Each time a voltage is changed on an output channel, that channel is added to the display (starting from the bottom) as a voltage line between -10v and 10v (with 0v in the middle). Updated output channels are added to the display in the order that they are updated. If a channel is already present on the display and its output is updated again, it's voltage display is updated the line that it already occupied. The display of an output port voltage will gradually fade out if no [set-value](TIMESEQ-SCRIPT-JSON.md#set-value) action is executed. After a while, output ports that haven't had a *set-value* action executed will be removed from the display as they are considered inactive.
 
 This visual feedback of the changing output voltages will give a visual indication of the sequencing activity being performed by TimeSeq, but is not intended as a way to closely monitor exact changes.
+
+## Input and Output Ports and Channels
+
+TimeSeq has eight input and output ports, which each can contain up to 16 channels. This results in a total of 128 possible input channels and 128 possible output channels. Depending on the complexity of the patch in which TimeSeq is used and how many other modules receives signals from or provides signals for, eight inputs or outputs may not be sufficient.
+
+The [PI-PO](../PIPO.md) were written with this scenario in mind: they allow the channels of different polyphonic cables to be split up and merged again in different cable setups. For example, if a patch requires 16 *cables* with each cable containing 4 polyphonic *channels* coming out of TimeSeq, the script for it could be written with all 8 of the TimeSeq *ports* containing 8 *channels*, i.e. each output *port* containing the *channels* for 2 of the signals (8 channels / port = 2 signals * 4 channels per port). The *PI-PO* modules can then be set up so that they split these 8 outputs with 8 channels each (= 64 total channels) over 16 outputs with 4 channels each (= 64 total channels). This would require the use of 1 *P-I* module (to receive the 8 TimeSeq outputs) connected to 2 *P-O* modules (to split up the channels over 16 total outputs).
 
 ## Rate Control
 

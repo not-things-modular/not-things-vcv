@@ -40,7 +40,7 @@ Next to the JSON objects that are defined in this document, following property t
 
 * **string**: a sequence of characters
 * **boolean**: a value that can be either set to `true` or `false`
-* **usigned number**: A non-decimal number that is either 0 or positive
+* **unsigned number**: A non-decimal number that is either 0 or positive
 * **float**: A decimal number that can be negative, 0 or positive
 * **unsigned float**: A decimal number that is either 0 or positive
 * **list**: When combined with the name of a JSON object, defines that a list of one or more of those JSON objects is expected (e.g. a list of *segment*s). A lists in JSON are written as comma-separated list surrounded by square brackets (`[]`).
@@ -185,7 +185,7 @@ The running state of a *lane* can be controlled using triggers:
 | `repeat` | no | unsigned number | Specifies how many times the *lane* should be executed before stopping. Has no impact if `loop` is set to `true`. Defaults to `0` |
 | `start-trigger` | no | string | The name of the trigger that will cause this *lane* to start running. A start trigger on an already running *lane* has no impact on the state of the lane. Defaults to empty. |
 | `restart-trigger` | no | string | The name of the trigger that will cause this *lane* to restart. A restart trigger on an inactive *lane* will cause it to start running. A restart trigger on a running *lane* will cause it to restart from the first *segment*. Defaults to empty.|
-| `stop-trigger` | no | string | The name of the trigger that will cause this *lane* to stop running. A stop trigger on an an incative *lane* has no impact on the state of the lane. Defaults to empty. |
+| `stop-trigger` | no | string | The name of the trigger that will cause this *lane* to stop running. A stop trigger on an an inactive *lane* has no impact on the state of the lane. Defaults to empty. |
 | `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this *lane* will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
 
 ### Example
@@ -272,7 +272,7 @@ All objects defined in this pool **must** have an `id` property, since this will
 
 Segments provide the core timing functionality of TimeSeq. Through its `duration` property, the segment specifies how long it should last. And since [lane](#lane)s execute *segment*s in order one by one, this allows sequences with more complex timings.
 
-The actual output of a *segment* is determined by its list of `actions`. Differnt types of *action*s exist, with their `timing` specifying when they should be executed (See [action](#action) and its sub-types for more details).
+The actual output of a *segment* is determined by its list of `actions`. Different types of *action*s exist, with their `timing` specifying when they should be executed (See [action](#action) and its sub-types for more details).
 
 If the order that the actions is executed in is of importance (e.g. when writing and subsequently reading values), a segment groups the actions in three sets according to their timing: ***start*** actions, ***ongoing*** actions (with a `glide` or `gate` timing) and ***end*** actions. The processing order of the actions then becomes:
 
@@ -290,7 +290,7 @@ The `actions` property can still be used together with the `segment-block` prope
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `duration` | yes | [duratino](#duration) | Defines how long this segment will take to complete. |
+| `duration` | yes | [duration](#duration) | Defines how long this segment will take to complete. |
 | `actions`| no | [action](#action) list | The actions that will be executed as part of this segment. See the description above for details about the timings of actions. |
 | `disable-ui` | no | boolean | If set to `true`, the *S* LED on the TimeSeq panel will light up when this *segment* starts. If set to `false`, a start of this *segment* will not cause the *S* LED on the TimeSeq panel to light up. Defaults to `true`. |
 | `segment-block` | no | string | The ID of a [segment-block](#segment-block) in the [component-pool](#component-pool) that will take the place of this segment. Can not be combined with the `duration`, `actions` and `disable-ui` properties. |
@@ -496,7 +496,7 @@ A glide action has two possible targets to send its generated voltages to: eithe
 | `end-value`| yes | [value](#value) | The *value* that the action should glide towards. |
 | `ease-factor`| no | float | Controls the rate at which the action will move from the `start` value to the `end` value. Must be between -5 and 5. Defaults to 0 |
 | `ease-algorithm`| no | string | The algorithm to use for easing calculations. Can be either `sig` or `pow`. Defaults to `sig` |
-| `output`| no | [output](#output) | The output port to which the calculcated value should be sent |
+| `output`| no | [output](#output) | The output port to which the calculated value should be sent |
 | `variable`| no | string | The name of the variable that should be set based on the calculated value of the action. |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
@@ -527,15 +527,15 @@ Just like the other action types, a gate action can be made conditional using an
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `gate-high-ratio` | no | unsigned float | The position when the gate signal should go from high to low. Must be a value between `0` and `1`, with `0.5` alligning with half of the *segment* duration. Defaults to `0.5` |
-| `output`| no | [output](#output) | The output port to which the calculcated value should be sent |
+| `gate-high-ratio` | no | unsigned float | The position when the gate signal should go from high to low. Must be a value between `0` and `1`, with `0.5` aligning with half of the *segment* duration. Defaults to `0.5` |
+| `output`| no | [output](#output) | The output port to which the calculated value should be sent |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
 #### Example
 
 ```json
 {
-    "timing": "glide",
+    "timing": "gate",
     "start-value": { "voltage": -3 },
     "end-value": { "variable": "glide-end-value" },
     "output": { "index": 9, "port": 6 },
@@ -687,7 +687,6 @@ An `and` logical operator with a child `or` logical operator as first child cond
 ## set-value
 
 The *set-value* is used within an [action](#action) to update the voltage of one of the TimeSeq outputs.
-The root item of the TimeSeq JSON script.
 
 The voltage to use is determined by the `value` property, while the port (and channel) on which the voltage should be updated is determined by the `output` property.
 
@@ -716,7 +715,7 @@ An example of a set-value within an action:
 
 ## set-variable
 
-The *set-variable* is used within an [action](#action) to update an internal TimeSeq variable that can then be references by other [value](#value)s within the script.
+The *set-variable* is used within an [action](#action) to update an internal TimeSeq variable that can then be referenced by other [value](#value)s within the script.
 
 The voltage to use is determined by the `value` property, while the `name` property determines the name of the variable that should be updated.
 
@@ -809,7 +808,7 @@ An example of a set-label within an action:
 
 Asserts allow TimeSeq to be used as a module to test the behaviour of other modules. The assert action allows a check to be performed on an [if](#if) condition, and if that condition is not met, it will result in an assert warning becoming active on the module UI. By writing a script that sends varying voltages through the TimeSeq [output](#output)s to another module, and then sending the output of that other module back into the [input](#input)s of TimeSeq, the assert action can subsequently verify that the other module behaved as expected.
 
-The `expect` property will identify the [if](#if) condition that will be checked. If this condition evaluates to *false*, an assert with the specified `name` will be triggered on TimeSeq. The `stop-on-fail` property specifies if the occurance of a failed assert should also pause TimeSeq, or if the script should continue running.
+The `expect` property will identify the [if](#if) condition that will be checked. If this condition evaluates to *false*, an assert with the specified `name` will be triggered on TimeSeq. The `stop-on-fail` property specifies if the occurence of a failed assert should also pause TimeSeq, or if the script should continue running.
 
 While the assert is mainly intended to be used to verify voltages on the input ports of TimeSeq, the `expect` condition can be used to compare any types of *value*s.
 
@@ -921,7 +920,7 @@ The voltage of channel 8 on output port 5, with a random value between 0.5 and 1
 
 ### Shorthand Value Notation
 
-To allow easer writing of fixed values, the TimeSeq JSON script allows `voltage` and `note` values to be written using a shorthand notation:
+To allow easier writing of fixed values, the TimeSeq JSON script allows `voltage` and `note` values to be written using a shorthand notation:
 
 * A voltage value like `{ "voltage": 6.9 }` can be shortened to its float value instead: `6.9`
 * A note value like `{ "note": "E4" }` can be shortened to its string note value instead: `"E4"`
@@ -966,7 +965,7 @@ This shorthand notation can be used in all places where `voltage` or `note` valu
 
 An input identifies a channel on one of the input ports of TimeSeq, either to read a voltage from it in a [value](#value) or to monitor it for [input-trigger](#input-trigger)s.
 
-The input port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If to `channel` is specified, (e.g. since it is a monophonic input signal), the first channel of the port will be used. In VCV Rack, a monophonic signal can be seen as a signal containing one channel.
+The input port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If no `channel` is specified, (e.g. since it is a monophonic input signal), the first channel of the port will be used. In VCV Rack, a monophonic signal can be seen as a signal containing one channel.
 
 Note that TimeSeq will not validate how many channels are present on the input port. If a channel is requested that is outside of the current polyphonic channel range of the input signal, TimeSeq will use whatever value VCV Rack returns for that channel (usually 0v).
 
@@ -1149,7 +1148,7 @@ The voltage of channel 4 on input port 3, multiplied by 2:
 }
 ```
 
-The voltage of channel 8 on output port 5, with a random value between 06.5 and 1 added to it, and subsequently multiplied by 2:
+The voltage of channel 8 on output port 5, with a random value between 0.5 and 1 added to it, and subsequently multiplied by 2:
 
 ```json
 {

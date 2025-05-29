@@ -2,11 +2,13 @@
 
 *Part of the set of [not-things VCV Rack](../README.md) modules.*
 
-![Solim main and expander modules](./pipo-modules-separated-light.png)
+![Pi-PO modules](./pipo-modules-separated-light.png)
 
 The Pi-Po modules allow multiple polyphonic (or monophonic) signals to be split and merged into new monophonic or polyphonic signals.
 
 To achieve this effect, the Polyphonic Input (*P-I*) module takes all the channels of the individual incoming signals, and provides them as a combined list to the Polyphonic Output (*P-O*) module. The *P-O* module will construct new monophonic or polyphonic outputs by taking the available channels from the list and assigning them in order on the output ports, with a dial specifying how many channels each output port should receive.
+
+This flexible way of combining and splitting channels was constructed with the [TimeSeq](TIMESEQ.md) module in mind, where the flexibility provided by the script may result in the desire to split up and combine channels from one or several of the outputs to distribute them to different targets, or to map the correct input voltages to the correct channels on the input ports.
 
 ## P-I (Polyphonic Input module)
 

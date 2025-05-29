@@ -35,6 +35,17 @@ The [clock](samples/CLOCK.md) script demonstrates the usage of TimeSeq as a cloc
 * Using beats and bars to specify clock durations
 * Controlling the length that a clock (gate) signal remains high
 
+## Sample and Hold
+
+The [Sample and Hold](samples/SAMPLE-AND-HOLD.md) script demonstrates how S&H functionality can be made in TimeSeq, starting from a basic multi-port Sample and Hold, and extending it with internal voltages, calculations and timings. This script demonstrates:
+
+* Defining reusable input and output definitions
+* Using input triggers and input voltages
+* Using internal random voltages
+* Using variables
+* Performing calculations
+* Combining multiple sources
+
 ## A Bernoulli Gate
 
 The [Bernoulli Gate](samples/BERNOULLI.md) sample demonstrates how TimeSeq can be used to reproduce the functionality of the Bernoulli Gate (i.e. Mutable Instruments Branches) module. It is not intended to replace the Bernoulli Gate, but instead a demonstration of how the logic processing of TimeSeq can be used for more then just sequence generation.
