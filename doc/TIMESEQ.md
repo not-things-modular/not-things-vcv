@@ -13,4 +13,4 @@ The documentation is organized into the following sections:
 * [UI Panel](timeseq/TIMESEQ-UI-PANEL.md): Overview of the controls on the TimeSeq panel and how they relate to script execution.
 * [Script Overview](timeseq/TIMESEQ-SCRIPT.md): Conceptual introduction to the JSON script that drives TimeSeq.
 * [Script JSON Reference](timeseq/TIMESEQ-SCRIPT-JSON.md): Technical reference detailing the structure and elements of the TimeSeq JSON script.
-* [Script Samples](timeseq/TIMESEQ-SCRIPT-SAMPLES.md): A collection of script examples (including VCV Rack patches) illustrating different scripting techniques and some possible use cases.
+* [Script Samples](timeseq/TIMESEQ-SCRIPT-SAMPLES.md): A collection of script examples/tutorials (including VCV Rack patches) illustrating different scripting techniques and some of their possible use cases.
