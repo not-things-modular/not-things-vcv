@@ -303,7 +303,7 @@ The `actions` property can still be used together with the `segment-block` prope
 {
     "duration": { "beats": 2 },
     "actions": [
-        { "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } }
+        { "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } },
         { "timing": "end", "set-output": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
     ]
 }
@@ -386,7 +386,7 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 
 ## segment-block
 
-A segment-block allows multiple segments to be grouped together so that they can easily be added in other places within the script.
+A segment-block allows multiple segments to be grouped together so that they can easily be added in other places within the script. The *segment*s in a segment-block can be full inline *segment*s, references to re-usable *segment*s (using the `ref` property) or references to other segment-block instances.
 
 The `segments` in the block will be executed in the order that they appear in the list. The `repeat` property allows the full list to be repeated a number of times.
 
@@ -536,12 +536,10 @@ Just like the other action types, a gate action can be made conditional using an
 ```json
 {
     "timing": "gate",
-    "start-value": { "voltage": -3 },
-    "end-value": { "variable": "glide-end-value" },
-    "output": { "index": 9, "port": 6 },
+    "gate-high-ratio": 0.75,
     "if": { "ne": [
         { "voltage": 0 },
-        { "variable": "glide-condition" }
+        { "variable": "gate-condition" }
     ] }
 }
 ```
@@ -592,7 +590,7 @@ Some examples of *if* usage within an action:
         ],
         "tolerance": 0.00001
     },
-    { "set-variable": { "my-output-variable": 6.9 } }
+    "set-variable": { "my-output-variable": 6.9 }
 }
 ```
 
@@ -604,7 +602,7 @@ Some examples of *if* usage within an action:
               { "variable": "my-input-variable"}
         ]
     },
-    { "set-variable": { "my-output-variable": 6.9 } }
+    "set-variable": { "my-output-variable": 6.9 }
 }
 ```
 
@@ -646,7 +644,7 @@ A single-level logical *if* in an action:
             }
         ]
     },
-    { "set-variable": { "my-output-variable": 9.9 } }
+    "set-variable": { "my-output-variable": 9.9 }
 }
 ```
 
@@ -680,7 +678,7 @@ An `and` logical operator with a child `or` logical operator as first child cond
             }
         ]
     },
-    { "set-variable": { "my-output-variable": 9.9 } }
+    "set-variable": { "my-output-variable": 9.9 }
 }
 ```
 
@@ -737,7 +735,7 @@ An example of a set-variable within an action:
 ```json
 {
     "timing": "start",
-    "set-value": {
+    "set-variable": {
         "value": { "voltage": 3.14 },
         "name": "a-piece-of-pi"
     }
