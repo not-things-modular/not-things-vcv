@@ -408,7 +408,7 @@ SolimWidget::SolimWidget(SolimModule* module): NTModuleWidget(dynamic_cast<NTMod
 		if (i == 0) {
 			addChild(createLightCentered<TinyLight<BlueGreenLight>>(Vec(xOut + 12.5, y + 12.5), module, SolimModule::OUT_POLYPHONIC_LIGHT));
 		} else {
-			addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xOut + 12.5, y + 12.5), module, SolimModule::OUT_LIGHTS + i));
+			addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(xOut + 12.5, y + 12.5), module, SolimModule::OUT_LIGHTS + i));
 		}
 		y += yDelta;
 	}

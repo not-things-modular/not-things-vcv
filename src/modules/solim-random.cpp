@@ -1,5 +1,6 @@
 #include "modules/solim-random.hpp"
 #include "components/ntport.hpp"
+#include "components/lights.hpp"
 
 
 extern Model* modelSolimRandom;
@@ -135,20 +136,20 @@ bool SolimRandomModule::processTriggers(ParamId paramId, InputId inputId, Trigge
 }
 
 SolimRandomWidget::SolimRandomWidget(SolimRandomModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "solim-random") {
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(22.5f, 49.5f), module, SolimRandomModule::PARAM_TRIG_MOVE, SolimRandomModule::LIGHT_TRIG_MOVE));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(22.5f, 49.5f), module, SolimRandomModule::PARAM_TRIG_MOVE, SolimRandomModule::LIGHT_TRIG_MOVE));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 82.5f), module, SolimRandomModule::INPUT_TRIG_MOVE));
 
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(22.5f, 133.5f), module, SolimRandomModule::PARAM_TRIG_ONE, SolimRandomModule::LIGHT_TRIG_ONE));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(22.5f, 133.5f), module, SolimRandomModule::PARAM_TRIG_ONE, SolimRandomModule::LIGHT_TRIG_ONE));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 166.5f), module, SolimRandomModule::INPUT_TRIG_ONE));
 
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(22.5f, 217.5f), module, SolimRandomModule::PARAM_TRIG_ALL, SolimRandomModule::LIGHT_TRIG_ALL));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(22.5f, 217.5f), module, SolimRandomModule::PARAM_TRIG_ALL, SolimRandomModule::LIGHT_TRIG_ALL));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 250.5f), module, SolimRandomModule::INPUT_TRIG_ALL));
 
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(22.5f, 301.5f), module, SolimRandomModule::PARAM_TRIG_RESET, SolimRandomModule::LIGHT_TRIG_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(22.5f, 301.5f), module, SolimRandomModule::PARAM_TRIG_RESET, SolimRandomModule::LIGHT_TRIG_RESET));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 334.5f), module, SolimRandomModule::INPUT_TRIG_RESET));
 
-	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(5.f, 20.f), module, SolimRandomModule::LIGHT_CONNECTED_LEFT));
-	addChild(createLightCentered<TinyLight<GreenLight>>(Vec(40.f, 20.f), module, SolimRandomModule::LIGHT_CONNECTED_RIGHT));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(5.f, 20.f), module, SolimRandomModule::LIGHT_CONNECTED_LEFT));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(40.f, 20.f), module, SolimRandomModule::LIGHT_CONNECTED_RIGHT));
 }
 
 

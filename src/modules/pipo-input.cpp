@@ -1,6 +1,7 @@
 #include "modules/pipo-input.hpp"
 #include "components/ntport.hpp"
 #include "components/leddisplay.hpp"
+#include "components/lights.hpp"
 
 extern Model* modelPipoOutput;
 extern Model* modelPipoInput;
@@ -51,7 +52,7 @@ PipoInputWidget::PipoInputWidget(PipoInputModule* module): NTModuleWidget(dynami
 		}
 	}
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(40.f, 20.f), module, PipoInputModule::LIGHT_CONNECTED));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(40.f, 20.f), module, PipoInputModule::LIGHT_CONNECTED));
 }
 
 

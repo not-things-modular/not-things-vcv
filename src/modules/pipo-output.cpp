@@ -185,12 +185,16 @@ PipoOutputWidget::PipoOutputWidget(PipoOutputModule* module): NTModuleWidget(dyn
 	float yDelta = 40;
 	for (int i = 0; i < 8; i++) {
 		addOutput(createOutputCentered<NTPort>(Vec(xOut, y), module, PipoOutputModule::OUT_OUTPUTS + i));
-		addChild(createLightCentered<TinyLight<RedOrangeGreenLight>>(Vec(xOut + 12.5, y + 12.5), module, PipoOutputModule::OUT_LIGHTS + (i * 3)));
+		if (i == 0) {
+			addChild(createLightCentered<TinyLight<RedOrangeGreenLight>>(Vec(xOut + 12.5, y + 12.5), module, PipoOutputModule::OUT_LIGHTS + (i * 3)));
+		} else {
+			addChild(createLightCentered<TinyLight<DimmedLight<RedOrangeGreenLight>>>(Vec(xOut + 12.5, y + 12.5), module, PipoOutputModule::OUT_LIGHTS + (i * 3)));
+		}
 		addParam(createParamCentered<NTKnobDark16>(Vec(xOut - 15.5f, y + 15.5f), module, PipoOutputModule::PARAM_OUTPUT_CHANNELS + i));
 		y += yDelta;
 	}
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(5.f, 20.f), module, PipoOutputModule::LIGHT_CONNECTED));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(5.f, 20.f), module, PipoOutputModule::LIGHT_CONNECTED));
 }
 
 

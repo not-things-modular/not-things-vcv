@@ -1,5 +1,6 @@
 #include "modules/solim-input.hpp"
 #include "components/ntport.hpp"
+#include "components/lights.hpp"
 
 
 extern Model* modelSolimRandom;
@@ -55,7 +56,7 @@ SolimInputWidget::SolimInputWidget(SolimInputModule* module): NTModuleWidget(dyn
 		y += yDelta;
 	}
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(40.f, 20.f), module, SolimInputModule::LIGHT_CONNECTED));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(40.f, 20.f), module, SolimInputModule::LIGHT_CONNECTED));
 }
 
 

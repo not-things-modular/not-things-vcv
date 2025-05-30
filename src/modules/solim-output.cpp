@@ -100,12 +100,12 @@ SolimOutputWidget::SolimOutputWidget(SolimOutputModule* module): NTModuleWidget(
 		if (i == 0) {
 			addChild(createLightCentered<TinyLight<BlueGreenLight>>(Vec(xOut + 12.5, y + 12.5), module, SolimOutputModule::OUT_POLYPHONIC_LIGHT));
 		} else {
-			addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xOut + 12.5, y + 12.5), module, SolimOutputModule::OUT_LIGHTS + i));
+			addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(xOut + 12.5, y + 12.5), module, SolimOutputModule::OUT_LIGHTS + i));
 		}
 		y += yDelta;
 	}
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(5.f, 20.f), module, SolimOutputModule::LIGHT_CONNECTED));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(5.f, 20.f), module, SolimOutputModule::LIGHT_CONNECTED));
 }
 
 void SolimOutputWidget::appendContextMenu(Menu* menu) {

@@ -1,5 +1,6 @@
 #include "modules/solim-output-octaver.hpp"
 #include "components/ntport.hpp"
+#include "components/lights.hpp"
 
 
 extern Model* modelSolimRandom;
@@ -96,15 +97,15 @@ SolimOutputOctaverWidget::SolimOutputOctaverWidget(SolimOutputOctaverModule* mod
 		addParam(createParamCentered<BefacoSwitch>(Vec(33.f, y), module, SolimOutputOctaverModule::PARAM_ADD_OCTAVE + i));
 		addInput(createInputCentered<NTPort>(Vec(68.f, y), module, SolimOutputOctaverModule::IN_ADD_OCTAVE + i));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<RedLight>>>(Vec(117.5f, y), module, SolimOutputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimOutputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<DimmedLight<RedLight>>>>(Vec(117.5f, y), module, SolimOutputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimOutputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
 		addInput(createInputCentered<NTPort>(Vec(150.5f, y), module, SolimOutputOctaverModule::IN_REPLACE_ORIGINAL + i));
 
 		y += yDelta;
 	}
 
-	addParam(createLightParamCentered<VCVLightLatch<SmallSimpleLight<GreenLight>>>(Vec(175.f, 360.f), module, SolimOutputOctaverModule::PARAM_RESORT, SolimOutputOctaverModule::LIGHT_RESORT));
+	addParam(createLightParamCentered<VCVLightLatch<SmallSimpleLight<DimmedLight<GreenLight>>>>(Vec(175.f, 360.f), module, SolimOutputOctaverModule::PARAM_RESORT, SolimOutputOctaverModule::LIGHT_RESORT));
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(5.f, 20.f), module, SolimOutputOctaverModule::LIGHT_CONNECTED));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(5.f, 20.f), module, SolimOutputOctaverModule::LIGHT_CONNECTED));
 }
 
 void SolimOutputOctaverWidget::appendContextMenu(Menu* menu) {

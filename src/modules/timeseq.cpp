@@ -2,6 +2,7 @@
 #include "components/ntport.hpp"
 #include "components/timeseq-display.hpp"
 #include "components/leddisplay.hpp"
+#include "components/lights.hpp"
 #include <osdialog.h>
 
 #define TO_CHANNEL_PORT_IDENTIFIER(channel, port) ((channel << 5) + port)
@@ -376,7 +377,6 @@ int TimeSeqModule::getRate() {
 	}
 }
 
-
 TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "timeseq") {
 	float xIn = 24;
 	float xOut = 126.f+60.f+15.f-45.f+15.f;
@@ -392,14 +392,14 @@ TimeSeqWidget::TimeSeqWidget(TimeSeqModule* module): NTModuleWidget(dynamic_cast
 	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(68.f+7.5f, 113.f), module, TimeSeqModule::PARAM_RUN, TimeSeqModule::LIGHT_RUN));
 	addOutput(createOutputCentered<NTPort>(Vec(68.f+7.5f, 146.5f), module, TimeSeqModule::OUT_RUN));
 	addInput(createInputCentered<NTPort>(Vec(112.f+7.5f, 206.5f-140.f), module, TimeSeqModule::IN_RESET));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(112.f+7.5f, 253.f-140.f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(112.f+7.5f, 253.f-140.f), module, TimeSeqModule::PARAM_RESET, TimeSeqModule::LIGHT_RESET));
 	addOutput(createOutputCentered<NTPort>(Vec(112.f+7.5f, 286.5f-140.f), module, TimeSeqModule::OUT_RESET));
 	addInput(createInputCentered<NTPort>(Vec(68.f+7.5f, 66.5f+135.f), module, TimeSeqModule::IN_RATE));
 	addParam(createParamCentered<RoundSmallBlackKnob>(Vec(68.f+7.5f, 112.f+135.f), module, TimeSeqModule::PARAM_RATE));
 
-	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(53.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_LANE_LOOPED));
+	addChild(createLightCentered<SmallLight<DimmedLight<GreenLight>>>(Vec(53.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_LANE_LOOPED));
 	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(68.f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_SEGMENT_STARTED));
-	addChild(createLightCentered<SmallLight<GreenLight>>(Vec(82.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
+	addChild(createLightCentered<SmallLight<DimmedLight<GreenLight>>>(Vec(82.5f+7.5f, 347.5f), module, TimeSeqModule::LightId::LIGHT_TRIGGER_TRIGGERED));
 
 	addChild(createParamCentered<VCVButton>(Vec(92.5f + 10.f -2.f + 23.f - 44.f + 7.5f, 315.f), module, TimeSeqModule::PARAM_RESET_CLOCK));
 
