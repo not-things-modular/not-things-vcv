@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.3-timeseq-beta-02 (2025-05-31)
+
+* **TimeSeq**: Second beta versio nof TimeSeq: add set-label action; rework script state engine for potention load memory error
+
 ## 2.0.3-timeseq-beta-01 (2025-05-24)
 
 * **TimeSeq**: Initial beta version of TimeSeq
