@@ -22,10 +22,12 @@ The [note sequence](samples/NOTE-SEQ.md) scripts start with a simple note sequen
 
 * Building a simple simple sequence
 * Using multiple lanes with sequences running in parallel
+* Using segment blocks
 * Using eight- and triplet timings
 * Using variables and random values
 * Starting and stopping lanes through triggers
 * Using input ports as CV sources
+* Using to component-pool to reduce script size using re-usable components
 
 ## Creating Clock Signals
 
