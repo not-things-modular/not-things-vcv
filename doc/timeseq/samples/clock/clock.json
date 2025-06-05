@@ -79,7 +79,7 @@
 			]
 		},
 		{
-			"time-scale": { "bpm": 75 },
+			"time-scale": { "bpm": 70 },
 		  	"lanes": [
 				{
 					"auto-start": true, "loop": true,
