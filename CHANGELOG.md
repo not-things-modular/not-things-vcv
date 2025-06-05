@@ -10,8 +10,8 @@
 
 ## 2.0.3 (TBD)
 
-* **Global**: Minor design update and updates to preview rendering of modules
-* **Solim**: Fixed issue where Solim Output Octaver settings remained active on the main Solim module after disconnecting the Output Octaver expander.
+* **Global**: Updates to overall UI design and preview rendering
+* **Solim**: Fixed issue where Solim Output Octaver settings remained active on the main Solim module after disconnecting the Output Octaver expander
 * **TimeSeq**: Initial version of TimeSeq
 
 ## 2.0.2 (2025-04-21)

@@ -518,7 +518,7 @@ void TimeSeqWidget::pasteScript() {
 	const char* clipboardString = glfwGetClipboardString(APP->window->win);
 	if (clipboardString) {
 		// If a script is already loaded, first confirm if it should be replaced.
-		// if ((!hasScript()) || (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, "A script is already loaded. Are you sure you want to replace it?") == 1)) {
+		if ((!hasScript()) || (osdialog_message(OSDIALOG_ERROR, OSDIALOG_YES_NO, "A script is already loaded. Are you sure you want to replace it?") == 1)) {
 			std::string json = clipboardString;
 			TimeSeqModule* timeSeqModule = dynamic_cast<TimeSeqModule *>(getModule());
 			if (timeSeqModule != nullptr) {
@@ -539,7 +539,7 @@ void TimeSeqWidget::pasteScript() {
 					APP->history->push(h);
 				}
 			}
-		// }
+		}
 	}
 }
 
