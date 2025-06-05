@@ -46,7 +46,7 @@ JsonScriptParser::~JsonScriptParser() {}
 
 std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError> *validationErrors, vector<string> location) {
 	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" };
-	Script* script = new Script();
+	shared_ptr<Script> script = make_shared<Script>();
 
 	verifyAllowedProperties(scriptJson, scriptProperties, false, validationErrors, location);
 
@@ -396,7 +396,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 		}
 	}
 
-	return shared_ptr<Script>(script);
+	return script;
 }
 
 ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
