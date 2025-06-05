@@ -43,17 +43,17 @@ Next to the JSON objects that are defined in this document, following property t
 * **unsigned number**: A non-decimal number that is either 0 or positive
 * **float**: A decimal number that can be negative, 0 or positive
 * **unsigned float**: A decimal number that is either 0 or positive
-* **list**: When combined with the name of a JSON object, defines that a list of one or more of those JSON objects is expected (e.g. a list of *segment*s). A lists in JSON are written as comma-separated list surrounded by square brackets (`[]`).
+* **list**: When combined with the name of a JSON object, defines that a list of one or more of those JSON objects is expected (e.g. a list of *segment*s). A list JSON is written as comma-separated list surrounded by square brackets (`[]`). E.g. a list of three strings is written as: `[ "string one", "string two", "string three" ]`
 
 ## script
 
 The root item of the TimeSeq JSON script.
 
-Sequencing is done by adding one or more *timeline* objects to the `timelines` list property. If execution order is important for the processing of the sequence, each processing cycle will go through the *timeline* objects in the order that they appear in this list.
+Sequencing is done by adding one or more *timeline* objects to the `timelines` list property. Each processing cycle of the script will go through the *timeline* objects in the order that they appear in this list (in case execution order is important for the processing of the sequences, e.g. when setting and reading variables).
 
-The `global-actions` property allows specific *action*s to be executed when a script is started or reset (e.g. setting the number of channels on a polyphonic output). Only *action*s that have a `timing` set to `start` can be added to this list.
+The `global-actions` property allows specific *action*s to be executed when a script is loaded or reset (e.g. setting the number of channels on a polyphonic output). Only *action*s that have a `timing` set to `start` can be added to this list.
 
-If there is a need to generate internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers) based on external trigger sources, the `input-triggers` property allows input ports to set up for receiving external trigger signals.
+If there is a need to generate internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers) based on external trigger sources, the `input-triggers` property allows input ports to be set up for receiving external trigger signals.
 
 In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [component reuse](TIMESEQ-SCRIPT.md#component-reuse) section of the main TimeSeq script documentation file for more details.
 
@@ -64,8 +64,8 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
 | `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported. |
 | `timelines` | no | [timeline](#timeline) list | A list of *timeline*s that will drive the sequencer. |
-| `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script starts or is reset. Only *action*s which have their `timing` set to `start` are allowed here. |
-| `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing a gate/trigger signal on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
+| `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
+| `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing gate/trigger signals on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
 | `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script. |
 
 ### Example
@@ -98,7 +98,7 @@ A timeline is a container for the sequencing definitions of a script. It groups 
 
 An optional [time-scale](#time-scale) property controls the timing calculations that will be performed for all *lane*s (and thus the duration of their *segment*s).
 
-If there are looping *lane*s present in this timeline, the `loop-lock` property will define when the *lane*s loop: if `loop-lock` is enabled, any *lane* that reaches the end of its processing will not restart until all other *lane*s (looping or not-looping) have finished processing. Once all *lane*s have finished, those that should loop will loop together. If `loop-lock` is not enabled, any *lane* that finishes processing and is set to loop will do so immediately.
+If there are looping *lane*s present in this timeline, the `loop-lock` property will define when the *lane*s loop: if `loop-lock` is enabled, any *lane* that reaches the end of its processing will not restart until all other *lane*s (looping or non-looping) have finished processing. Once all *lane*s have finished, those that should loop will loop together. If `loop-lock` is not enabled, any *lane* that finishes processing and is set to loop will do so immediately.
 
 When running the script, each processing cycle will run through the *lane*s in the order that they appear in the `lanes` list.
 
@@ -106,7 +106,7 @@ When running the script, each processing cycle will run through the *lane*s in t
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations in this timeline. |
+| `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations of *segment*s in this timeline. |
 | `loop-lock`| no | boolean | If `true`, *lane*s will only loop once all other *lane*s have completed. If `false`, *lane*s loop immediately when finished. Defaults to `false` if not set. |
 | `lanes` | yes | [lane](#lane) list | The *lane*s that contain the *segment* sequences for this timeline. |
 
@@ -127,13 +127,13 @@ When running the script, each processing cycle will run through the *lane*s in t
 
 ## time-scale
 
-The *time-scale* object defines how certain timing calculations should be performed for a [timeline](#timeline). Although the properties of a *time-scale* are all optional, if a *time-scale* is added to a *timeline* then at least one of `sample-rate` or `bpm` must be provided.
+The *time-scale* object defines how certain timing calculations should be performed for a [timeline](#timeline). Although the properties of a *time-scale* are all optional, if a *time-scale* is added to a *timeline* then at least one of `sample-rate` or `bpm` must be present.
 
 ### sample-rate
 
-Using samples is the most fine-grained scale to specify timing within TimeSeq. Since VCV Rack allows the active sample rate to be changed, the exact sample rate at which the script will be running may however not be known in advance. The `sample-rate` property allows you to specify that any *segment*s in this *timeline* that use `samples` for their `duration` have been configured to run at the specified sample rate. When parsing the script, TimeSeq will remap the provided duration of these *segment*s so that they will last as long as they would have under the specified *sample-rate* E.g. if `sample-rate` is set to 48000, but VCV Rack is running a 96000 (96Khz) sample rate, a *segment* with a 250 samples duration will instead last 500 samples (since there are double the amount of samples per second).
+Using samples is the most fine-grained scale to specify timing within TimeSeq. However, since VCV Rack allows the active sample rate to be changed, the exact sample rate at which the script will be running may not be known in advance. The `sample-rate` property allows you to specify that any *segment*s in this *timeline* that use `samples` for their `duration` have been configured assuming that they are running at the specified sample rate. When parsing the script, TimeSeq will remap the provided duration of these *segment*s so that they will last as long as they would have under the specified *sample-rate* E.g. if `sample-rate` is set to 48000, but VCV Rack is running a 96000 (96Khz) sample rate, a *segment* with a 250 samples duration will instead last 500 samples (since there are double the amount of samples per second at 96Khz when compared to the expected 48Khz).
 
-Note that sample rate recalculation can not make a segment shorter then one sample. A *segment* can never last less then one sample.
+Note that sample rate recalculation can not make a segment shorter then one sample. If the sample duration recalculation of a *segment* goes below one sample, it will instead last one sample.
 
 ## Beats per Minute and Beats per Bar
 
@@ -146,7 +146,7 @@ A `bpb` value can only be set if there is also a `bpm` value set.
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `sample-rate` | no | unsigned number | The sample rate in which the `samples` duration of all *segment*s in the *timeline* are expressed. |
-| `bpm`| no | unsigned number | The number of Beats per Minute to use for all *segment*s in the *timeline* that specify their duration using *beats*. |
+| `bpm`| no | unsigned number | The number of Beats per Minute to use for all *segment*s in the *timeline* that specify their duration using `beats`. |
 | `bpb` | no | unsigned number | How many beats go into one bar for all *segment*s in the *timeline* that use a `bars` duration. `bpb` can only be set if `bpm` is also set. |
 
 ### Example
