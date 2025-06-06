@@ -47,7 +47,7 @@ SolimModule::SolimModule(SolimCore* solimCore) : m_solimCore(solimCore) {
 	configSwitch(PARAM_SORT, -1.0, 1.0, 0.0, "Sort", {"Descending", "None", "Ascending"});
 	configInput(IN_SORT, "Sort CV");
 
-	clockDivider.setDivision(12);
+	m_clockDivider.setDivision(12);
 }
 
 SolimModule::~SolimModule() {
@@ -95,7 +95,7 @@ void SolimModule::process(const ProcessArgs& args) {
 	// Determine if we actually process in this invocation based on the process rate and clock divider
 	bool process = false;
 	if (m_processRate == ProcessRate::DIVIDED) {
-		process = clockDivider.process();
+		process = m_clockDivider.process();
 	} else {
 		process = true;
 	}
@@ -161,7 +161,7 @@ void SolimModule::draw(const widget::Widget::DrawArgs& args) {
 }
 
 void SolimModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
-	clockDivider.setDivision(sampleRateChangeEvent.sampleRate / 6000);
+	m_clockDivider.setDivision(sampleRateChangeEvent.sampleRate / 6000);
 }
 
 void SolimModule::onPortChange(const PortChangeEvent& event) {
@@ -408,7 +408,7 @@ SolimWidget::SolimWidget(SolimModule* module): NTModuleWidget(dynamic_cast<NTMod
 		if (i == 0) {
 			addChild(createLightCentered<TinyLight<BlueGreenLight>>(Vec(xOut + 12.5, y + 12.5), module, SolimModule::OUT_POLYPHONIC_LIGHT));
 		} else {
-			addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xOut + 12.5, y + 12.5), module, SolimModule::OUT_LIGHTS + i));
+			addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(xOut + 12.5, y + 12.5), module, SolimModule::OUT_LIGHTS + i));
 		}
 		y += yDelta;
 	}

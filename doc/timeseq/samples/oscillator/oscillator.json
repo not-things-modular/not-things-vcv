@@ -1,0 +1,168 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a square wave by looping two segments that switch between 5V and -5V",
+					"segments": [
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": 5
+									}
+								}
+							]
+						},
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": -5
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a sawtooth wave by looping a single gliding segment that moves from -5V to 5V and then immediately drops back to -5V when it loops",
+					"segments": [
+						{
+							"duration": { "hz": 130.815 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": -5,
+									"end-value": 5,
+									"output": 2
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a triangle wave by looping two segments: one that glides from -5V to 5V and another that glides back from 5V to -5V",
+					"segments": [
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": -5.0,
+									"end-value": 5.0,
+									"output": 3
+								}
+							]
+						},
+						{
+							"duration": { "hz": 261.63 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": 5.0,
+									"end-value": -5.0,
+									"output": 3
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a sine-like wave by looping four segments that use glide actions with easing factors that will approach a sine shape",
+					"segments": [
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": 0.375,
+									"ease-algorithm": "pow",
+									"start-value": -5,
+									"end-value": 0,
+									"output": 4
+								}
+							]
+						},
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": -0.375,
+									"ease-algorithm": "pow",
+									"start-value": 0,
+									"end-value": 5,
+									"output": 4
+								}
+							]
+						},
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": 0.375,
+									"ease-algorithm": "pow",
+									"start-value": 5,
+									"end-value": 0,
+									"output": 4
+								}
+							]
+						},
+						{
+							"duration": { "hz": 523.26 },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": -0.375,
+									"ease-algorithm": "pow",
+									"start-value": 0,
+									"end-value": -5,
+									"output": 4
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Generate a noise signal by outputting random values between -5V and 5V",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"value": {
+											"rand": {
+												"lower": -5.0,
+												"upper": 5.0
+											}
+										},
+										"output": 5
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

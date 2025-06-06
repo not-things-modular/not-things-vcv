@@ -1,6 +1,7 @@
 #include "modules/solim-input-octaver.hpp"
 #include "components/ntport.hpp"
 #include "components/dualbefacoswitch.hpp"
+#include "components/lights.hpp"
 
 
 extern Model* modelSolimRandom;
@@ -69,13 +70,13 @@ SolimInputOctaverWidget::SolimInputOctaverWidget(SolimInputOctaverModule* module
 		addParam(createParamCentered<DualBefacoSwitch>(Vec(120.5f, y), module, SolimInputOctaverModule::PARAM_SORT_POSITION + i));
 		addInput(createInputCentered<NTPort>(Vec(154.5f, y), module, SolimInputOctaverModule::IN_SORT_POSITION + i));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<RedLight>>>(Vec(201.5f, y), module, SolimInputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimInputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<DimmedLight<RedLight>>>>(Vec(201.5f, y), module, SolimInputOctaverModule::PARAM_REPLACE_ORIGINAL + i, SolimInputOctaverModule::LIGHT_REPLACE_ORIGINAL + i));
 		addInput(createInputCentered<NTPort>(Vec(232.5f, y), module, SolimInputOctaverModule::IN_REPLACE_ORIGINAL + i));
 
 		y += yDelta;
 	}
 
-	addChild(createLightCentered<TinyLight<GreenRedLight>>(Vec(265.f, 20.f), module, SolimInputOctaverModule::LIGHT_CONNECTED));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(265.f, 20.f), module, SolimInputOctaverModule::LIGHT_CONNECTED));
 }
 
 

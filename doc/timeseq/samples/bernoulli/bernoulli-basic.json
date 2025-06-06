@@ -1,0 +1,94 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": false,
+					"loop": false,
+					"x-description": "The lane is started when the input-trigger causes an internal trigger to be fired",
+					"start-trigger": "determine-output",
+					"segments": [
+						{
+							"x-description": "The segment lasts 0.5 seconds, so the gate will last 0.5 seconds",
+							"duration": { "millis": 500 },
+							"actions": [
+								{
+									"x-description": "Generate a random value between -5V and 5V that will determine which output to use",
+									"set-variable": {
+										"name": "bernoulli-chance",
+										"value": {
+											"rand": {
+												"lower": -5,
+												"upper": 5
+											}
+										}
+									}
+								},
+								{
+									"x-description": "Also send the random value to output 3, from where when can visualize for debugging purposes",
+									"set-value": {
+										"output": 3,
+										"value": { "variable": "bernoulli-chance" }
+									}
+								},
+								{
+									"x-description": "If the random value is greater than 0, set the first output to a high gate",
+									"if": {
+										"gt": [
+											{ "variable": "bernoulli-chance" },
+											0
+										]
+									},
+									"set-value": {
+										"output": 1,
+										"value": 10
+									}
+								},
+								{
+									"x-description": "If the random value is less than or equal to 0, set the second output to a high gate",
+									"if": {
+										"lte": [
+											{ "variable": "bernoulli-chance" },
+											0
+										]
+									},
+									"set-value": {
+										"output": 2,
+										"value": 10
+									}
+								}
+							]
+						},
+						{
+							"x-description": "After the 0.5 seconds of the previous segment has passed, set the output gates to low (0V) again",
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": 0
+									}
+								},
+								{
+									"set-value": {
+										"output": 2,
+										"value": 0
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"input-triggers": [
+		{
+			"x-description": "Monitor input 1 for an input trigger that will activate our Bernoulli Gate logic through an internall trigger",
+			"id": "determine-output",
+			"input": 1
+		}
+	]
+}

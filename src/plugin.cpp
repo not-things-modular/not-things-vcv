@@ -12,6 +12,7 @@ extern Model* modelPipoOutput;
 extern Model* modelPipoInput;
 
 extern Model* modelPolySameDiff;
+extern Model* modelTimeSeq;
 
 Plugin* pluginInstance;
 
@@ -27,4 +28,5 @@ void init(Plugin* p) {
 	p->addModel(modelPipoInput);
 	p->addModel(modelPipoOutput);
 	p->addModel(modelPolySameDiff);
+	p->addModel(modelTimeSeq);
 }

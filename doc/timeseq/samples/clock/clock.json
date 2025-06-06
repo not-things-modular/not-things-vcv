@@ -1,0 +1,101 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"global-actions": [
+		{
+			"set-polyphony": {
+				"index": 1,
+				"channels": 5
+			}
+		}
+	],
+	"timelines": [
+		{
+			"time-scale": { "bpm": 120, "bpb": 4 },
+		  	"lanes": [
+				{
+					"auto-start": true, "loop": true,
+					"segments": [
+						{
+							"duration": { "beats": 1 },
+							"actions": [
+								{
+									"timing": "gate",
+									"output": { "index": 1, "channel": 1 }
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true, "loop": true,
+					"segments": [
+						{
+							"duration": { "beats": 1.75 },
+							"actions": [
+								{
+									"timing": "gate",
+									"gate-high-ratio": 0.66,
+									"output": { "index": 1, "channel": 2 }
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true, "loop": true,
+					"segments": [
+						{
+							"duration": { "beats": 0, "bars": 4 },
+							"actions": [
+								{
+									"timing": "gate",
+									"gate-high-ratio": 0.25,
+									"output": { "index": 1, "channel": 5 }
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"time-scale": { "bpm": 90 },
+		  	"lanes": [
+				{
+					"auto-start": true, "loop": true,
+					"segments": [
+						{
+							"duration": { "beats": 1 },
+							"actions": [
+								{
+									"timing": "gate",
+									"output": { "index": 1, "channel": 3 }
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"time-scale": { "bpm": 70 },
+		  	"lanes": [
+				{
+					"auto-start": true, "loop": true,
+					"segments": [
+						{
+							"duration": { "beats": 1 },
+							"actions": [
+								{
+									"timing": "gate",
+									"output": { "index": 1, "channel": 4 }
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

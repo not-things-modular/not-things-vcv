@@ -88,7 +88,7 @@ struct SolimModule : NTModule, DrawListener {
 	std::array<bool, 8>& getConnectedPorts();
 
 	private:
-		dsp::ClockDivider clockDivider;
+		dsp::ClockDivider m_clockDivider;
 		ProcessRate m_processRate = ProcessRate::AUDIO;
 
 		SolimCore *m_solimCore;

@@ -1,0 +1,291 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"global-actions": [
+		{ "set-label": { "index": 1, "label": "Sine S&H"} },
+		{ "set-label": { "index": 2, "label": "Triangle S&H"} },
+		{ "set-label": { "index": 3, "label": "Sawtooth S&H"} },
+		{ "set-label": { "index": 4, "label": "Noise S&H"} },
+		{ "set-label": { "index": 5, "label": "Internal Random S&H"} },
+		{ "set-label": { "index": 6, "label": "Sine + Internal Random S&H"} },
+		{ "set-label": { "index": 7, "label": "Internal Triangle"} },
+		{ "set-label": { "index": 8, "label": "Internal Triangle + Internal Random S&H"} }
+	],
+	"input-triggers": [
+		{ "input": { "ref": "input-sine-trigger" }, "id": "sine-trigger" },
+		{ "input": { "ref": "input-triangle-trigger" }, "id": "triangle-trigger" },
+		{ "input": { "ref": "input-sawtooth-trigger" }, "id": "sawtooth-trigger" },
+		{ "input": { "ref": "input-noise-trigger" }, "id": "noise-trigger" },
+		{ "input": { "ref": "input-random-variable-trigger" }, "id": "random-variable-trigger" }
+	],
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"start-trigger": "sine-trigger",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": { "ref": "output-sine" },
+										"value": { "input": { "ref": "input-sine-source" } }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"start-trigger": "triangle-trigger",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": { "ref": "output-triangle" },
+										"value": { "input": { "ref": "input-triangle-source" } }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"start-trigger": "sawtooth-trigger",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": { "ref": "output-sawtooth" },
+										"value": { "input": { "ref": "input-sawtooth-source" } }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"start-trigger": "noise-trigger",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": { "ref": "output-noise" },
+										"value": { "input": { "ref": "input-noise-source" } }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"start-trigger": "random-variable-trigger",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-variable": {
+										"name": "random-variable",
+										"value": {
+											"rand": {
+												"lower": -5,
+												"upper": 5
+											}
+										}
+									}
+								},
+								{
+									"set-value": {
+										"value": { "variable": "random-variable" },
+										"output": { "ref": "output-random-variable" }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"value": {
+											"input": { "ref": "input-sine-source" },
+											"calc": [
+												{ "add": { "variable": "random-variable" } }
+											]
+										},
+										"output": { "ref": "output-random-variable-plus-sine" }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "millis": 2333 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": -5,
+									"end-value": 5,
+									"variable": "internal-triangle"
+								}
+							]
+						},
+						{
+							"duration": { "millis": 2333 },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": 5,
+									"end-value": -5,
+									"variable": "internal-triangle"
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "millis": 500 },
+							"actions": [
+								{
+									"set-value": {
+										"value": {
+											"variable": "internal-triangle"
+										},
+										"output": { "ref": "output-internal-triangle" }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"value": {
+											"variable": "internal-triangle",
+											"calc": [
+												{ "add": { "variable": "random-variable" } }
+											]
+										},
+										"output": { "ref": "output-internal-triangle-plus-random-value" }
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"component-pool": {
+		"inputs": [
+			{
+				"id": "input-sine-source",
+				"index": 1,
+				"channel": 1
+			},
+			{
+				"id": "input-sine-trigger",
+				"index": 1,
+				"channel": 2
+			},
+			{
+				"id": "input-triangle-source",
+				"index": 2,
+				"channel": 1
+			},
+			{
+				"id": "input-triangle-trigger",
+				"index": 2,
+				"channel": 2
+			},
+			{
+				"id": "input-sawtooth-source",
+				"index": 3,
+				"channel": 1
+			},
+			{
+				"id": "input-sawtooth-trigger",
+				"index": 3,
+				"channel": 2
+			},
+			{
+				"id": "input-noise-source",
+				"index": 4,
+				"channel": 1
+			},
+			{
+				"id": "input-noise-trigger",
+				"index": 4,
+				"channel": 2
+			},
+			{
+				"id": "input-random-variable-trigger",
+				"index": 5
+			}
+		],
+		"outputs": [
+			{
+				"id": "output-sine",
+				"index": 1
+			},
+			{
+				"id": "output-triangle",
+				"index": 2
+			},
+			{
+				"id": "output-sawtooth",
+				"index": 3
+			},
+			{
+				"id": "output-noise",
+				"index": 4
+			},
+			{
+				"id": "output-random-variable",
+				"index": 5
+			},
+			{
+				"id": "output-random-variable-plus-sine",
+				"index": 6
+			},
+			{
+				"id": "output-internal-triangle",
+				"index": 7
+			},
+			{
+				"id": "output-internal-triangle-plus-random-value",
+				"index": 8
+			}
+		]
+	}
+}

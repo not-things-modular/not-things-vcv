@@ -1,0 +1,187 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"timelines": [
+		{
+			"time-scale": {
+				"bpm": 120,
+				"bpb": 4
+			},
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"actions": [
+								{
+									"set-variable": {
+										"name": "root-note",
+										"value": "C3"
+									}
+								},
+								{
+									"set-variable": {
+										"name": "chord-note-1",
+										"value": "C4"
+									}
+								},
+								{
+									"set-variable": {
+										"name": "chord-note-2",
+										"value": "E4"
+									}
+								},
+								{
+									"set-variable": {
+										"name": "chord-note-3",
+										"value": "G4"
+									}
+								}
+							],
+							"segment-block": "arp"
+						},
+						{
+							"actions": [
+								{ "set-variable": { "name": "root-note", "value": "F3" } },
+								{ "set-variable": { "name": "chord-note-1", "value": "C4" } },
+								{ "set-variable": { "name": "chord-note-2", "value": "F4" } },
+								{ "set-variable": { "name": "chord-note-3", "value": "A4" } }
+							],
+							"segment-block": "arp"
+						},
+						{
+							"actions": [
+								{ "set-variable": { "name": "root-note", "value": "D3" } },
+								{ "set-variable": { "name": "chord-note-1", "value": "D4" } },
+								{ "set-variable": { "name": "chord-note-2", "value": "F4" } },
+								{ "set-variable": { "name": "chord-note-3", "value": "A4" } }
+							],
+							"segment-block": "arp"
+						},
+						{
+							"actions": [
+								{ "set-variable": { "name": "root-note", "value": "G3" } },
+								{ "set-variable": { "name": "chord-note-1", "value": "D4" } },
+								{ "set-variable": { "name": "chord-note-2", "value": "G4" } },
+								{ "set-variable": { "name": "chord-note-3", "value": "B4" } }
+							],
+							"segment-block": "arp"
+						}
+					]
+				}
+			]
+		}
+	],
+	"component-pool": {
+        "actions": [
+            {
+                "id": "arp-gate-action",
+				"x-description": "The addition of the 'if' condition will cause the gate to only trigger if the random 'play-note' variable is above 2.5.",
+                "timing": "gate",
+				"if": { "ref": "should-play-note" },
+                "output": 3
+            },
+			{
+				"id": "determine-chance",
+				"timing": "start",
+				"set-variable": {
+					"name": "play-note",
+					"value": {
+						"rand": {
+							"lower": 0,
+							"upper": 10
+						}
+					}
+				}
+			}
+        ],
+		"ifs": [
+			{
+				"id": "should-play-note",
+				"x-description": "A note should only be played if the randomized 'play-note' variable is above 2.5",
+				"gt": [
+					{ "variable": "play-note" },
+					2.5
+				]
+			}
+		],
+		"segment-blocks" : [
+			{
+				"id": "arp",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"timing": "start",
+								"set-value": { "output": 1, "value": { "variable": "root-note" } }
+							},
+							{ "ref": "determine-chance" },
+							{
+								"timing": "start",
+								"x-description": "The addition of the 'if' condition will cause the note to only change if the random 'play-note' variable is above 2.5.",
+								"if": { "ref": "should-play-note" },
+								"set-value": { "output": 2, "value": { "variable": "chord-note-1" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{ "ref": "determine-chance" },
+							{
+								"timing": "start",
+								"if": { "ref": "should-play-note" },
+								"set-value": { "output": 2, "value": { "variable": "chord-note-2" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{ "ref": "determine-chance" },
+							{
+								"timing": "start",
+								"if": { "ref": "should-play-note" },
+								"set-value": { "output": 2, "value": { "variable": "chord-note-3" } }
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{ "ref": "determine-chance" },
+							{
+								"timing": "start",
+								"if": { "ref": "should-play-note" },
+								"set-value": {
+									"output": 2,
+									"value": {
+										"variable": "chord-note-1",
+										"calc": [
+											{ "add": 1 }
+										]
+									}
+								}
+							},
+					        {
+            					"ref": "arp-gate-action"
+        					}
+						]
+					}
+				]
+			}
+		]
+	}
+}

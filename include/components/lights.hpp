@@ -20,3 +20,22 @@ struct TRedOrangeGreenLight : TBase {
 	}
 };
 using RedOrangeGreenLight = TRedOrangeGreenLight<>;
+
+template <typename TBase = GrayModuleLightWidget>
+struct DimmedLight : TBase {
+	void step() override {
+		std::vector<float> brightnesses(TBase::baseColors.size());
+
+		if (TBase::module) {
+			return TBase::step();
+		}
+		else {
+			// Turn all lights off
+			for (size_t i = 0; i < TBase::baseColors.size(); i++) {
+				brightnesses[i] = 0.f;
+			}
+			TBase::setBrightnesses(brightnesses);
+			MultiLightWidget::step();
+		}
+	}
+};

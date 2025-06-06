@@ -1,0 +1,236 @@
+{
+	"type": "not-things_timeseq_script",
+	"version": "1.0.0",
+	"timelines": [
+		{
+			"time-scale": {
+				"x-description": "Set the Beats per Minute and Beats per Bar that will apply to segments in this timeline",
+				"bpm": 120,
+				"bpb": 4
+			},
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": "C3"
+									}
+								}
+							]
+						},
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": "F3"
+									}
+								}
+							]
+						},
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": "D3"
+									}
+								}
+							]
+						},
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": "G3"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"x-description": "The second lane that will contain the arpeggiated chord notes, referencing segment-block instances from the component-pool",
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{ "segment-block": "c-arp" },
+						{ "segment-block": "f-arp" },
+						{ "segment-block": "d-arp" },
+						{ "segment-block": "g-arp" }
+					]
+				}
+			]
+		}
+	],
+	"component-pool": {
+		"segment-blocks" : [
+			{
+				"id": "c-arp",
+				"x-description": "The segment-block with the segments that make up an arpeggiated C chord",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "C4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "E4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "G4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "C5" }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "f-arp",
+				"x-description": "The segment-block with the segments that make up an arpeggiated F chord",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "C4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "F4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "A4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "C5" }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "d-arp",
+				"x-description": "The segment-block with the segments that make up an arpeggiated D chord",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "D4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "F4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "A4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "D5" }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "g-arp",
+				"x-description": "The segment-block with the segments that make up an arpeggiated G chord",
+				"repeat": 4,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "D4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "G4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "B4" }
+							}
+						]
+					},
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": "D5" }
+							}
+						]
+					}
+				]
+			}
+		]
+	}
+}

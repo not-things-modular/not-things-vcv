@@ -8,4 +8,6 @@
 dep-test/*
 !dep-test/
 !dep-test/Makefile
-
+dep/*
+!dep/
+!dep/Makefile
