@@ -272,21 +272,21 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
 
 ## segment
 
-Segments provide the core timing functionality of TimeSeq. Through its `duration` property, the segment specifies how long it should last. And since [lane](#lane)s execute *segment*s in order one by one, this allows sequences with more complex timings.
+Segments provide the core timing functionality of TimeSeq. Through its `duration` property, a segment specifies how long it should last. And since [lane](#lane)s execute their *segment*s in order one by one, this allows sequences with more complex timings to be created.
 
 The actual output of a *segment* is determined by its list of `actions`. Different types of *action*s exist, with their `timing` specifying when they should be executed (See [action](#action) and its sub-types for more details).
 
-If the order that the actions is executed in is of importance (e.g. when writing and subsequently reading values), a segment groups the actions in three sets according to their timing: ***start*** actions, ***ongoing*** actions (with a `glide` or `gate` timing) and ***end*** actions. The processing order of the actions then becomes:
+If the order that the actions is executed in is of importance (e.g. when writing and subsequently reading variables), the order in which segment *action*s are executed follows a predefined logic. A segment first groups the *action*s in three sets according to their timing: ***start*** actions, ***ongoing*** actions (with a `glide` or `gate` timing) and ***end*** actions. In each processing cycle, the processing order of these actions then becomes:
 
-* If the segment is starting, first execute all **start*** actions (in the order that they appear in the list)
-* Subsequently, execute all ***ongoing*** actions (in the order that they appear in the list)
-* Finally, if the segment is ending, execute all ***end*** actions (in the order that they appear in the list)
+* If the segment is starting, first execute all **start** actions (in the order that they appear in the original action list)
+* Subsequently, execute all ***ongoing*** actions (in the order that they appear in the original action list)
+* Finally, if the segment is ending, execute all ***end*** actions (in the order that they appear in the original action list)
 
 ### segment-block segments
 
-The `segment-block` property provides a special version of a *segment*: if present, the `segment-block` must contain the ID of a *segment-block* in the `segment-blocks` section of the [component-pool](#component-pool). TimeSeq will then replace this *segment* instances with the *segment*s of the *segment-block*. The `segment-block` property can not be combined with the `duration` and property within the same *segment* instance: either it is a stand-alone *segment* with a `duration` and `actions`, or it is a link to a `segment-block`.
+The `segment-block` property allows for a special version of a *segment*: if present, the `segment-block` property must contain the ID of a *segment-block* in the `segment-blocks` section of the [component-pool](#component-pool). The *segment*s of that *segment-block* will then take the place of the original *segment*, as if they were added inline. The `segment-block` property can not be combined with the `duration` property within the same *segment* instance: either it is a stand-alone *segment* with a `duration` and `actions`, or it is a link to a `segment-block`.
 
-The `actions` property can still be used together with the `segment-block` property, but it can only contain *action*s with a `start` or the `end` `timing`. The `start` actions will then be executed before the first segment of the *segment-block* starts. The `end` actions will be executed when the last segment of the *segment-block* has completed. If the *segment-block* has a `repeat` set, the *action*s will not be executed as when the *segment-block* repeats. They will only execute at the start of the first repeat, and after the last repeat has completed.
+The `actions` property can still be used together with the `segment-block` property, but in that case, it can only contain *action*s with a `start` or the `end` `timing`. In this case, the `start` actions will be executed before the first segment of the *segment-block* starts. The `end` actions will be executed when the last segment of the *segment-block* has completed. If the *segment-block* has a `repeat` value configured, the *action*s will not be executed each time the *segment-block* repeats. They will only execute at the start of the first repeat, and after the last repeat has completed.
 
 ### Properties
 
@@ -295,7 +295,7 @@ The `actions` property can still be used together with the `segment-block` prope
 | `duration` | yes | [duration](#duration) | Defines how long this segment will take to complete. |
 | `actions`| no | [action](#action) list | The actions that will be executed as part of this segment. See the description above for details about the timings of actions. |
 | `disable-ui` | no | boolean | If set to `true`, the *S* LED on the TimeSeq panel will light up when this *segment* starts. If set to `false`, a start of this *segment* will not cause the *S* LED on the TimeSeq panel to light up. Defaults to `true`. |
-| `segment-block` | no | string | The ID of a [segment-block](#segment-block) in the [component-pool](#component-pool) that will take the place of this segment. Can not be combined with the `duration`, `actions` and `disable-ui` properties. |
+| `segment-block` | no | string | The ID of a [segment-block](#segment-block) in the [component-pool](#component-pool) that will take the place of this segment. Can not be combined with the `duration`, and `disable-ui` properties. |
 
 ### Example
 
@@ -321,11 +321,9 @@ The `actions` property can still be used together with the `segment-block` prope
 
 ## duration
 
-The duration section defines how long a [segment](#segment) will last. TimeSeq allows several units of time specification. Since TimeSeq works based on VCV Rack samples, all of these types of units will be converted into samples when loading the script.
+The duration section defines how long a [segment](#segment) will last. TimeSeq allows the duration to be expressed in several types of units: samples, milliseconds, beats & bars or Hertz. Only one of these units can be used at a time for a *segment* duration, except for `beats` and `bars`, which can be used together.
 
-Only one of the units can be used for a *segment* duration, except for `beats` and `bars`, which are related to each other and can thus be used together.
-
-Note that the *duration* of a *segment* can not be shorter then one sample. If any of the unit conversions result in a *duration* that is shorter then one sample, the *segment* will last one sample instead. TimeSeq does allow fractional durations above that however (e.g. a segment can end up lasting 1.2 samples), and TimeSeq will keep track of these fractions to try and avoid drifts over time between different *lane*s.
+Since TimeSeq works based on VCV Rack samples, all of these types of units will be converted into samples once the script is loaded. The final converted *duration* of a *segment* can not be shorter then one sample. If any of the unit conversions result in a *duration* that is shorter then one sample, the *segment* will last one sample instead. TimeSeq does allow fractional durations above that however (e.g. a segment can end up lasting 1.2 samples), and TimeSeq will keep track of these fractions to try and avoid drifts over time between different *lane*s.
 
 ### samples
 
@@ -333,7 +331,7 @@ Samples are the smallest time division in VCV Rack and thus in TimeSeq. The dura
 
 Since the sample rate of VCV Rack (and thus the length of a sample) may not be known in advance, TimeSeq allows sample durations to be "re-mapped": if the [time-scale](#time-scale) of the [timeline](#timeline) in which the *segment* appears has a `sample-rate` property, that sample rate will be used instead to calculate the duration of the *segment*.
 
-E.g. if the *timeline* `sample-rate` is set to 48000, but VCV Rack is running at 96Khz, all `sample` values specified in the segment durations in that *timeline* will be multiplied by 2 (96000 / 48000 = 2). The end result will be that the segment will have the same duration independent of the actual VCV Rack sample rate.
+E.g. if the *timeline* `sample-rate` is set to 48000, but VCV Rack is running at 96Khz, all *segment*s in that *timeline* that express their *duration* with a `sample` value will have this value multiplied by 2 (96000 / 48000 = 2). The end result will be that the segment will have the same duration (in absolute time) independent of the actual VCV Rack sample rate.
 
 ### millis
 
@@ -341,9 +339,9 @@ Specifies the duration of a *segment* in milliseconds. Decimal values are allowe
 
 ### beats and bars
 
-If the [time-scale](#time-scale) of the [timeline](#timeline) in which the *segment* appears has a `bpm` configured, the duration of a *segment* can be expressed in `beats` relative to those Beats per Minute. Decimal values are allowed to express partials of beats (e.g. 8ths, 16ths, ...).
+If the [time-scale](#time-scale) of the [timeline](#timeline) in which the *segment* appears has a `bpm` configured, the duration of a *segment* can be expressed in the number of `beats` relative to those Beats per Minute. Decimal values are allowed so that partials of beats (e.g. 8ths, 16ths, ...) can be expressed.
 
-If there is also a `bpb` configured in the *time-scale*, an additional `bars` property is available relative to those Beats per Bar. `bars` can not be decimal, and a `bars` property can not be used if no `beats` property is present. The `beats` can be `0` however to specify that the *segment* last exactly the length of a (number of) bar(s).
+If there is also a `bpb` configured in the *time-scale*, an additional `bars` property is available relative to those Beats per Bar. `bars` can not be decimal, and a `bars` property can not be used if no `beats` property is present, though the `beats` property can be set to `0` to specify that the *segment* last exactly the length of a (number of) bar(s).
 
 ### hz
 
