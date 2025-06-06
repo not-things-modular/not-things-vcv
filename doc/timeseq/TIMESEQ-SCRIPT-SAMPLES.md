@@ -18,7 +18,7 @@ While each of the samples demonstrates separate pieces of functionality, the fac
 
 ## Building a Chord and Note Sequence
 
-The [note sequence](samples/NOTE-SEQ.md) scripts start with a simple note sequence and gradually builds this into a full chord sequence with eight and tripplet notes and some chance control. This script demonstrates:
+The [note sequence](samples/NOTE-SEQ.md) scripts start with a simple note sequence and gradually builds this into a full chord sequence with eight and triplet notes and some chance control. This script demonstrates:
 
 * Building a simple simple sequence
 * Using multiple lanes with sequences running in parallel

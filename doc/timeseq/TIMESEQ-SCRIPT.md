@@ -87,7 +87,7 @@ A gate action allows a gate signal to be generated on an *output* port. It will 
 
 ## Triggers
 
-The TimeSeq core processor contains support for internal triggers. Internal triggers are always referenced by their `id` (as choosen by the user).
+The TimeSeq core processor contains support for internal triggers. Internal triggers are always referenced by their `id` (as chosen by the user).
 
 Internal triggers can either be fired by a trigger *action* that is executed when a *segment* starts or ends, or because an external trigger or gate signal is detected on an input port that is monitored by an *input-trigger*.
 

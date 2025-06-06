@@ -198,7 +198,7 @@ A script version with gate actions added to all the arpeggiated chord notes can 
 
 ## Using Triplets
 
-When there are multiple looping *lanes* in a *timeline* that are expected to stay in sync, unless the `loop-lock` is activated on the *timeline*, it's important to make sure that all the *lane*s have the same duration. This can be demonstrated by making the *segment-block* play half-note triplets instead of eight notes. A tripplet *segment* can be written as:
+When there are multiple looping *lanes* in a *timeline* that are expected to stay in sync, unless the `loop-lock` is activated on the *timeline*, it's important to make sure that all the *lane*s have the same duration. This can be demonstrated by making the *segment-block* play half-note triplets instead of eight notes. A triplet *segment* can be written as:
 
 ```json
 {

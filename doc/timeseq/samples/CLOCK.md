@@ -4,7 +4,7 @@
 
 A clock signal in VCV Rack can be created using a consistent gate signal. And since [segment](../TIMESEQ-SCRIPT-JSON.md#segment)s in TimeSeq can be looped and can have [gate](../TIMESEQ-SCRIPT-JSON.md#gate-actions) actions, a basic clock signal can be created easily. But because TimeSeq supports multiple [timeline](../TIMESEQ-SCRIPT-JSON.md#timeline)s that can have different [time-scale](../TIMESEQ-SCRIPT-JSON.md#time-scale)s and one or more looping [lane](../TIMESEQ-SCRIPT-JSON.md#lane)s, it's also possible to set up a complex combination of clock signals in a TimeSeq script.
 
-This page will give an example of simple script setup using a couple of *bpm*s and beat subdivisions. It will output the different clock signals using different channels of the same polyphonic output port. While this is not really needed here since there are only a couple of clock signals, it is likely that in real-life scenarios, the script will also contain other output signals outside of the clock signals. Combining the clock singals into one output port frees up the other outputs for other usages in the script.
+This page will give an example of simple script setup using a couple of *bpm*s and beat subdivisions. It will output the different clock signals using different channels of the same polyphonic output port. While this is not really needed here since there are only a couple of clock signals, it is likely that in real-life scenarios, the script will also contain other output signals outside of the clock signals. Combining the clock signals into one output port frees up the other outputs for other usages in the script.
 
 ## Table of Contents
 
@@ -92,7 +92,7 @@ The `beat` property of the *segment* *duration* can also be set to decimal numbe
 
 This *lane* will create a clock beat that lasts one and three quarters of the 120 bpm that is specified on the *timeline* (so slower then the previous *lane*, but not quite double as long). The clock signal will be sent to the second channel of the first output port.
 
-The `gate-high-ratio` property will control how long the clock signal will remain high (as a value between `0` and `1`). The `0.66` value used here will cause it to remain high for 66% of the segment duration, and low for 44% of the segment duration. This can be usefull in certain scenarios, like when the clock signal is used for generating an ADSR envelope, and the sustain section of the envelope should be longer or shorter.
+The `gate-high-ratio` property will control how long the clock signal will remain high (as a value between `0` and `1`). The `0.66` value used here will cause it to remain high for 66% of the segment duration, and low for 44% of the segment duration. This can be useful in certain scenarios, like when the clock signal is used for generating an ADSR envelope, and the sustain section of the envelope should be longer or shorter.
 
 ### A Slow Clock Signal
 

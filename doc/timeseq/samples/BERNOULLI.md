@@ -6,7 +6,7 @@ It is unlikely that the TimeSeq module will be used as a Bernoulli Gate. After a
 
 Throughout the script, we'll use short versions of notations where possible, e.g.:
 
-* Use *input*s, *output*s and fixed *value*s shorthand notations instead of the full verbose versions (see the [input](../TIMESEQ-SCRIPT-JSON.md#shorthand-input-notation), [output](../TIMESEQ-SCRIPT-JSON.md#shorthand-output-notation) and [value](../TIMESEQ-SCRIPT-JSON.md#shorthand-value-notation) shorthand sections of the TimeSeq Script JSON sepcification for more details).
+* Use *input*s, *output*s and fixed *value*s shorthand notations instead of the full verbose versions (see the [input](../TIMESEQ-SCRIPT-JSON.md#shorthand-input-notation), [output](../TIMESEQ-SCRIPT-JSON.md#shorthand-output-notation) and [value](../TIMESEQ-SCRIPT-JSON.md#shorthand-value-notation) shorthand sections of the TimeSeq Script JSON specification for more details).
 * Since an *action* that doesn't have a `timing` property will default to a `start` timing, we'll only include the `timing` property on actions if it is different from that `start` timing value.
 
 ## Table of Contents
@@ -14,7 +14,7 @@ Throughout the script, we'll use short versions of notations where possible, e.g
 * [Basic Bernoulli Gate Version](#basic-bernoulli-gate-version)
   * [Triggering the Gate](#triggering-the-gate)
   * [Reacting to a Trigger](#reacting-to-the-trigger)
-  * [Determine Output Chacne](#determine-output-chance)
+  * [Determine Output Chance](#determine-output-chance)
   * [Send Output Gate](#send-output-gate)
   * [Reset the Outputs](#reset-the-outputs)
   * [Full Script and VCV Rack Patch](#full-script-and-vcv-rack-patch-for-basic-version)
@@ -225,7 +225,7 @@ To get the output gate to last as long as the input gate signal that started it,
 
 ### Update the Output Chance Segment
 
-Timing-wise, the first *segment* from the *basic* script will become (ommitting the existing actions for brevity):
+Timing-wise, the first *segment* from the *basic* script will become (omitting the existing actions for brevity):
 
 ```json
 {

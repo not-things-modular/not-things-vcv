@@ -276,7 +276,7 @@ Segments provide the core timing functionality of TimeSeq. Through its `duration
 
 The actual output of a *segment* is determined by its list of `actions`. Different types of *action*s exist, with their `timing` specifying when they should be executed (See [action](#action) and its sub-types for more details).
 
-If the order that the actions is executed in is of importance (e.g. when writing and subsequently reading variables), the order in which segment *action*s are executed follows a predefined logic. A segment first groups the *action*s in three sets according to their timing: ***start*** actions, ***ongoing*** actions (with a `glide` or `gate` timing) and ***end*** actions. In each processing cycle, the processing order of these actions then becomes:
+Depending on the script, the order that the actions are executed in can be of importance (e.g. when writing and subsequently reading variables). This execution order follows a predefined logic. A segment first groups the *action*s in three sets according to their timing: ***start*** actions, ***ongoing*** actions (with a `glide` or `gate` timing) and ***end*** actions. In each processing cycle, the processing order of these actions then becomes:
 
 * If the segment is starting, first execute all **start** actions (in the order that they appear in the original action list)
 * Subsequently, execute all ***ongoing*** actions (in the order that they appear in the original action list)
@@ -426,34 +426,36 @@ The `timing` property of an *action* identifies when the *action* will be execut
 * Actions that glide from a start value to an end value for the full duration of the segment (`glide` timing).
 * Actions that generate a gate signal while the segment is running (`gate` timing)
 
-If the order of the actions is important (e.g. when writing and reading variables), see the description of [segment](#segment) for how it will handle the action order.
+The order in which the actions of a *segment* are executed is described in the [segment](#segment) section.
 
 ### Start and End actions
 
-Actions that have a `start` or an `end` `timing` will be executed one time at the appropriate time in the *segment*. If an `if` property is present on the action, the condition of that [if](#if) will be evaluated at the time that the *segment* wants to execute the action. If the condition of the *if* is not met, the action will not be executed.
+Actions that have a `start` or an `end` `timing` will be executed once at the appropriate time in the *segment* (i.e. when it starts or ends). If an `if` property is present on the action, the condition of that [if](#if) will be evaluated at the time that the *segment* tries to execute the action. If the condition of the *if* is not met, the action will not be executed.
 
 `start` and `end` actions can perform a number of operations, each with their own appropriate properties:
 
 * Set a voltage on an output port
 * Set the polyphony of an output port
+* Set the label of an output port
 * Set a variable
 * Perform an assert
-* Fire an internal trigger (see [here](TIMESEQ-SCRIPT.md#triggers) on the script overview page for more details about triggers)
+* Fire an internal trigger (see the [triggers](TIMESEQ-SCRIPT.md#triggers) section on the script overview page for more details)
 
-Each action must contain exactly one operation. If multiple operations need to be performed, separate actions will have to be created for each of them.
+Each action must contain exactly one of these operation. If multiple operations need to be performed, separate actions will have to be created for each of them.
 
-Except for the `trigger` action, all the action types have an action property that will contain a sub-object with the different parameters required for that action. Since `trigger` action only needs to identify the ID of the trigger that has to be fired, a plain string that identifies that trigger ID will be sufficient.
+Except for the `trigger` action, all the action operations have their own *action* property that will contain a sub-object with the appropriate parameters for that operation. Since `trigger` action only needs to identify the ID of the trigger that has to be fired, a plain string that identifies that trigger ID will be sufficient.
 
 #### Properties
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `timing` | no | string | Identifies the timing when this action will be executed. Can be either `start` or `end`. |
+| `timing` | no | string | Identifies the timing when this action will be executed. Can be either `start` or `end`. Defaults to `start`.|
 | `set-value`| no | [set-value](#set-value) | Sets a voltage on an output port. |
 | `set-polyphony`| no | [set-polyphony](#set-polyphony) | Sets the polyphony of an output port. |
-| `set-variable`| no | [set-variable](#set-variable) | Sets a variable |
-| `assert`| no | [assert](#assert) | Performs an assert |
-| `trigger`| no | string | Fires an internal trigger with the specified name |
+| `set-label`| no | [set-label](#set-label) | Sets the tooltip label of an output port. |
+| `set-variable`| no | [set-variable](#set-variable) | Sets a variable. |
+| `assert`| no | [assert](#assert) | Performs an assert. |
+| `trigger`| no | string | Fires an internal trigger with the specified id. |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
 #### Examples
@@ -470,7 +472,17 @@ Except for the `trigger` action, all the action types have an action property th
 
 ```json
 {
-    "timing": "stop",
+    "timing": "end",
+    "set-variable": {
+      "name": "my-first-variable",
+      "value": { "voltage": 1.23 }
+    }
+}
+```
+
+```json
+{
+    "timing": "end",
     "trigger": "trigger-next-sequence"
 }
 ```
@@ -480,13 +492,13 @@ Except for the `trigger` action, all the action types have an action property th
 Actions with a `glide` timing gradually move from one value to another over the duration of a *segment*. The `start` *value* of the action will define at which voltage the glide starts, and the `end` *value* identifies the voltage the action will reach at the end of the *segment*.
 
 Using the `ease-factor` property, it is possible to influence the rate at which the glide moves from the `start` *value* to the `end` *value*. A positive `ease-factor` will cause the change to start slow and speed up towards the end, while a negative one will cause it to start changing quickly and ease out towards the end. If no `ease-factor` is specified (or it is set to zero), the glide will be executed in a linear fashion.
-The calculation of the easing factor supports two algorithms: using sigmoid function (`sig`) or based on power calculations (`pow`). The arc resulting from these altorithms differs slightly. By default, the `sig` algorithm will be used since it is less CPU intensive.
+The calculation of the easing factor supports two algorithms: using sigmoid function (`sig`) or based on power calculations (`pow`). The arc resulting from these algorithms differs slightly. By default, the `sig` algorithm will be used since it is less CPU intensive.
 
 Just like with other actions, a glide action can be made conditional by including an `if` property so that the action will only be executed if the [if](#if) condition is met.
 
-The exact values used for the `start`, `end` and `if` properties will be calculated when the *segment* that contains the action is started. They will not be re-evaluated while the *segment* is running, so any change that could influence these value calculations that happens while the *segment* is running will not be taken into account anymore. For example, if the action was determined to be disabled due to its `if` condition when the *segment* started, the action will not become active while the *segment* is running if the values for that `if` condition change afterwards. If the *segment* is started again at a later time (e.g. due to a looping *lane*), all values for the action will be re-evaluated when the *segment* restarts.
+The exact values used for the `start`, `end` and `if` properties will be calculated when the *segment* that contains the glide action is started. They will not be re-evaluated while the *segment* is running, so any change that could influence these value calculations that happens while the *segment* is running will not be taken into account anymore. For example, if the action was determined to be disabled due to its `if` condition when the *segment* started, the action will not become active afterwards while the *segment* is running parameter values for that `if` condition change in between. If the *segment* is started again at a later time however (e.g. due to a looping *lane*), all values for the action will be re-evaluated when the *segment* restarts.
 
-A glide action has two possible targets to send its generated voltages to: either change an [output](#output) voltage or set a variable that can be used in other areas of the script. Only one of these targets can be used per glide action.
+A glide action has two possible targets to send its generated voltages to: either change an [output](#output) voltage or set a variable that can be used in other areas of the script. Only one of these targets can be used per glide action. A glide action that is executed will update the voltage of its target (the *output* or the *variable*) in each processing cycle (i.e. at the active sample rate of VCV Rack).
 
 #### Properties
 
@@ -506,7 +518,7 @@ A glide action has two possible targets to send its generated voltages to: eithe
 {
     "timing": "glide",
     "start-value": { "voltage": -3 },
-    "end-value": { "variable": "glide-end-value" },
+    "end-value": { "variable": "glide-end-voltage" },
     "output": { "index": 9, "port": 6 },
     "if": { "ne": [
         { "voltage": 0 },
@@ -527,8 +539,8 @@ Just like the other action types, a gate action can be made conditional using an
 
 | property | required | type | description |
 | --- | --- | --- | --- |
+| `output`| yes | [output](#output) | The output port that will receive the gate signal |
 | `gate-high-ratio` | no | unsigned float | The position when the gate signal should go from high to low. Must be a value between `0` and `1`, with `0.5` aligning with half of the *segment* duration. Defaults to `0.5` |
-| `output`| no | [output](#output) | The output port to which the calculated value should be sent |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
 #### Example
@@ -546,7 +558,7 @@ Just like the other action types, a gate action can be made conditional using an
 
 ## if
 
-The *if* object provides conditional functionality for *action*s and *assert*s either by comparing two [value](#value)s with each other or by checking the result of two child if conditionals using logical operators. A condition can either evaluate to *true* or *false*. The result of the condition can then either enable (if *true*) or disable (if *false*) an [action](#action), to trigger (if *true*) the [assert](#assert) that they were used in.
+The *if* object provides conditional functionality for *action*s and *assert*s either by comparing two [value](#value)s with each other or by checking the result of two child if conditionals using logical operators. A condition can either evaluate to *true* or *false*. The result of the condition can then enable or disable an [action](#action), or trigger the [assert](#assert) that the *if* was used in.
 
 Each *if* object must contain exactly one comparison or logical operator.
 
@@ -579,7 +591,7 @@ For the `eq` and the `ne` comparisons, an optional `tolerance` can be can be pro
 
 #### Examples
 
-Some examples of *if* usage within an action:
+Some examples of *if* usage with comparison operators within an action:
 
 ```json
 {
@@ -613,7 +625,7 @@ A logical operator allows two child *if*s to be combined. Following logical oper
 * `and`: returns *true* if the two child *if*s both evaluate to *true*,
 * `or`: returns *true* if at least one of the child *if*s evaluates to *true*
 
-The value of the logical operator property must be set to an array of exactly two child *if* objects. If needed, multiple levels of logical *if* operators can be nested.
+The value of the logical operator property must be set to an array of exactly two child *if* objects. More complex conditional can be constructed by nesting multiple levels of logical *if* operators.
 
 #### Properties
 
@@ -688,7 +700,7 @@ The *set-value* is used within an [action](#action) to update the voltage of one
 
 The voltage to use is determined by the `value` property, while the port (and channel) on which the voltage should be updated is determined by the `output` property.
 
-The voltage will be immediately assigned to the [output](#output) as part of the executed action, so any subsequent [value](#value) in the script that references that *output* will immediately receive the updated voltage.
+The voltage will be immediately assigned to the [output](#output) as part of the executed action, so any subsequent [value](#value) in the script that references that *output* will receive the updated voltage once the set-value was performed.
 
 ### Properties
 
@@ -717,7 +729,7 @@ The *set-variable* is used within an [action](#action) to update an internal Tim
 
 The voltage to use is determined by the `value` property, while the `name` property determines the name of the variable that should be updated.
 
-When a variable is set to a voltage using a *set-variable* *action*, that variable will keep that voltage value as long as the script keeps running. Pausing and resuming a script will not clear existing variables. Resetting a script, loading a new script or restarting VCV Rack will cause existing variables to be removed.
+When a variable is set to a voltage using a *set-variable* *action*, that variable will keep that voltage value as long as the script keeps running. Pausing and resuming a script will not clear existing variables. Resetting a script, loading a new script or restarting VCV Rack will cause existing variables to be removed/cleared.
 
 Since unknown variables will default to 0V, setting a variable to 0V will be the same as removing that variable from the list of currently known variables.
 
@@ -744,9 +756,9 @@ An example of a set-variable within an action:
 
 ## set-polyphony
 
-The *set-polyphony* is used within an [action](#action) to update the number of polyphonic channels of an output port.
+The *set-polyphony* is used within an [action](#action) to update the number of polyphonic channels on an output port.
 
-The port on which the number of channels should be updated is determined by the `index` property, while the number of channels that it should have is determined by the `channels` property. Setting the number of channels to `1` will make the port monophonic. One port can have up to `16` channels.
+The port on which the number of channels should be updated is determined by the `index` property. The number of channels that the port should have is determined by the `channels` property. Setting the number of channels to `1` will make the port monophonic. A port can have up to `16` channels.
 
 The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8`
 
@@ -775,9 +787,9 @@ An example of a set-polyphony within an action:
 
 ## set-label
 
-The *set-label* is used within an [action](#action) to update label of the output port in the tooltip when moving the mouse over it. This is a purely aesthetic action to allow easier identification of output ports in the VCV Rack UI. Since setting the label of an output port in VCV Rack requires memory allocations (i.e. has a minor performance overhead), this action should not be executed repeatedly in a script. This action is intended to be used during script setup (e.g. in the *global-actions* of the [script](#script) element).
+The *set-label* is used within an [action](#action) to update text label of the output port in the tooltip when moving the mouse over the port. This is a purely aesthetic action to allow easier identification of output ports in the VCV Rack UI. Since setting the label of an output port in VCV Rack requires memory allocations (i.e. has a minor performance overhead), this action should not be executed repeatedly in a script. This action is intended to be used during script setup (e.g. in the *global-actions* of the [script](#script) element).
 
-The port on which the label should be updated is determined by the `index` property. The `label` property should contain the value to use.
+The port on which the label should be updated is determined by the `index` property. The `label` property should contain the text to use.
 
 The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8`
 
@@ -806,9 +818,11 @@ An example of a set-label within an action:
 
 Asserts allow TimeSeq to be used as a module to test the behaviour of other modules. The assert action allows a check to be performed on an [if](#if) condition, and if that condition is not met, it will result in an assert warning becoming active on the module UI. By writing a script that sends varying voltages through the TimeSeq [output](#output)s to another module, and then sending the output of that other module back into the [input](#input)s of TimeSeq, the assert action can subsequently verify that the other module behaved as expected.
 
-The `expect` property will identify the [if](#if) condition that will be checked. If this condition evaluates to *false*, an assert with the specified `name` will be triggered on TimeSeq. The `stop-on-fail` property specifies if the occurence of a failed assert should also pause TimeSeq, or if the script should continue running.
+The `expect` property will identify the [if](#if) condition that will be checked. If this condition evaluates to *false*, an assert with the specified `name` will be triggered on TimeSeq. The `stop-on-fail` property specifies if the occurrence of a failed assert should also pause TimeSeq, or if the script should continue running.
 
 While the assert is mainly intended to be used to verify voltages on the input ports of TimeSeq, the `expect` condition can be used to compare any types of *value*s.
+
+See [assert](TIMESEQ-UI-PANEL.md#asserts) for more details on how they are handled in the UI.
 
 ### Properties
 
@@ -841,23 +855,23 @@ An example of a set-value within an action:
 
 Throughout the TimeSeq script, whenever a voltage is needed, a value is used to provide different ways to determine that voltage value:
 
-* A constant voltage, either using an exact voltage number or using a note value that will be its corresponding 1V/Oct voltage,
-* Using a variable that was previousy set using a [set-variable](#set-variable) [action](#action),
-* Reading the current voltage from an [input](#input) port,
-* Reading the current voltage from an [output](#output) port or
+* A constant voltage, either using an exact voltage number or using a note value that will be translated into its corresponding 1V/Oct voltage
+* Using a variable that was previously set using a [set-variable](#set-variable) *action*
+* Reading the current voltage from an [input](#input) port
+* Reading the current voltage from an [output](#output) port
 * Using a [rand](#rand)om voltage generator
 
-When the `note` property is used, it must be a 2 or 3 character string, where the first character specifies the note name (A-G), the second specifies the octave (0-9) and the third (optional) character can either use `+` to indicate a sharp, or `-` to indicate a flat. E.g: `C4+` will result in the 1V/Oct value of a middle C# t be used, while a `A3-` will result in an A flat below middle C.
+When the `note` property is used, it must be a 2 or 3 character string, where the first character specifies the note name (A-G), the second specifies the octave (0-9) and the third (optional) character can either use `+` to indicate a sharp, or `-` to indicate a flat. E.g: `C4+` will result in the 1V/Oct value of a middle C#, while a `A3-` will result in an A flat below middle C.
 
-If a `variable` property is used and no variable with a matching name was previously set using a [set-variable](#set-variable) [action](#action), 0V will be used instead.
+If a `variable` property is used and no variable with a matching name was previously set using a [set-variable](#set-variable) *action, 0V will be used instead.
 
-Additional mathematical operations are possible on a value using the `calc` property. This allows simple [calc](#calc)ulations to be performed by either adding, subtracting, dividing or multiplying this value with another value. The `calc` property expects a list of [calc](#calc) objects. Even if only one calculation is to be performed, it should still be supplied as a list (with one element). The calculations in the list will be executed in the order that they appear in the list.
+Additional mathematical operations are possible on a value using the `calc` property. This allows simple [calc](#calc)ulations to be performed by either adding, subtracting, dividing or multiplying this value with another value. The `calc` property expects a list of [calc](#calc) objects. Even if only one calculation is to be performed, it should still be supplied as a list (with one element). The calculations will then be executed in the order that they appear in the list. While voltage values are usually expected to fall into the -10V to 10V range in VCV Rack, calculations will not enforce this limit, and the result of the calculation can fall outside of that range.
 
-Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** any *calc* has been applied to the voltage value.
+Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** the *calc* operations have been applied to the voltage value.
 
 Exactly one of the `voltage`, `note`, `variable`, `input`, `output` or `rand` properties must be specified for a value.
 
-Note: values always resolve into a voltage, which is then used by the object that contains the value. The source of the value voltage will not be tied to the target of that value. E.g. if an action set the voltage of an *output* using a value that is based on the voltage of an *input* port, the voltage to use will be determined when the action is executed. If the voltage on the *input*  port changes afterwards, the voltage of the *output* port will **not** be changes automatically. The *set-value* action will have to be re-executed in order for the *output* port to update again.
+Note: values always resolve into a voltage, which is then used by the object that contains the value. The source of the value voltage will not be tied to the target of that value. E.g. if an action sets the voltage of an *output* port using a value that is based on the voltage of an *input* port, the voltage to use will be determined when the action is executed. If the voltage on the *input* port changes afterwards, the voltage of the *output* port will **not** be changes automatically to the updated voltage of the *input* port. The *set-value* action will have to be re-executed in order for the *output* port to update again.
 
 ### Properties
 
@@ -957,15 +971,15 @@ Can be shortened using both shorthand value and [shorthand output](#shorthand-ou
 }
 ```
 
-This shorthand notation can be used in all places where `voltage` or `note` values are used, except when declaring a re-usable variable as a direct child of the [component-pool](#component-pool) `values` list (where the full value notation must be used since an `id` must also be specified).
+This shorthand notation can be used in all places where `voltage` or `note` values are used, except when declaring a re-usable variable as a direct child of the [component-pool](#component-pool) `values` list (where the full value notation must be used since an `id` property must also be specified).
 
 ## input
 
 An input identifies a channel on one of the input ports of TimeSeq, either to read a voltage from it in a [value](#value) or to monitor it for [input-trigger](#input-trigger)s.
 
-The input port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If no `channel` is specified, (e.g. since it is a monophonic input signal), the first channel of the port will be used. In VCV Rack, a monophonic signal can be seen as a signal containing one channel.
+The input port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If no `channel` property is specified, the first channel of the port will be used. When working with monophonic input signals, either the `channel` property can be omitted, or it can be set to `1` (since in VCV Rack, a monophonic signal is considered to be a signal containing one channel).
 
-Note that TimeSeq will not validate how many channels are present on the input port. If a channel is requested that is outside of the current polyphonic channel range of the input signal, TimeSeq will use whatever value VCV Rack returns for that channel (usually 0v).
+Note that TimeSeq will not validate how many channels are present on the input port. If a channel is requested that is outside of the current polyphonic channel range of the input signal, TimeSeq will use whatever value VCV Rack returns for that channel (usually 0V).
 
 ### Properties
 
@@ -995,7 +1009,7 @@ The fifth input port, using channel 15:
 
 ### Shorthand Input Notation
 
-To allow easer writing of inputs, the TimeSeq JSON script allows outputs for which no `channel` is specified (i.e. monophonic outputs or channel `1` on polyphonic outputs) to be written using a shorthand notation: a full `{ "index": 5 }` or `{ "index": 5, "channel": 1 }` can be shortened to `5` (i.e. just the index value).
+To allow easer writing of inputs, the TimeSeq JSON script allows inputs for which no `channel` is specified (i.e. monophonic inputs or channel `1` on polyphonic inputs) to be written using a shorthand notation: a full `{ "index": 5 }` or `{ "index": 5, "channel": 1 }` notation can be shortened to `5` (i.e. just the index value).
 
 This way, following [set-value](#set-value) action:
 
@@ -1019,15 +1033,15 @@ Can be shortened using both shorthand input and [shorthand output](#shorthand-ou
 }
 ```
 
-This shorthand notation can be used in all places where inputs are used, except when declaring a re-usable input as a direct child of the [component-pool](#component-pool) `inputs` list (where the full input notation must be used since an `id` must also be specified).
+This shorthand notation can be used in all places where inputs are used, except when declaring a re-usable input as a direct child of the [component-pool](#component-pool) `inputs` list (where the full input notation must be used since an `id` property must also be specified).
 
 ## output
 
 An output identifies a channel on one of the output ports of TimeSeq, either to assign a voltage to it through an [action](#action), or to read a voltage from it using a [value](#value).
 
-The output port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If to `channel` is specified, the first channel of the port will be used. In VCV Rack, a monophonic signal can be seen as a signal containing one channel.
+The output port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If no `channel` property is specified, the first channel of the port will be used. When working with monophonic output signals, either the `channel` property can be omitted, or it can be set to `1` (since in VCV Rack, a monophonic signal is considered to be a signal containing one channel).
 
-Note that TimeSeq will not validate how many channels are present on the output port. Assigning a value to a channel that is outside the current polyphonic channel count will not result in more channels becoming active on that output. TimeSeq will however remember any voltage updates done on all channels (even if they are outside of the current polyphonic channel count), and will assign those voltages to the channels if the channel count is changed using a [set-polyphony](#set-polyphony) *action*. Similarly, if a voltage is assigned to a channel that is outside of the current polyphonic channel count, a [value](#value) that uses that channel will still return the value that was assigned to it.
+Note that TimeSeq will not validate how many channels are present on the output port. Assigning a value to a channel that is outside the current polyphonic channel count will not result in more channels becoming active on that output. TimeSeq will however remember any voltage updates done on all channels (even if they are outside of the current polyphonic channel count), and will assign those voltages to the channels if the channel count is changed afterwards using a [set-polyphony](#set-polyphony) *action*. Similarly, if a voltage is assigned to a channel that is outside of the current polyphonic channel count, a [value](#value) that references that channel on the output port will still return the value that was assigned to it.
 
 When a script is loaded or reset, all output ports of TimeSeq will be set to monophonic mode (i.e. have 1 channel), and all voltages on the output ports will be set to 0 volts.
 
@@ -1059,7 +1073,7 @@ The fifth output port, using channel 15:
 
 ### Shorthand Output Notation
 
-To allow easer writing of outputs, the TimeSeq JSON script allows outputs for which no `channel` is specified (i.e. monophonic outputs or channel `1` on polyphonic outputs) to be written using a shorthand notation: a full `{ "index": 5 }` or `{ "index": 5, "channel": 1 }` can be shortened to `5` (i.e. just the index value).
+To allow easer writing of outputs, the TimeSeq JSON script allows outputs for which no `channel` is specified (i.e. monophonic outputs or channel `1` on polyphonic outputs) to be written using a shorthand notation: a full `{ "index": 5 }` or `{ "index": 5, "channel": 1 }` notation can be shortened to `5` (i.e. just the index value).
 
 This way, following [set-value](#set-value) action:
 
@@ -1083,7 +1097,7 @@ Can be shortened using both shorthand output and [shorthand value](#shorthand-va
 }
 ```
 
-This shorthand notation can be used in all places where outputs are used, except when declaring a re-usable output as a direct child of the [component-pool](#component-pool) `outputs` list (where the full output notation must be used since an `id` must also be specified).
+This shorthand notation can be used in all places where outputs are used, except when declaring a re-usable output as a direct child of the [component-pool](#component-pool) `outputs` list (where the full output notation must be used since an `id` property must also be specified).
 
 ## rand
 
@@ -1111,11 +1125,11 @@ The generated random value will be between the `lower` and `upper` [value](#valu
 
 ## calc
 
-Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, where each calculation either adds or subtracts another value from the current voltage, multiplies them, or divides the current voltage by the specified value.
+Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, each calculation either adds or subtracts another value from the current voltage, multiplies them, or divides the current voltage by the specified value.
 
-To safeguard against calculation errors, a division by zero will result in a 0V.
+To safeguard against calculation errors, a division by zero will result in 0V.
 
-The possible mathematical operations are available as:
+The possible mathematical operations that are available are:
 
 * `add` or adding a value to the current voltage,
 * `sub` for subtracting a value from the current voltage,
