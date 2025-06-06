@@ -161,32 +161,32 @@ A `bpb` value can only be set if there is also a `bpm` value set.
 
 ## lane
 
-Lanes provide the core sequencing functionality of TimeSeq. A *lane* will activate the `segments` in the order that they appear in the list. Only one *segment* can be active within a *lane*, and when a *segment* completes, the *lane* will move on to the next *segment*.
+Lanes provide the core sequencing functionality of TimeSeq. A lane will activate the `segments` that are assigned to it in the order that they appear in the list. Only one *segment* can be active at a time within a lane. When a *segment* completes, the lane will move on to the next *segment* in the list.
 
-Several properties control how a *lane* executes:
+Several properties control how a lane executes:
 
-* `auto-start` defines if the *lane* should automatically be started when the script is started.
-* `loop` defines if the *lane* should loop through the `segments`, activating the first *segment* again when the last *segment* of the list completes if looping is enabled.
-* `repeat` defines how many times the `segments` in the *lane* should be repeated. A value of 0 or 1 mean that the list of `segments` will only be executed once. A value of 2 results in running through the list twice, 3 results in three iterations, etc. If `loop` is enabled for the *lane*, the `segments` will be repeated indefinitely, so the `repeat` property will have no impact anymore in that case.
+* `auto-start` defines if the lane should automatically be started when the script is started.
+* `loop` defines if the lane should keep looping the `segments`: if enabled, the first *segment* will be activated again when the last *segment* of the list completes.
+* `repeat` defines how many times the `segments` in the lane should be repeated. A value of 0 or 1 mean that the list of `segments` will only be executed once. A value of 2 results in running through the list twice, 3 results in three iterations, etc. If `loop` is enabled for the lane, the `segments` will be repeated indefinitely, so the `repeat` property will have no impact anymore in that case.
 
-The running state of a *lane* can be controlled using triggers:
+The running state of a lane can be controlled using triggers:
 
-* If a trigger matching the `start-trigger` property fires, and the *lane* is not currently running, it will be started. Any previous progress of the *lane* will be reset, and it will start again from the first *segment*. If the *lane* was already running when the trigger was received, the trigger will have no impact on the *lane* status or position.
-* If a trigger matching the `restart-trigger` property fires, the *lane* will be restarted from the first *segment*. If the *lane* was paused or hadn't started yet, it will start running from the first *segment*. If the *lane* was already running, its position will be reset to that of the first *segment*.
-* If a trigger matching the `stop-trigger` property fires, the *lane* will stop running if it is currently running. If it is not running, the trigger will have no impact.
+* If a trigger matching the `start-trigger` property fires and the lane is not currently running, that lane will be started. Any previous progress of the lane will be reset, and it will start from its first *segment*. If the lane was already running when the trigger was received, the trigger will have no impact on the lane status or position.
+* If a trigger matching the `restart-trigger` property fires, the lane will be restarted from its first *segment*. If the lane was paused or hadn't started yet, it will start running from the first *segment*. If the lane was already running, its position will be reset to that of the first *segment*.
+* If a trigger matching the `stop-trigger` property fires and the lane is currently running, that lane will stop running. If it is not running, the trigger will have no impact.
 
 ### Properties
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `segments` | yes | [segment](#segment) list | The sequence of segments that will be executed for this *lane* |
-| `auto-start` | no | boolean | If set to `true`, the *lane* will start automatically when the script is loaded. If set to `false` the *lane* will remain stopped when the script is loaded. Defaults to `true` |
-| `loop`| no | boolean | If set to `true`, the *lane* will restart from the first segment once the last segment completes. Otherwise the lane will stop once the last segment completes. Defaults to `false` |
-| `repeat` | no | unsigned number | Specifies how many times the *lane* should be executed before stopping. Has no impact if `loop` is set to `true`. Defaults to `0` |
-| `start-trigger` | no | string | The name of the trigger that will cause this *lane* to start running. A start trigger on an already running *lane* has no impact on the state of the lane. Defaults to empty. |
-| `restart-trigger` | no | string | The name of the trigger that will cause this *lane* to restart. A restart trigger on an inactive *lane* will cause it to start running. A restart trigger on a running *lane* will cause it to restart from the first *segment*. Defaults to empty.|
-| `stop-trigger` | no | string | The name of the trigger that will cause this *lane* to stop running. A stop trigger on an an inactive *lane* has no impact on the state of the lane. Defaults to empty. |
-| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this *lane* will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
+| `segments` | yes | [segment](#segment) list | The sequence of *segment*s that will be executed for this lane |
+| `auto-start` | no | boolean | If set to `true`, the lane will start automatically when the script is loaded. If set to `false` the lane will remain stopped when the script is loaded. Defaults to `true` |
+| `loop`| no | boolean | If set to `true`, the lane will restart from its first segment once its last segment has completed. Otherwise the lane will stop once its last segment completes. Defaults to `false` |
+| `repeat` | no | unsigned number | Specifies how many times the *segment*s in the lane should be repeated before stopping the lane. Both values `0` and `1` mean that the segments are executed once. This property has no impact if `loop` is set to `true`. Defaults to `0` |
+| `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
+| `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty.|
+| `stop-trigger` | no | string | The id of the internal trigger that will cause this lane to stop running. A stop trigger on an an inactive lane has no impact on the state of that lane. Defaults to empty. |
+| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this lane will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
 
 ### Example
 
@@ -204,11 +204,11 @@ The running state of a *lane* can be controlled using triggers:
 
 ## input-trigger
 
-Identifies the input port that will be monitored for trigger inputs.
+Identifies that an input port that will be monitored for trigger input signals.
 
-An input will be considered to have 'triggered' if it went from low voltage (0V) to high voltage (more then 1V). After triggering, the input must first return back to low voltage (0V) before it can be triggered again.
+An input will be considered to have 'triggered' if it went from low voltage (0V) to high voltage (more then 1V). After being triggered, the input signal must first return back to low voltage (0V) before it can be triggered again.
 
-When an input has been triggered, the internal trigger (identified by the `id` property) will be set, which can then influence the running state of a [Lane](#lane) if it uses that trigger as `start-trigger`, `restart-trigger` or `stop-trigger`.
+When an input has been triggered, the internal trigger (identified by the `id` property) will be set, which can then influence the running state of a [Lane](#lane) if it uses that trigger id as `start-trigger`, `restart-trigger` or `stop-trigger`.
 
 ### Properties
 
@@ -233,7 +233,9 @@ When an input has been triggered, the internal trigger (identified by the `id` p
 
 A pool of reusable script components. Objects defined in this pool aren't added into the script directly from here, but can instead be referenced throughout the script using the [ref](TIMESEQ-SCRIPT.md#referencing) mechanism.
 
-All objects defined in this pool **must** have an `id` property, since this will be used to reference them from within the script. It is allowed to use the same `id` value for different types of objects (e.g. for a *segment* and a *value*), but within one type of object, the `id` must be unique.
+All objects defined in this pool **must** have an additional `id` property, since this will be used to reference them from within the script. It is allowed to use the same `id` value for different types of objects (e.g. for a *segment* and a *value*), but within one type of object, the `id` must be unique.
+
+See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for more information about using re-usable components.
 
 ### Properties
 
