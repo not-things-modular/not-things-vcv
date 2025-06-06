@@ -1,18 +1,10 @@
 # CHANGELOG
 
-## 2.0.3-timeseq-beta-02 (2025-05-31)
-
-* **TimeSeq**: Second beta versio nof TimeSeq: add set-label action; rework script state engine for potention load memory error
-
-## 2.0.3-timeseq-beta-01 (2025-05-24)
-
-* **TimeSeq**: Initial beta version of TimeSeq
-
-## 2.0.3 (TBD)
+## 2.0.3 (2025-06-06)
 
 * **Global**: Updates to overall UI design and preview rendering
 * **Solim**: Fixed issue where Solim Output Octaver settings remained active on the main Solim module after disconnecting the Output Octaver expander
-* **TimeSeq**: Initial version of TimeSeq
+* **TimeSeq**: Initial version of TimeSeq sequencer module
 
 ## 2.0.2 (2025-04-21)
 
