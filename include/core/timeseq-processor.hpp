@@ -7,6 +7,7 @@
 #include <utility>
 #include <random>
 #include <rack.hpp>
+#include <cstdint>
 #include "core/timeseq-validation.hpp"
 
 #ifndef nt_private
