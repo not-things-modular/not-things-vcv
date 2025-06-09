@@ -31,7 +31,6 @@ include $(RACK_DIR)/plugin.mk
 dep:
 	$(MAKE) -C dep
 cleandep:
-	echo $(MAKE) -C dep clean
 	$(MAKE) -C dep clean
 
 ### Test dependencies ###
@@ -89,8 +88,8 @@ GCOVFLAGS = -fprofile-arcs -ftest-coverage -fno-omit-frame-pointer -fno-elide-co
 ifdef ARCH_WIN
 	OLD_SHELL := $(SHELL)
 	SHELL := /bin/bash
-	LCOV_PWD := $(shell echo `pwd -W`/ | tr / \)
-	LCOV_DEP_PWD := $(shell echo `pwd -W`/dep/ | tr / \)
+	LCOV_PWD := $(shell echo `pwd -W`/ | tr '/' '\\')
+	LCOV_DEP_PWD := $(shell echo `pwd -W`/dep/ | tr '/' '\\')
 	SHELL = $(OLD_SHELL)
 else
 	LCOV_PWD := $(shell pwd)/
