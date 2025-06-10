@@ -1,4 +1,5 @@
 #include "core/timeseq-json.hpp"
+#include "util/notes.hpp"
 
 using namespace std;
 using namespace timeseq;
@@ -146,7 +147,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 	json::const_iterator componentPool = scriptJson.find("component-pool");
 	if (componentPool != scriptJson.end()) {
 		if (componentPool->is_object()) {
-			static const vector<string> componentPoolProperties = { "segment-blocks", "segments", "inputs", "outputs", "calcs", "values", "actions", "ifs" };
+			static const vector<string> componentPoolProperties = { "segment-blocks", "segments", "inputs", "outputs", "calcs", "values", "actions", "ifs", "tunings" };
 			location.push_back("component-pool");
 			vector<string> ids;
 
@@ -387,6 +388,36 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 					location.pop_back();
 				} else {
 					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_IfsArray, "'ifs' must be an array.");
+				}
+			}
+
+			json::const_iterator tunings = componentPool->find("tunings");
+			if (tunings != componentPool->end()) {
+				if (tunings->is_array()) {
+					location.push_back("tunings");
+
+					ids.clear();
+					int count = 0;
+					std::vector<json> tuningElements = (*ifs);
+					for (const json& tuningObj : tuningElements) {
+						location.push_back(std::to_string(count));
+						if (tuningObj.is_object()) {
+							script->tunings.push_back(parseTuning(tuningObj, validationErrors, location));
+							if (std::find(ids.begin(), ids.end(), script->tunings.back().id) != ids.end()) {
+								ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->tunings.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+							} else if (script->tunings.back().id.size() > 0) {
+								ids.push_back(script->tunings.back().id);
+							}
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TuningObject, "'tunings' elements must be objects.");
+						}
+						location.pop_back();
+						count++;
+					}
+
+					location.pop_back();
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_IfsArray, "'tunings' must be an array.");
 				}
 			}
 
@@ -1661,7 +1692,7 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson, std::vector<Validat
 }
 
 ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
-	static const char* cCalcProperties[] = { "add", "sub", "div", "mult" };
+	static const char* cCalcProperties[] = { "add", "sub", "div", "mult", "max", "min", "remain", "frac", "round", "quantize", "sign" };
 	static const vector<string> vCalcProperties(begin(cCalcProperties), end(cCalcProperties));
 	ScriptCalc calc;
 
@@ -1707,10 +1738,92 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, std
 			calc.value.reset(scriptValue);
 		}
 
+		json::const_iterator max = calcJson.find("max");
+		if (max != calcJson.end()) {
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::MAX;
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*max, true, validationErrors, location, "max", ValidationErrorCode::Calc_MaxObject, "'max' must be an object."));
+			calc.value.reset(scriptValue);
+		}
+
+		json::const_iterator min = calcJson.find("min");
+		if (min != calcJson.end()) {
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::MIN;
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*min, true, validationErrors, location, "min", ValidationErrorCode::Calc_MinObject, "'min' must be an object."));
+			calc.value.reset(scriptValue);
+		}
+
+		json::const_iterator remain = calcJson.find("remain");
+		if (remain != calcJson.end()) {
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::REMAIN;
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*remain, true, validationErrors, location, "remain", ValidationErrorCode::Calc_RemainObject, "'remain' must be an object."));
+			calc.value.reset(scriptValue);
+		}
+
+		json::const_iterator frac = calcJson.find("frac");
+		if (frac != calcJson.end()) {
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::FRAC;
+			if ((!frac->is_boolean()) || (!frac->get<bool>())) {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_FracBoolean, "'frac' must be a boolean, with its value set to true.");
+			}
+		}
+
+		json::const_iterator round = calcJson.find("round");
+		if (round != calcJson.end()) {
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::ROUND;
+			if (round->is_string()) {
+				std::string roundString = round->get<string>();
+				if (roundString == "up") {
+					calc.roundType.reset(new ScriptCalc::RoundType(ScriptCalc::RoundType::UP));
+				} else if (roundString == "down") {
+					calc.roundType.reset(new ScriptCalc::RoundType(ScriptCalc::RoundType::DOWN));
+				} else if (roundString == "near") {
+					calc.roundType.reset(new ScriptCalc::RoundType(ScriptCalc::RoundType::NEAR));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_RoundEnum, "'round' must be a string set to either 'up', 'down' or 'near'.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_RoundString, "'round' must be a string set to either 'up', 'down' or 'near'.");
+			}
+		}
+
+		json::const_iterator quantize = calcJson.find("quantize");
+		if (quantize != calcJson.end()) {
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::QUANTIZE;
+			if ((quantize->is_string()) && (quantize->get<string>().length() > 0)) {
+				calc.tuning = quantize->get<string>();
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_QuantizeString, "'quantize' must be a non-empty string.");
+			}
+		}
+
+		json::const_iterator sign = calcJson.find("sign");
+		if (sign != calcJson.end()) {
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::SIGN;
+			if (sign->is_string()) {
+				std::string signString = sign->get<string>();
+				if (signString == "pos") {
+					calc.signType.reset(new ScriptCalc::SignType(ScriptCalc::SignType::POS));
+				} else if (signString == "NEG") {
+					calc.signType.reset(new ScriptCalc::SignType(ScriptCalc::SignType::NEG));
+				} else {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_SignEnum, "'sign' must be a string set to either 'pos' or 'neg'.");
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_SignString, "'sign' must be a string set to either 'pos' or 'neg'.");
+			}
+		}
+
 		if (count == 0) {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div' or 'mult' must be set.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize' or 'sign' must be set.");
 		} else if (count > 1) {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_MultpleOperations, "At most one of 'add', 'sub', 'div' or 'mult' may be set.");
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Calc_MultipleOperations, "At most one of 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize' or 'sign' may be set.");
 		}
 	}
 
@@ -1741,6 +1854,74 @@ ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJ
 	}
 
 	return inputTrigger;
+}
+
+ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {
+	static const vector<string> tuningProperties = { "id", "notes" };
+	ScriptTuning tuning;
+
+	verifyAllowedProperties(tuningJson, tuningProperties, false, validationErrors, location);
+
+	json::const_iterator id = tuningJson.find("id");
+	if ((id != tuningJson.end()) && (id->is_string())) {
+		tuning.id = *id;
+		if (tuning.id.length() == 0) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_IdLength, "'id' can not be an empty string.");
+		}
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_IdString, "'id' is required and must be a string.");
+	}
+
+	json::const_iterator notes = tuningJson.find("notes");
+	if ((notes != tuningJson.end()) && (notes->is_array())) {
+		location.push_back("notes");
+
+		int count = 0;
+		std::vector<json> noteElements = (*notes);
+		for (const json& noteElement : noteElements) {
+			location.push_back(std::to_string(count));
+			if (noteElement.is_number()) {
+				float x;
+				float note = noteElement.get<float>();
+				note = modf(note, &x); // If values > 1.0 are supplied, keep only the 
+				tuning.notes.push_back(note);
+			} else if (noteElement.is_string()) {
+				string noteString = noteElement.get<string>();
+				if ((noteString.size() < 1) || (noteString.size() > 2)) {
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must be a string with a note name (A-G) and optionally an accidental (+ for sharp, - for flat).");
+				} else {
+					int noteIndex = 0;
+					char n = toupper((noteString)[0]);
+					if (n < 'A' || n > 'G') {
+						ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must start with a valid note name (A-G).");
+					} else {
+						noteIndex = noteNameToIndex(n);
+					}
+					if (noteString.size() == 2) {
+						char a = (noteString)[1];
+						if (a == '+') {
+							noteIndex++;
+						} else if (a == '-') {
+							noteIndex--;
+						} else {
+							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
+						}
+					}
+					tuning.notes.push_back((float) noteIndex / 12);
+				}
+			} else {
+				ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_NoteFloatOrString, "'notes' elements must be either 1V/Oct floats or note name strings.");
+			}
+			location.pop_back();
+			count++;
+		}
+
+		location.pop_back();
+	} else {
+		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_NotesArray, "'notes' is required and must be an array.");
+	}
+
+	return tuning;
 }
 
 void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, std::vector<ValidationError> *validationErrors, std::vector<std::string> location) {

@@ -58,10 +58,19 @@ struct ScriptRand {
 };
 
 struct ScriptCalc : ScriptRefObject {
-	enum CalcOperation { ADD, SUB, DIV, MULT };
+	enum CalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN, FRAC, ROUND, QUANTIZE, SIGN };
+	enum RoundType { UP, DOWN, NEAR };
+	enum SignType { POS, NEG };
 
 	CalcOperation operation;
+	// The value to use for an ADD, SUB, DIV, MULT, MAX, MIN or REMAIN
 	std::unique_ptr<ScriptValue> value;
+	// The direction to round to
+	std::unique_ptr<RoundType> roundType;
+	// The id of the tuning to quantize into
+	std::string tuning;
+	// The sign to apply
+	std::unique_ptr<SignType> signType;
 };
 
 /**
@@ -219,6 +228,11 @@ struct ScriptInputTrigger {
 	ScriptInput input;
 };
 
+struct ScriptTuning {
+	std::string id;
+	std::vector<float> notes;
+};
+
 struct Script {
 	std::string type;
 	std::string version;
@@ -234,6 +248,7 @@ struct Script {
 	std::vector<ScriptValue> values;
 	std::vector<ScriptAction> actions;
 	std::vector<ScriptIf> ifs;
+	std::vector<ScriptTuning> tunings;
 };
 
 }

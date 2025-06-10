@@ -101,12 +101,12 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailWithMultipleOperations) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 6u);
-	expectError(validationErrors, ValidationErrorCode::Calc_MultpleOperations, "/component-pool/calcs/0");
-	expectError(validationErrors, ValidationErrorCode::Calc_MultpleOperations, "/component-pool/calcs/1");
-	expectError(validationErrors, ValidationErrorCode::Calc_MultpleOperations, "/component-pool/calcs/2");
-	expectError(validationErrors, ValidationErrorCode::Calc_MultpleOperations, "/component-pool/calcs/3");
-	expectError(validationErrors, ValidationErrorCode::Calc_MultpleOperations, "/component-pool/calcs/4");
-	expectError(validationErrors, ValidationErrorCode::Calc_MultpleOperations, "/component-pool/calcs/5");
+	expectError(validationErrors, ValidationErrorCode::Calc_MultipleOperations, "/component-pool/calcs/0");
+	expectError(validationErrors, ValidationErrorCode::Calc_MultipleOperations, "/component-pool/calcs/1");
+	expectError(validationErrors, ValidationErrorCode::Calc_MultipleOperations, "/component-pool/calcs/2");
+	expectError(validationErrors, ValidationErrorCode::Calc_MultipleOperations, "/component-pool/calcs/3");
+	expectError(validationErrors, ValidationErrorCode::Calc_MultipleOperations, "/component-pool/calcs/4");
+	expectError(validationErrors, ValidationErrorCode::Calc_MultipleOperations, "/component-pool/calcs/5");
 }
 
 TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonObjectOperator) {

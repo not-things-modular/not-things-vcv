@@ -3,7 +3,7 @@
 #include "core/timeseq-core.hpp"
 #include <sstream>
 #include <stdarg.h>
-#include <cctype>
+#include "util/notes.hpp"
 
 using namespace std;
 using namespace timeseq;
@@ -581,18 +581,13 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 	return shared_ptr<ValueProcessor>();
 }
 
-// Take the letter of the note in lowercase, subtract 'a' from it, take the value in this array at that position
-// => the result can be multiplied with 1/12 to get the matchin 1V/oct value.
-const int note_to_index [] = { 9, 11, 0, 2, 4, 5, 7};
-
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
 	float value = 0.f;
 	if (scriptValue->voltage) {
 		value = *scriptValue->voltage.get();
 	} else if (scriptValue->note) {
 		string note = *scriptValue->note.get();
-		char x = tolower(note[0]);
-		int noteIndex = note_to_index[(x - 'a')];
+		int noteIndex = noteNameToIndex(note[0]);
 		if (note.length() > 2) {
 			if (note[2] == '-') {
 				noteIndex -= 1;
