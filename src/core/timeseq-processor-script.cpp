@@ -638,26 +638,84 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 
 shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {
 	if (scriptCalc->ref.length() == 0) {
+		bool valueProcessor = false;
+		bool truncProcessor = false;
+		bool fracProcessor = false;
+		bool roundProcessor = false;
+		bool quantizeProcessor = false;
+		bool signProcessor = false;
+
 		switch (scriptCalc->operation) {
 			case ScriptCalc::CalcOperation::ADD:
 				location.push_back("add");
+				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::SUB:
 				location.push_back("sub");
+				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::DIV:
 				location.push_back("div");
+				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::MULT:
 				location.push_back("mult");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::MAX:
+				location.push_back("max");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::MIN:
+				location.push_back("min");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::REMAIN:
+				location.push_back("remain");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::TRUNC:
+				location.push_back("trunc");
+				truncProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::FRAC:
+				location.push_back("frac");
+				fracProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::ROUND:
+				location.push_back("round");
+				roundProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::QUANTIZE:
+				location.push_back("quantize");
+				quantizeProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::SIGN:
+				location.push_back("sign");
+				signProcessor = true;
 				break;
 		}
 
-		shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
+		shared_ptr<CalcProcessor> calcProcessor;
+
+		if (valueProcessor) {
+			shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
+			calcProcessor = make_shared<CalcValueProcessor>(scriptCalc, valueProcessor);
+		} else if (truncProcessor) {
+			calcProcessor = make_shared<CalcTruncProcessor>();
+		} else if (fracProcessor) {
+			calcProcessor = make_shared<CalcFracProcessor>();
+		} else if (roundProcessor) {
+			calcProcessor = make_shared<CalcRoundProcessor>(scriptCalc);
+		} else if (quantizeProcessor) {
+			calcProcessor = make_shared<CalcQuantizeProcessor>();
+		} else if (signProcessor) {
+			calcProcessor = make_shared<CalcSignProcessor>(scriptCalc);
+		}
 
 		location.pop_back();
 
-		return shared_ptr<CalcProcessor>(new CalcProcessor(scriptCalc, valueProcessor));
+		return calcProcessor;
 	} else {
 		if (find(valueStack.begin(), valueStack.end(), string("c-") + scriptCalc->ref) == valueStack.end()) {
 			int count = 0;

@@ -42,13 +42,49 @@ struct AssertListener;
 
 
 struct CalcProcessor {
-	CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value);
+	virtual double calc(double value) = 0;
+};
 
-	double calc(double value);
+struct CalcValueProcessor : CalcProcessor {
+	enum ValueCalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN };
+
+	CalcValueProcessor(ScriptCalc* scriptCalc, std::shared_ptr<ValueProcessor> value);
+
+	double calc(double value) override;
 
 	nt_private:
-		ScriptCalc *m_scriptCalc;
+		ValueCalcOperation m_operation;
 		std::shared_ptr<ValueProcessor> m_value;
+};
+
+struct CalcTruncProcessor : CalcProcessor {
+	double calc(double value) override;
+};
+
+struct CalcFracProcessor : CalcProcessor {
+	double calc(double value) override;
+};
+
+struct CalcRoundProcessor : CalcProcessor {
+	CalcRoundProcessor(ScriptCalc* scriptCalc);
+
+	double calc(double value) override;
+
+	nt_private:
+		ScriptCalc* m_scriptCalc;
+};
+
+struct CalcQuantizeProcessor : CalcProcessor {
+	double calc(double value) override;
+};
+
+struct CalcSignProcessor : CalcProcessor {
+	CalcSignProcessor(ScriptCalc* scriptCalc);
+
+	double calc(double value) override;
+
+	nt_private:
+		bool m_positive;
 };
 
 struct ValueProcessor {

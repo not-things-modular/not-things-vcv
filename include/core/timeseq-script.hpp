@@ -58,7 +58,7 @@ struct ScriptRand {
 };
 
 struct ScriptCalc : ScriptRefObject {
-	enum CalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN, FRAC, ROUND, QUANTIZE, SIGN };
+	enum CalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN, TRUNC, FRAC, ROUND, QUANTIZE, SIGN };
 	enum RoundType { UP, DOWN, NEAR };
 	enum SignType { POS, NEG };
 

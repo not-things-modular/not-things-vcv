@@ -9,29 +9,103 @@ using namespace std;
 using namespace timeseq;
 
 
-CalcProcessor::CalcProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_scriptCalc(scriptCalc), m_value(value) {}
+CalcValueProcessor::CalcValueProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_value(value) {
+	switch (scriptCalc->operation) {
+		case ScriptCalc::ADD:
+			m_operation = ValueCalcOperation::ADD;
+			break;
+		case ScriptCalc::SUB:
+			m_operation = ValueCalcOperation::SUB;
+			break;
+		case ScriptCalc::DIV:
+			m_operation = ValueCalcOperation::DIV;
+			break;
+		case ScriptCalc::MULT:
+			m_operation = ValueCalcOperation::MULT;
+			break;
+		case ScriptCalc::MAX:
+			m_operation = ValueCalcOperation::MAX;
+			break;
+		case ScriptCalc::MIN:
+			m_operation = ValueCalcOperation::MIN;
+			break;
+		case ScriptCalc::REMAIN:
+			m_operation = ValueCalcOperation::REMAIN;
+			break;
+		case ScriptCalc::TRUNC:
+		case ScriptCalc::FRAC:
+		case ScriptCalc::ROUND:
+		case ScriptCalc::QUANTIZE:
+		case ScriptCalc::SIGN:
+			// Should happen in this constructor.
+			break;
+	}
+}
 
-double CalcProcessor::calc(double value) {
+double CalcValueProcessor::calc(double value) {
 	double calcValue = m_value->process();
 
-	switch (m_scriptCalc->operation) {
-		case ScriptCalc::ADD:
+	switch (m_operation) {
+		case ValueCalcOperation::ADD:
 			return value + calcValue;
-		case ScriptCalc::SUB:
+		case ValueCalcOperation::SUB:
 			return value - calcValue;
-		case ScriptCalc::MULT:
+		case ValueCalcOperation::MULT:
 			return value * calcValue;
-		case ScriptCalc::DIV:
+		case ValueCalcOperation::DIV:
 			if (calcValue != 0.) {
 				return value / calcValue;
 			} else {
 				return 0.;
 			}
+		case ValueCalcOperation::MAX:
+			return value > calcValue ? value : calcValue;
+		case ValueCalcOperation::MIN:
+			return value < calcValue ? value : calcValue;
+		case ValueCalcOperation::REMAIN:
+			return remainder(value, calcValue);
 	}
 
 	return value;
 }
 
+double CalcTruncProcessor::calc(double value) {
+	return trunc(value);
+}
+
+double CalcFracProcessor::calc(double value) {
+	float x;
+	return modf(value, &x);
+}
+
+CalcRoundProcessor::CalcRoundProcessor(ScriptCalc* scriptCalc) : m_scriptCalc(scriptCalc) {}
+
+double CalcRoundProcessor::calc(double value) {
+	switch (*m_scriptCalc->roundType) {
+		case ScriptCalc::RoundType::UP:
+			return ceil(value);
+		case ScriptCalc::RoundType::DOWN:
+			return floor(value);
+		case ScriptCalc::RoundType::NEAR:
+			return round(value);
+	}
+
+	return value;
+}
+
+double CalcQuantizeProcessor::calc(double value) {
+	return value;
+}
+
+CalcSignProcessor::CalcSignProcessor(ScriptCalc* scriptCalc) : m_positive(*scriptCalc->signType == ScriptCalc::SignType::POS) {}
+
+double CalcSignProcessor::calc(double value) {
+	if (((m_positive) && (value < 0)) || ((!m_positive) && (value > 0))) {
+		return -value;
+	} else {
+		return value;
+	}
+}
 
 ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : m_calcProcessors(calcProcessors), m_quantize(quantize) {}
 
