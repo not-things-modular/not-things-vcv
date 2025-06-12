@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.4 (2025-06-06)
+
+* **TimeSeq**: Fixed issue where loading a new script while already running could cause memory corruption.
+
 ## 2.0.3 (2025-06-06)
 
 * **Global**: Updates to overall UI design and preview rendering

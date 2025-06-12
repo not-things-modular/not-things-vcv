@@ -23,10 +23,10 @@ ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableH
 	m_randomValueGenerator = randomValueGenerator;
 }
 
-shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<ValidationError> *validationErrors, vector<string> location) {
+shared_ptr<Processor> ProcessorScriptParser::parseScript(std::shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string> location) {
 	ProcessorScriptParseContext context;
 
-	context.script = script;
+	context.script = script.get();
 	if (validationErrors != nullptr) {
 		context.validationErrors = validationErrors;
 	} else {
@@ -79,7 +79,7 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(Script* script, vector<
 	}
 	location.pop_back();
 
-	return shared_ptr<Processor>(new Processor(timelineProcessors, triggerProcessors, startActionProcessors));
+	return shared_ptr<Processor>(new Processor(script, timelineProcessors, triggerProcessors, startActionProcessors));
 }
 
 shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, vector<string> location) {
@@ -887,5 +887,5 @@ ProcessorLoader::~ProcessorLoader() {
 }
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
-	return m_processorScriptParser.parseScript(script.get(), validationErrors, vector<string>());
+	return m_processorScriptParser.parseScript(script, validationErrors, vector<string>());
 }

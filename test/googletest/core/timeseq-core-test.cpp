@@ -21,7 +21,7 @@ struct MockProcessorLoader : ProcessorLoader {
 };
 
 struct MockProcessor : Processor {
-	MockProcessor() : Processor(std::vector<std::shared_ptr<TimelineProcessor>>(), std::vector<std::shared_ptr<TriggerProcessor>>(), std::vector<std::shared_ptr<ActionProcessor>>()) {}
+	MockProcessor() : Processor(std::shared_ptr<Script>(), std::vector<std::shared_ptr<TimelineProcessor>>(), std::vector<std::shared_ptr<TriggerProcessor>>(), std::vector<std::shared_ptr<ActionProcessor>>()) {}
 
 	MOCK_METHOD(void, reset, (), (override));
 	MOCK_METHOD(void, process, (), (override));
@@ -130,7 +130,7 @@ TEST(TimeSeqCore, LoadScriptShouldInitializeLoadingOnInitialScriptLoad) {
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script(new Script());
-	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script));
@@ -162,8 +162,8 @@ TEST(TimeSeqCore, LoadScriptShouldReplaceExistingScriptOnNewSuccesfulLoad) {
 
 	std::shared_ptr<Script> script1(new Script());
 	std::shared_ptr<Script> script2(new Script());
-	std::shared_ptr<Processor> processor1(new Processor({}, {}, {}));
-	std::shared_ptr<Processor> processor2(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor1(new Processor({}, {}, {}, {}));
+	std::shared_ptr<Processor> processor2(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	{
@@ -216,8 +216,8 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 
 	std::shared_ptr<Script> script1(new Script());
 	std::shared_ptr<Script> script2(new Script());
-	std::shared_ptr<Processor> processor1(new Processor({}, {}, {}));
-	std::shared_ptr<Processor> processor2(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor1(new Processor({}, {}, {}, {}));
+	std::shared_ptr<Processor> processor2(new Processor({}, {}, {}, {}));
 	std::vector<ValidationError> returningValidationErrors1 = { ValidationError("/1", "error-1") };
 	std::vector<ValidationError> returningValidationErrors2 = { ValidationError("/2", "error-2") };
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
@@ -329,8 +329,8 @@ TEST(TimeSeqCore, ReloadScriptShouldReloadProcessorFromCurrentScript) {
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
-	std::shared_ptr<Processor> processor1(new Processor({}, {}, {}));
-	std::shared_ptr<Processor> processor2(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor1(new Processor({}, {}, {}, {}));
+	std::shared_ptr<Processor> processor2(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	{
@@ -391,7 +391,7 @@ TEST(TimeSeqCore, PauseScriptShouldPauseWhenScriptLoaded) {
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
-	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	{
@@ -455,7 +455,7 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
-	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	{
@@ -737,7 +737,7 @@ TEST(TimeSeqCore, ElapsedSamplesShouldLoopOnHourBoundary) {
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script(new Script());
-	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script));
@@ -764,7 +764,7 @@ TEST(TimeSeqCore, StartScriptShouldCauseImmediateProcessingOnZeroDelay) {
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
-	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	{
@@ -803,7 +803,7 @@ TEST(TimeSeqCore, StartScriptShouldDelayProcessingWhenStartedWithDelay) {
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
-	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	{
@@ -848,7 +848,7 @@ TEST(TimeSeqCore, StartScriptShouldDelayProcessingWhenStartedWithDelayAndProcess
 	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
 
 	std::shared_ptr<Script> script1(new Script());
-	std::shared_ptr<Processor> processor(new Processor({}, {}, {}));
+	std::shared_ptr<Processor> processor(new Processor({}, {}, {}, {}));
 	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
 
 	{
