@@ -7,6 +7,7 @@
 #include <utility>
 #include <random>
 #include <rack.hpp>
+#include <cstdint>
 #include "core/timeseq-validation.hpp"
 
 #ifndef nt_private
@@ -399,7 +400,7 @@ struct TriggerProcessor {
 };
 
 struct Processor {
-	Processor(std::vector<std::shared_ptr<TimelineProcessor>> m_timelines, std::vector<std::shared_ptr<TriggerProcessor>> m_triggers, std::vector<std::shared_ptr<ActionProcessor>> startActions);
+	Processor(std::shared_ptr<Script> script, std::vector<std::shared_ptr<TimelineProcessor>> timelines, std::vector<std::shared_ptr<TriggerProcessor>> triggers, std::vector<std::shared_ptr<ActionProcessor>> startActions);
 
 	virtual void reset();
 	virtual void process();
@@ -408,6 +409,10 @@ struct Processor {
 		std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
 		std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
+
+		// The script objects are used throughout the processor hierarchy,
+		// keep a reference so it doesn't get deleted on script switch
+		std::shared_ptr<Script> m_script;
 };
 
 struct ProcessorScriptParseContext {
@@ -418,7 +423,7 @@ struct ProcessorScriptParseContext {
 struct ProcessorScriptParser {
 	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, std::shared_ptr<RandValueGenerator> randomValueGenerator);
 
-	std::shared_ptr<Processor> parseScript(Script* script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
+	std::shared_ptr<Processor> parseScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors, std::vector<std::string> location);
 	std::shared_ptr<TimelineProcessor> parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, std::vector<std::string> location);
 	std::shared_ptr<TriggerProcessor> parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* ScriptInputTrigger, std::vector<std::string> location);
 	std::shared_ptr<LaneProcessor> parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, std::vector<std::string> location);
