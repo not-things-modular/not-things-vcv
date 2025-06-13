@@ -708,7 +708,18 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 		} else if (roundProcessor) {
 			calcProcessor = make_shared<CalcRoundProcessor>(scriptCalc);
 		} else if (quantizeProcessor) {
-			calcProcessor = make_shared<CalcQuantizeProcessor>();
+			ScriptTuning* scriptTuning = nullptr;
+			for (vector<ScriptTuning>::iterator it = context->script->tunings.begin(); it != context->script->tunings.end(); it++) {
+				if (it->id == scriptCalc->tuning) {
+					scriptTuning = &(*it);
+				}
+			}
+
+			if (scriptTuning != nullptr) {
+				calcProcessor = make_shared<CalcQuantizeProcessor>(scriptTuning);
+			} else {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_QuantizeTuningNotFound, "Could not find the referenced tuning with id '", scriptCalc->tuning.c_str(), "' in the script tunings.");
+			}
 		} else if (signProcessor) {
 			calcProcessor = make_shared<CalcSignProcessor>(scriptCalc);
 		}

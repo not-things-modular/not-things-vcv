@@ -93,7 +93,44 @@ double CalcRoundProcessor::calc(double value) {
 	return value;
 }
 
+CalcQuantizeProcessor::CalcQuantizeProcessor(ScriptTuning* scriptTuning) {
+	if (scriptTuning->notes.size() == 1) {
+		// If there is only one note in the tuning, everything will quantize to it
+		m_quantizeValues.push_back({ 2.f, scriptTuning->notes[0] });
+	} else {
+		vector<float> tuningValues;
+
+		// First create a list of all the tuning notes with the last one added at the front one octave lower
+		// And the first one added at the back one octave higher
+		tuningValues.push_back(scriptTuning->notes.back() - 1.f);
+		tuningValues.insert(tuningValues.end(), scriptTuning->notes.begin(), scriptTuning->notes.end());
+		tuningValues.push_back(scriptTuning->notes.front() + 1.f);
+
+		// Based on the tuningValues list, determine all the quantization points as being halfway between each tuning value
+		for (unsigned int i = 0; i < tuningValues.size() - 1; i++) {
+			float boundary = tuningValues[i] + ((tuningValues[i + 1] - tuningValues[i]) / 2.f);
+			m_quantizeValues.push_back({ boundary, tuningValues[i]});
+		}
+		// Add in the last tuningValue entry as a round-up entry
+		m_quantizeValues.push_back({ 2.f, scriptTuning->notes.back()});
+	}
+}
+
 double CalcQuantizeProcessor::calc(double value) {
+	float integral;
+	float fract = modf(value, &integral);
+
+	if (fract < 0.f) {
+		fract += 1.f;
+		integral -= 1.f;
+	}
+
+	for (std::vector<std::array<float, 2>>::iterator it = m_quantizeValues.begin(); it != m_quantizeValues.end(); it++) {
+		if (fract < (*it)[0]) {
+			return integral + (*it)[1];
+		}
+	}
+
 	return value;
 }
 

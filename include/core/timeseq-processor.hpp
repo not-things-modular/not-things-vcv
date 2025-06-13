@@ -31,6 +31,7 @@ struct ScriptLane;
 struct ScriptSegment;
 struct ScriptSegmentBlock;
 struct ScriptCalc;
+struct ScriptTuning;
 struct Script;
 struct ValueProcessor;
 struct PortHandler;
@@ -75,7 +76,12 @@ struct CalcRoundProcessor : CalcProcessor {
 };
 
 struct CalcQuantizeProcessor : CalcProcessor {
+	CalcQuantizeProcessor(ScriptTuning* scriptTuning);
+
 	double calc(double value) override;
+
+	nt_private:
+		std::vector<std::array<float, 2>> m_quantizeValues;
 };
 
 struct CalcSignProcessor : CalcProcessor {

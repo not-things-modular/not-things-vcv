@@ -398,7 +398,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> tuningElements = (*ifs);
+					std::vector<json> tuningElements = (*tunings);
 					for (const json& tuningObj : tuningElements) {
 						location.push_back(std::to_string(count));
 						if (tuningObj.is_object()) {
@@ -417,7 +417,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_IfsArray, "'tunings' must be an array.");
+					ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Script_TuningsArray, "'tunings' must be an array.");
 				}
 			}
 
@@ -1883,7 +1883,10 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, std::vector<V
 			if (noteElement.is_number()) {
 				float x;
 				float note = noteElement.get<float>();
-				note = modf(note, &x); // If values > 1.0 are supplied, keep only the 
+				note = modf(note, &x); // If values > 1.0 are supplied, keep only the value within one octave
+				if (note < 0.f) {
+					note += 1.f;
+				}
 				tuning.notes.push_back(note);
 			} else if (noteElement.is_string()) {
 				string noteString = noteElement.get<string>();
@@ -1907,6 +1910,11 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, std::vector<V
 							ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
 						}
 					}
+					if (noteIndex > 11) {
+						noteIndex -= 12;
+					} else if (noteIndex < 0) {
+						noteIndex += 12;
+					}
 					tuning.notes.push_back((float) noteIndex / 12);
 				}
 			} else {
@@ -1914,6 +1922,15 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, std::vector<V
 			}
 			location.pop_back();
 			count++;
+		}
+
+		// Sort the notes in the tuning from low to high and remove duplicates.
+		sort(tuning.notes.begin(), tuning.notes.end());
+		vector<float>::iterator end = unique(tuning.notes.begin(), tuning.notes.end());
+		tuning.notes.erase(end, tuning.notes.end());
+
+		if (noteElements.size() == 0) {
+			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Tuning_NotesArraySize, "'notes' must contain at least one element.");
 		}
 
 		location.pop_back();
