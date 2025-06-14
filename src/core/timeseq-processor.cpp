@@ -163,7 +163,7 @@ double ValueProcessor::process() {
 // The quantizing thresholds within an octave for quantizing to the nearest note.
 // The first value is halfway between two quantized notes, the second value is the quantized note that is below it.
 // Any value that is below the first value should be quantized down to the note that's in the second value.
-const float quantize_treshholds[][2] = {
+const float quantize_thresholds[][2] = {
 	{ 1.f / 24, 0.f }, // C
 	{ (1.f / 12) + (1.f / 24), (1.f / 12) }, // C#
 	{ (2.f / 12) + (1.f / 24), (2.f / 12) }, // D
@@ -189,8 +189,8 @@ double ValueProcessor::quantize(double value) {
 	}
 
 	for (int i = 0; i < 13; i++) {
-		if (note < quantize_treshholds[i][0]) {
-			note = quantize_treshholds[i][1];
+		if (note < quantize_thresholds[i][0]) {
+			note = quantize_thresholds[i][1];
 			break;
 		}
 	}

@@ -8,9 +8,12 @@ shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<Validat
 }
 
 json getMinimalJson() {
+	return getMinimalJson(SCRIPT_VERSION_1_0_0);
+}
+json getMinimalJson(const char* scriptVersion) {
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", SCRIPT_VERSION },
+		{ "version", scriptVersion },
 		{ "timelines", json::array() }
 	};
 

@@ -16,6 +16,7 @@ enum ValidationErrorCode {
 	Id_NotAllowed = 8,
 	Id_Duplicate = 9,
 	Unknown_Property = 10,
+	Feature_Not_In_Version = 11,
 
 	Script_TypeMissing = 101,
 	Script_TypeUnsupported = 102,
@@ -82,7 +83,7 @@ enum ValidationErrorCode {
 	If_AndArray = 507,
 	If_OrArray = 508,
 	If_NoOperation = 509,
-	If_MultpleOperations = 510,
+	If_MultipleOperations = 510,
 	If_TwoValues = 511,
 	If_ValueObject = 512,
 	If_ToleranceNumber = 513,

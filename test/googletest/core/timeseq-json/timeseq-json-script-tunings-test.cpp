@@ -1,32 +1,42 @@
 #include "timeseq-json-shared.hpp"
 
-TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTunings) {
+TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTuningsVersion100) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_0_0);
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->calcs.size(), 0u);
 }
 
-TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithEmptyTunings) {
+TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTuningsVersion110) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	EXPECT_EQ(script->calcs.size(), 0u);
+}
+
+TEST(TimeSeqJsonScriptTuning, ParseShouldFailWithTuningsPre110Version) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_0_0);
 	json["component-pool"] = {
 		{ "tunings", json::array() }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	EXPECT_NO_ERRORS(validationErrors);
-	EXPECT_EQ(script->calcs.size(), 0u);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool");
 }
 
 TEST(TimeSeqJsonScriptTuning, ParseTuningsShouldFailOnNonArrayTunings) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", "not-an-array" }
 	};
@@ -39,7 +49,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningsShouldFailOnNonArrayTunings) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonObjectTuning) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { .5f } ) } },
@@ -56,7 +66,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonObjectTuning) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnDuplicateId) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { .5f } ) } },
@@ -73,7 +83,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnDuplicateId) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingId) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { .5f } ) } },
@@ -93,7 +103,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingId) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingNotes) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { .5f } ) } },
@@ -110,7 +120,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingNotes) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonArrayNotes) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { .5f } ) } },
@@ -127,7 +137,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonArrayNotes) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonUnknownTuningProperty) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { .5f } ) } },
@@ -144,7 +154,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonUnknownTuningProperty) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnEmptyNotes) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-2" }, { "notes", json::array() } },
@@ -161,7 +171,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnEmptyNotes) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInvalidFormatNotes) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { .5f }) } },
@@ -178,7 +188,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInvalidFormatNotes) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInvalidNoteFormat) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { "c", "", "d", "h", "c+", "c/", "abc" }) } },
@@ -196,7 +206,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInvalidNoteFormat) {
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapFloatNotesToSingleOctaveAndSort) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { -.5f, -2.003f, -.001f, 0.f, 0.001f, .49f, .998f, 1.005f, 5.096f } ) } },
@@ -227,7 +237,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapFloatNotesToSingleOctaveAndSor
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapFloatNotesToSingleOctaveAndFilterDuplicates) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { -.5f, -2.f, .25f, 0.f, 3.f, .5f, .75f, 3.75f } ) } }
@@ -249,7 +259,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapFloatNotesToSingleOctaveAndFil
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapNoteStringToCorrespondingVoltage) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { "C", "d", "E", "f", "G", "a", "B" } ) } },
@@ -298,7 +308,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapNoteStringToCorrespondingVolta
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMixNotesAndVoltagesAndFilterDuplicates) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "tunings", json::array({
 			{ { "id", "tuning-1" }, { "notes", json::array( { "C", .25f, 0.f, "d+", "E", .75 } ) } },

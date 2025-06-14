@@ -4,7 +4,7 @@ TEST(TimeSeqJsonScript, ParseWithoutTypeShouldFail) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = {
-		{ "version", SCRIPT_VERSION },
+		{ "version", SCRIPT_VERSION_1_0_0 },
 		{ "timelines", json::array() }
 	};
 
@@ -18,7 +18,7 @@ TEST(TimeSeqJsonScript, ParseWithInvalidTypeShouldFail) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not_not-things_timeseq_script" },
-		{ "version", SCRIPT_VERSION },
+		{ "version", SCRIPT_VERSION_1_0_0 },
 		{ "timelines", json::array() }
 	};
 

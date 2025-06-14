@@ -669,7 +669,7 @@ TEST(TimeSeqJsonScriptIf, ParseShouldFailWithMultipleOperators) {
 
 	ASSERT_EQ(validationErrors.size(), 28u);
 	for (unsigned int i = 0; i < 28; i++) {
-		expectError(validationErrors, ValidationErrorCode::If_MultpleOperations, "/component-pool/actions/" + std::to_string(i) + "/if");
+		expectError(validationErrors, ValidationErrorCode::If_MultipleOperations, "/component-pool/actions/" + std::to_string(i) + "/if");
 	}
 }
 
