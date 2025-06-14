@@ -37,7 +37,7 @@ CalcValueProcessor::CalcValueProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueP
 		case ScriptCalc::ROUND:
 		case ScriptCalc::QUANTIZE:
 		case ScriptCalc::SIGN:
-			// Should happen in this constructor.
+			// Should not happen in this constructor.
 			break;
 	}
 }
@@ -53,7 +53,7 @@ double CalcValueProcessor::calc(double value) {
 		case ValueCalcOperation::MULT:
 			return value * calcValue;
 		case ValueCalcOperation::DIV:
-			if (calcValue != 0.) {
+			if (calcValue != 0.f) {
 				return value / calcValue;
 			} else {
 				return 0.;
@@ -63,9 +63,14 @@ double CalcValueProcessor::calc(double value) {
 		case ValueCalcOperation::MIN:
 			return value < calcValue ? value : calcValue;
 		case ValueCalcOperation::REMAIN:
-			return remainder(value, calcValue);
+			if (calcValue != 0.f) {
+				return fmod(value, calcValue);
+			} else {
+				return 0.f;
+			}
 	}
 
+	// All value-based calculations should have already been handled in the switch...
 	return value;
 }
 
@@ -90,30 +95,33 @@ double CalcRoundProcessor::calc(double value) {
 			return round(value);
 	}
 
+	// All rounding types should have been covered in the switch...
 	return value;
 }
 
 CalcQuantizeProcessor::CalcQuantizeProcessor(ScriptTuning* scriptTuning) {
-	if (scriptTuning->notes.size() == 1) {
-		// If there is only one note in the tuning, everything will quantize to it
-		m_quantizeValues.push_back({ 2.f, scriptTuning->notes[0] });
-	} else {
-		vector<float> tuningValues;
+	vector<float> tuningValues;
 
+	if (scriptTuning->notes.size() == 1) {
+		// If there is only one note in the tuning, add the note one octave lower, the note itself, and the note one octave higher
+		tuningValues.push_back(scriptTuning->notes[0] - 1.f);
+		tuningValues.push_back(scriptTuning->notes[0]);
+		tuningValues.push_back(scriptTuning->notes[0] + 1.f);
+	} else {
 		// First create a list of all the tuning notes with the last one added at the front one octave lower
 		// And the first one added at the back one octave higher
 		tuningValues.push_back(scriptTuning->notes.back() - 1.f);
 		tuningValues.insert(tuningValues.end(), scriptTuning->notes.begin(), scriptTuning->notes.end());
 		tuningValues.push_back(scriptTuning->notes.front() + 1.f);
-
-		// Based on the tuningValues list, determine all the quantization points as being halfway between each tuning value
-		for (unsigned int i = 0; i < tuningValues.size() - 1; i++) {
-			float boundary = tuningValues[i] + ((tuningValues[i + 1] - tuningValues[i]) / 2.f);
-			m_quantizeValues.push_back({ boundary, tuningValues[i]});
-		}
-		// Add in the last tuningValue entry as a round-up entry
-		m_quantizeValues.push_back({ 2.f, scriptTuning->notes.back()});
 	}
+
+	// Based on the tuningValues list, determine all the quantization points as being halfway between each tuning value
+	for (unsigned int i = 0; i < tuningValues.size() - 1; i++) {
+		float boundary = tuningValues[i] + ((tuningValues[i + 1] - tuningValues[i]) / 2.f);
+		m_quantizeValues.push_back({ boundary, tuningValues[i]});
+	}
+	// Add in the last tuningValue entry as a round-up entry
+	m_quantizeValues.push_back({ 2.f, tuningValues.back()});
 }
 
 double CalcQuantizeProcessor::calc(double value) {
@@ -131,6 +139,7 @@ double CalcQuantizeProcessor::calc(double value) {
 		}
 	}
 
+	// Shouldn't reach this point...
 	return value;
 }
 

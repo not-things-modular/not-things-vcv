@@ -1720,7 +1720,7 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson, JsonScriptParseCont
 }
 
 ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
-	static const char* cCalcProperties[] = { "add", "sub", "div", "mult", "max", "min", "remain", "frac", "round", "quantize", "sign" };
+	static const char* cCalcProperties[] = { "add", "sub", "div", "mult", "max", "min", "remain", "frac", "trunc", "round", "quantize", "sign" };
 	static const vector<string> vCalcProperties(begin(cCalcProperties), end(cCalcProperties));
 	ScriptCalc calc;
 
@@ -1777,7 +1777,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 
 		json::const_iterator min = calcJson.find("min");
 		if (min != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'max'", location);
+			verifyVersion(VERSION_1_1_0, context, "calc 'min'", location);
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::MIN;
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*min, true, context, location, "min", ValidationErrorCode::Calc_MinObject, "'min' must be an object."));
@@ -1786,16 +1786,26 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 
 		json::const_iterator remain = calcJson.find("remain");
 		if (remain != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'max'", location);
+			verifyVersion(VERSION_1_1_0, context, "calc 'remain'", location);
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::REMAIN;
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*remain, true, context, location, "remain", ValidationErrorCode::Calc_RemainObject, "'remain' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
+		json::const_iterator trunc = calcJson.find("trunc");
+		if (trunc != calcJson.end()) {
+			verifyVersion(VERSION_1_1_0, context, "calc 'trunc'", location);
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::TRUNC;
+			if ((!trunc->is_boolean()) || (!trunc->get<bool>())) {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_TruncBoolean, "'trunc' must be a boolean, with its value set to true.");
+			}
+		}
+
 		json::const_iterator frac = calcJson.find("frac");
 		if (frac != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'max'", location);
+			verifyVersion(VERSION_1_1_0, context, "calc 'frac'", location);
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::FRAC;
 			if ((!frac->is_boolean()) || (!frac->get<bool>())) {
@@ -1805,7 +1815,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 
 		json::const_iterator round = calcJson.find("round");
 		if (round != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'max'", location);
+			verifyVersion(VERSION_1_1_0, context, "calc 'round'", location);
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::ROUND;
 			if (round->is_string()) {
@@ -1826,7 +1836,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 
 		json::const_iterator quantize = calcJson.find("quantize");
 		if (quantize != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'max'", location);
+			verifyVersion(VERSION_1_1_0, context, "calc 'quantize'", location);
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::QUANTIZE;
 			if ((quantize->is_string()) && (quantize->get<string>().length() > 0)) {
@@ -1838,7 +1848,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 
 		json::const_iterator sign = calcJson.find("sign");
 		if (sign != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'max'", location);
+			verifyVersion(VERSION_1_1_0, context, "calc 'sign'", location);
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::SIGN;
 			if (sign->is_string()) {

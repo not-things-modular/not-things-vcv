@@ -203,13 +203,14 @@ enum ValidationErrorCode {
 	Calc_MaxObject = 1807, // Since 1.1.0
 	Calc_MinObject = 1808, // Since 1.1.0
 	Calc_RemainObject = 1809, // Since 1.1.0
-	Calc_FracBoolean = 1810, // Since 1.1.0
-	Calc_RoundString = 1811, // Since 1.1.0
-	Calc_RoundEnum = 1812, // Since 1.1.0
-	Calc_QuantizeString = 1813, // Since 1.1.0
-	Calc_QuantizeTuningNotFound = 1814, // Since 1.1.0
-	Calc_SignString = 1815, // Since 1.1.0
-	Calc_SignEnum = 1816, // Since 1.1.0
+	Calc_TruncBoolean = 1810, // Since 1.1.0
+	Calc_FracBoolean = 1811, // Since 1.1.0
+	Calc_RoundString = 1812, // Since 1.1.0
+	Calc_RoundEnum = 1813, // Since 1.1.0
+	Calc_QuantizeString = 1814, // Since 1.1.0
+	Calc_QuantizeTuningNotFound = 1815, // Since 1.1.0
+	Calc_SignString = 1816, // Since 1.1.0
+	Calc_SignEnum = 1817, // Since 1.1.0
 
 	InputTrigger_IdString = 1900,
 	InputTrigger_IdLength = 1901,
