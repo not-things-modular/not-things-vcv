@@ -133,7 +133,7 @@ double CalcQuantizeProcessor::calc(double value) {
 		integral -= 1.f;
 	}
 
-	for (std::vector<std::array<float, 2>>::iterator it = m_quantizeValues.begin(); it != m_quantizeValues.end(); it++) {
+	for (vector<array<float, 2>>::iterator it = m_quantizeValues.begin(); it != m_quantizeValues.end(); it++) {
 		if (fract < (*it)[0]) {
 			return integral + (*it)[1];
 		}
@@ -190,7 +190,7 @@ const float quantize_thresholds[][2] = {
 
 double ValueProcessor::quantize(double value) {
 	double octave;
-	double note = std::modf(value, &octave);
+	double note = modf(value, &octave);
 
 	if (note < 0.f) {
 		note += 1.f;
@@ -235,7 +235,7 @@ RandValueGenerator::RandValueGenerator() : m_generator(chrono::steady_clock::now
 RandValueGenerator::~RandValueGenerator() {}
 
 float RandValueGenerator::generate(float lower, float upper) {
-	// std::uniform_real_distribution expects lower < upper, so make sure to handle possible edge cases.
+	// uniform_real_distribution expects lower < upper, so make sure to handle possible edge cases.
 	if (lower == upper) {
 		return lower;
 	} else if (lower < upper) {
@@ -264,14 +264,14 @@ bool IfProcessor::process(string* message) {
 		switch (m_scriptIf->ifOperator) {
 			case ScriptIf::IfOperator::EQ: {
 				if (m_scriptIf->tolerance) {
-					return std::fabs(m_values.first->process() - m_values.second->process()) <= *m_scriptIf->tolerance.get();
+					return fabs(m_values.first->process() - m_values.second->process()) <= *m_scriptIf->tolerance.get();
 				} else {
 					return m_values.first->process() == m_values.second->process();
 				}
 			}
 			case ScriptIf::IfOperator::NE: {
 				if (m_scriptIf->tolerance) {
-					return std::fabs(m_values.first->process() - m_values.second->process()) > *m_scriptIf->tolerance.get();
+					return fabs(m_values.first->process() - m_values.second->process()) > *m_scriptIf->tolerance.get();
 				} else {
 					return m_values.first->process() != m_values.second->process();
 				}
@@ -293,7 +293,7 @@ bool IfProcessor::process(string* message) {
 		return false;
 	} else {
 		// We'll need to return the details of the comparison if it failed, so we'll need to do some additional work...
-		std::ostringstream oss;
+		ostringstream oss;
 		oss.precision(10);
 		if (m_scriptIf->ifOperator == ScriptIf::IfOperator::AND) {
 			string message1;
@@ -332,7 +332,7 @@ bool IfProcessor::process(string* message) {
 			switch (m_scriptIf->ifOperator) {
 				case ScriptIf::IfOperator::EQ: {
 					if (m_scriptIf->tolerance) {
-						result = std::fabs(value1 - value2) <= *m_scriptIf->tolerance.get();
+						result = fabs(value1 - value2) <= *m_scriptIf->tolerance.get();
 					} else {
 						result = value1 == value2;
 					}
@@ -341,7 +341,7 @@ bool IfProcessor::process(string* message) {
 				}
 				case ScriptIf::IfOperator::NE: {
 					if (m_scriptIf->tolerance) {
-						result = std::fabs(value1 - value2) > *m_scriptIf->tolerance.get();
+						result = fabs(value1 - value2) > *m_scriptIf->tolerance.get();
 					} else {
 						result = value1 != value2;
 					}
@@ -383,7 +383,7 @@ bool IfProcessor::process(string* message) {
 	}
 }
 
-ActionProcessor::ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
+ActionProcessor::ActionProcessor(shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
 
 void ActionProcessor::process() {
 	if ((!m_ifProcessor) || (m_ifProcessor->process(nullptr))) {
@@ -523,7 +523,7 @@ double ActionGlideProcessor::calculateSigEase(float ease, uint64_t glidePosition
 }
 
 
-ActionGateProcessor::ActionGateProcessor(float gateHighRatio, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
+ActionGateProcessor::ActionGateProcessor(float gateHighRatio, shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
 	ActionOngoingProcessor(ifProcessor), m_portHandler(portHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_gateHighRatio(gateHighRatio) {}
 
 void ActionGateProcessor::start(uint64_t glideLength) {
@@ -531,7 +531,7 @@ void ActionGateProcessor::start(uint64_t glideLength) {
 
 	if (shouldProcess()) {
 		// There should be at least one high sample in the gate
-		m_gateLowPosition = std::fmax(std::ceil(m_gateHighRatio * glideLength), 1.f);
+		m_gateLowPosition = fmax(ceil(m_gateHighRatio * glideLength), 1.f);
 
 		m_gateHigh = true;
 		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, 10.f);
@@ -615,11 +615,11 @@ SegmentProcessor::SegmentProcessor(
 	EventListener* eventListener) :
 		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_ongoingActions(ongoingActions), m_eventListener(eventListener) {}
 
-void SegmentProcessor::pushStartActions(std::vector<std::shared_ptr<ActionProcessor>> startActions) {
+void SegmentProcessor::pushStartActions(vector<shared_ptr<ActionProcessor>> startActions) {
 	m_startActions.insert(m_startActions.begin(), startActions.begin(), startActions.end());
 }
 
-void SegmentProcessor::pushEndActions(std::vector<std::shared_ptr<ActionProcessor>> endActions) {
+void SegmentProcessor::pushEndActions(vector<shared_ptr<ActionProcessor>> endActions) {
 	m_endActions.insert(m_endActions.end(), endActions.begin(), endActions.end());
 }
 

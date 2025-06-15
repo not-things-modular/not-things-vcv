@@ -7,7 +7,7 @@ using namespace timeseq;
 
 struct timeseq::JsonScriptParseContext {
 	int version;
-	std::vector<ValidationError> *validationErrors;
+	vector<ValidationError> *validationErrors;
 };
 
 template<size_t N>
@@ -36,11 +36,11 @@ void verifyVersion(int expectedVersion, JsonScriptParseContext* context, const c
 
 bool verifyAllowedProperties(const json& json, vector<string> propertyNames, bool allowRef, vector<ValidationError> *validationErrors, vector<string> location) {
 	uint64_t count = 0;
-	std::string unexpectedKeys;
+	string unexpectedKeys;
 
 	if (json.is_object()) {
 		for (json::const_iterator i = json.begin(); i != json.end(); i++) {
-			if ((i.key().substr(0, 2) != "x-") && (std::find(propertyNames.begin(), propertyNames.end(), i.key()) == propertyNames.end())) {
+			if ((i.key().substr(0, 2) != "x-") && (find(propertyNames.begin(), propertyNames.end(), i.key()) == propertyNames.end())) {
 				if (allowRef && (i.key() == "ref" || i.key() == "id")) {
 					continue;
 				}
@@ -64,7 +64,7 @@ bool verifyAllowedProperties(const json& json, vector<string> propertyNames, boo
 
 JsonScriptParser::~JsonScriptParser() {}
 
-std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError>* validationErrors, vector<string> location) {
+shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError>* validationErrors, vector<string> location) {
 	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" };
 	shared_ptr<Script> script = make_shared<Script>();
 
@@ -79,7 +79,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 	} else {
 		script->type = *type;
 		if (script->type != "not-things_timeseq_script") {
-			std::string typeValue = (*type);
+			string typeValue = (*type);
 			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TypeUnsupported, "'type' '", typeValue.c_str(), "' is not supported.");
 		}
 	}
@@ -96,7 +96,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			context.version = 110;
 		}
 		else {
-			std::string versionValue = (*version);
+			string versionValue = (*version);
 			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0 and 1.1.0 are currently supported.");
 		}
 	}
@@ -106,9 +106,9 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 		location.push_back("timelines");
 
 		int count = 0;
-		std::vector<json> timelineElements = (*timelines);
+		vector<json> timelineElements = (*timelines);
 		for (const json& timeline : timelineElements) {
-			location.push_back(std::to_string(count));
+			location.push_back(to_string(count));
 			if (timeline.is_object()) {
 				script->timelines.push_back(parseTimeline(timeline, &context, location));
 			} else {
@@ -129,9 +129,9 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			location.push_back("global-actions");
 
 			int count = 0;
-			std::vector<json> actionElements = (*globalActions);
+			vector<json> actionElements = (*globalActions);
 			for (const json& action : actionElements) {
-				location.push_back(std::to_string(count));
+				location.push_back(to_string(count));
 				if (action.is_object()) {
 					script->globalActions.push_back(parseAction(action, true, &context, location));
 				} else {
@@ -153,9 +153,9 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 			location.push_back("input-triggers");
 
 			int count = 0;
-			std::vector<json> inputTriggerElements = (*inputTriggers);
+			vector<json> inputTriggerElements = (*inputTriggers);
 			for (const json& inputTrigger : inputTriggerElements) {
-				location.push_back(std::to_string(count));
+				location.push_back(to_string(count));
 				if (inputTrigger.is_object()) {
 					script->inputTriggers.push_back(parseInputTrigger(inputTrigger, &context, location));
 				} else {
@@ -186,12 +186,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 					location.push_back("segment-blocks");
 
 					int count = 0;
-					std::vector<json> segmentBlockElements = (*segmentBlocks);
+					vector<json> segmentBlockElements = (*segmentBlocks);
 					for (const json& segmentBlock : segmentBlockElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (segmentBlock.is_object()) {
 							script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->segmentBlocks.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->segmentBlocks.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->segmentBlocks.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->segmentBlocks.back().id.size() > 0) {
 								ids.push_back(script->segmentBlocks.back().id);
@@ -216,12 +216,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> segmentElements = (*segments);
+					vector<json> segmentElements = (*segments);
 					for (const json& segment : segmentElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (segment.is_object()) {
 							script->segments.push_back(parseSegment(segment, false, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->segments.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->segments.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->segments.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->segments.back().id.size() > 0) {
 								ids.push_back(script->segments.back().id);
@@ -245,12 +245,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> inputElements = (*inputs);
+					vector<json> inputElements = (*inputs);
 					for (const json& input : inputElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (input.is_object()) {
 							script->inputs.push_back(parseFullInput(input, false, false, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->inputs.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->inputs.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->inputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->inputs.back().id.size() > 0) {
 								ids.push_back(script->inputs.back().id);
@@ -275,12 +275,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> outputElements = (*outputs);
+					vector<json> outputElements = (*outputs);
 					for (const json& output : outputElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (output.is_object()) {
 							script->outputs.push_back(parseFullOutput(output, false, false, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->outputs.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->outputs.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->outputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->outputs.back().id.size() > 0) {
 								ids.push_back(script->outputs.back().id);
@@ -305,12 +305,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> calcElements = (*calcs);
+					vector<json> calcElements = (*calcs);
 					for (const json& calc : calcElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (calc.is_object()) {
 							script->calcs.push_back(parseCalc(calc, false, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->calcs.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->calcs.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->calcs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->calcs.back().id.size() > 0) {
 								ids.push_back(script->calcs.back().id);
@@ -335,12 +335,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> valueElements = (*values);
+					vector<json> valueElements = (*values);
 					for (const json& value : valueElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (value.is_object()) {
 							script->values.push_back(parseFullValue(value, false, false, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->values.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->values.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->values.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->values.back().id.size() > 0) {
 								ids.push_back(script->values.back().id);
@@ -365,12 +365,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> actionElements = (*actions);
+					vector<json> actionElements = (*actions);
 					for (const json& action : actionElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (action.is_object()) {
 							script->actions.push_back(parseAction(action, false, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->actions.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->actions.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->actions.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->actions.back().id.size() > 0) {
 								ids.push_back(script->actions.back().id);
@@ -395,12 +395,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> ifElements = (*ifs);
+					vector<json> ifElements = (*ifs);
 					for (const json& ifObj : ifElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (ifObj.is_object()) {
 							script->ifs.push_back(parseIf(ifObj, false, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->ifs.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->ifs.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->ifs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->ifs.back().id.size() > 0) {
 								ids.push_back(script->ifs.back().id);
@@ -426,12 +426,12 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 
 					ids.clear();
 					int count = 0;
-					std::vector<json> tuningElements = (*tunings);
+					vector<json> tuningElements = (*tunings);
 					for (const json& tuningObj : tuningElements) {
-						location.push_back(std::to_string(count));
+						location.push_back(to_string(count));
 						if (tuningObj.is_object()) {
 							script->tunings.push_back(parseTuning(tuningObj, &context, location));
-							if (std::find(ids.begin(), ids.end(), script->tunings.back().id) != ids.end()) {
+							if (find(ids.begin(), ids.end(), script->tunings.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->tunings.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->tunings.back().id.size() > 0) {
 								ids.push_back(script->tunings.back().id);
@@ -458,7 +458,7 @@ std::shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, ve
 	return script;
 }
 
-ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> timelineProperties = { "time-scale", "lanes", "loop-lock" };
 	ScriptTimeline timeline;
 
@@ -481,9 +481,9 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, JsonScr
 		location.push_back("lanes");
 
 		int count = 0;
-		std::vector<json> laneElements = (*lanes);
+		vector<json> laneElements = (*lanes);
 		for (const json& lane : laneElements) {
-			location.push_back(std::to_string(count));
+			location.push_back(to_string(count));
 			if (lane.is_object()) {
 				timeline.lanes.push_back(parseLane(lane, context, location));
 			} else {
@@ -511,7 +511,7 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, JsonScr
 	return timeline;
 }
 
-ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> timeScaleProperties = { "sample-rate", "bpm", "bpb" };
 	ScriptTimeScale timeScale;
 
@@ -553,7 +553,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, Json
 	return timeScale;
 }
 
-ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> laneProperties = { "auto-start", "loop", "repeat", "start-trigger", "restart-trigger", "stop-trigger", "segments", "disable-ui" };
 	ScriptLane lane;
 
@@ -630,9 +630,9 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		location.push_back("segments");
 
 		int count = 0;
-		std::vector<json> segmentElements = (*segments);
+		vector<json> segmentElements = (*segments);
 		for (const json& segment : segmentElements) {
-			location.push_back(std::to_string(count));
+			location.push_back(to_string(count));
 			if (segment.is_object()) {
 				lane.segments.push_back(parseSegment(segment, true, context, location));
 			} else {
@@ -660,7 +660,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 	return lane;
 }
 
-ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
 	static const char* cSegmentProperties[] = { "duration", "actions", "disable-ui", "segment-block" };
 	static const vector<string> vSegmentProperties(begin(cSegmentProperties), end(cSegmentProperties));
 	ScriptSegment segment;
@@ -719,9 +719,9 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				location.push_back("actions");
 
 				int count = 0;
-				std::vector<json> actionElements = (*actions);
+				vector<json> actionElements = (*actions);
 				for (const json& action : actionElements) {
-					location.push_back(std::to_string(count));
+					location.push_back(to_string(count));
 					if (action.is_object()) {
 						segment.actions.push_back(parseAction(action, true, context, location));
 					} else {
@@ -741,7 +741,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 	return segment;
 }
 
-ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> segmentBlockProperties = { "repeat", "segments" };
 	ScriptSegmentBlock segmentBlock;
 
@@ -762,9 +762,9 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 		location.push_back("segments");
 
 		int count = 0;
-		std::vector<json> segmentElements = (*segments);
+		vector<json> segmentElements = (*segments);
 		for (const json& segment : segmentElements) {
-			location.push_back(std::to_string(count));
+			location.push_back(to_string(count));
 			if (segment.is_object()) {
 				segmentBlock.segments.push_back(parseSegment(segment, true, context, location));
 			} else {
@@ -782,7 +782,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 	return segmentBlock;
 }
 
-ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> durationProperties = { "samples", "millis", "bars", "beats", "hz" };
 	ScriptDuration duration;
 	int durationCount = 0;
@@ -855,7 +855,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 	return duration;
 }
 
-ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
 	static const char* cActionProperties[] = { "timing", "set-value", "set-variable", "set-polyphony", "set-label", "assert", "trigger", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" };
 	static const vector<string> vActionProperties(begin(cActionProperties), end(cActionProperties));
 	ScriptAction action;
@@ -1077,11 +1077,11 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.setLabel) && (!action.assert) && (action.trigger.size() == 0)) {
-				std::string timingStr = timing != actionJson.end() ? *timing : "start";
+				string timingStr = timing != actionJson.end() ? *timing : "start";
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert' or 'trigger' must be present for '", timingStr.c_str(), "' timing.");
 			}
 			if (actionCount > 1) {
-				std::string timingStr = timing != actionJson.end() ? *timing : "start";
+				string timingStr = timing != actionJson.end() ? *timing : "start";
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert' or 'trigger' can be used in the same '", timingStr.c_str(), "' action.");
 			}
 		}
@@ -1090,7 +1090,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 	return action;
 }
 
-ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
 	static const char* cIfProperties[] = { "eq", "ne", "lt", "lte", "gt", "gte", "and", "or", "tolerance" };
 	static const vector<string> vIfProperties(begin(cIfProperties), end(cIfProperties));
 	ScriptIf scriptIf;
@@ -1111,7 +1111,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 			if (eqValue->is_array()) {
 				location.push_back("eq");
 				scriptIf.ifOperator = ScriptIf::IfOperator::EQ;
-				scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("eq", *eqValue, context, location)));
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("eq", *eqValue, context, location)));
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_EqArray, "'eq' must be an array.");
@@ -1124,7 +1124,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 			if (neValue->is_array()) {
 				location.push_back("ne");
 				scriptIf.ifOperator = ScriptIf::IfOperator::NE;
-				scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("ne", *neValue, context, location)));
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("ne", *neValue, context, location)));
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_NeArray, "'ne' must be an array.");
@@ -1137,7 +1137,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 			if (ltValue->is_array()) {
 				location.push_back("lt");
 				scriptIf.ifOperator = ScriptIf::IfOperator::LT;
-				scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("lt", *ltValue, context, location)));
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lt", *ltValue, context, location)));
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_LtArray, "'lt' must be an array.");
@@ -1150,7 +1150,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 			if (lteValue->is_array()) {
 				location.push_back("lte");
 				scriptIf.ifOperator = ScriptIf::IfOperator::LTE;
-				scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("lte", *lteValue, context, location)));
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lte", *lteValue, context, location)));
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_LteArray, "'lte' must be an array.");
@@ -1163,7 +1163,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 			if (gtValue->is_array()) {
 				location.push_back("gt");
 				scriptIf.ifOperator = ScriptIf::IfOperator::GT;
-				scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("gt", *gtValue, context, location)));
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gt", *gtValue, context, location)));
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_GtArray, "'gt' must be an array.");
@@ -1176,7 +1176,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 			if (gteValue->is_array()) {
 				location.push_back("gte");
 				scriptIf.ifOperator = ScriptIf::IfOperator::GTE;
-				scriptIf.values.reset(new std::pair<ScriptValue, ScriptValue>(parseIfValues("gte", *gteValue, context, location)));
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gte", *gteValue, context, location)));
 				location.pop_back();
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_GteArray, "'gte' must be an array.");
@@ -1232,10 +1232,10 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 	return scriptIf;
 }
 
-std::pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(std::string ifOperator, const json& valuesJson, JsonScriptParseContext* context, std::vector<std::string> location) {
-	std::pair<ScriptValue, ScriptValue> valuePair;
+pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(string ifOperator, const json& valuesJson, JsonScriptParseContext* context, vector<string> location) {
+	pair<ScriptValue, ScriptValue> valuePair;
 
-	std::vector<json> valueElements = valuesJson.get<std::vector<json>>();
+	vector<json> valueElements = valuesJson.get<vector<json>>();
 	if (valueElements.size() == 2) {
 		valuePair.first = parseValue(valueElements[0], true, context, location, "0", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
 		valuePair.second = parseValue(valueElements[1], true, context, location, "1", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
@@ -1246,12 +1246,12 @@ std::pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(std::string 
 	return valuePair;
 }
 
-std::unique_ptr<std::pair<ScriptIf, ScriptIf>> JsonScriptParser::parseIfIfs(std::string ifOperator, const json& ifsJson, JsonScriptParseContext* context, std::vector<std::string> location) {
-	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> ifPair;
+unique_ptr<pair<ScriptIf, ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, const json& ifsJson, JsonScriptParseContext* context, vector<string> location) {
+	unique_ptr<pair<ScriptIf, ScriptIf>> ifPair;
 
-	std::vector<json> ifElements = ifsJson.get<std::vector<json>>();
+	vector<json> ifElements = ifsJson.get<vector<json>>();
 	if (ifElements.size() == 2) {
-		ifPair.reset(new std::pair<ScriptIf, ScriptIf>());
+		ifPair.reset(new pair<ScriptIf, ScriptIf>());
 		location.push_back("0");
 		ifPair->first = parseIf(ifElements[0], true, context, location);
 		location.pop_back();
@@ -1265,7 +1265,7 @@ std::unique_ptr<std::pair<ScriptIf, ScriptIf>> JsonScriptParser::parseIfIfs(std:
 	return ifPair;
 }
 
-ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> setValueProperties = { "output", "value" };
 	ScriptSetValue setValue;
 
@@ -1288,7 +1288,7 @@ ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, JsonScr
 	return setValue;
 }
 
-ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> setVariableProperties  = { "name", "value" };
 	ScriptSetVariable setVariable;
 
@@ -1314,7 +1314,7 @@ ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson
 	return setVariable;
 }
 
-ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> setPolyphonyProperties = { "index", "channels" };
 	ScriptSetPolyphony setPolyphony;
 
@@ -1343,7 +1343,7 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 	return setPolyphony;
 }
 
-ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> setLabelProperties = { "index", "label" };
 	ScriptSetLabel setLabel;
 
@@ -1372,7 +1372,7 @@ ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson, JsonScr
 	return setLabel;
 }
 
-ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> assertProperties = { "name", "expect", "stop-on-fail" };
 	ScriptAssert scriptAssert;
 
@@ -1418,7 +1418,7 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, JsonScriptPar
 	return scriptAssert;
 }
 
-ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage) {
+ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
 	ScriptValue scriptValue;
 
 	if (valueJson.is_object()) {
@@ -1442,7 +1442,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 	return scriptValue;
 }
 
-ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, vector<string> location) {
 	static const char* cValueProperties[] = { "voltage", "note", "variable", "input", "output", "rand", "calc", "quantize" };
 	static const vector<string> vValueProperties(begin(cValueProperties), end(cValueProperties));
 	ScriptValue value;
@@ -1474,7 +1474,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 		if (note != valueJson.end()) {
 			valueTypes++;
 			if (note->is_string()) {
-				value.note.reset(new std::string(*note));
+				value.note.reset(new string(*note));
 				if ((value.note->size() < 2) || (value.note->size() > 3)) {
 					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A note value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 				} else {
@@ -1550,9 +1550,9 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 				location.push_back("calc");
 
 				int count = 0;
-				std::vector<json> calcElements = (*calcs);
+				vector<json> calcElements = (*calcs);
 				for (const json& calc : calcElements) {
-					location.push_back(std::to_string(count));
+					location.push_back(to_string(count));
 					if (calc.is_object()) {
 						value.calc.push_back(parseCalc(calc, true, context, location));
 					} else {
@@ -1582,7 +1582,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 	return value;
 }
 
-ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage) {
+ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
 	ScriptOutput scriptOutput;
 
 	if (outputJson.is_object()) {
@@ -1599,7 +1599,7 @@ ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRef
 	return scriptOutput;
 }
 
-ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, vector<string> location) {
 	static const char* cOutputProperties[] = { "index", "channel" };
 	static const vector<string> vOutputProperties(begin(cOutputProperties), end(cOutputProperties));
 	ScriptOutput output;
@@ -1638,7 +1638,7 @@ ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allo
 	return output;
 }
 
-ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage) {
+ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
 	ScriptInput scriptInput;
 
 	if (inputJson.is_object()) {
@@ -1655,7 +1655,7 @@ ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, 
 	return scriptInput;
 }
 
-ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, vector<string> location) {
 	static const char* cInputProperties[] = { "index", "channel" };
 	static const vector<string> vInputProperties(begin(cInputProperties), end(cInputProperties));
 	ScriptInput input;
@@ -1694,7 +1694,7 @@ ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRe
 	return input;
 }
 
-ScriptRand JsonScriptParser::parseRand(const json& randJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptRand JsonScriptParser::parseRand(const json& randJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> randProperties = { "lower", "upper" };
 	ScriptRand rand;
 
@@ -1719,7 +1719,7 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson, JsonScriptParseCont
 	return rand;
 }
 
-ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
 	static const char* cCalcProperties[] = { "add", "sub", "div", "mult", "max", "min", "remain", "frac", "trunc", "round", "quantize", "sign" };
 	static const vector<string> vCalcProperties(begin(cCalcProperties), end(cCalcProperties));
 	ScriptCalc calc;
@@ -1819,7 +1819,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::ROUND;
 			if (round->is_string()) {
-				std::string roundString = round->get<string>();
+				string roundString = round->get<string>();
 				if (roundString == "up") {
 					calc.roundType.reset(new ScriptCalc::RoundType(ScriptCalc::RoundType::UP));
 				} else if (roundString == "down") {
@@ -1852,7 +1852,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::SIGN;
 			if (sign->is_string()) {
-				std::string signString = sign->get<string>();
+				string signString = sign->get<string>();
 				if (signString == "pos") {
 					calc.signType.reset(new ScriptCalc::SignType(ScriptCalc::SignType::POS));
 				} else if (signString == "neg") {
@@ -1875,7 +1875,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 	return calc;
 }
 
-ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> inputTriggerProperties = { "id", "input" };
 	ScriptInputTrigger inputTrigger;
 
@@ -1901,7 +1901,7 @@ ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJ
 	return inputTrigger;
 }
 
-ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, JsonScriptParseContext* context, vector<string> location) {
 	static const vector<string> tuningProperties = { "id", "notes" };
 	ScriptTuning tuning;
 
@@ -1922,9 +1922,9 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, JsonScriptPar
 		location.push_back("notes");
 
 		int count = 0;
-		std::vector<json> noteElements = (*notes);
+		vector<json> noteElements = (*notes);
 		for (const json& noteElement : noteElements) {
-			location.push_back(std::to_string(count));
+			location.push_back(to_string(count));
 			if (noteElement.is_number()) {
 				float x;
 				float note = noteElement.get<float>();
@@ -1986,7 +1986,7 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, JsonScriptPar
 	return tuning;
 }
 
-void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
+void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
 	json::const_iterator ref = refJson.find("ref");
 	json::const_iterator id = refJson.find("id");
 

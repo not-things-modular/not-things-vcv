@@ -23,7 +23,7 @@ ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableH
 	m_randomValueGenerator = randomValueGenerator;
 }
 
-shared_ptr<Processor> ProcessorScriptParser::parseScript(std::shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string> location) {
+shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string> location) {
 	ProcessorScriptParseContext context;
 
 	context.script = script.get();
@@ -245,7 +245,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(Process
 	return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener));
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<ScriptAction>& actions, vector<string> location, vector<string> actionsLocation, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<ScriptAction>& actions, vector<string> location, vector<string> actionsLocation, vector<string> segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
 		location.push_back("segments");
@@ -270,7 +270,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 			int count = 0;
 
 			actionsLocation.push_back("actions");
-			for (std::vector<ScriptAction>::iterator it = actions.begin(); it != actions.end(); it++) {
+			for (vector<ScriptAction>::iterator it = actions.begin(); it != actions.end(); it++) {
 				actionsLocation.push_back(to_string(count));
 
 				vector<string> actionLocation;
@@ -518,7 +518,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(Processor
 	return shared_ptr<ActionProcessor>(new ActionSetLabelProcessor(scriptSetLabel->index - 1, scriptSetLabel->label, m_portHandler, ifProcessor));
 }
 
-std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
 	ScriptAssert* scriptAssert = scriptAction->assert.get();
 
 	location.push_back("expect");
