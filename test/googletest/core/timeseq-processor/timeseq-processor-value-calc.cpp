@@ -772,6 +772,38 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldSignValue) {
 	}
 }
 
+TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldFailForUnknownQuantizeTuning) {
+	testing::NiceMock<MockEventListener> mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	MockPortHandler mockPortHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "set-variable", { { "name", "output-variable" }, { "value", { { "input", 1 }, { "calc", json::array({
+					{ { "quantize", "not-a-single-note-tuning" } }
+				}) } } } } } }
+			}) } } }) } }
+		}) } }
+	});
+	json["component-pool"] = {
+		{ "tunings", json::array({
+			{
+				{ "id", "single-note-tuning" },
+				{ "notes", json::array({ .23f }) }
+			}
+		})}
+	};
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeTuningNotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/calc/0/quantize");
+}
+
 TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValueToSingleNoteTuning) {
 	testing::NiceMock<MockEventListener> mockEventListener;
 	MockTriggerHandler mockTriggerHandler;
@@ -794,7 +826,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValueToSingleNoteTuni
 		{ "tunings", json::array({
 			{
 				{ "id", "single-note-tuning" },
-				{ "notes", json::array({ .23f}) }
+				{ "notes", json::array({ .23f }) }
 			}
 		})}
 	};
@@ -862,6 +894,103 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValueToSingleNoteTuni
 	}
 
 	for (int i = 0; i < 11; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValuesToDifferentTunings) {
+	testing::NiceMock<MockEventListener> mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	MockPortHandler mockPortHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "set-variable", { { "name", "output-variable" }, { "value", { { "input", 1 }, { "calc", json::array({
+					{ { "quantize", "a-minor-pentatonic" } }
+				}) } } } } } },
+				{ { "set-variable", { { "name", "output-variable" }, { "value", { { "input", 1 }, { "calc", json::array({
+					{ { "quantize", "f-minor-pentatonic" } }
+				}) } } } } } }
+			}) } } }) } }
+		}) } }
+	});
+	json["component-pool"] = {
+		{ "tunings", json::array({
+			{
+				{ "id", "a-minor-pentatonic" },
+				{ "notes", json::array({ "E", "C", "A", "D", "G" }) }
+			},
+			{
+				{ "id", "f-minor-pentatonic" },
+				{ "notes", json::array({ "C", "A+", "G+", "D+", "F" }) }
+			}
+		})}
+	};
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(0.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 0.f)).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(0.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 0.f)).Times(1);
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(2.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 2.f)).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(2.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 2.f)).Times(1);
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(4.55));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(4.5833333333f))).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(4.55));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(4.6666666667))).Times(1);
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(2.70833));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(2.75f))).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(2.70833));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(2.6666666667f))).Times(1);
+
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(-2.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, -2.f)).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(-2.f));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, -2.f)).Times(1);
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(-4.45));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(-4.4166666667f))).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(-4.45));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(-4.3333333333f))).Times(1);
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(-2.29176));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(-2.25f))).Times(1);
+		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(-2.29176));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(-2.3333333333f))).Times(1);
+	}
+
+	for (int i = 0; i < 7; i++) {
 		script.second->process();
 	}
 }
