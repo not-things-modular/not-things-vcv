@@ -58,7 +58,7 @@ struct ScriptRand {
 };
 
 struct ScriptCalc : ScriptRefObject {
-	enum CalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN, TRUNC, FRAC, ROUND, QUANTIZE, SIGN };
+	enum CalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN, TRUNC, FRAC, ROUND, QUANTIZE, SIGN, VTOF };
 	enum RoundType { UP, DOWN, NEAR };
 	enum SignType { POS, NEG };
 
@@ -180,10 +180,14 @@ struct ScriptAction : ScriptRefObject {
 
 struct ScriptDuration {
 	std::unique_ptr<uint64_t> samples;
+	std::unique_ptr<ScriptValue> samplesValue;
 	std::unique_ptr<float> millis;
+	std::unique_ptr<ScriptValue> millisValue;
 	std::unique_ptr<uint64_t> bars;
 	std::unique_ptr<float> beats;
+	std::unique_ptr<ScriptValue> beatsValue;
 	std::unique_ptr<float> hz;
+	std::unique_ptr<ScriptValue> hzValue;
 };
 
 struct ScriptSegment : ScriptRefObject {

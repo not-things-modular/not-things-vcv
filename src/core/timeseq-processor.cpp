@@ -37,6 +37,7 @@ CalcValueProcessor::CalcValueProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueP
 		case ScriptCalc::ROUND:
 		case ScriptCalc::QUANTIZE:
 		case ScriptCalc::SIGN:
+		case ScriptCalc::VTOF:
 			// Should not happen in this constructor.
 			break;
 	}
@@ -151,6 +152,11 @@ double CalcSignProcessor::calc(double value) {
 	} else {
 		return value;
 	}
+}
+
+double CalcVtoFProcessor::calc(double value) {
+	// return pow(2, value) * 261.625565f;
+	return pow(2, value) * 261.6256f;
 }
 
 ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : m_calcProcessors(calcProcessors), m_quantize(quantize) {}
@@ -555,8 +561,6 @@ void ActionGateProcessor::end() {
 }
 
 
-DurationProcessor::DurationProcessor(uint64_t duration, double drift) : m_duration(duration), m_drift(drift) {}
-
 DurationProcessor::DurationState DurationProcessor::getState() {
 	return m_state;
 }
@@ -597,6 +601,56 @@ void DurationProcessor::reset() {
 	m_position = 0;
 }
 
+void DurationProcessor::setDuration(uint64_t duration) {
+	m_duration = duration;
+}
+
+void DurationProcessor::setDrift(double drift) {
+	m_drift = drift;
+}
+
+DurationConstantProcessor::DurationConstantProcessor(uint64_t duration, double drift) {
+	setDuration(duration);
+	setDrift(drift);
+}
+
+void DurationConstantProcessor::prepareForStart() {}
+
+
+DurationVariableFactorProcessor::DurationVariableFactorProcessor(std::shared_ptr<ValueProcessor> value, double samplesFactor) : m_value(value), m_samplesFactor(samplesFactor) {}
+
+void DurationVariableFactorProcessor::prepareForStart() {
+	double value = m_value->process();
+	double refactoredValue = (m_samplesFactor != 1.f) ? value * m_samplesFactor : value;
+	
+	if (refactoredValue >= 1.f) {
+		uint64_t duration = floor(refactoredValue);
+		setDuration(duration);
+		setDrift(refactoredValue - duration);
+	} else {
+		setDuration(1);
+		setDrift(0.);
+	}
+}
+
+
+DurationVariableHzProcessor::DurationVariableHzProcessor(std::shared_ptr<ValueProcessor> value, double sampleRate) : m_value(value), m_sampleRate(sampleRate) {}
+
+void DurationVariableHzProcessor::prepareForStart() {
+	double value = m_value->process();
+	double refactoredValue = m_sampleRate / value;
+	
+	if (refactoredValue >= 1.f) {
+		uint64_t duration = floor(refactoredValue);
+		setDuration(duration);
+		setDrift(refactoredValue - duration);
+	} else {
+		setDuration(1);
+		setDrift(0.);
+	}
+}
+
+
 SegmentProcessor::SegmentProcessor(SegmentProcessor& segmentProcessor) :
 	m_scriptSegment(segmentProcessor.m_scriptSegment),
 	m_duration(segmentProcessor.m_duration),
@@ -636,6 +690,7 @@ double SegmentProcessor::process(double drift) {
 			m_eventListener->segmentStarted();
 		}
 		processStartActions();
+		m_duration->prepareForStart();
 		starting = true; // The glide actions will have to be processed from their start position.
 	}
 

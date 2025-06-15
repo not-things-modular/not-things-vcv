@@ -103,11 +103,12 @@ enum ValidationErrorCode {
 	SegmentBlock_SegmentObject = 702,
 	SegmentBlock_RepeatNumber = 703,
 
-	Duration_SamplesNumber = 800,
-	Duration_MillisNumber = 801,
+	Duration_SamplesNumberOrValue = 800,
+	Duration_SamplesValue = 800,
+	Duration_MillisNumberOrValue = 801,
 	Duration_BarsNumber = 802,
-	Duration_BeatsNumber = 803,
-	Duration_HzNumber = 804,
+	Duration_BeatsNumberOrValue = 803,
+	Duration_HzNumberOrValue = 804,
 	Duration_NoSamplesOrMillisOrBeatsOrHz = 805,
 	Duration_EitherSamplesOrMillisOrBeatsOrHz = 806,
 	Duration_BarsRequiresBeats = 807,
@@ -211,6 +212,7 @@ enum ValidationErrorCode {
 	Calc_QuantizeTuningNotFound = 1815, // Since 1.1.0
 	Calc_SignString = 1816, // Since 1.1.0
 	Calc_SignEnum = 1817, // Since 1.1.0
+	Calc_VtofBoolean = 1818, // Since 1.1.0
 
 	InputTrigger_IdString = 1900,
 	InputTrigger_IdLength = 1901,

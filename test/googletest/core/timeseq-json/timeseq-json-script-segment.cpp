@@ -317,7 +317,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNonNumberSam
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeSamples) {
@@ -332,7 +332,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeSamp
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroSamples) {
@@ -347,7 +347,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroSamples)
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithFloatSamples) {
@@ -362,7 +362,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithFloatSamples
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_SamplesNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNonNumberMillis) {
@@ -377,7 +377,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNonNumberMil
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeMillis) {
@@ -392,7 +392,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeMill
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroMillis) {
@@ -407,7 +407,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroMillis) 
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_MillisNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNonNumberBars) {
@@ -482,7 +482,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNonNumberBea
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_BeatsNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_BeatsNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeBeats) {
@@ -497,7 +497,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeBeat
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_BeatsNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_BeatsNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroBeatsAndNoBars) {
@@ -527,7 +527,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNonNumberHz)
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_HzNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_HzNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeHz) {
@@ -542,7 +542,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNegativeHz) 
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_HzNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_HzNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroHz) {
@@ -557,7 +557,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithZeroHz) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_HzNumber, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_HzNumberOrValue, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithPositiveSamples) {

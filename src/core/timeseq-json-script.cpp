@@ -791,23 +791,31 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 
 	json::const_iterator samples = durationJson.find("samples");
 	if (samples != durationJson.end()) {
+		durationCount++;
 		if ((samples->is_number_unsigned()) && (samples->get<uint64_t>() > 0)) {
 			duration.samples.reset(new uint64_t(samples->get<uint64_t>()));
-			durationCount++;
+		} else if (samples->is_object()) {
+			location.push_back("samples");
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*samples, true, context, location, "samples", ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be an object."));
+			duration.samplesValue.reset(scriptValue);
+			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_SamplesNumber, "samples must be a positive integer number.");
-			durationCount++; // It's not configured correctly, but we did encounter a duration entry
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_SamplesNumberOrValue, "samples must be a positive integer number or a value object.");
 		}
 	}
 
 	json::const_iterator millis = durationJson.find("millis");
 	if (millis != durationJson.end()) {
+		durationCount++;
 		if ((millis->is_number()) && (millis->get<float>() > 0)) {
 			duration.millis.reset(new float(millis->get<float>()));
-			durationCount++;
+		} else if (millis->is_object()) {
+			location.push_back("millis");
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*millis, true, context, location, "millis", ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be an object."));
+			duration.millisValue.reset(scriptValue);
+			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_MillisNumber, "millis must be a positive decimal number.");
-			durationCount++; // It's not configured correctly, but we did encounter a duration entry
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_MillisNumberOrValue, "millis must be a positive decimal number or a value object.");
 		}
 	}
 
@@ -816,29 +824,37 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((bars->is_number_unsigned()) && (bars->get<uint64_t>() > 0)) {
 			duration.bars.reset(new uint64_t(bars->get<uint64_t>()));
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsNumber, "bars must be a positive integer number.");
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsNumber, "bars must be a positive integer number or a value object.");
 		}
 	}
 
 	json::const_iterator beats = durationJson.find("beats");
 	if (beats != durationJson.end()) {
+		durationCount++;
 		if ((beats->is_number()) && (beats->get<float>() >= 0)) {
 			duration.beats.reset(new float(beats->get<float>()));
-			durationCount++;
+		} else if (beats->is_object()) {
+			location.push_back("beats");
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*beats, true, context, location, "beats", ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be an object."));
+			duration.beatsValue.reset(scriptValue);
+			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsNumber, "beats must be a positive decimal number.");
-			durationCount++; // It's not configured correctly, but we did encounter a duration entry
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsNumberOrValue, "beats must be a positive decimal number or a value object.");
 		}
 	}
 
 	json::const_iterator hz = durationJson.find("hz");
 	if (hz != durationJson.end()) {
+		durationCount++;
 		if ((hz->is_number()) && (hz->get<float>() > 0)) {
 			duration.hz.reset(new float(hz->get<float>()));
-			durationCount++;
+		} else if (hz->is_object()) {
+			location.push_back("hz");
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*hz, true, context, location, "hz", ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be an object."));
+			duration.hzValue.reset(scriptValue);
+			location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_HzNumber, "'hz' must be a positive decimal number.");
-			durationCount++; // It's not configured correctly, but we did encounter a duration entry
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be a positive decimal number or a value object.");
 		}
 	}
 
@@ -1720,7 +1736,7 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson, JsonScriptParseCont
 }
 
 ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
-	static const char* cCalcProperties[] = { "add", "sub", "div", "mult", "max", "min", "remain", "frac", "trunc", "round", "quantize", "sign" };
+	static const char* cCalcProperties[] = { "add", "sub", "div", "mult", "max", "min", "remain", "frac", "trunc", "round", "quantize", "sign", "vtof" };
 	static const vector<string> vCalcProperties(begin(cCalcProperties), end(cCalcProperties));
 	ScriptCalc calc;
 
@@ -1865,10 +1881,20 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 			}
 		}
 
+		json::const_iterator vtof = calcJson.find("vtof");
+		if (vtof != calcJson.end()) {
+			verifyVersion(VERSION_1_1_0, context, "calc 'vtof'", location);
+			count++;
+			calc.operation = ScriptCalc::CalcOperation::VTOF;
+			if ((!vtof->is_boolean()) || (!vtof->get<bool>())) {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_VtofBoolean, "'vtof' must be a boolean, with its value set to true.");
+			}
+		}
+
 		if (count == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize' or 'sign' must be set.");
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' must be set.");
 		} else if (count > 1) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_MultipleOperations, "At most one of 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize' or 'sign' may be set.");
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_MultipleOperations, "At most one of 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' may be set.");
 		}
 	}
 
