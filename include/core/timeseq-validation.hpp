@@ -178,6 +178,8 @@ enum ValidationErrorCode {
 	Value_CalcArray = 1413,
 	Value_CalcObject = 1414,
 	Value_QuantizeBool = 1415,
+	Value_NoLimitBoolean = 1416,
+	Value_NoLimitOnNonVoltage = 1417,
 
 	Output_RefOrInstance = 1500,
 	Output_IndexNumber = 1501,

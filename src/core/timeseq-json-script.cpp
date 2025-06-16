@@ -1459,7 +1459,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 }
 
 ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, vector<string> location) {
-	static const char* cValueProperties[] = { "voltage", "note", "variable", "input", "output", "rand", "calc", "quantize" };
+	static const char* cValueProperties[] = { "voltage", "no-limit", "note", "variable", "input", "output", "rand", "calc", "quantize" };
 	static const vector<string> vValueProperties(begin(cValueProperties), end(cValueProperties));
 	ScriptValue value;
 
@@ -1473,17 +1473,31 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 	} else {
 		int valueTypes = 0;
 
+		unique_ptr<bool> noLimitValue;
+		json::const_iterator nolimit = valueJson.find("no-limit");
+		if (nolimit != valueJson.end()) {
+			if (nolimit->is_boolean()) {
+				noLimitValue.reset(new bool(nolimit->get<bool>()));
+			} else {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VoltageFloat, "'no-limit' must be a boolean.");
+			}
+		}
+
 		json::const_iterator voltage = valueJson.find("voltage");
 		if (voltage != valueJson.end()) {
 			valueTypes++;
 			if (voltage->is_number()) {
 				value.voltage.reset(new float(voltage->get<float>()));
-				if ((*value.voltage < -10) || (*value.voltage > 10)) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VoltageRange, fromShorthand ? "A voltage value must be a decimal number between -10 and 10." : "'voltage' must be a decimal number between -10 and 10.");
+				if ((!noLimitValue) || (!*noLimitValue.get())) {
+					if ((*value.voltage < -10) || (*value.voltage > 10)) {
+						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VoltageRange, fromShorthand ? "A voltage value must be a decimal number between -10 and 10." : "'voltage' must be a decimal number between -10 and 10.");
+					}
 				}
 			} else {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
 			}
+		} else if (noLimitValue) {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoLimitOnNonVoltage, "'no-limit' can only be used with a 'voltage' value.");
 		}
 
 		json::const_iterator note = valueJson.find("note");
