@@ -116,6 +116,57 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithVoltageOutsideOfRange) {
 	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/values/1");
 }
 
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithVoltageOutsideOfRangeWithNoLimitFalse) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", -10.1 }, { "no-limit", false } },
+			{ { "id", "value-2" }, { "voltage", 10.1 }, { "no-limit", false } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/values/0");
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/component-pool/values/1");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithNoLimitOnNonNoteValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "note", "A5" }, { "no-limit", true } },
+			{ { "id", "value-2" }, { "input", 5 }, { "no-limit", true } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Value_NoLimitOnNonVoltage, "/component-pool/values/0");
+	expectError(validationErrors, ValidationErrorCode::Value_NoLimitOnNonVoltage, "/component-pool/values/1");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithNoLimitNonBoolean) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", -1.f }, { "no-limit", "false" } },
+			{ { "id", "value-2" }, { "voltage", 1.f }, { "no-limit", "false" } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Value_NoLimitBoolean, "/component-pool/values/0");
+	expectError(validationErrors, ValidationErrorCode::Value_NoLimitBoolean, "/component-pool/values/1");
+}
+
 TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithIntegerVoltages) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -143,6 +194,26 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldSucceedWithIntegerVoltages) {
 	EXPECT_EQ(*script->values[3].voltage.get(), 6);
 	ASSERT_TRUE(script->values[4].voltage);
 	EXPECT_EQ(*script->values[4].voltage.get(), 10);
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldAllowVoltageOutsideOfRangeWithNoLimitTrue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "voltage", -10.1f }, { "no-limit", true } },
+			{ { "id", "value-2" }, { "voltage", 10.1f }, { "no-limit", true } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->values.size(), 2u);
+	ASSERT_TRUE(script->values[0].voltage);
+	EXPECT_EQ(*script->values[0].voltage.get(), -10.1f);
+	ASSERT_TRUE(script->values[1].voltage);
+	EXPECT_EQ(*script->values[1].voltage.get(), 10.1f);
 }
 
 TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnDuplicateIds) {

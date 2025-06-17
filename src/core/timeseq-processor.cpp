@@ -155,7 +155,6 @@ double CalcSignProcessor::calc(double value) {
 }
 
 double CalcVtoFProcessor::calc(double value) {
-	// return pow(2, value) * 261.625565f;
 	return pow(2, value) * 261.6256f;
 }
 

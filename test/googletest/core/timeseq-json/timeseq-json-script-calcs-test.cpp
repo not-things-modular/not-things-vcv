@@ -102,12 +102,13 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldVerifyFeatureVersion) {
 				{ { "id", "calc-9" }, { "frac", true } }, // Requires 1.1.0
 				{ { "id", "calc-10" }, { "round", "down" } }, // Requires 1.1.0
 				{ { "id", "calc-11" }, { "quantize", "tuning" } }, // Requires 1.1.0
-				{ { "id", "calc-12" }, { "sign", "pos" } } // Requires 1.1.0
+				{ { "id", "calc-12" }, { "sign", "pos" } }, // Requires 1.1.0
+				{ { "id", "calc-13" }, { "vtof", true } } // Requires 1.1.0
 			}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 8u);
+	ASSERT_EQ(validationErrors.size(), 9u);
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/calcs/4");
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/calcs/5");
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/calcs/6");
@@ -116,6 +117,7 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldVerifyFeatureVersion) {
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/calcs/9");
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/calcs/10");
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/calcs/11");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/calcs/12");
 
 	for (vector<ValidationError>::iterator it = validationErrors.begin(); it != validationErrors.end(); it++) {
 		EXPECT_NE(it->message.find("requires version 1.1.0"), std::string::npos);
@@ -136,7 +138,8 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailWithMultipleOperations) {
 		{ "frac", true },
 		{ "round", "down" },
 		{ "quantize", "tuning" },
-		{ "sign", "pos" }
+		{ "sign", "pos" },
+		{ "vtof", true }
 	};
 
 	vector<ValidationError> validationErrors;
@@ -314,11 +317,12 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnRefWithOtherCalcProperties) {
 			{ { "id", "value-10" }, { "voltage", 1 }, { "calc", json::array({ json::object({{ "ref", "calc-ref-10" }, { "round", "up" }}) })} },
 			{ { "id", "value-11" }, { "voltage", 1 }, { "calc", json::array({ json::object({{ "ref", "calc-ref-11" }, { "quantize", "tuning" }}) })} },
 			{ { "id", "value-12" }, { "voltage", 1 }, { "calc", json::array({ json::object({{ "ref", "calc-ref-12" }, { "sign", "pos" }}) })} },
+			{ { "id", "value-13" }, { "voltage", 1 }, { "calc", json::array({ json::object({{ "ref", "calc-ref-12" }, { "vtof", true }}) })} },
 		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 12u);
+	ASSERT_EQ(validationErrors.size(), 13u);
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/0/calc/0");
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/1/calc/0");
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/2/calc/0");
@@ -331,6 +335,7 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnRefWithOtherCalcProperties) {
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/9/calc/0");
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/10/calc/0");
 	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/11/calc/0");
+	expectError(validationErrors, ValidationErrorCode::Calc_RefOrInstance, "/component-pool/values/12/calc/0");
 }
 
 TEST(TimeSeqJsonScriptCalc, ParseCalcWithUnknownPropertyShouldFail) {
@@ -639,6 +644,55 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseSignValues) {
 	EXPECT_EQ(script->calcs[1].operation, ScriptCalc::CalcOperation::SIGN);
 	EXPECT_TRUE(script->calcs[1].signType);
 	EXPECT_EQ(*script->calcs[1].signType.get(), ScriptCalc::SignType::NEG);
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonBooleanVtof) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "vtof", { { "ref", "value-1" } } } },
+			{ { "id", "calc-2" }, { "vtof", "true" } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Calc_VtofBoolean, "/component-pool/calcs/0");
+	expectError(validationErrors, ValidationErrorCode::Calc_VtofBoolean, "/component-pool/calcs/1");
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnFalseVtof) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "vtof", false } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Calc_VtofBoolean, "/component-pool/calcs/0");
+}
+
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseTrueVtof) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc-1" }, { "vtof", true } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+
+	EXPECT_EQ(script->calcs.size(), 1u);
+	EXPECT_EQ(script->calcs[0].operation, ScriptCalc::CalcOperation::VTOF);
 }
 
 TEST(TimeSeqJsonScriptCalc, ParseCalcShouldAllowUnknownPropertyWithXPrefix) {

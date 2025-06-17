@@ -1,4 +1,6 @@
 #include "timeseq-processor-shared.hpp"
+#include <dsp/common.hpp>
+#include <cmath>
 
 TEST(TimeSeqProcessorValueCalc, ValueWithCalcRefToUnknownCalcShouldFail) {
 	MockEventListener mockEventListener;
@@ -991,6 +993,65 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValuesToDifferentTuni
 	}
 
 	for (int i = 0; i < 7; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldConvertVoltageToFrequency) {
+	testing::NiceMock<MockEventListener> mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	MockPortHandler mockPortHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "set-variable", { { "name", "output-variable" }, { "value", { { "input", 1 }, { "calc", json::array({
+					{ { "vtof", true } }
+				}) } } } } } }
+			}) } } }) } },
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	array<array<float, 2u>, 4u> vtofPairs = {{
+		{{ 1.f, (float) (std::pow(2, 1) * rack::dsp::FREQ_C4) }},
+		{{ 1.33f, (float) (std::pow(2, 1.33) * rack::dsp::FREQ_C4) }},
+		{{ 1.66f, (float) (std::pow(2, 1.66) * rack::dsp::FREQ_C4) }},
+		{{ 1.75f, (float) (std::pow(2, 1.75) * rack::dsp::FREQ_C4) }}
+	}};
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+
+		for (unsigned int i = 0; i < vtofPairs.size(); i++) {
+			// The original value
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+			EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(vtofPairs[i][0]));
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(vtofPairs[i][1]))).Times(1);
+
+			// One octave higher should double the frequency
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+			EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(vtofPairs[i][0] + 1));
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(vtofPairs[i][1] * 2))).Times(1);
+
+			// One octave lower should half the frequency
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+			EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 0)).Times(1).WillOnce(testing::Return(vtofPairs[i][0] - 1));
+			EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, testing::FloatEq(vtofPairs[i][1] / 2))).Times(1);
+		}
+	}
+
+	for (int i = 0; i < 12; i++) {
 		script.second->process();
 	}
 }

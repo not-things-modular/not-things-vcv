@@ -1479,7 +1479,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (nolimit->is_boolean()) {
 				noLimitValue.reset(new bool(nolimit->get<bool>()));
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VoltageFloat, "'no-limit' must be a boolean.");
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoLimitBoolean, "'no-limit' must be a boolean.");
 			}
 		}
 
