@@ -1,10 +1,8 @@
 # not-things VCV Rack modules
 
-![build badge](https://img.shields.io/github/actions/workflow/status/not-things-modular/not-things-vcv/build-plugin.yml?label=build) ![version badge](https://img.shields.io/github/v/release/not-things-modular/not-things-vcv)
+A collection of modules for [VCV Rack](https://vcvrack.com/) (a virtual Eurorack modular synthesizer platform), available in the VCV Rack [plugin library](https://library.vcvrack.com/not-things)
 
 ## Modules
-
-The list of modules in this plugin for [VCV Rack](https://github.com/VCVRack/Rack), a virtual Eurorack modular synthesizer platform:
 
 * [SOLIM](./doc/SOLIM.md): A set of modules with a core idea of limiting note values to an octave range and sorting them
 * [TIMESEQ](./doc/TIMESEQ.md): A scripted timeline processor. Run simple sequences, more complex behavior, or a mix of both via a JSON script
@@ -18,10 +16,12 @@ All modules have a **light** and a **dark** theme version. By default, the *Foll
 ![Solim modules in Light theme](./doc/all-modules-separated-light.png "Solim modules in Light theme")
 ![Solim modules in Dark theme](./doc/all-modules-separated-dark.png "Solim modules in Dark theme")
 
-## Acknowledgements
+![build badge](https://img.shields.io/github/actions/workflow/status/not-things-modular/not-things-vcv/build-plugin.yml?label=build) ![version badge](https://img.shields.io/github/v/release/not-things-modular/not-things-vcv)
 
-The automated build setup for Github in the `.github/workflows` folder has been created based on the information available VCV Rack community forum, mainly [this](https://community.vcvrack.com/t/automated-building-and-releasing-plugins-on-github-with-github-actions/11364) post, with user `qno` keeping the script up to date with the lastest changes.
+## Links
 
-## More About *not-things*
-
-Check out [not-things.com](https://not-things.com)
+* not-things plugins [documentation](https://not-things-modular.github.io/not-things-vcv/)
+* not-things in the [VCV Rack Library](https://library.vcvrack.com/not-things)
+* The not-things plugin in [GitHub](https://github.com/not-things-modular/not-things-vcv)
+* The [changelog](https://github.com/not-things-modular/not-things-vcv/blob/main/CHANGELOG.md) for the not-things plugins
+* More About *not-things*:  [not-things.com](https://not-things.com)
