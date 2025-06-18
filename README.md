@@ -16,8 +16,12 @@ All modules have a **light** and a **dark** theme version. By default, the *Foll
 ![Solim modules in Light theme](./doc/all-modules-separated-light.png "Solim modules in Light theme")
 ![Solim modules in Dark theme](./doc/all-modules-separated-dark.png "Solim modules in Dark theme")
 
-## More About *not-things*
-
-Check out [not-things.com](https://not-things.com)
-
 ![build badge](https://img.shields.io/github/actions/workflow/status/not-things-modular/not-things-vcv/build-plugin.yml?label=build) ![version badge](https://img.shields.io/github/v/release/not-things-modular/not-things-vcv)
+
+## Links
+
+* not-things plugins [documentation](https://not-things-modular.github.io/not-things-vcv/)
+* not-things in the [VCV Rack Library](https://library.vcvrack.com/not-things)
+* The not-things plugin in [GitHub](https://github.com/not-things-modular/not-things-vcv)
+* The [changelog](https://github.com/not-things-modular/not-things-vcv/blob/main/CHANGELOG.md) for the not-things plugins
+* More About *not-things*:  [not-things.com](https://not-things.com)
