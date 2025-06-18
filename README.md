@@ -1,10 +1,8 @@
 # not-things VCV Rack modules
 
-![build badge](https://img.shields.io/github/actions/workflow/status/not-things-modular/not-things-vcv/build-plugin.yml?label=build) ![version badge](https://img.shields.io/github/v/release/not-things-modular/not-things-vcv)
+A collection of modules for [VCV Rack](https://vcvrack.com/) (a virtual Eurorack modular synthesizer platform), available in the VCV Rack [plugin library](https://library.vcvrack.com/not-things)
 
 ## Modules
-
-The list of modules in this plugin for [VCV Rack](https://github.com/VCVRack/Rack), a virtual Eurorack modular synthesizer platform:
 
 * [SOLIM](./doc/SOLIM.md): A set of modules with a core idea of limiting note values to an octave range and sorting them
 * [TIMESEQ](./doc/TIMESEQ.md): A scripted timeline processor. Run simple sequences, more complex behavior, or a mix of both via a JSON script
@@ -25,3 +23,5 @@ The automated build setup for Github in the `.github/workflows` folder has been 
 ## More About *not-things*
 
 Check out [not-things.com](https://not-things.com)
+
+![build badge](https://img.shields.io/github/actions/workflow/status/not-things-modular/not-things-vcv/build-plugin.yml?label=build) ![version badge](https://img.shields.io/github/v/release/not-things-modular/not-things-vcv)
