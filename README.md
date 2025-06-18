@@ -16,10 +16,6 @@ All modules have a **light** and a **dark** theme version. By default, the *Foll
 ![Solim modules in Light theme](./doc/all-modules-separated-light.png "Solim modules in Light theme")
 ![Solim modules in Dark theme](./doc/all-modules-separated-dark.png "Solim modules in Dark theme")
 
-## Acknowledgements
-
-The automated build setup for Github in the `.github/workflows` folder has been created based on the information available VCV Rack community forum, mainly [this](https://community.vcvrack.com/t/automated-building-and-releasing-plugins-on-github-with-github-actions/11364) post, with user `qno` keeping the script up to date with the lastest changes.
-
 ## More About *not-things*
 
 Check out [not-things.com](https://not-things.com)
