@@ -2,6 +2,7 @@
 
 ## 2.0.5 (TBD)
 
+* **Global**: Setup GitHub Ppages for documentation
 * **TimeSeq**
   * Added `max`, `min`, `remain`, `trunc`, `frac`, `round`, `sign` and `vtof` operations in `calc`
   * Added quantization to scales through `tunings` that can be used in `quantize` operation in `calc`
