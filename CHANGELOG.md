@@ -8,6 +8,7 @@
   * Added quantization to scales through `tunings` that can be used in `quantize` operation in `calc`
   * Added support for variable length `segments` by allowing the usage of `values` in `duration` instead of only fixed numbers
   * Added `no-limit` option for a `value` with a `voltage` to allow disabling of -10 to 10 limiting of the value (e.g. for usage in variable length segments)
+  * Fixed issue in processing glide action where having a 1-sample duration would not set the correct end value
 
 ## 2.0.4 (2025-06-06)
 

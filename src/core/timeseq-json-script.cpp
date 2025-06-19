@@ -795,10 +795,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((samples->is_number_unsigned()) && (samples->get<uint64_t>() > 0)) {
 			duration.samples.reset(new uint64_t(samples->get<uint64_t>()));
 		} else if (samples->is_object()) {
-			location.push_back("samples");
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*samples, true, context, location, "samples", ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be an object."));
 			duration.samplesValue.reset(scriptValue);
-			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_SamplesNumberOrValue, "samples must be a positive integer number or a value object.");
 		}
@@ -810,10 +808,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((millis->is_number()) && (millis->get<float>() > 0)) {
 			duration.millis.reset(new float(millis->get<float>()));
 		} else if (millis->is_object()) {
-			location.push_back("millis");
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*millis, true, context, location, "millis", ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be an object."));
 			duration.millisValue.reset(scriptValue);
-			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_MillisNumberOrValue, "millis must be a positive decimal number or a value object.");
 		}
@@ -834,10 +830,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((beats->is_number()) && (beats->get<float>() >= 0)) {
 			duration.beats.reset(new float(beats->get<float>()));
 		} else if (beats->is_object()) {
-			location.push_back("beats");
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*beats, true, context, location, "beats", ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be an object."));
 			duration.beatsValue.reset(scriptValue);
-			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsNumberOrValue, "beats must be a positive decimal number or a value object.");
 		}
@@ -849,10 +843,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((hz->is_number()) && (hz->get<float>() > 0)) {
 			duration.hz.reset(new float(hz->get<float>()));
 		} else if (hz->is_object()) {
-			location.push_back("hz");
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*hz, true, context, location, "hz", ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be an object."));
 			duration.hzValue.reset(scriptValue);
-			location.pop_back();
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be a positive decimal number or a value object.");
 		}
@@ -862,6 +854,8 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
 	} else if (durationCount > 1) {
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
+	} else if (duration.bars && duration.beatsValue) {
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can only be used with a constant 'beats', not with a value-based 'beats'.");
 	} else if (duration.bars && !duration.beats) {
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
 	} else if ((!duration.bars) && (duration.beats) && (*duration.beats.get() == 0)) {

@@ -703,7 +703,7 @@ double SegmentProcessor::process(double drift) {
 			processOngoingActions(starting, false);
 			break;
 		case DurationProcessor::DurationState::STATE_END:
-			processOngoingActions(false, true);
+			processOngoingActions(starting, true);
 			processEndActions();
 			break;
 	}

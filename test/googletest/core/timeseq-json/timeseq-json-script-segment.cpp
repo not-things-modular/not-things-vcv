@@ -1,5 +1,21 @@
 #include "timeseq-json-shared.hpp"
 
+void expectNoValueDurations(ScriptDuration& duration) {
+	EXPECT_FALSE(duration.samplesValue);
+	EXPECT_FALSE(duration.beatsValue);
+	EXPECT_FALSE(duration.millisValue);
+	EXPECT_FALSE(duration.samplesValue);
+	EXPECT_FALSE(duration.hzValue);
+}
+
+void expectNoNonValueDurations(ScriptDuration& duration) {
+	EXPECT_FALSE(duration.samples);
+	EXPECT_FALSE(duration.bars);
+	EXPECT_FALSE(duration.beats);
+	EXPECT_FALSE(duration.hz);
+	EXPECT_FALSE(duration.millis);
+}
+
 TEST(TimeSeqJsonScriptSegment, ParseScriptWithNoSegmentsShouldSucceed) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
@@ -282,6 +298,21 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithBarsButNoBea
 	json["component-pool"] = {
 		{ "segments", json::array({
 			{ { "id", "segment-1" }, { "duration", { { "millis", 1 }, { "bars", 1 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_BarsRequiresBeats, "/component-pool/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithBarsButBeatsValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "bars", 1 }, { "beats", { { "variable", "the-beats-variable" } } } } } }
 		}) }
 	};
 
@@ -579,6 +610,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithPositiveSamples
 	EXPECT_FALSE(script->segments[0].duration.beats);
 	EXPECT_FALSE(script->segments[0].duration.hz);
 	EXPECT_FALSE(script->segments[0].duration.millis);
+	expectNoValueDurations(script->segments[0].duration);
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithIntegerMillis) {
@@ -600,6 +632,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithIntegerMillis) 
 	EXPECT_FALSE(script->segments[0].duration.beats);
 	EXPECT_FALSE(script->segments[0].duration.hz);
 	EXPECT_FALSE(script->segments[0].duration.samples);
+	expectNoValueDurations(script->segments[0].duration);
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithFloatMillis) {
@@ -621,6 +654,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseDurationWithFloatMillis) {
 	EXPECT_FALSE(script->segments[0].duration.beats);
 	EXPECT_FALSE(script->segments[0].duration.hz);
 	EXPECT_FALSE(script->segments[0].duration.samples);
+	expectNoValueDurations(script->segments[0].duration);
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseBarsWithNonZeroBeats) {
@@ -643,6 +677,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseBarsWithNonZeroBeats) {
 	EXPECT_FALSE(script->segments[0].duration.millis);
 	EXPECT_FALSE(script->segments[0].duration.hz);
 	EXPECT_FALSE(script->segments[0].duration.samples);
+	expectNoValueDurations(script->segments[0].duration);
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseBarsWithZeroBeats) {
@@ -665,6 +700,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseBarsWithZeroBeats) {
 	EXPECT_FALSE(script->segments[0].duration.millis);
 	EXPECT_FALSE(script->segments[0].duration.hz);
 	EXPECT_FALSE(script->segments[0].duration.samples);
+	expectNoValueDurations(script->segments[0].duration);
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseFloatBeats) {
@@ -686,6 +722,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseFloatBeats) {
 	EXPECT_FALSE(script->segments[0].duration.millis);
 	EXPECT_FALSE(script->segments[0].duration.hz);
 	EXPECT_FALSE(script->segments[0].duration.samples);
+	expectNoValueDurations(script->segments[0].duration);
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseIntegerHz) {
@@ -707,6 +744,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseIntegerHz) {
 	EXPECT_FALSE(script->segments[0].duration.millis);
 	EXPECT_FALSE(script->segments[0].duration.beats);
 	EXPECT_FALSE(script->segments[0].duration.samples);
+	expectNoValueDurations(script->segments[0].duration);
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseFloatHz) {
@@ -728,6 +766,166 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseFloatHz) {
 	EXPECT_FALSE(script->segments[0].duration.millis);
 	EXPECT_FALSE(script->segments[0].duration.beats);
 	EXPECT_FALSE(script->segments[0].duration.samples);
+	expectNoValueDurations(script->segments[0].duration);
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseValueSamples) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "samples", { { "ref", "value-ref" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->segments.size(), 1u);
+	ASSERT_TRUE(script->segments[0].duration.samplesValue);
+	EXPECT_EQ(script->segments[0].duration.samplesValue->ref, "value-ref");
+	EXPECT_FALSE(script->segments[0].duration.millisValue);
+	EXPECT_FALSE(script->segments[0].duration.beatsValue);
+	EXPECT_FALSE(script->segments[0].duration.hzValue);
+	expectNoNonValueDurations(script->segments[0].duration);
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnInvalidValueSamples) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "samples", { { "voltage", "1" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/component-pool/segments/0/duration/samples");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseValueMillis) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "millis", { { "ref", "value-ref" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->segments.size(), 1u);
+	ASSERT_TRUE(script->segments[0].duration.millisValue);
+	EXPECT_EQ(script->segments[0].duration.millisValue->ref, "value-ref");
+	EXPECT_FALSE(script->segments[0].duration.samplesValue);
+	EXPECT_FALSE(script->segments[0].duration.beatsValue);
+	EXPECT_FALSE(script->segments[0].duration.hzValue);
+	expectNoNonValueDurations(script->segments[0].duration);
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnInvalidValueMillis) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "millis", { { "voltage", "1" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/component-pool/segments/0/duration/millis");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseValueBeats) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "beats", { { "ref", "value-ref" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->segments.size(), 1u);
+	ASSERT_TRUE(script->segments[0].duration.beatsValue);
+	EXPECT_EQ(script->segments[0].duration.beatsValue->ref, "value-ref");
+	EXPECT_FALSE(script->segments[0].duration.millisValue);
+	EXPECT_FALSE(script->segments[0].duration.samplesValue);
+	EXPECT_FALSE(script->segments[0].duration.hzValue);
+	expectNoNonValueDurations(script->segments[0].duration);
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnInvalidValueBeats) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "beats", { { "voltage", "1" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/component-pool/segments/0/duration/beats");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldParseValueHz) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "hz", { { "ref", "value-ref" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->segments.size(), 1u);
+	ASSERT_TRUE(script->segments[0].duration.hzValue);
+	EXPECT_EQ(script->segments[0].duration.hzValue->ref, "value-ref");
+	EXPECT_FALSE(script->segments[0].duration.millisValue);
+	EXPECT_FALSE(script->segments[0].duration.beatsValue);
+	EXPECT_FALSE(script->segments[0].duration.samplesValue);
+	expectNoNonValueDurations(script->segments[0].duration);
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnInvalidValueHz) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "hz", { { "voltage", "1" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/component-pool/segments/0/duration/hz");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldNotAllowBarsValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segments", json::array({
+			{ { "id", "segment-1" }, { "duration", { { "beats", 1 }, { "bars", { { "ref", "value-ref" } } } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_BarsNumber, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldSucceedWithoutActions) {
