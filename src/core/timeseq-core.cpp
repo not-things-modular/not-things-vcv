@@ -34,8 +34,9 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 			m_sampleRate = m_sampleRateReader->getSampleRate();
 			m_samplesPerHour = m_sampleRate * 60 * 60;
 			m_script = script;
-			m_danglingProcessor = m_processor ? m_processor : processor; // Make sure that the next processing cycle triggers a reset
+			m_danglingProcessors.push_back(m_processor ? m_processor : processor);
 			m_processor = processor;
+			m_reset = true; // Make sure that the next processing cycle triggers a reset
 
 			m_status = Status::LOADING;
 		}
@@ -46,9 +47,10 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 
 void TimeSeqCore::reloadScript() {
 	if (m_script) {
-		m_danglingProcessor = m_processor;
+		m_danglingProcessors.push_back(m_processor);
 		m_processor = m_processorLoader->loadScript(m_script, nullptr);
 		m_sampleRate = m_sampleRateReader->getSampleRate();
+		m_reset = true;
 
 		m_status = Status::LOADING;
 	}
@@ -56,7 +58,7 @@ void TimeSeqCore::reloadScript() {
 
 void TimeSeqCore::clearScript() {
 	m_status = Status::LOADING;
-	m_danglingProcessor = m_processor;
+	m_danglingProcessors.push_back(m_processor);
 	m_processor.reset();
 	m_script.reset();
 }
@@ -86,7 +88,7 @@ void TimeSeqCore::pause() {
 }
 
 void TimeSeqCore::reset() {
-	m_danglingProcessor = m_processor;
+	m_reset = true;
 }
 
 void TimeSeqCore::process(int rate) {
@@ -94,13 +96,13 @@ void TimeSeqCore::process(int rate) {
 		// Don't process until the sample delay reaches 0
 		m_startSampleDelay--;
 	} else {
-		std::shared_ptr<Processor> processor = m_processor;
-
-		// If there is an old processor still dangling, it can be released now
-		if (m_danglingProcessor) {
+		if (m_reset) {
 			processReset();
-			m_danglingProcessor = nullptr;
 		}
+
+		// We can safely use this processor instance outside of the smart pointer, since the m_danglingProcessors vector
+		// keeps references to the processors as they are replaced by a (re)load until we clear it at the end of this method.
+		Processor* processor = m_processor.get();
 
 		if (m_status == Status::LOADING) {
 				m_status = processor ? Status::PAUSED : Status::EMPTY;
@@ -115,6 +117,11 @@ void TimeSeqCore::process(int rate) {
 					m_elapsedSamples = 0;
 				}
 			}
+		}
+
+		// If there is an old processor still dangling, it can be released now
+		if (m_danglingProcessors.size() > 0) {
+			m_danglingProcessors.clear();
 		}
 	}
 }
@@ -171,4 +178,6 @@ void TimeSeqCore::processReset() {
 	m_variables.clear();
 
 	resetElapsedSamples();
+	
+	m_reset = false;
 }
