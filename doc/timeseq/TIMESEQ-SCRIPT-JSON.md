@@ -12,6 +12,7 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
     * [lanes](#lane) - The core sequencing object of TimeSeq
       * [segments](#segment) - The core timing object of TimeSeq
         * [duration](#duration) - Identify the length of a *segment*
+          * [variable-length duration](#variable-length-durations) - duration lengths based on *value*s
         * [segment-block](#segment-block) - Allow grouping of several *segment*s
         * [action](#action) - The core functional component of TimeSeq
           * [if](#if) - Allow conditional executing of *action*s
@@ -33,6 +34,7 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
   * [input-triggers](#input-trigger) - Fire internal triggers based on external trigger signals
   * global-[action](#action) - *Action*s to perform during script start
   * [component-pool](#component-pool) - A pool of reusable JSON objects
+    * [tuning](#tuning)s - Quantization tunings
 
 ## JSON Property types
 
@@ -62,7 +64,7 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
-| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported. |
+| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported. |
 | `timelines` | no | [timeline](#timeline) list | A list of *timeline*s that will drive the sequencer. |
 | `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
 | `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing gate/trigger signals on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
@@ -239,16 +241,17 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
 
 ### Properties
 
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `segment-blocks` | no | [segment-block](#segment-block) list | A list of reusable *segment-block* objects. |
-| `segments`| no | [segment](#segment) list | A list of reusable *segment* objects. |
-| `inputs` | no | [input](#input) list | A list of reusable *input* objects. |
-| `outputs` | no | [output](#output) list | A list of reusable *output* objects. |
-| `calcs` | no | [calc](#calc) list | A list of reusable *calc* objects. |
-| `values` | no | [value](#value) list | A list of reusable *value* objects. |
-| `actions` | no | [action](#action) list | A list of reusable *action* objects. |
-| `ifs` | no | [if](#if) list | A list of reusable *if* objects. |
+| property | required | type | since | description |
+| --- | --- | --- | --- | --- |
+| `segment-blocks` | no | [segment-block](#segment-block) list | | A list of reusable *segment-block* objects. |
+| `segments`| no | [segment](#segment) list | | A list of reusable *segment* objects. |
+| `inputs` | no | [input](#input) list | | A list of reusable *input* objects. |
+| `outputs` | no | [output](#output) list | | A list of reusable *output* objects. |
+| `calcs` | no | [calc](#calc) list | | A list of reusable *calc* objects. |
+| `values` | no | [value](#value) list | | A list of reusable *value* objects. |
+| `actions` | no | [action](#action) list | | A list of reusable *action* objects. |
+| `ifs` | no | [if](#if) list | | A list of reusable *if* objects. |
+| `tunings` | no | [tuning](#tuning) list | *1.1.0* | A list of *tuning* objects that can be used in *quantize* *calc*s |
 
 ### Example
 
@@ -381,6 +384,39 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 {
     "beats": 0,
     "bars": 2
+}
+```
+
+### Variable-length durations
+
+Instead of a duration always having the same length as has been described so far (resulting in *segment*s that always have the same length), it is also possible to have a variable duration length. Instead of specifying a fixed number/float value for the `samples`, `millis`, `beats` or `hz` property, a [value](#value) can be used. Each time a *segment* starts, if the duration is set to a *value* object instead of a fixed number, that value will be evaluated and the resulting length will be used as duration for that run of the *segment*.
+
+The calculation of the current value of such a variable-length duration will be performed after all the [action](#action)s of the segment with a `start` timing have been executed, but before any `glide`, `gate` or `end` actions have been executed. This allows any changes made in the `start` *action*s of the segment to influence the *value* calculation for the duration. Once the segment has started (and thus the duration length has been determined), the duration will not be re-evaluated until the *segment* has completed. This means changes that could influence the *value* of the duration will not be taken into account after the *segment* has started.
+
+When using a *value*-based `beats` duration, it is not possible to also specify a `bars` property.
+
+Just like the constant-length durations, variable-length durations can not be shorter then one sample, but are allowed to have a decimal sample duration, resulting in drift compensation by TimeSeq over time.
+
+*Variable-length durations were introduced in TimeSeq script version 1.1.0.*
+
+### Examples of Variable-length Durations
+
+The duration is expressed in `beats`, its length is determined by the voltage of input 2:
+
+```json
+{
+    "beats": { "input": 2 }
+}
+```
+
+The duration is expressed in `millis`, which is set to the current value of the `my-segment-duration` variable that gets truncated (i.e. the decimal part removed, only the whole value is used)
+
+```json
+{
+    "millis": {
+        "variable": "my-segment-duration",
+        "calc": { "trunc": true }
+    }
 }
 ```
 
@@ -861,6 +897,8 @@ Throughout the TimeSeq script, whenever a voltage is needed, a value is used to 
 * Reading the current voltage from an [output](#output) port
 * Using a [rand](#rand)om voltage generator
 
+Since `voltage` values are usually expected to be between -10V and 10V, the constant `voltage` value will by default be limited to this range. In some scenarios (e.g. when specifying *segment* lengths in variable-length [duration](#duration)s), there may be a need to specify a constant value outside this range. The range check on a `voltage` value can be disabled by setting the `no-limit` property of a value to `true`.
+
 When the `note` property is used, it must be a 2 or 3 character string, where the first character specifies the note name (A-G), the second specifies the octave (0-9) and the third (optional) character can either use `+` to indicate a sharp, or `-` to indicate a flat. E.g: `C4+` will result in the 1V/Oct value of a middle C#, while a `A3-` will result in an A flat below middle C.
 
 If a `variable` property is used and no variable with a matching name was previously set using a [set-variable](#set-variable) *action, 0V will be used instead.
@@ -875,16 +913,17 @@ Note: values always resolve into a voltage, which is then used by the object tha
 
 ### Properties
 
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `voltage` | no | float | An exact constant voltage value between `-10` and `10`. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for voltage values |
-| `note`| no | string | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for note values |
-| `variable`| no | string | The name of the variable to use. |
-| `input` | no | [input](#input) | Reads the current voltage from one of the TimeSeq inputs. |
-| `output` | no | [output](#output) | Reads the current voltage from one of the TimeSeq outputs. |
-| `rand` | no | [rand](#rand) | Uses a random voltage value (within a specified voltage range). |
-| `calc` | no | [calc](#calc) list | Allows mathematical operations to be applied to the voltage of this value, using the voltage of another value. |
-| `quantize` | no | boolean | If set to `true`, the voltage of this value will be quantized to the nearest 1V/Oct note value **after** any optional calculations have been performed. If set to `false`, the voltage value will be used as-is after any optional calculations have been performed. Defaults to `false`. |
+| property | required | type | since | description |
+| --- | --- | --- | --- | --- |
+| `voltage` | no | float | | An exact constant voltage value between `-10` and `10`. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for voltage values. |
+| `no-limit`| no | boolean | *1.1.0* | Can only be used in combination with `voltage`. When set to `true`, the default check that enforces a voltage value between `-10` and `10` will be disabled. |
+| `note`| no | string | | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for note values |
+| `variable`| no | string | | The name of the variable to use. |
+| `input` | no | [input](#input) | | Reads the current voltage from one of the TimeSeq inputs. |
+| `output` | no | [output](#output) | | Reads the current voltage from one of the TimeSeq outputs. |
+| `rand` | no | [rand](#rand) | | Uses a random voltage value (within a specified voltage range). |
+| `calc` | no | [calc](#calc) list | | Allows mathematical operations to be applied to the voltage of this value, using the voltage of another value. |
+| `quantize` | no | boolean | | If set to `true`, the voltage of this value will be quantized to the nearest 1V/Oct note value **after** any optional calculations have been performed. If set to `false`, the voltage value will be used as-is after any optional calculations have been performed. Defaults to `false`. |
 
 ### Examples
 
@@ -1125,27 +1164,45 @@ The generated random value will be between the `lower` and `upper` [value](#valu
 
 ## calc
 
-Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, each calculation either adds or subtracts another value from the current voltage, multiplies them, or divides the current voltage by the specified value.
+Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, each calculation modifies the value (e.g. adds or subtracts another value from the current voltage).
 
-To safeguard against calculation errors, a division by zero will result in 0V.
+To safeguard against calculation errors, a division by zero will result in 0V and a remainder after division by zero will also result in 0V.
 
 The possible mathematical operations that are available are:
 
-* `add` or adding a value to the current voltage,
+* `add` for adding a value to the current voltage,
 * `sub` for subtracting a value from the current voltage,
 * `mult` for multiplying the current voltage with a value,
-* `div` for dividing the current voltage by a value.
+* `div` for dividing the current voltage by a value,
+* `max` for determining the highest of two values,
+* `min` for determining the lowest of two values,
+* `remain` for calculating the remainder after division by another value,
+* `trunc` for getting the non-decimal part of a value,
+* `frac` for getting the decimal part of a value,
+* `round` for rounding the value up, down or to the nearest non-decimal number,
+* `quantize` for quantizing to a [tuning](#tuning)
+* `sign` for enforcing that the sign of a value is either positive or negative.
+* `vtof` for converting a 1V/Oct value into a frequency
 
-Each calc must specify exactly one mathematical operation.
+While multiple calcs can be added to the calculation list of a *value*, each calc must specify exactly one mathematical operation.
 
 ### Properties
 
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `add` | no | [value](#value) | Adds a value to the current voltage. |
-| `sub` | no | [value](#value) | Subtracts a value from the current voltage. |
-| `mult` | no | [value](#value) | Multiplies the current voltage with a value. |
-| `div` | no | [value](#value) | Divides the current voltage by a value. |
+| property | required | type | since | description |
+| --- | --- | --- | --- | --- |
+| `add` | no | [value](#value) |  | Adds a value to the current voltage. |
+| `sub` | no | [value](#value) |  | Subtracts a value from the current voltage. |
+| `mult` | no | [value](#value) |  | Multiplies the current voltage with a value. |
+| `div` | no | [value](#value) |  | Divides the current voltage by a value. |
+| `max` | no | [value](#value) | *1.1.0* | Compares the current voltage with the supplied value and uses the higher of the two. |
+| `min` | no | [value](#value) | *1.1.0* | Compares the current voltage with the supplied value and uses the lower of the two. |
+| `remain` | no | [value](#value) | *1.1.0* | Divides the current voltage by a value and uses the remainder after division. |
+| `trunc` | no | boolean | *1.1.0* | Removes the decimal part of the current voltage, keeping only the whole number. The result keeps the same sign (positive or negative) as the original voltage. Must be set to `true`. |
+| `frac` | no | boolean | *1.1.0* | Removes the whole number part of the current voltage, keeping only the decimal part. The result keeps the same sign (positive or negative) as the original voltage. Must be set to `true`. |
+| `round` | no | string | *1.1.0* | Can be either `up` to round up, `down`to round down or `near` to round to the nearest whole number. |
+| `quantize` | no | string | *1.1.0* | Should be set to the `id` of a [tuning](#tuning). The current voltage will be quantized to the nearest note value in that tuning. |
+| `sign` | no | string | *1.1.0* | Can be set to either `pos` or `neg`. Keeps the current voltage's value but forces it to be positive or negative, depending on which one is specified. |
+| `vtof` | no | boolean | *1.1.0* | Interprets the current voltage as a 1V/Oct value and returns the corresponding audio frequency value. Must be set to `true`. |
 
 ### Examples
 
@@ -1178,3 +1235,55 @@ The voltage of channel 8 on output port 5, with a random value between 0.5 and 1
     ]
 }
 ```
+
+The maximum of either channel 4 on input 3, or channel 5 on input 4:
+
+```json
+{
+    "input": { "index": 3, "channel": 4 },
+    "calc": [
+        { "max": { "input": { "index": 4, "cannel": 5 } } }
+    ]
+}
+```
+
+The voltage on input 6, quantized to the *tuning* with id `c-maj-pent`, and subsequently 1V (i.e. 1 octave) added to it:
+
+```json
+{
+    "input": 6,
+    "calc": [
+        { "frac": true }
+    ]
+}
+```
+
+The decimal part of the voltage that is currently stored in variable `my-voltage`:
+
+```json
+{
+    "variable": "my-voltage",
+    "calc": [
+        { "quantize": "c-maj-pent" },
+        { "add": 1 }
+    ]
+}
+```
+
+## tuning
+
+A tuning allows values to be quantized to a scale. The `notes` property of a contains the list of notes that should be quantized towards. They can be expressed in two ways:
+
+* A float value that specifies the note value as a 1V/Oct value. While any float value can be supplied, since quantization is done based on octaves, only the decimal part of the value will be used during quantization.
+* A string value where the first character specifies the note name (from A-G), and the optional second character specifies the accidental: `+` for a sharp and `-` for a flat. E.g.: `A-`, `F+`, `C+`, `B-`, `G`
+
+To quantize a value to a tuning, a [calc](#calc) must be added to the [value](#value), using the `id` of the tuning as *calc* `quantize` property. The value will then be quantized up or down towards the nearest `notes` entry in the tuning (ignoring the octave information of the value).
+
+*Tunings were introduced in TimeSeq script version 1.1.0.*
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `id` | yes | string | The identifier of the tuning. |
+| `notes` | yes | string/float list | The list of notes to quantize to, either as a float or a string as described above. |
