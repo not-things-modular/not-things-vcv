@@ -36,6 +36,10 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
   * [component-pool](#component-pool) - A pool of reusable JSON objects
     * [tuning](#tuning)s - Quantization tunings
 
+## Versions
+
+As new features are added, the `version` of the script is updated. See [this](TIMESEQ-SCRIPT-VERSION.md) page for an overview of version changes.
+
 ## JSON Property types
 
 Next to the JSON objects that are defined in this document, following property type definitions are used throughout the JSON format specification:
@@ -64,7 +68,7 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
-| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported. |
+| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
 | `timelines` | no | [timeline](#timeline) list | A list of *timeline*s that will drive the sequencer. |
 | `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
 | `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing gate/trigger signals on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
