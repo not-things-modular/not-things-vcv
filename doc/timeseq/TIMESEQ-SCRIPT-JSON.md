@@ -61,7 +61,7 @@ The `global-actions` property allows specific *action*s to be executed when a sc
 
 If there is a need to generate internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers) based on external trigger sources, the `input-triggers` property allows input ports to be set up for receiving external trigger signals.
 
-In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [component reuse](TIMESEQ-SCRIPT.md#component-reuse) section of the main TimeSeq script documentation file for more details.
+In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [referencing](TIMESEQ-SCRIPT.md#referencing) section of the main TimeSeq script documentation file for more details.
 
 ### Properties
 
@@ -189,7 +189,7 @@ The running state of a lane can be controlled using triggers:
 | `auto-start` | no | boolean | If set to `true`, the lane will start automatically when the script is loaded. If set to `false` the lane will remain stopped when the script is loaded. Defaults to `true` |
 | `loop`| no | boolean | If set to `true`, the lane will restart from its first segment once its last segment has completed. Otherwise the lane will stop once its last segment completes. Defaults to `false` |
 | `repeat` | no | unsigned number | Specifies how many times the *segment*s in the lane should be repeated before stopping the lane. Both values `0` and `1` mean that the segments are executed once. This property has no impact if `loop` is set to `true`. Defaults to `0` |
-| `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
+| `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
 | `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty.|
 | `stop-trigger` | no | string | The id of the internal trigger that will cause this lane to stop running. A stop trigger on an an inactive lane has no impact on the state of that lane. Defaults to empty. |
 | `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this lane will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
@@ -359,7 +359,7 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `samples` | no | unsigned number | The number of samples that the *segment* will last. Relative to the `sample-rate` of the [time-scale](#time-scale) of the current [timeline](#timeline), or to the active VCV Rack sample rate if none was specified on the *timeline*  |
-| `millis`| no | unsigned float | Number of seconds that the *segment* will last |
+| `millis`| no | unsigned float | Number of milliseconds that the *segment* will last |
 | `beats` | no | unsigned float | Number of beats that the *segment* will last, Relative to the `bpm` of the [time-scale](#time-scale) of the current [timeline](#timeline) |
 | `bars` | no | unsigned number | Number of bars that the *segment* will last, Relative to the `bpb` of the [time-scale](#time-scale) of the current [timeline](#timeline). Can not be used without `beats` |
 | `hz` | no | unsigned float | Expresses the duration of the *segment* in Hertz, or fractions of a second |

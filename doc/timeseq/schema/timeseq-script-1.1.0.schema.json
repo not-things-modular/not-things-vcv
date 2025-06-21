@@ -1,0 +1,694 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json",
+	"title": "TimeSeq Script 1.1.0",
+	"type": "object",
+	"definitions": {
+		"script": {
+			"type": "object",
+			"properties": {
+				"$schema": {
+					"type": "string",
+					"format": "uri"
+				},
+				"type": {
+					"description": "Identifies this file as a not-things TimeSeq JSON script.",
+					"const": "not-things_timeseq_script"
+				},
+				"version": {
+					"description": "The version of the not-things TimeSeq JSON script specification that the document conforms to.",
+					"const": "1.1.0"
+				},
+				"timelines": {
+					"description": "The timeline instances that will be executed in this script.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/timeline"
+					}
+				},
+				"global-actions": {
+					"descriptions": "A list of actions that will be executed when the script is loaded.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					}
+				},
+				"input-triggers": {
+					"description": "A list of input-triggers for this script.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/input-trigger"
+					}
+				},
+				"component-pool": {
+					"$ref": "#/definitions/component-pool"
+				}
+			},
+			"required": [ "type", "version" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "$schema", "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"component-pool": {
+			"description": "A pool of reusable objects that can be referenced from elsewhere in the script.",
+			"type": "object",
+			"properties": {
+				"segment-blocks": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/segment-block" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/segment-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"inputs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/input-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"outputs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/output-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"calcs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/calc-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"values": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/value-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"actions": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/action-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"ifs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/if-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"tunings": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/tuning"
+					}
+				}
+			}
+		},
+		"timeline": {
+			"type": "object",
+			"properties": {
+				"time-scale": {
+					"$ref": "#/definitions/time-scale"
+				},
+				"loop-lock": {
+					"description": "Identifies if lanes in this timeline will only loop when all have completed, or will loop individually",
+					"type": "boolean",
+					"default": false
+				},
+				"lanes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/lane"
+					}
+				}
+			},
+			"required": [ "lanes" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "time-scale", "loop-lock", "lanes" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"time-scale": {
+			"description": "Identifies how timing calculations should be performed in a timeline",
+			"type": "object",
+			"properties": {
+				"sample-rate": {
+					"description": "If a segment in the timeline of this time-scale has a duration expressed in samples, these samples will be relative to this sample-rate instead of the active sample rate of VCV Rack.",
+					"type": "integer",
+					"minimum": 1
+				},
+				"bpm": {
+					"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Minute.",
+					"type": "integer",
+					"minimum": 1
+				},
+				"bpb": {
+					"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Minute.",
+					"type": "integer",
+					"minimum": 1
+				}
+			},
+			"anyOf": [
+				{ "required": [ "sample-rate" ] },
+				{ "required": [ "bpm" ] }
+			],
+			"dependencies": {
+				"bpb": { "required": [ "bpm" ] }
+			},
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "sample-rate", "bpm", "bpb" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"lane": {
+			"description": "The sequencing core of the not-things TimeSeq script, allowing segments to be scheduled in order.",
+			"type": "object",
+			"properties": {
+				"segments": {
+					"type": "array",
+					"items": {
+						"oneOf": [
+							{ "$ref": "#/definitions/segment" },
+							{ "$ref": "#/definitions/reference" }
+						]
+					}
+				},
+				"auto-start": {
+					"description": "Indicate if this lane should automatically start when the script is started.",
+					"type": "boolean",
+					"default": true
+				},
+				"loop": {
+					"description": "Loop to the first segment once the last segment in the lane has completed.",
+					"type": "boolean",
+					"default": false
+				},
+				"repeat": {
+					"description": "How many times the segments in this lane should be repeated. Values 0 and 1 mean that the segments are only executed once. Has no impact if loop is set to true.",
+					"type": "integer",
+					"minimum": 0
+				},
+				"start-trigger": {
+					"description": "The id of the internal trigger that will cause this lane to start running if it is not already running.",
+					"type": "string",
+					"minLength": 1
+				},
+				"restart-trigger": {
+					"description": "The id of the internal trigger that will cause this lane to start running from its first segment, or restart from its first segment if it is already running.",
+					"type": "string",
+					"minLength": 1
+				},
+				"stop-trigger": {
+					"description": "The id of the internal trigger that will cause this lane to stop if it is currently running.",
+					"type": "string",
+					"minLength": 1
+				},
+				"disable-ui": {
+					"description": "Specifies if the L LED on the UI should light up when this lane loops.",
+					"type": "boolean",
+					"default": false
+				}
+			},
+			"required": [ "segments" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "segments", "auto-start", "loop", "repeat", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"segment": {
+			"oneOf": [
+				{ "$ref": "#/definitions/segment-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"segment-full": {
+			"type": "object",
+			"properties": {
+				"duration": {
+					"$ref": "#/definitions/duration"
+				},
+				"actions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					}
+				},
+				"segment-block": {
+					"description": "The id of a segment-block that will be inserted in the place of this segment. Can not be combined with duration and disable-ui.",
+					"type": "string"
+				},
+				"disable-ui": {
+					"description": "Specifies if the S LED on the UI should light up when this segment starts.",
+					"type": "boolean",
+					"default": false
+				}
+			},
+			"required": [ "duration" ],
+			"allOf": [
+				{
+					"not": {
+						"properties": {
+							"duration": { "type": "object" },
+							"segment-block": { "type": "string" }
+						},
+						"required": [ "duration", "segment-block" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"disable-ui": { "type": "boolean" },
+							"segment-block": { "type": "string" }
+						},
+						"required": [ "disable-ui", "segment-block" ]
+					}
+				}
+			],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "duration", "actions", "segment-block", "disable-ui" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"duration": {
+			"description": "Specifies how long a segment should last.",
+			"type": "object",
+			"properties": {
+				"samples": {
+					"description": "Specifies the segment duration in number of samples.",
+					"oneOf": [
+						{
+							"type": "integer",
+							"minimum": 1
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				},
+				"millis": {
+					"description": "Specifies the segment duration in number of milliseconds.",
+					"oneOf": [
+						{
+							"type": "number",
+							"exclusiveMinimum": 0
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				},
+				"beats": {
+					"description": "Specifies the segment duration in number of beats. The timeline time-scale must have 'bmp' set to specify how long one beat lasts.",
+					"oneOf": [
+						{
+							"type": "number"
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				},
+				"bars": {
+					"description": "Specifies the segment duration in number of beats. Can only be used in combination with 'beats'. The timeline time-scale must have 'bpb' set to specify how many beats go in a bar.",
+					"type": "integer",
+					"minimum": 1
+				},
+				"hz": {
+					"description": "Specifies the segment duration in Hertz.",
+					"oneOf": [
+						{
+							"type": "number",
+							"exclusiveMinimum": 0
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				}
+			},
+			"minProperties": 1,
+			"oneOf": [
+				{ "required": [ "samples" ], "not": { "required": [ "millis", "beats", "bars", "hz" ] } },
+				{ "required": [ "millis" ], "not": { "required": [ "samples", "beats", "bars", "hz" ] } },
+				{ "required": [ "beats" ], "not": { "required": [ "millis", "samples", "hz" ] } },
+				{ "required": [ "hz" ], "not": { "required": [ "millis", "samples", "beats", "bars" ] } }
+			],
+			"dependencies": {
+				"bars": { "required": [ "beats" ] }
+			},
+			"if": {
+				"properties": { "bars": { "type": "integer" } },
+				"required": [ "bars" ]
+			},
+			"then": {
+				"properties": { "beats": { "minimum": 0 } }
+			},
+			"else": {
+				"properties": { "beats": { "exclusiveMinimum": 0 } }
+			},
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "samples", "millis", "beats", "bars", "hz" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"value": {
+			"description": "A value that evaluates to a voltage.",
+			"oneOf": [
+				{
+					"$ref": "#/definitions/value-full"
+				},
+				{
+					"type": "number",
+					"minimum": -10,
+					"maximum": 10
+				},
+				{
+					"$ref": "#/definitions/value-note"
+				},
+				{
+					"$ref": "#/definitions/reference"
+				}
+			]
+		},
+		"value-note": {
+			"description": "A fixed note value, translated into the corresponding 1V/Oct value.",
+			"type": "string",
+			"pattern": "^[A-Ga-g][0-9](?:[+-])?$"
+		},
+		"value-full": {
+			"type": "object",
+			"properties": {
+				"voltage": {
+					"description": "A fixed voltage. Unless 'no-limit' is set to 'true', the value must be within the -10 to 10 voltage range.",
+					"type": "number"
+				},
+				"no-limit": {
+					"description": "Can only be used in combination with 'voltage'. If set to 'true', disables the -10 to 10 limitation of the voltage value.",
+					"type": "boolean",
+					"default": false
+				},
+				"note": {
+					"$ref": "#/definitions/value-note"
+				},
+				"variable": {
+					"description": "Use a previously set variable as voltage value source.",
+					"type": "string",
+					"minLength": 1
+				},
+				"input": {
+					"$ref": "#/definitions/input"
+				},
+				"output": {
+					"$ref": "#/definitions/output"
+				},
+				"rand": {
+					"$ref": "#/definitions/rand"
+				},
+				"calc": {
+					"$ref": "#/definitions/calc"
+				},
+				"quantize": {
+					"description": "Allows the value to be quantized to the nearest note value.",
+					"type": "boolean",
+					"default": false
+				}
+			},
+			"if": {
+				"properties": { "no-limit": { "const": true } },
+				"required": [ "no-limit" ]
+			},
+			"else": {
+				"properties": { "voltage": { "minimum": -10, "maximum": 10 } }
+			},
+			"minProperties": 1,
+			"oneOf": [
+				{ "required": [ "voltage" ], "not": { "required": [ "note", "variable", "input", "output", "rand", "calc" ] } },
+				{ "required": [ "note" ], "not": { "required": [ "voltage", "variable", "input", "output", "rand", "calc" ] } },
+				{ "required": [ "variable" ], "not": { "required": [ "voltage", "note", "input", "output", "rand", "calc" ] } },
+				{ "required": [ "input" ], "not": { "required": [ "voltage", "note", "variable", "output", "rand", "calc" ] } },
+				{ "required": [ "output" ], "not": { "required": [ "voltage", "note", "variable", "input", "rand", "calc" ] } },
+				{ "required": [ "rand" ], "not": { "required": [ "voltage", "note", "variable", "input", "output", "calc" ] } },
+				{ "required": [ "calc" ], "not": { "required": [ "voltage", "note", "variable", "input", "output", "rand" ] } }
+			],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "voltage", "no-limit", "note", "variable", "input", "output", "rand", "calc" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"action": {
+			"oneOf": [
+				{ "$ref": "#/definitions/action-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"action-full": {
+			"description": "Executes an action as part of segment processing.",
+			"type": "object",
+			"oneOf": [
+				{
+					"properties": {
+						"timing": {
+							"enum": [ "start", "end" ],
+							"default": "start"
+						},
+						"set-value": {
+							"type": "object"
+						},
+						"set-polyphony": {
+							"type": "object"
+						},
+						"set-label": {
+							"type": "object"
+						},
+						"set-variable": {
+							"type": "object"
+						},
+						"assert": {
+							"type": "object"
+						},
+						"trigger": {
+							"description": "Fires an internal trigger with the specified id.",
+							"type": "string",
+							"minLength": 1
+						},
+						"if": {
+							"$ref": "#/definitions/if"
+						}
+					},
+					"minProperties": 1,
+					"oneOf": [
+						{ "required": [ "set-value" ], "not": { "required": [ "set-polyphony", "set-label", "set-variable", "assert", "trigger" ] } },
+						{ "required": [ "set-polyphony" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "trigger" ] } },
+						{ "required": [ "set-label" ], "not": { "required": [ "set-value", "set-polyphony", "set-variable", "assert", "trigger" ] } },
+						{ "required": [ "set-variable" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "assert", "trigger" ] } },
+						{ "required": [ "assert" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "trigger" ] } },
+						{ "required": [ "trigger" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "trigger" ] } }
+					],
+					"propertyNames": {
+						"anyOf": [
+							{ "enum": [ "timing", "set-value", "set-polyphony", "set-label", "set-variable", "assert", "trigger", "if" ] },
+							{ "pattern": "^x-" }
+						]
+					}
+				},
+				{
+					"properties": {
+						"timing": {
+							"const": "glide"
+						},
+						"start-value": {
+							"$ref": "#/definitions/value"
+						},
+						"end-value": {
+							"$ref": "#/definitions/value"
+						},
+						"ease-factor": {
+							"type": "number",
+							"minimum": -5,
+							"maximum": 5,
+							"default": 0
+						},
+						"output": {
+							"$ref": "#/definitions/if"
+						},
+						"variable": {
+							"description": "Name of the variable that should be set to the current glide value.",
+							"type": "string",
+							"minLength": 1
+						},
+						"if": {
+							"$ref": "#/definitions/if"
+						}
+					},
+					"required": [ "timing", "start-value", "end-value" ],
+					"oneOf": [
+						{ "required": [ "output" ], "not": { "required": [ "variable" ] } },
+						{ "required": [ "variable" ], "not": { "required": [ "output" ] } }
+					],
+					"propertyNames": {
+						"anyOf": [
+							{ "enum": [ "timing", "start-value", "end-value", "ease-factor", "output", "variable", "if" ] },
+							{ "pattern": "^x-" }
+						]
+					}
+				},
+				{
+					"properties": {
+						"timing": {
+							"const": "gate"
+						},
+						"output": {
+							"$ref": "#/definitions/output"
+						},
+						"gate-high-ratio": {
+							"type": "number",
+							"minimum": 0,
+							"maximum": 1,
+							"default": 0.5
+						},
+						"if": {
+							"$ref": "#/definitions/if"
+						}
+					},
+					"required": [ "timing", "output" ],
+					"propertyNames": {
+						"anyOf": [
+							{ "enum": [ "timing", "output", "gate-high-ratio", "if" ] },
+							{ "pattern": "^x-" }
+						]
+					}
+				}
+			]
+		},
+		"input": {
+			"oneOf": [
+				{ "$ref": "#/definitions/input-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"input-full": {
+			"type": "object"
+		},
+		"output": {
+			"oneOf": [
+				{ "$ref": "#/definitions/output-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"output-full": {
+			"type": "object"
+		},
+		"rand": {
+			"description": "Generate a random value in a specified lower and upper range",
+			"type": "object",
+			"properties": {
+				"lower": {
+					"$ref": "#/definitions/value"
+				},
+				"upper": {
+					"$ref": "#/definitions/value"
+				}
+			},
+			"required": [ "lower", "upper" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "lower", "upper" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"calc": {
+			"oneOf": [
+				{ "$ref": "#/definitions/calc-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"calc-full": {
+			"type": "object"
+		},
+		"if": {
+			"oneOf": [
+				{ "$ref": "#/definitions/if-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"if-full": {
+			"type": "object"
+		},
+		"input-trigger": {
+			"type": "object"
+		},
+		"segment-block": {
+			"type": "object"
+		},
+		"tuning": {
+			"type": "object"
+		},
+		"reference": {
+			"description": "A reference to an object instance in the component-pool of the script.",
+			"type": "object",
+			"properties": {
+				"ref": {
+					"description": "The id of the referenced object.",
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"required": [ "ref" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "ref" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"referenceable": {
+			"description": "An object in the component-pool that can be referenced by id from elsewhere.",
+			"type": "object",
+			"properties": {
+				"id": {
+					"description": "The id of the referenceable object.",
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"required": [ "id" ]
+		}
+	}
+}
