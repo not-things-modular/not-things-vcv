@@ -8,7 +8,9 @@
   * Added quantization to scales through `tunings` that can be used in `quantize` operation in `calc`
   * Added support for variable length `segments` by allowing the usage of `values` in `duration` instead of only fixed numbers
   * Added `no-limit` option for a `value` with a `voltage` to allow disabling of -10 to 10 limiting of the value (e.g. for usage in variable length segments)
+  * Allow `$schema` property on the root of the script to allow automatic JSON Schema validation to be performed in JSON editors that support this.
   * Fixed issue in processing glide action where having a 1-sample duration would not set the correct end value
+  * Created JSON Schema definition for the TimeSeq JSON Script (v1.1.0) to allow easier validation and editing of scripts outside of TimeSeq
 
 ## 2.0.4 (2025-06-06)
 

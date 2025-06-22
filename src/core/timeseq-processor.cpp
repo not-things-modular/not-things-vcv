@@ -310,6 +310,7 @@ bool IfProcessor::process(string* message) {
 			*message = oss.str();
 
 			if (if1 && if2) {
+				// Normally, we shouldn't arrive here anymore since the assert action will first verify the expectation without requesting the detailed message
 				return true;
 			} else {
 				return false;
@@ -324,6 +325,7 @@ bool IfProcessor::process(string* message) {
 			*message = oss.str();
 
 			if (if1 || if2) {
+				// Normally, we shouldn't arrive here anymore since the assert action will first verify the expectation without requesting the detailed message
 				return true;
 			} else {
 				return false;
@@ -425,8 +427,11 @@ void ActionSetLabelProcessor::processAction() {
 ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
 
 void ActionAssertProcessor::processAction() {
-	string message;
-	if (!m_expect->process(&message)) {
+	// First check the expectation without constructing a message to avoid performance impact
+	if (!m_expect->process(nullptr)) {
+		// If the expectation failed, re-execute it to generate the message
+		string message;
+		m_expect->process(&message);
 		m_assertListener->assertFailed(m_name, message, m_stopOnFail);
 	}
 }

@@ -65,7 +65,7 @@ bool verifyAllowedProperties(const json& json, vector<string> propertyNames, boo
 JsonScriptParser::~JsonScriptParser() {}
 
 shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError>* validationErrors, vector<string> location) {
-	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" };
+	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool", "$schema" };
 	shared_ptr<Script> script = make_shared<Script>();
 
 	JsonScriptParseContext context;

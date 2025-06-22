@@ -1,0 +1,253 @@
+{
+	"$schema": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json",
+	"type": "not-things_timeseq_script",
+	"version": "1.1.0",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "samples": 10 },
+							"actions": [
+								{
+									"timing": "start",
+									"set-value": {
+										"output": 1,
+										"value": {
+											"rand": {
+												"lower": -10,
+												"upper": 10
+											},
+											"calc": [
+												{ "quantize": "c-min-pentatonic" }
+											]
+										}
+									}
+								},
+								{
+									"timing": "start",
+									"set-value": {
+										"output": 2,
+										"value": {
+											"rand": {
+												"lower": -10,
+												"upper": 10
+											},
+											"calc": [
+												{ "quantize": "a-min-pentatonic" }
+											]
+										}
+									}
+								},
+								{
+									"timing": "start",
+									"set-value": {
+										"output": 3,
+										"value": {
+											"rand": {
+												"lower": -10,
+												"upper": 10
+											},
+											"calc": [
+												{ "quantize": "f-maj" }
+											]
+										}
+									}
+								},
+								{
+									"timing": "end",
+									"set-variable": {
+										"name": "input-1-note",
+										"value": {
+											"input": 1,
+											"calc": [
+												{ "add": 10 },
+												{ "frac": true}
+											]
+										}
+									}
+								},
+								{
+									"timing": "end",
+									"set-variable": {
+										"name": "input-2-note",
+										"value": {
+											"input": 2,
+											"calc": [
+												{ "add": 10 },
+												{ "frac": true}
+											]
+										}
+									}
+								},
+								{
+									"timing": "end",
+									"set-variable": {
+										"name": "input-3-note",
+										"value": {
+											"input": 3,
+											"calc": [
+												{ "add": 10 },
+												{ "frac": true}
+											]
+										}
+									}
+								},
+								{
+									"timing": "end",
+									"assert": {
+										"expect": {
+											"or": [
+												{
+													"or": [
+														{ "or": [
+															{ "eq": [
+																{ "variable": "input-1-note" },
+																"c4"
+															], "tolerance": 0.00001 },
+															{ "eq": [
+																{ "variable": "input-1-note" },
+																"e4-"
+															], "tolerance": 0.00001 }
+														]},
+														{ "eq": [
+															{ "variable": "input-1-note" },
+															"f4"
+														], "tolerance": 0.00001 }
+													]
+												},
+												{
+													"or": [
+														{ "eq": [
+															{ "variable": "input-1-note" },
+															"g4"
+														], "tolerance": 0.00001 },
+														{ "eq": [
+															{ "variable": "input-1-note" },
+															"b4-"
+														], "tolerance": 0.00001 }
+													]
+												}
+											]
+										},
+										"name": "check-c-minor-pentatonic-notes"
+									}
+								},
+								{
+									"timing": "end",
+									"assert": {
+										"expect": {
+											"or": [
+												{
+													"or": [
+														{ "or": [
+															{ "eq": [
+																{ "variable": "input-2-note" },
+																"a4"
+															], "tolerance": 0.00001 },
+															{ "eq": [
+																{ "variable": "input-2-note" },
+																"c4"
+															], "tolerance": 0.00001 }
+														]},
+														{ "eq": [
+															{ "variable": "input-2-note" },
+															"d4"
+														], "tolerance": 0.00001 }
+													]
+												},
+												{
+													"or": [
+														{ "eq": [
+															{ "variable": "input-2-note" },
+															"e4"
+														], "tolerance": 0.00001 },
+														{ "eq": [
+															{ "variable": "input-2-note" },
+															"g4"
+														], "tolerance": 0.00001 }
+													]
+												}
+											]
+										},
+										"name": "check-c-minor-pentatonic-notes"
+									}
+								},
+								{
+									"timing": "end",
+									"assert": {
+										"expect": {
+											"or": [
+												{
+													"or": [
+														{ "or": [
+															{ "eq": [
+																{ "variable": "input-3-note" },
+																"f4"
+															], "tolerance": 0.00001 },
+															{ "eq": [
+																{ "variable": "input-3-note" },
+																"g4"
+															], "tolerance": 0.00001 }
+														]},
+														{ "or": [
+															{ "eq": [
+																{ "variable": "input-3-note" },
+																"a4"
+															], "tolerance": 0.00001 },
+															{ "eq": [
+																{ "variable": "input-3-note" },
+																"b4-"
+															], "tolerance": 0.00001 }
+														]}
+													]
+												},
+												{
+													"or": [
+														{ "or": [
+															{ "eq": [
+																{ "variable": "input-3-note" },
+																"c4"
+															], "tolerance": 0.00001 },
+															{ "eq": [
+																{ "variable": "input-3-note" },
+																"d4"
+															], "tolerance": 0.00001 }
+														]},
+														{ "eq": [
+															{ "variable": "input-3-note" },
+															"e4"
+														], "tolerance": 0.00001 }
+													]
+												}
+											]
+										},
+										"name": "check-f-maj-notes"
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"component-pool": {
+		"tunings": [
+			{
+				"id": "c-min-pentatonic",
+				"notes": [ "c", "e-", "f", "g", "b-" ]
+			},
+			{
+				"id": "a-min-pentatonic",
+				"notes": [ "a", "c", "d", "e", "g" ]
+			},
+			{
+				"id": "f-maj",
+				"notes": [ "f", "g", "a", "b-", "c", "d", "e" ]
+			}
+		]
+	}
+}

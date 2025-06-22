@@ -1,6 +1,7 @@
 {
+	"$schema": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json",
 	"type": "not-things_timeseq_script",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"timelines": [
 		{
 			"lanes": [

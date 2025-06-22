@@ -548,8 +548,12 @@
 							"maximum": 5,
 							"default": 0
 						},
+						"ease-algorithm": {
+							"enum": [ "sig", "pow" ],
+							"default": "sig"
+						},
 						"output": {
-							"$ref": "#/definitions/if"
+							"$ref": "#/definitions/output"
 						},
 						"variable": {
 							"description": "Name of the variable that should be set to the current glide value.",
@@ -567,7 +571,7 @@
 					],
 					"propertyNames": {
 						"anyOf": [
-							{ "enum": [ "id", "timing", "start-value", "end-value", "ease-factor", "output", "variable", "if" ] },
+							{ "enum": [ "id", "timing", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if" ] },
 							{ "pattern": "^x-" }
 						]
 					}
@@ -632,7 +636,7 @@
 			"required": [ "index" ],
 			"propertyNames": {
 				"anyOf": [
-					{ "enum": [ "id", "index", "port" ] },
+					{ "enum": [ "id", "index", "channel" ] },
 					{ "pattern": "^x-" }
 				]
 			}
@@ -669,7 +673,7 @@
 			"required": [ "index" ],
 			"propertyNames": {
 				"anyOf": [
-					{ "enum": [ "id", "index", "port" ] },
+					{ "enum": [ "id", "index", "channel" ] },
 					{ "pattern": "^x-" }
 				]
 			}
@@ -813,6 +817,14 @@
 					"description": "Checks that the first value is greater than or equal to the second.",
 					"$ref": "#/definitions/if-child-values"
 				},
+				"and": {
+					"description": "Checks that two if conditionals are both true.",
+					"$ref": "#/definitions/if-child-ifs"
+				},
+				"or": {
+					"description": "Checks that at least one of the two if conditionals is true.",
+					"$ref": "#/definitions/if-child-ifs"
+				},
 				"tolerance": {
 					"description": "Specifies how much two values may differ while still being considered equal. For usage in combination with 'eq' or 'ne'.",
 					"type": "number",
@@ -821,12 +833,14 @@
 				}
 			},
 			"oneOf": [
-				{ "required": [ "eq" ], "not": { "required": [ "ne", "lt", "lte", "gt", "gte" ] } },
-				{ "required": [ "ne" ], "not": { "required": [ "eq", "lt", "lte", "gt", "gte" ] } },
-				{ "required": [ "lt" ], "not": { "required": [ "eq", "ne", "lte", "gt", "gte" ] } },
-				{ "required": [ "lte" ], "not": { "required": [ "eq", "ne", "lt", "gt", "gte" ] } },
-				{ "required": [ "gt" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gte" ] } },
-				{ "required": [ "gte" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt" ] } }
+				{ "required": [ "eq" ], "not": { "required": [ "ne", "lt", "lte", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "ne" ], "not": { "required": [ "eq", "lt", "lte", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "lt" ], "not": { "required": [ "eq", "ne", "lte", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "lte" ], "not": { "required": [ "eq", "ne", "lt", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "gt" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gte", "and", "or" ] } },
+				{ "required": [ "gte" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "and", "or" ] } },
+				{ "required": [ "and" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "gte", "or" ] } },
+				{ "required": [ "or" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "gte", "and" ] } }
 			],
 			"allOf": [
 				{
@@ -864,11 +878,29 @@
 						},
 						"required": [ "tolerance", "gte" ]
 					}
+				},
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"and": { "type": "array" }
+						},
+						"required": [ "tolerance", "and" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"or": { "type": "array" }
+						},
+						"required": [ "tolerance", "or" ]
+					}
 				}
 			],
 			"propertyNames": {
 				"anyOf": [
-					{ "enum": [ "id", "eq", "ne", "lt", "lte", "gt", "gte", "tolerance" ] },
+					{ "enum": [ "id", "eq", "ne", "lt", "lte", "gt", "gte", "and", "or", "tolerance" ] },
 					{ "pattern": "^x-" }
 				]
 			}
@@ -877,6 +909,14 @@
 			"type": "array",
 			"items": {
 				"$ref": "#/definitions/value"
+			},
+			"minItems": 2,
+			"maxItems": 2
+		},
+		"if-child-ifs": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/if"
 			},
 			"minItems": 2,
 			"maxItems": 2
