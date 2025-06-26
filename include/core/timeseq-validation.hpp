@@ -210,7 +210,7 @@ enum ValidationErrorCode {
 	Calc_FracBoolean = 1811, // Since 1.1.0
 	Calc_RoundString = 1812, // Since 1.1.0
 	Calc_RoundEnum = 1813, // Since 1.1.0
-	Calc_QuantizeString = 1814, // Since 1.1.0
+	Calc_QuantizeObject = 1814, // Since 1.1.0
 	Calc_QuantizeTuningNotFound = 1815, // Since 1.1.0
 	Calc_SignString = 1816, // Since 1.1.0
 	Calc_SignEnum = 1817, // Since 1.1.0
@@ -225,12 +225,11 @@ enum ValidationErrorCode {
 	SetLabel_LabelString = 2002,
 	SetLabel_LabelLength = 2003,
 
-	Tuning_IdString = 2100, // Since 1.1.0
-	Tuning_IdLength = 2101, // Since 1.1.0
-	Tuning_NotesArray = 2102, // Since 1.1.0
-	Tuning_NotesArraySize = 2103, // Since 1.1.0
-	Tuning_NoteFloatOrString = 2104, // Since 1.1.0
-	Tuning_NoteFormat = 2105 // Since 1.1.0
+	Tuning_RefOrInstance = 2100, // Since 1.1.0
+	Tuning_NotesArray = 2101, // Since 1.1.0
+	Tuning_NotesArraySize = 2102, // Since 1.1.0
+	Tuning_NoteFloatOrString = 2103, // Since 1.1.0
+	Tuning_NoteFormat = 2104 // Since 1.1.0
 };
 
 

@@ -430,7 +430,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 					for (const json& tuningObj : tuningElements) {
 						location.push_back(to_string(count));
 						if (tuningObj.is_object()) {
-							script->tunings.push_back(parseTuning(tuningObj, &context, location));
+							script->tunings.push_back(parseTuning(tuningObj, false, &context, location));
 							if (find(ids.begin(), ids.end(), script->tunings.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->tunings.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->tunings.back().id.size() > 0) {
@@ -1863,10 +1863,13 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 			verifyVersion(VERSION_1_1_0, context, "calc 'quantize'", location);
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::QUANTIZE;
-			if ((quantize->is_string()) && (quantize->get<string>().length() > 0)) {
-				calc.tuning = quantize->get<string>();
+			if (quantize->is_object()) {
+				location.push_back("quantize");
+				ScriptTuning *scriptTuning = new ScriptTuning(parseTuning(*quantize, true, context, location));
+				calc.tuning.reset(scriptTuning);
+				location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_QuantizeString, "'quantize' must be a non-empty string.");
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_QuantizeObject, "'quantize' must be a tuning object.");
 			}
 		}
 
@@ -1935,86 +1938,84 @@ ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJ
 	return inputTrigger;
 }
 
-ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, JsonScriptParseContext* context, vector<string> location) {
-	static const vector<string> tuningProperties = { "id", "notes" };
+ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
+	static const char* cTuningProperties[] = { "notes" };
+	static const vector<string> vTuningProperties(begin(cTuningProperties), end(cTuningProperties));
 	ScriptTuning tuning;
 
-	verifyAllowedProperties(tuningJson, tuningProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(tuningJson, vTuningProperties, true, context->validationErrors, location);
 
-	json::const_iterator id = tuningJson.find("id");
-	if ((id != tuningJson.end()) && (id->is_string())) {
-		tuning.id = *id;
-		if (tuning.id.length() == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_IdLength, "'id' can not be an empty string.");
+	populateRef(tuning, tuningJson, allowRefs, context, location);
+	if (tuning.ref.length() > 0) {
+		if (hasOneOf(tuningJson, cTuningProperties)) {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_RefOrInstance, "A ref tuning can not be combined other non-ref tuning properties.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_IdString, "'id' is required and must be a string.");
-	}
+		json::const_iterator notes = tuningJson.find("notes");
+		if ((notes != tuningJson.end()) && (notes->is_array())) {
+			location.push_back("notes");
 
-	json::const_iterator notes = tuningJson.find("notes");
-	if ((notes != tuningJson.end()) && (notes->is_array())) {
-		location.push_back("notes");
-
-		int count = 0;
-		vector<json> noteElements = (*notes);
-		for (const json& noteElement : noteElements) {
-			location.push_back(to_string(count));
-			if (noteElement.is_number()) {
-				float x;
-				float note = noteElement.get<float>();
-				note = modf(note, &x); // If values > 1.0 are supplied, keep only the value within one octave
-				if (note < 0.f) {
-					note += 1.f;
-				}
-				tuning.notes.push_back(note);
-			} else if (noteElement.is_string()) {
-				string noteString = noteElement.get<string>();
-				if ((noteString.size() < 1) || (noteString.size() > 2)) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must be a string with a note name (A-G) and optionally an accidental (+ for sharp, - for flat).");
-				} else {
-					int noteIndex = 0;
-					char n = toupper((noteString)[0]);
-					if (n < 'A' || n > 'G') {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must start with a valid note name (A-G).");
+			int count = 0;
+			vector<json> noteElements = (*notes);
+			for (const json& noteElement : noteElements) {
+				location.push_back(to_string(count));
+				if (noteElement.is_number()) {
+					float x;
+					float note = noteElement.get<float>();
+					note = modf(note, &x); // If values > 1.0 are supplied, keep only the value within one octave
+					if (note < 0.f) {
+						note += 1.f;
+					}
+					tuning.notes.push_back(note);
+				} else if (noteElement.is_string()) {
+					string noteString = noteElement.get<string>();
+					if ((noteString.size() < 1) || (noteString.size() > 2)) {
+						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must be a string with a note name (A-G) and optionally an accidental (+ for sharp, - for flat).");
 					} else {
-						noteIndex = noteNameToIndex(n);
-					}
-					if (noteString.size() == 2) {
-						char a = (noteString)[1];
-						if (a == '+') {
-							noteIndex++;
-						} else if (a == '-') {
-							noteIndex--;
+						int noteIndex = 0;
+						char n = toupper((noteString)[0]);
+						if (n < 'A' || n > 'G') {
+							ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must start with a valid note name (A-G).");
 						} else {
-							ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
+							noteIndex = noteNameToIndex(n);
 						}
+						if (noteString.size() == 2) {
+							char a = (noteString)[1];
+							if (a == '+') {
+								noteIndex++;
+							} else if (a == '-') {
+								noteIndex--;
+							} else {
+								ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
+							}
+						}
+						if (noteIndex > 11) {
+							noteIndex -= 12;
+						} else if (noteIndex < 0) {
+							noteIndex += 12;
+						}
+						tuning.notes.push_back((float) noteIndex / 12);
 					}
-					if (noteIndex > 11) {
-						noteIndex -= 12;
-					} else if (noteIndex < 0) {
-						noteIndex += 12;
-					}
-					tuning.notes.push_back((float) noteIndex / 12);
+				} else {
+					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFloatOrString, "'notes' elements must be either 1V/Oct floats or note name strings.");
 				}
-			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFloatOrString, "'notes' elements must be either 1V/Oct floats or note name strings.");
+				location.pop_back();
+				count++;
 			}
+
+			// Sort the notes in the tuning from low to high and remove duplicates.
+			sort(tuning.notes.begin(), tuning.notes.end());
+			vector<float>::iterator end = unique(tuning.notes.begin(), tuning.notes.end());
+			tuning.notes.erase(end, tuning.notes.end());
+
+			if (noteElements.size() == 0) {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NotesArraySize, "'notes' must contain at least one element.");
+			}
+
 			location.pop_back();
-			count++;
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NotesArray, "'notes' is required and must be an array.");
 		}
-
-		// Sort the notes in the tuning from low to high and remove duplicates.
-		sort(tuning.notes.begin(), tuning.notes.end());
-		vector<float>::iterator end = unique(tuning.notes.begin(), tuning.notes.end());
-		tuning.notes.erase(end, tuning.notes.end());
-
-		if (noteElements.size() == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NotesArraySize, "'notes' must contain at least one element.");
-		}
-
-		location.pop_back();
-	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NotesArray, "'notes' is required and must be an array.");
 	}
 
 	return tuning;

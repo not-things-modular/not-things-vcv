@@ -101,7 +101,7 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldVerifyFeatureVersion) {
 				{ { "id", "calc-8" }, { "trunc", true } }, // Requires 1.1.0
 				{ { "id", "calc-9" }, { "frac", true } }, // Requires 1.1.0
 				{ { "id", "calc-10" }, { "round", "down" } }, // Requires 1.1.0
-				{ { "id", "calc-11" }, { "quantize", "tuning" } }, // Requires 1.1.0
+				{ { "id", "calc-11" }, { "quantize", { { "ref", "tuning" } } } }, // Requires 1.1.0
 				{ { "id", "calc-12" }, { "sign", "pos" } }, // Requires 1.1.0
 				{ { "id", "calc-13" }, { "vtof", true } } // Requires 1.1.0
 			}) }
@@ -137,7 +137,7 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailWithMultipleOperations) {
 		{ "trunc", true },
 		{ "frac", true },
 		{ "round", "down" },
-		{ "quantize", "tuning" },
+		{ "quantize", { { "ref", "tuning" } } },
 		{ "sign", "pos" },
 		{ "vtof", true }
 	};
@@ -537,38 +537,38 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseRoundValues) {
 	EXPECT_EQ(*script->calcs[2].roundType.get(), ScriptCalc::RoundType::NEAR);
 }
 
-TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonStringQuantize) {
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonObjectQuantize) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "calcs", json::array({
-			{ { "id", "calc-1" }, { "quantize", { { "ref", "value-1" } } } },
+			{ { "id", "calc-1" }, { "quantize", nullptr } },
 			{ { "id", "calc-2" }, { "quantize", 1.0f } },
-			{ { "id", "calc-3" }, { "quantize", nullptr } }
+			{ { "id", "calc-3" }, { "quantize", "tuning" } }
 		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
-	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeString, "/component-pool/calcs/0");
-	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeString, "/component-pool/calcs/1");
-	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeString, "/component-pool/calcs/2");
+	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeObject, "/component-pool/calcs/0");
+	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeObject, "/component-pool/calcs/1");
+	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeObject, "/component-pool/calcs/2");
 }
 
-TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnEmptyQuantize) {
+TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonTuningQuantize) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "calcs", json::array({
-			{ { "id", "calc-1" }, { "quantize", "" } }
+			{ { "id", "calc-1" }, { "quantize", { { "index", 1 } } } }
 		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeString, "/component-pool/calcs/0");
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/calcs/0/quantize");
 }
 
 TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseQuantize) {
@@ -577,7 +577,7 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseQuantize) {
 	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "calcs", json::array({
-			{ { "id", "calc-1" }, { "quantize", "my-tuning" } }
+			{ { "id", "calc-1" }, { "quantize", { { "ref", "my-tuning" } } } }
 		}) }
 	};
 
@@ -586,7 +586,8 @@ TEST(TimeSeqJsonScriptCalc, ParseCalcShouldParseQuantize) {
 
 	EXPECT_EQ(script->calcs.size(), 1u);
 	EXPECT_EQ(script->calcs[0].operation, ScriptCalc::CalcOperation::QUANTIZE);
-	EXPECT_EQ(script->calcs[0].tuning, "my-tuning");
+	ASSERT_TRUE(script->calcs[0].tuning);
+	EXPECT_EQ(script->calcs[0].tuning->ref, "my-tuning");
 }
 
 TEST(TimeSeqJsonScriptCalc, ParseCalcShouldFailOnNonStringSign) {

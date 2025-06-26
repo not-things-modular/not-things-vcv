@@ -95,9 +95,9 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingId) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
-	expectError(validationErrors, ValidationErrorCode::Tuning_IdString, "/component-pool/tunings/1");
-	expectError(validationErrors, ValidationErrorCode::Tuning_IdString, "/component-pool/tunings/2");
-	expectError(validationErrors, ValidationErrorCode::Tuning_IdLength, "/component-pool/tunings/3");
+	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/tunings/1");
+	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/tunings/2");
+	expectError(validationErrors, ValidationErrorCode::Id_Length, "/component-pool/tunings/3");
 }
 
 TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingNotes) {
@@ -334,4 +334,74 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMixNotesAndVoltagesAndFilterDupli
 	EXPECT_NEAR(script->tunings[1].notes[1], .25f, 0.000001f);
 	EXPECT_NEAR(script->tunings[1].notes[2], 4.f / 12, 0.000001f);
 	EXPECT_NEAR(script->tunings[1].notes[3], .75f, 0.000001f);
+}
+
+TEST(TimeSeqJsonScriptTuning, ParseTuningWorkWithInlineRefCalcTuning) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc" }, { "quantize", { { "ref", "my-ref-tuning" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	
+	ASSERT_EQ(script->calcs.size(), 1u);
+	EXPECT_EQ(script->calcs[0].operation, ScriptCalc::CalcOperation::QUANTIZE);
+	ASSERT_TRUE(script->calcs[0].tuning);
+	EXPECT_EQ(script->calcs[0].tuning->ref, "my-ref-tuning");
+}
+
+TEST(TimeSeqJsonScriptTuning, ParseTuningWorkFailWithInlineRefCalcTuningWithAdditionalProperties) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc" }, { "quantize", { { "ref", "my-ref-tuning" }, { "notes", json::array({ 0.f }) } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Tuning_RefOrInstance, "/component-pool/calcs/0/quantize");
+}
+
+TEST(TimeSeqJsonScriptTuning, ParseTuningWorkWithInlineFullTuning) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc" }, { "quantize", { { "notes", json::array({ 1.f, 5.25f, 3.33f }) } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	
+	ASSERT_EQ(script->calcs.size(), 1u);
+	EXPECT_EQ(script->calcs[0].operation, ScriptCalc::CalcOperation::QUANTIZE);
+	ASSERT_TRUE(script->calcs[0].tuning);
+	EXPECT_NEAR(script->calcs[0].tuning->notes[0], 0.f, 0.000001f);
+	EXPECT_NEAR(script->calcs[0].tuning->notes[1], .25f, 0.000001f);
+	EXPECT_NEAR(script->calcs[0].tuning->notes[2], .33f, 0.000001f);
+}
+
+TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInlineTuningWithId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "calcs", json::array({
+			{ { "id", "calc" }, { "quantize", { { "id", "not-allowed" }, { "notes", json::array({ 1.f, 5.25f, 3.33f }) } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/calcs/0/quantize");
 }

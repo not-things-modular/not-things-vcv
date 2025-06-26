@@ -132,7 +132,10 @@
 				"tunings": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/tuning"
+						"allOf": [
+							{ "$ref": "#/definitions/tuning-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
 					}
 				}
 			}
@@ -749,8 +752,7 @@
 				},
 				"quantize": {
 					"description": "Quantizes the current voltage to a tuning.",
-					"type": "string",
-					"minLength": 1
+					"$ref": "#/definitions/tuning"
 				},
 				"sign": {
 					"description": "Changes the sign of the current voltage to positive or negative (if needed).",
@@ -778,7 +780,7 @@
 			],
 			"propertyNames": {
 				"anyOf": [
-					{ "enum": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] },
+					{ "enum": [ "id", "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] },
 					{ "pattern": "^x-" }
 				]
 			}
@@ -969,6 +971,12 @@
 			}
 		},
 		"tuning": {
+			"oneOf": [
+				{ "$ref": "#/definitions/tuning-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"tuning-full": {
 			"description": "A tuning/scale to which values can be quantized using the 'quantize' action.",
 			"type": "object",
 			"properties": {
@@ -997,7 +1005,7 @@
 					"minItems": 1
 				}
 			},
-			"required": [ "id", "notes" ],
+			"required": [ "notes" ],
 			"propertyNames": {
 				"anyOf": [
 					{ "enum": [ "id", "notes" ] },

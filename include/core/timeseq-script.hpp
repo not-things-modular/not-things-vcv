@@ -57,6 +57,10 @@ struct ScriptRand {
 	std::unique_ptr<ScriptValue> upper;
 };
 
+struct ScriptTuning : ScriptRefObject {
+	std::vector<float> notes;
+};
+
 struct ScriptCalc : ScriptRefObject {
 	enum CalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN, TRUNC, FRAC, ROUND, QUANTIZE, SIGN, VTOF };
 	enum RoundType { UP, DOWN, NEAR };
@@ -68,7 +72,7 @@ struct ScriptCalc : ScriptRefObject {
 	// The direction to round to
 	std::unique_ptr<RoundType> roundType;
 	// The id of the tuning to quantize into
-	std::string tuning;
+	std::unique_ptr<ScriptTuning> tuning;
 	// The sign to apply
 	std::unique_ptr<SignType> signType;
 };
@@ -230,11 +234,6 @@ struct ScriptTimeline {
 struct ScriptInputTrigger {
 	std::string id;
 	ScriptInput input;
-};
-
-struct ScriptTuning {
-	std::string id;
-	std::vector<float> notes;
 };
 
 struct Script {

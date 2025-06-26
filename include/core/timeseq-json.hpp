@@ -37,7 +37,7 @@ struct JsonScriptParser {
 	ScriptRand parseRand(const json& randJson, JsonScriptParseContext* context, std::vector<std::string> location);
 	ScriptCalc parseCalc(const json& calcJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
 	ScriptInputTrigger parseInputTrigger(const json& inputTriggerJson, JsonScriptParseContext* context, std::vector<std::string> location);
-	ScriptTuning parseTuning(const json& tuningJson, JsonScriptParseContext* context, std::vector<std::string> location);
+	ScriptTuning parseTuning(const json& tuningJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
 	ScriptIf parseIf(const json& ifJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
 	std::pair<ScriptValue, ScriptValue> parseIfValues(std::string ifOperator, const json& valuesJson, JsonScriptParseContext* context, std::vector<std::string> location);
 	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> parseIfIfs(std::string ifOperator, const json& ifsJson, JsonScriptParseContext* context, std::vector<std::string> location);
