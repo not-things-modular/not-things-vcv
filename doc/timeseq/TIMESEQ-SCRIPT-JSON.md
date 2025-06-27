@@ -24,6 +24,7 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
               * [output](#output) - Identifies an output port and channel
               * [rand](#rand) - Generates a random voltage
               * [calc](#calc) - Allows mathematical calculations with *value*s
+                * [tuning](#tuning)s - Quantization tunings
           * [set-variable](#set-variable) - Set an internal variable
             * [value](#value) - Evaluates to a voltage
           * [set-polyphony](#set-polyphony) - Sets the number of channels on an output port
@@ -34,7 +35,6 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
   * [input-triggers](#input-trigger) - Fire internal triggers based on external trigger signals
   * global-[action](#action) - *Action*s to perform during script start
   * [component-pool](#component-pool) - A pool of reusable JSON objects
-    * [tuning](#tuning)s - Quantization tunings
 
 ## Versions
 
@@ -909,7 +909,7 @@ If a `variable` property is used and no variable with a matching name was previo
 
 Additional mathematical operations are possible on a value using the `calc` property. This allows simple [calc](#calc)ulations to be performed by either adding, subtracting, dividing or multiplying this value with another value. The `calc` property expects a list of [calc](#calc) objects. Even if only one calculation is to be performed, it should still be supplied as a list (with one element). The calculations will then be executed in the order that they appear in the list. While voltage values are usually expected to fall into the -10V to 10V range in VCV Rack, calculations will not enforce this limit, and the result of the calculation can fall outside of that range.
 
-Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** the *calc* operations have been applied to the voltage value.
+Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** the *calc* operations have been applied to the voltage value. If more control is needed over the quantization , such as quantizing to a specific scale or a set of custom voltages, a [calc](#calc) with a `quantize` operation should be used instead.
 
 Exactly one of the `voltage`, `note`, `variable`, `input`, `output` or `rand` properties must be specified for a value.
 
@@ -1172,7 +1172,7 @@ Allows calculations to be performed on [value](#value)s. A *value* can contain a
 
 To safeguard against calculation errors, a division by zero will result in 0V and a remainder after division by zero will also result in 0V.
 
-The possible mathematical operations that are available are:
+The possible operations that are available are:
 
 * `add` for adding a value to the current voltage,
 * `sub` for subtracting a value from the current voltage,
@@ -1188,7 +1188,7 @@ The possible mathematical operations that are available are:
 * `sign` for enforcing that the sign of a value is either positive or negative.
 * `vtof` for converting a 1V/Oct value into a frequency
 
-While multiple calcs can be added to the calculation list of a *value*, each calc must specify exactly one mathematical operation.
+While multiple calcs can be added to the calculation list of a *value*, each calc within that list must specify exactly one mathematical operation.
 
 ### Properties
 
@@ -1204,7 +1204,7 @@ While multiple calcs can be added to the calculation list of a *value*, each cal
 | `trunc` | no | boolean | *1.1.0* | Removes the decimal part of the current voltage, keeping only the whole number. The result keeps the same sign (positive or negative) as the original voltage. Must be set to `true`. |
 | `frac` | no | boolean | *1.1.0* | Removes the whole number part of the current voltage, keeping only the decimal part. The result keeps the same sign (positive or negative) as the original voltage. Must be set to `true`. |
 | `round` | no | string | *1.1.0* | Can be either `up` to round up, `down`to round down or `near` to round to the nearest whole number. |
-| `quantize` | no | string | *1.1.0* | Should be set to the `id` of a [tuning](#tuning). The current voltage will be quantized to the nearest note value in that tuning. |
+| `quantize` | no | [tuning](#tuning) | *1.1.0* | Quantizes the current voltage to the nearest voltage in the specified tuning's `notes`. |
 | `sign` | no | string | *1.1.0* | Can be set to either `pos` or `neg`. Keeps the current voltage's value but forces it to be positive or negative, depending on which one is specified. |
 | `vtof` | no | boolean | *1.1.0* | Interprets the current voltage as a 1V/Oct value and returns the corresponding audio frequency value. Must be set to `true`. |
 
@@ -1257,7 +1257,8 @@ The voltage on input 6, quantized to the *tuning* with id `c-maj-pent`, and subs
 {
     "input": 6,
     "calc": [
-        { "frac": true }
+        { "quantize": { "ref": "c-maj-pent" } },
+        { "add": 1 }
     ]
 }
 ```
@@ -1268,20 +1269,21 @@ The decimal part of the voltage that is currently stored in variable `my-voltage
 {
     "variable": "my-voltage",
     "calc": [
-        { "quantize": "c-maj-pent" },
-        { "add": 1 }
+        { "frac": true }
     ]
 }
 ```
 
 ## tuning
 
-A tuning allows values to be quantized to a scale. The `notes` property of a contains the list of notes that should be quantized towards. They can be expressed in two ways:
+While a [value](#value) can be quantized to the nearest semitone using its `quantize` property, tunings allow values to be quantized to a scale. The `notes` property of a tuning contains the list of notes that should be quantized towards. Notes can be expressed in two ways:
 
-* A float value that specifies the note value as a 1V/Oct value. While any float value can be supplied, since quantization is done based on octaves, only the decimal part of the value will be used during quantization.
 * A string value where the first character specifies the note name (from A-G), and the optional second character specifies the accidental: `+` for a sharp and `-` for a flat. E.g.: `A-`, `F+`, `C+`, `B-`, `G`
+* A float value that specifies the note value as a 1V/Oct value.
 
-To quantize a value to a tuning, a [calc](#calc) must be added to the [value](#value), using the `id` of the tuning as *calc* `quantize` property. The value will then be quantized up or down towards the nearest `notes` entry in the tuning (ignoring the octave information of the value).
+Quantization of values is always done in the octave range of the original value. As such, which supplying a tuning note as a float value, only the decimal part of the quantization note will be taken into account.
+
+To quantize a value to a tuning, a [calc](#calc) must be added to the [value](#value), using the tuning as *calc* `quantize` property, either directly inline or through a `ref`. The value will then be quantized up or down towards the nearest `notes` entry in the tuning (ignoring the octave information of the value).
 
 *Tunings were introduced in TimeSeq script version 1.1.0.*
 

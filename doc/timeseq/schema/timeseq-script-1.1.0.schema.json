@@ -1165,7 +1165,7 @@
 	"changelog": [
 		{
 			"version": "1.0.0",
-			"date": "2025-06-22",
+			"date": "2025-06-27",
 			"changes": [
 				"Initial version of the TimeSeq Script 1.1.0 JSON Schema definition"
 			]
