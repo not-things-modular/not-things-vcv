@@ -10,6 +10,7 @@
   * [One-time Actions](#one-time-actions)
   * [Glide Actions](#glide-actions)
   * [Gate Actions](#gate-actions)
+* [Quantizing](#quantizing)
 * [Triggers](#triggers)
 * [Referencing](#referencing)
   * [Example](#example)
@@ -39,6 +40,7 @@ From a high-level sequencing view, a TimeSeq script contains:
 * A *lane* can loop or repeat, and may list the IDs of *trigger*s that start, restart or stop it. A *Lane* can also be configured to auto-start when the script is loaded.
 * Each *Lane* contains one or more [segment](TIMESEQ-SCRIPT-JSON.md#segment)s.
 * A *segment* has a [duration](TIMESEQ-SCRIPT-JSON.md#duration) (in samples, milliseconds, beats/bars or hertz) and contains a list of [action](TIMESEQ-SCRIPT-JSON.md#action)s.
+  * The segment duration can either be expressed using fixed numbers, or using a [value](TIMESEQ-SCRIPT-JSON.md#value) that will be evaluated when the segment starts, resulting in segments with a variable duration.
 * An *action* can:
   * Execute at the start or end of the *segment*,
   * Glide between a start and end *value* over the duration of the *segment*, transitioning smoothly over the duration of that *segment*,
@@ -84,6 +86,12 @@ Also like one-time actions, glide actions can set the voltage of either a variab
 ### Gate Actions
 
 A gate action allows a gate signal to be generated on an *output* port. It will change the *output* port voltage to 10v at the start of a *segment*, and change it to 0v as the *segment* progresses. By default, the change to 0v will occur halfway through the duration of the *segment*, but it is possible to change this position using the `gate-high-ratio`, moving it more towards the start or the end of the *segment*.
+
+## Quantizing
+
+If needed, *value*s can be quantized to notes. The simplest way to quantize is by setting the `quantize` property of a [value](TIMESEQ-SCRIPT-JSON.md#value) to `true`. This will cause the voltage of the *value* to be quantized to the nearest semitone, using the 1V/Oct standard.
+
+It is however also possible to perform more fine-grained quantization using [tuning](TIMESEQ-SCRIPT-JSON.md#tuning)s. A *tuning* defines a list of notes to which a value should be quantized. The *tuning* can then be applied to a value by using a [calc](TIMESEQ-SCRIPT-JSON.md#calc) with the `quantize` operation. This allows values to be quantized to scales or, since the tuning notes can be specified using floats, to special tunings that don't follow the usual semitone note values.
 
 ## Triggers
 

@@ -393,13 +393,20 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 
 ### Variable-length durations
 
-Instead of a duration always having the same length as has been described so far (resulting in *segment*s that always have the same length), it is also possible to have a variable duration length. Instead of specifying a fixed number/float value for the `samples`, `millis`, `beats` or `hz` property, a [value](#value) can be used. Each time a *segment* starts, if the duration is set to a *value* object instead of a fixed number, that value will be evaluated and the resulting length will be used as duration for that run of the *segment*.
+Instead of using a fixed numeric value for the duration (e.g. `"beats": 0.25`), it is also possible to use a [value](#value) for the `samples`, `millis`, `beats` or `hz` properties. This allows the duration of the segment to vary based on the evaluated voltage of the *variable*. Each time a *segment* starts, if the duration is set to a *value* object instead of a fixed numeric, that *value* will be evaluated and the result will be used as duration *segment*. The next time that *segment* is executed, the *value* will be re-evaluated and may result in a different duration.
 
-The calculation of the current value of such a variable-length duration will be performed after all the [action](#action)s of the segment with a `start` timing have been executed, but before any `glide`, `gate` or `end` actions have been executed. This allows any changes made in the `start` *action*s of the segment to influence the *value* calculation for the duration. Once the segment has started (and thus the duration length has been determined), the duration will not be re-evaluated until the *segment* has completed. This means changes that could influence the *value* of the duration will not be taken into account after the *segment* has started.
+Since the [action](#action)s of a *segment* can have an impact on the resulting voltage of a *value*, a fixed order of operations is followed:
+
+* First all actions of the *segment* with a `start` timing will be executed
+* Then the *duration* of the *segment* is calculated
+* Then the `glide` and `gate` actions are executed
+* Finally, when the segment ends, the `end` actions are executed
+
+This means that `start` actions can be used in a segment to influence the *duration* of that segment. However, once this *length* has been determined, the remaining actions (`glide`, `gate` or `end`) will not influence it anymore, even if they modify properties that the original *duration* calculation was based on.
+
+Just like constant-length durations, a variable-length durations can not be made shorter then one sample. If the *duration* evaluates to a length shorter then one sample, it will be made to last one sample instead. Fractional sample durations (longer then 1 sample) are supported however, resulting in drift compensation by TimeSeq over time.
 
 When using a *value*-based `beats` duration, it is not possible to also specify a `bars` property.
-
-Just like the constant-length durations, variable-length durations can not be shorter then one sample, but are allowed to have a decimal sample duration, resulting in drift compensation by TimeSeq over time.
 
 *Variable-length durations were introduced in TimeSeq script version 1.1.0.*
 
@@ -1293,3 +1300,32 @@ To quantize a value to a tuning, a [calc](#calc) must be added to the [value](#v
 | --- | --- | --- | --- |
 | `id` | yes | string | The identifier of the tuning. |
 | `notes` | yes | string/float list | The list of notes to quantize to, either as a float or a string as described above. |
+
+### Examples
+
+A tuning for a C minor pentatonic scale, with the notes specified using their note names:
+
+```json
+{
+    "id": "c-minor-pentatonic",
+    "notes": [ "c", "e-", "f", "g", "b-" ]
+}
+```
+
+The same C minor pentatonic scale, but this time using a combination of note names and 1V/Oct float values:
+
+```json
+{
+    "id": "c-minor-pentatonic",
+    "notes": [ 0, "e-", "f", 0.5833, "b-" ]
+}
+```
+
+A tuning that uses 1V/Oct values that don't follow the usual semitone notes:
+
+```json
+{
+    "id": "non-semitone-tuning",
+    "notes": [ 0, 0.1579, 0.3158, 0.4211, 0.5789, 0.7368, 0.8947 ]
+}
+```
