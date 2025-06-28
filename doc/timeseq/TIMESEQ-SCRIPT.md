@@ -5,6 +5,8 @@
 ## Table of Contents
 
 * [Intro](#intro)
+* [Editing with JSON Schema](#editing-with-json-schema)
+* [Script Execution Considerations](#script-execution-considerations)
 * [High Level Overview](#high-level-overview)
 * [Actions](#actions)
   * [One-time Actions](#one-time-actions)
@@ -22,6 +24,21 @@
 ## Intro
 
 This page describes the concepts used in the TimeSeq script. It introduces the different object types that are used in the script and how they interact with each other. It does not go into every detail on all the properties. For a full detailed description of all the objects, see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page. When looking for an hierarchical overview of the script structure, the Table of Contents on that page is also structured to represent that hierarchy. When a new JSON object type is introduced on this page, it will also link to it's section within the full details on the JSON Reference page.
+
+## Editing with JSON Schema
+
+To facilitate easier editing of a TimeSeq JSON script, a JSON Schema definition is available for it. When used in combination with a JSON Schema aware editor (such as Visual Studio Code), this will result in inline validation and auto completion suggestions while creating the script. While not all aspects of the TimeSeq JSON script will be validated this way (e.g. referencing non-existing *component-pool* items), it does greatly speed up script editing.
+
+The schema can be associated with a script file by adding following property at the root element of the JSON data:
+
+```js
+{
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json"
+    ...
+}
+```
+
+## Script Execution Considerations
 
 For running the script, TimeSeq is tied to the active sample rate of VCV Rack. Each sample in VCV Rack will result in a processing cycle in TimeSeq (e.g. when set to 44.1Khz sample rate, there will be 44100 processing cycles per second in TimeSeq). During each such processing cycle, TimeSeq will check if any action should be performed for the running script. Since the TimeSeq processing is tied to the sample rate, the internal processor timing is also based on samples, with all other timing specification that can be used in the script being translated into the corresponding sample count.
 
