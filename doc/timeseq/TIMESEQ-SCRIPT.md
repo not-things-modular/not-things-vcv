@@ -23,11 +23,11 @@
 
 ## Intro
 
-This page describes the concepts used in the TimeSeq script. It introduces the different object types that are used in the script and how they interact with each other. It does not go into every detail on all the properties. For a full detailed description of all the objects, see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page. When looking for an hierarchical overview of the script structure, the Table of Contents on that page is also structured to represent that hierarchy. When a new JSON object type is introduced on this page, it will also link to it's section within the full details on the JSON Reference page.
+This page describes the concepts used in the TimeSeq script. It introduces the different object types that are used in the script and how they interact with each other. It does not go into every detail on all the properties. For a full detailed description of all the objects, see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page. When looking for an hierarchical overview of the script structure, the Table of Contents on that page is also structured to represent that hierarchy. When a new JSON object type is introduced on this page, it will also link to its section within the full details on the JSON Reference page.
 
 ## Editing with JSON Schema
 
-To facilitate easier editing of a TimeSeq JSON script, a JSON Schema definition is available for it. When used in combination with a JSON Schema aware editor (such as Visual Studio Code), this will result in inline validation and auto completion suggestions while creating the script. While not all aspects of the TimeSeq JSON script will be validated this way (e.g. referencing non-existing *component-pool* items), it does greatly speed up script editing.
+To facilitate easier editing of a TimeSeq JSON script, a JSON Schema definition is available for it. When used in combination with a JSON Schema aware editor (such as Visual Studio Code), it enables inline validation and auto completion suggestions while creating the script. Although not all aspects of the TimeSeq JSON script will be validated through the schema (e.g. referencing non-existing *component-pool* items), it does greatly speed up script editing.
 
 The schema can be associated with a script file by adding following property at the root element of the JSON data:
 
@@ -37,6 +37,8 @@ The schema can be associated with a script file by adding following property at 
     ...
 }
 ```
+
+As new features are added to the TimeSeq JSON script, its version number will also increment. This will result in updated schemas to match those changes. The [script versions](TIMESEQ-SCRIPT-VERSION.md) page provides an overview of the script versions along with their corresponding JSON schemas.
 
 ## Script Execution Considerations
 

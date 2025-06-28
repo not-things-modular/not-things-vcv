@@ -1,0 +1,208 @@
+{
+	"$schema": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json",
+	"type": "not-things_timeseq_script",
+	"version": "1.1.0",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"x-description": "Calculate the frequencies every 100 millisecond based on the input 1V/Oct value",
+					"segments": [
+						{
+							"duration": { "millis": 50 },
+							"actions": [
+								{
+									"set-variable": {
+										"name": "frequency",
+										"value": {
+											"input": 1,
+											"calc": [ { "vtof": true } ]
+										}
+									}
+								},
+								{
+									"set-variable": {
+										"name": "frequency-2x",
+										"value": {
+											"variable": "frequency",
+											"calc": [ { "mult": 2 } ]
+										}
+									}
+								},
+								{
+									"set-variable": {
+										"name": "frequency-4x",
+										"value": {
+											"variable": "frequency",
+											"calc": [ { "mult": 4 } ]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a square wave by looping two segments that switch between 5V and -5V",
+					"segments": [
+						{
+							"duration": { "hz": { "variable": "frequency-2x" } },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": 5
+									}
+								}
+							]
+						},
+						{
+							"duration": { "hz": { "variable": "frequency-2x" } },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": -5
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a sawtooth wave by looping a single gliding segment that moves from -5V to 5V and then immediately drops back to -5V when it loops",
+					"segments": [
+						{
+							"duration": { "hz": { "variable": "frequency" } },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": -5,
+									"end-value": 5,
+									"output": 2
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a triangle wave by looping two segments: one that glides from -5V to 5V and another that glides back from 5V to -5V",
+					"segments": [
+						{
+							"duration": { "hz": { "variable": "frequency-2x" } },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": -5.0,
+									"end-value": 5.0,
+									"output": 3
+								}
+							]
+						},
+						{
+							"duration": { "hz": { "variable": "frequency-2x" } },
+							"actions": [
+								{
+									"timing": "glide",
+									"start-value": 5.0,
+									"end-value": -5.0,
+									"output": 3
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Create a sine-like wave by looping four segments that use glide actions with easing factors that will approach a sine shape",
+					"segments": [
+						{
+							"duration": { "hz": { "variable": "frequency-4x" } },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": 0.375,
+									"ease-algorithm": "pow",
+									"start-value": -5,
+									"end-value": 0,
+									"output": 4
+								}
+							]
+						},
+						{
+							"duration": { "hz": { "variable": "frequency-4x" } },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": -0.375,
+									"ease-algorithm": "pow",
+									"start-value": 0,
+									"end-value": 5,
+									"output": 4
+								}
+							]
+						},
+						{
+							"duration": { "hz": { "variable": "frequency-4x" } },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": 0.375,
+									"ease-algorithm": "pow",
+									"start-value": 5,
+									"end-value": 0,
+									"output": 4
+								}
+							]
+						},
+						{
+							"duration": { "hz": { "variable": "frequency-4x" } },
+							"actions": [
+								{
+									"timing": "glide",
+									"ease-factor": -0.375,
+									"ease-algorithm": "pow",
+									"start-value": 0,
+									"end-value": -5,
+									"output": 4
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+                    "x-description": "Generate a noise signal by outputting random values between -5V and 5V",
+					"segments": [
+						{
+							"duration": { "samples": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"value": {
+											"rand": {
+												"lower": -5.0,
+												"upper": 5.0
+											}
+										},
+										"output": 5
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

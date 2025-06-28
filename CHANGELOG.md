@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2.0.5 (TBD)
+## 2.0.5 (25-06-28)
 
 * **Global**: Setup GitHub Ppages for documentation
 * **TimeSeq**
@@ -13,7 +13,7 @@
   * Fixed issue that caused set-variable and trigger actions in the global-actions to not be correctly applied
   * Created JSON Schema definition for the TimeSeq JSON Script (v1.1.0) to allow easier validation and editing of scripts outside of TimeSeq
 
-## 2.0.4 (2025-06-06)
+## 2.0.4 (2025-06-12)
 
 * **TimeSeq**: Fixed issue where loading a new script while already running could cause memory corruption.
 
