@@ -884,3 +884,105 @@ TEST(TimeSeqCore, StartScriptShouldDelayProcessingWhenStartedWithDelayAndProcess
 		EXPECT_EQ(timeSeqCore.getElapsedSamples(), i * 20);
 	}
 }
+
+TEST(TimeSeqCore, ResetShouldClearVariablesBeforeResettingProcessor) {
+	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
+	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
+	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
+
+	std::shared_ptr<Script> script1(new Script());
+	std::shared_ptr<MockProcessor> processor(new testing::NiceMock<MockProcessor>());
+	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
+
+	std::string variableName = "before1";
+	timeSeqCore.setVariable(variableName, 1.f);
+	variableName = "before2";
+	timeSeqCore.setVariable(variableName, 2.f);
+
+	{
+		testing::InSequence inSequence;
+
+		EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script1));
+		EXPECT_CALL(*mockProcessorLoader, loadScript(script1, testing::_)).Times(1).WillOnce(testing::Return(processor));
+		EXPECT_CALL(mockSampleRateReader, getSampleRate()).Times(1).WillOnce(testing::Return(420));
+	}
+
+	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
+
+	EXPECT_CALL(*processor.get(), reset()).Times(1).WillOnce(testing::Invoke([&]() {
+		std::string variableName = "after1";
+		timeSeqCore.setVariable(variableName, 3.f);
+		variableName = "after2";
+		timeSeqCore.setVariable(variableName, 4.f);
+	}));
+
+	variableName = "before1";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 1.f);
+	variableName = "before2";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 2.f);
+	variableName = "after1";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 0.f);
+	variableName = "after2";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 0.f);
+
+	timeSeqCore.reset();
+	timeSeqCore.process(1);
+
+	variableName = "before1";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 0.f);
+	variableName = "before2";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 0.f);
+	variableName = "after1";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 3.f);
+	variableName = "after2";
+	EXPECT_EQ(timeSeqCore.getVariable(variableName), 4.f);
+}
+
+TEST(TimeSeqCore, ResetShouldClearTriggersBeforeResettingProcessor) {
+	std::shared_ptr<MockJsonLoader> mockJsonLoader(new MockJsonLoader());
+	std::shared_ptr<MockProcessorLoader> mockProcessorLoader(new MockProcessorLoader());
+	MockSampleRateReader mockSampleRateReader;
+	testing::NiceMock<MockEventListener> mockEventListener;
+	TimeSeqCore timeSeqCore(mockJsonLoader, mockProcessorLoader, &mockSampleRateReader, &mockEventListener);
+
+	std::shared_ptr<Script> script1(new Script());
+	std::shared_ptr<MockProcessor> processor(new testing::NiceMock<MockProcessor>());
+	std::string scriptData = DUMMY_TIMESEQ_SCRIPT;
+
+	{
+		testing::InSequence inSequence;
+
+		EXPECT_CALL(*mockJsonLoader, loadScript).Times(1).WillOnce(testing::Return(script1));
+		EXPECT_CALL(*mockProcessorLoader, loadScript(script1, testing::_)).Times(1).WillOnce(testing::Return(processor));
+		EXPECT_CALL(mockSampleRateReader, getSampleRate()).Times(1).WillOnce(testing::Return(420));
+	}
+
+	std::vector<ValidationError> resultValidationErrors = timeSeqCore.loadScript(scriptData);
+	// Prime the core by starting it and run it for one cycle
+	timeSeqCore.start(0);
+	timeSeqCore.process(1);
+
+	// Set the triggers that are there before the reset
+	std::string triggerName = "before1";
+	timeSeqCore.setTrigger(triggerName);
+	triggerName = "before2";
+	timeSeqCore.setTrigger(triggerName);
+	timeSeqCore.process(1); // Do one process cycle so that the triggers become the active set
+
+	EXPECT_CALL(*processor.get(), reset()).Times(1).WillOnce(testing::Invoke([&]() {
+		std::string triggerName = "after1";
+		timeSeqCore.setTrigger(triggerName);
+		triggerName = "after2";
+		timeSeqCore.setTrigger(triggerName);
+	}));
+
+	std::vector<std::string> triggers = { "before1", "before2" };
+	EXPECT_EQ(timeSeqCore.getTriggers(), triggers);
+
+	timeSeqCore.reset();
+	timeSeqCore.process(1); // Do a process cycle so that the newly set triggers become the active trigger set
+	triggers = { "after1", "after2" };
+	EXPECT_EQ(timeSeqCore.getTriggers(), triggers);
+}

@@ -170,12 +170,13 @@ void TimeSeqCore::resetElapsedSamples() {
 void TimeSeqCore::processReset() {
 	m_eventListener->scriptReset();
 
-	if (m_processor) {
-		m_processor->reset();
-	}
 	m_triggers[0].clear();
 	m_triggers[1].clear();
 	m_variables.clear();
+
+	if (m_processor) {
+		m_processor->reset();
+	}
 
 	resetElapsedSamples();
 	
