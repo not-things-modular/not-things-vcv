@@ -13,6 +13,7 @@ One of the basic functionalities of TimeSeq is to create repeating chord and not
 * [Restructuring the Script](#restructuring-the-script)
 * [Adding in Some Chance](#adding-in-some-chance)
 * [Modulating the Chance](#modulating-the-chance)
+* [Generating a Quantized Random Melody](#generating-a-quantized-random-melody)
 
 ## A Basic Note Sequence
 
@@ -480,7 +481,7 @@ The full updated script for this step can be found in [note-seq-arp-chance.json]
 
 ## Modulating the Chance
 
-As a final update to this script, we'll allow the chance that was introduced in the previous step to be controlled by an external voltage. Instead of always having a 75% chance that a note will play, an external voltage should be able to move that chance around, allowing external modulation sources to influence how often the notes are triggered. We'll set it up so that a 0V to 10V signal moves the probability between 25% and 75%. All that is needed for this is to update the `should-play-note` condition to:
+To bring some more variation in the output, we'll allow the chance that was introduced in the previous step to be controlled by an external voltage. Instead of always having a 75% chance that a note will play, an external voltage should be able to move that chance around, allowing external modulation sources to influence how often the notes are triggered. We'll set it up so that a 0V to 10V signal moves the probability between 25% and 75%. All that is needed for this is to update the `should-play-note` condition to:
 
 ```json
 "ifs": [
@@ -508,4 +509,59 @@ Instead of checking that the previously generated `play-note` random value is ab
 
 When checking that value against the randomly generated `play-note` variable (which will be between 0V and 10V), we get a 25% to 75% chance that a note will trigger, depending on the input voltage.
 
+### Full Script and VCV Rack Patch
+
 The resulting script for this step can be found in [note-seq-arp-chance-mod.json](note-seq/note-seq-arp-chance-mod.json), with the [note-seq-arp-chance-mod.vcv](note-seq/note-seq-arp-chance.vcv) patch using an LFO to generate the input voltage. A scope will also show the LFO output and the resulting gates coming from TimeSeq: as the LFO value is low, there is a higher chance of a note playing and when the LFO is high, there is a lower chance.
+
+## Generating a Quantized Random Melody
+
+A final addition to this script will be to generate a random melody. In order to let this melody fit in with the rest of the patch, it can not just play any note. It will have to be quantized to a scale that fits with the chords. We'll use a C major pentatonic scale for this (which contains the c, d, e, g and a notes). In the *component-pool*, we create a tuning for this:
+
+```json
+"tunings": [
+    {
+        "id": "c-major-pentatonic",
+        "notes": [ "c", "d", "e", "g", "a" ]
+    }
+],
+```
+
+A tuning can be used in the [calc](../TIMESEQ-SCRIPT-JSON.md#calc) section of a *value* to `quantize` the voltage of that value to the `notes` in the tuning:
+
+```json
+{
+    "auto-start": true,
+    "loop": true,
+    "segments": [
+        {
+            "duration": { "beats": 1 },
+            "actions": [
+                {
+                    "set-value": {
+                        "output": 4,
+                        "value": {
+                            "rand": {
+                                "lower": 1,
+                                "upper": 2
+                            },
+                            "calc": [
+                                { "quantize": { "ref": "c-major-pentatonic" } }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "timing": "gate",
+                    "output": 5
+                }
+            ]
+        }
+    ]
+}
+```
+
+This *lane* repeats one segment that updates the voltage on the 4th *output* of TimeSeq to a value. This value is randomly generated between 1V and 2V, and then gets quantized by the *calc* to the `c-major-pentatonic` tuning. A second action in that segment also generates a gate signal on *output* 5 that can be used to generate a volume envelope for the note.
+
+### Full Script and VCV Rack Patch
+
+The resulting script for this step can be found in [note-seq-quantize-random.json](note-seq/note-seq-quantize-random.json), with the [note-seq-quantize-random.vcv](note-seq/note-seq-quantize-random.vcv) sending the newly generated note sequence through an additional VCO, with the new gate signal driving another ADSR envelope generator.

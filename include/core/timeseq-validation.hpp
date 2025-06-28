@@ -16,6 +16,7 @@ enum ValidationErrorCode {
 	Id_NotAllowed = 8,
 	Id_Duplicate = 9,
 	Unknown_Property = 10,
+	Feature_Not_In_Version = 11,
 
 	Script_TypeMissing = 101,
 	Script_TypeUnsupported = 102,
@@ -45,6 +46,8 @@ enum ValidationErrorCode {
 	Script_GlobalActionsObject = 126,
 	Script_GlobalActionTiming = 127,
 	Script_ComponentPoolObject = 128,
+	Script_TuningsArray = 129, // Since 1.1.0
+	Script_TuningObject = 130, // Since 1.1.0
 
 	Timeline_TimeScaleObject = 200,
 	Timeline_LanesMissing = 201,
@@ -80,7 +83,7 @@ enum ValidationErrorCode {
 	If_AndArray = 507,
 	If_OrArray = 508,
 	If_NoOperation = 509,
-	If_MultpleOperations = 510,
+	If_MultipleOperations = 510,
 	If_TwoValues = 511,
 	If_ValueObject = 512,
 	If_ToleranceNumber = 513,
@@ -100,11 +103,12 @@ enum ValidationErrorCode {
 	SegmentBlock_SegmentObject = 702,
 	SegmentBlock_RepeatNumber = 703,
 
-	Duration_SamplesNumber = 800,
-	Duration_MillisNumber = 801,
+	Duration_SamplesNumberOrValue = 800,
+	Duration_SamplesValue = 800,
+	Duration_MillisNumberOrValue = 801,
 	Duration_BarsNumber = 802,
-	Duration_BeatsNumber = 803,
-	Duration_HzNumber = 804,
+	Duration_BeatsNumberOrValue = 803,
+	Duration_HzNumberOrValue = 804,
 	Duration_NoSamplesOrMillisOrBeatsOrHz = 805,
 	Duration_EitherSamplesOrMillisOrBeatsOrHz = 806,
 	Duration_BarsRequiresBeats = 807,
@@ -174,6 +178,8 @@ enum ValidationErrorCode {
 	Value_CalcArray = 1413,
 	Value_CalcObject = 1414,
 	Value_QuantizeBool = 1415,
+	Value_NoLimitBoolean = 1416,
+	Value_NoLimitOnNonVoltage = 1417,
 
 	Output_RefOrInstance = 1500,
 	Output_IndexNumber = 1501,
@@ -192,11 +198,23 @@ enum ValidationErrorCode {
 
 	Calc_RefOrInstance = 1800,
 	Calc_NoOperation = 1801,
-	Calc_MultpleOperations = 1802,
+	Calc_MultipleOperations = 1802,
 	Calc_AddObject = 1803,
 	Calc_SubObject = 1804,
 	Calc_DivObject = 1805,
 	Calc_MultObject = 1806,
+	Calc_MaxObject = 1807, // Since 1.1.0
+	Calc_MinObject = 1808, // Since 1.1.0
+	Calc_RemainObject = 1809, // Since 1.1.0
+	Calc_TruncBoolean = 1810, // Since 1.1.0
+	Calc_FracBoolean = 1811, // Since 1.1.0
+	Calc_RoundString = 1812, // Since 1.1.0
+	Calc_RoundEnum = 1813, // Since 1.1.0
+	Calc_QuantizeObject = 1814, // Since 1.1.0
+	Calc_QuantizeTuningNotFound = 1815, // Since 1.1.0
+	Calc_SignString = 1816, // Since 1.1.0
+	Calc_SignEnum = 1817, // Since 1.1.0
+	Calc_VtofBoolean = 1818, // Since 1.1.0
 
 	InputTrigger_IdString = 1900,
 	InputTrigger_IdLength = 1901,
@@ -205,7 +223,13 @@ enum ValidationErrorCode {
 	SetLabel_IndexNumber = 2000,
 	SetLabel_IndexRange = 2001,
 	SetLabel_LabelString = 2002,
-	SetLabel_LabelLength = 2003
+	SetLabel_LabelLength = 2003,
+
+	Tuning_RefOrInstance = 2100, // Since 1.1.0
+	Tuning_NotesArray = 2101, // Since 1.1.0
+	Tuning_NotesArraySize = 2102, // Since 1.1.0
+	Tuning_NoteFloatOrString = 2103, // Since 1.1.0
+	Tuning_NoteFormat = 2104 // Since 1.1.0
 };
 
 

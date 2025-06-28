@@ -28,6 +28,7 @@ The [note sequence](samples/NOTE-SEQ.md) scripts start with a simple note sequen
 * Starting and stopping lanes through triggers
 * Using input ports as CV sources
 * Using to component-pool to reduce script size using re-usable components
+* Using a tuning to quantize values to a scale
 
 ## Creating Clock Signals
 
@@ -57,6 +58,8 @@ The sample will start with a simplified version of the Bernoulli Gate, and then 
 
 ## Oscillator
 
-The [oscillator](samples/OSCILLATOR.md) sample will set up a script that causes TimeSeq to generate several types of waveforms (square, sawtooth, triangle and Sine-like) that all produce a C3 note. Just like the [bernoulli gate](#a-bernoulli-gate) sample, this sample is not intended to demonstrate how TimeSeq can replace an Oscillator, but instead is intended to show what can be done. In this case, it also provides an opportunity to show different aspects of the *glide* actions.
+The [oscillator](samples/OSCILLATOR.md) sample will set up a script that causes TimeSeq to generate several types of waveforms (square, sawtooth, triangle and Sine-like). Just like the [bernoulli gate](#a-bernoulli-gate) sample, this sample is not intended to demonstrate how TimeSeq can replace an Oscillator, but instead is intended to show what can be done. In this case, it also provides an opportunity to show different aspects of the *glide* actions.
+
+The sample starts with creating versions of the waveforms that all produce a C3 note, but the last section of the sample page will update this using segments with a variable duration, causing it to become tunable using a 1V/Oct input signal. 
 
 As a bonus, this sample also throws in a random voltage generator (i.e. noise) output.

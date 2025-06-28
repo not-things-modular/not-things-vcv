@@ -9,29 +9,154 @@ using namespace std;
 using namespace timeseq;
 
 
-CalcProcessor::CalcProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_scriptCalc(scriptCalc), m_value(value) {}
+CalcValueProcessor::CalcValueProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_value(value) {
+	switch (scriptCalc->operation) {
+		case ScriptCalc::ADD:
+			m_operation = ValueCalcOperation::ADD;
+			break;
+		case ScriptCalc::SUB:
+			m_operation = ValueCalcOperation::SUB;
+			break;
+		case ScriptCalc::DIV:
+			m_operation = ValueCalcOperation::DIV;
+			break;
+		case ScriptCalc::MULT:
+			m_operation = ValueCalcOperation::MULT;
+			break;
+		case ScriptCalc::MAX:
+			m_operation = ValueCalcOperation::MAX;
+			break;
+		case ScriptCalc::MIN:
+			m_operation = ValueCalcOperation::MIN;
+			break;
+		case ScriptCalc::REMAIN:
+			m_operation = ValueCalcOperation::REMAIN;
+			break;
+		case ScriptCalc::TRUNC:
+		case ScriptCalc::FRAC:
+		case ScriptCalc::ROUND:
+		case ScriptCalc::QUANTIZE:
+		case ScriptCalc::SIGN:
+		case ScriptCalc::VTOF:
+			// Should not happen in this constructor.
+			break;
+	}
+}
 
-double CalcProcessor::calc(double value) {
+double CalcValueProcessor::calc(double value) {
 	double calcValue = m_value->process();
 
-	switch (m_scriptCalc->operation) {
-		case ScriptCalc::ADD:
+	switch (m_operation) {
+		case ValueCalcOperation::ADD:
 			return value + calcValue;
-		case ScriptCalc::SUB:
+		case ValueCalcOperation::SUB:
 			return value - calcValue;
-		case ScriptCalc::MULT:
+		case ValueCalcOperation::MULT:
 			return value * calcValue;
-		case ScriptCalc::DIV:
-			if (calcValue != 0.) {
+		case ValueCalcOperation::DIV:
+			if (calcValue != 0.f) {
 				return value / calcValue;
 			} else {
 				return 0.;
 			}
+		case ValueCalcOperation::MAX:
+			return value > calcValue ? value : calcValue;
+		case ValueCalcOperation::MIN:
+			return value < calcValue ? value : calcValue;
+		case ValueCalcOperation::REMAIN:
+			if (calcValue != 0.f) {
+				return fmod(value, calcValue);
+			} else {
+				return 0.f;
+			}
 	}
 
+	// All value-based calculations should have already been handled in the switch...
 	return value;
 }
 
+double CalcTruncProcessor::calc(double value) {
+	return trunc(value);
+}
+
+double CalcFracProcessor::calc(double value) {
+	float x;
+	return modf(value, &x);
+}
+
+CalcRoundProcessor::CalcRoundProcessor(ScriptCalc* scriptCalc) : m_scriptCalc(scriptCalc) {}
+
+double CalcRoundProcessor::calc(double value) {
+	switch (*m_scriptCalc->roundType) {
+		case ScriptCalc::RoundType::UP:
+			return ceil(value);
+		case ScriptCalc::RoundType::DOWN:
+			return floor(value);
+		case ScriptCalc::RoundType::NEAR:
+			return round(value);
+	}
+
+	// All rounding types should have been covered in the switch...
+	return value;
+}
+
+CalcQuantizeProcessor::CalcQuantizeProcessor(ScriptTuning* scriptTuning) {
+	vector<float> tuningValues;
+
+	if (scriptTuning->notes.size() == 1) {
+		// If there is only one note in the tuning, add the note one octave lower, the note itself, and the note one octave higher
+		tuningValues.push_back(scriptTuning->notes[0] - 1.f);
+		tuningValues.push_back(scriptTuning->notes[0]);
+		tuningValues.push_back(scriptTuning->notes[0] + 1.f);
+	} else {
+		// First create a list of all the tuning notes with the last one added at the front one octave lower
+		// And the first one added at the back one octave higher
+		tuningValues.push_back(scriptTuning->notes.back() - 1.f);
+		tuningValues.insert(tuningValues.end(), scriptTuning->notes.begin(), scriptTuning->notes.end());
+		tuningValues.push_back(scriptTuning->notes.front() + 1.f);
+	}
+
+	// Based on the tuningValues list, determine all the quantization points as being halfway between each tuning value
+	for (unsigned int i = 0; i < tuningValues.size() - 1; i++) {
+		float boundary = tuningValues[i] + ((tuningValues[i + 1] - tuningValues[i]) / 2.f);
+		m_quantizeValues.push_back({ boundary, tuningValues[i]});
+	}
+	// Add in the last tuningValue entry as a round-up entry
+	m_quantizeValues.push_back({ 2.f, tuningValues.back()});
+}
+
+double CalcQuantizeProcessor::calc(double value) {
+	float integral;
+	float fract = modf(value, &integral);
+
+	if (fract < 0.f) {
+		fract += 1.f;
+		integral -= 1.f;
+	}
+
+	for (vector<array<float, 2>>::iterator it = m_quantizeValues.begin(); it != m_quantizeValues.end(); it++) {
+		if (fract < (*it)[0]) {
+			return integral + (*it)[1];
+		}
+	}
+
+	// Shouldn't reach this point...
+	return value;
+}
+
+CalcSignProcessor::CalcSignProcessor(ScriptCalc* scriptCalc) : m_positive(*scriptCalc->signType == ScriptCalc::SignType::POS) {}
+
+double CalcSignProcessor::calc(double value) {
+	if (((m_positive) && (value < 0)) || ((!m_positive) && (value > 0))) {
+		return -value;
+	} else {
+		return value;
+	}
+}
+
+double CalcVtoFProcessor::calc(double value) {
+	return pow(2, value) * 261.6256f;
+}
 
 ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : m_calcProcessors(calcProcessors), m_quantize(quantize) {}
 
@@ -52,7 +177,7 @@ double ValueProcessor::process() {
 // The quantizing thresholds within an octave for quantizing to the nearest note.
 // The first value is halfway between two quantized notes, the second value is the quantized note that is below it.
 // Any value that is below the first value should be quantized down to the note that's in the second value.
-const float quantize_treshholds[][2] = {
+const float quantize_thresholds[][2] = {
 	{ 1.f / 24, 0.f }, // C
 	{ (1.f / 12) + (1.f / 24), (1.f / 12) }, // C#
 	{ (2.f / 12) + (1.f / 24), (2.f / 12) }, // D
@@ -70,7 +195,7 @@ const float quantize_treshholds[][2] = {
 
 double ValueProcessor::quantize(double value) {
 	double octave;
-	double note = std::modf(value, &octave);
+	double note = modf(value, &octave);
 
 	if (note < 0.f) {
 		note += 1.f;
@@ -78,8 +203,8 @@ double ValueProcessor::quantize(double value) {
 	}
 
 	for (int i = 0; i < 13; i++) {
-		if (note < quantize_treshholds[i][0]) {
-			note = quantize_treshholds[i][1];
+		if (note < quantize_thresholds[i][0]) {
+			note = quantize_thresholds[i][1];
 			break;
 		}
 	}
@@ -115,7 +240,7 @@ RandValueGenerator::RandValueGenerator() : m_generator(chrono::steady_clock::now
 RandValueGenerator::~RandValueGenerator() {}
 
 float RandValueGenerator::generate(float lower, float upper) {
-	// std::uniform_real_distribution expects lower < upper, so make sure to handle possible edge cases.
+	// uniform_real_distribution expects lower < upper, so make sure to handle possible edge cases.
 	if (lower == upper) {
 		return lower;
 	} else if (lower < upper) {
@@ -144,14 +269,14 @@ bool IfProcessor::process(string* message) {
 		switch (m_scriptIf->ifOperator) {
 			case ScriptIf::IfOperator::EQ: {
 				if (m_scriptIf->tolerance) {
-					return std::fabs(m_values.first->process() - m_values.second->process()) <= *m_scriptIf->tolerance.get();
+					return fabs(m_values.first->process() - m_values.second->process()) <= *m_scriptIf->tolerance.get();
 				} else {
 					return m_values.first->process() == m_values.second->process();
 				}
 			}
 			case ScriptIf::IfOperator::NE: {
 				if (m_scriptIf->tolerance) {
-					return std::fabs(m_values.first->process() - m_values.second->process()) > *m_scriptIf->tolerance.get();
+					return fabs(m_values.first->process() - m_values.second->process()) > *m_scriptIf->tolerance.get();
 				} else {
 					return m_values.first->process() != m_values.second->process();
 				}
@@ -173,7 +298,7 @@ bool IfProcessor::process(string* message) {
 		return false;
 	} else {
 		// We'll need to return the details of the comparison if it failed, so we'll need to do some additional work...
-		std::ostringstream oss;
+		ostringstream oss;
 		oss.precision(10);
 		if (m_scriptIf->ifOperator == ScriptIf::IfOperator::AND) {
 			string message1;
@@ -185,6 +310,7 @@ bool IfProcessor::process(string* message) {
 			*message = oss.str();
 
 			if (if1 && if2) {
+				// Normally, we shouldn't arrive here anymore since the assert action will first verify the expectation without requesting the detailed message
 				return true;
 			} else {
 				return false;
@@ -199,6 +325,7 @@ bool IfProcessor::process(string* message) {
 			*message = oss.str();
 
 			if (if1 || if2) {
+				// Normally, we shouldn't arrive here anymore since the assert action will first verify the expectation without requesting the detailed message
 				return true;
 			} else {
 				return false;
@@ -212,7 +339,7 @@ bool IfProcessor::process(string* message) {
 			switch (m_scriptIf->ifOperator) {
 				case ScriptIf::IfOperator::EQ: {
 					if (m_scriptIf->tolerance) {
-						result = std::fabs(value1 - value2) <= *m_scriptIf->tolerance.get();
+						result = fabs(value1 - value2) <= *m_scriptIf->tolerance.get();
 					} else {
 						result = value1 == value2;
 					}
@@ -221,7 +348,7 @@ bool IfProcessor::process(string* message) {
 				}
 				case ScriptIf::IfOperator::NE: {
 					if (m_scriptIf->tolerance) {
-						result = std::fabs(value1 - value2) > *m_scriptIf->tolerance.get();
+						result = fabs(value1 - value2) > *m_scriptIf->tolerance.get();
 					} else {
 						result = value1 != value2;
 					}
@@ -263,7 +390,7 @@ bool IfProcessor::process(string* message) {
 	}
 }
 
-ActionProcessor::ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
+ActionProcessor::ActionProcessor(shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
 
 void ActionProcessor::process() {
 	if ((!m_ifProcessor) || (m_ifProcessor->process(nullptr))) {
@@ -300,8 +427,11 @@ void ActionSetLabelProcessor::processAction() {
 ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
 
 void ActionAssertProcessor::processAction() {
-	string message;
-	if (!m_expect->process(&message)) {
+	// First check the expectation without constructing a message to avoid performance impact
+	if (!m_expect->process(nullptr)) {
+		// If the expectation failed, re-execute it to generate the message
+		string message;
+		m_expect->process(&message);
 		m_assertListener->assertFailed(m_name, message, m_stopOnFail);
 	}
 }
@@ -403,7 +533,7 @@ double ActionGlideProcessor::calculateSigEase(float ease, uint64_t glidePosition
 }
 
 
-ActionGateProcessor::ActionGateProcessor(float gateHighRatio, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
+ActionGateProcessor::ActionGateProcessor(float gateHighRatio, shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
 	ActionOngoingProcessor(ifProcessor), m_portHandler(portHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_gateHighRatio(gateHighRatio) {}
 
 void ActionGateProcessor::start(uint64_t glideLength) {
@@ -411,7 +541,7 @@ void ActionGateProcessor::start(uint64_t glideLength) {
 
 	if (shouldProcess()) {
 		// There should be at least one high sample in the gate
-		m_gateLowPosition = std::fmax(std::ceil(m_gateHighRatio * glideLength), 1.f);
+		m_gateLowPosition = fmax(ceil(m_gateHighRatio * glideLength), 1.f);
 
 		m_gateHigh = true;
 		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, 10.f);
@@ -434,8 +564,6 @@ void ActionGateProcessor::end() {
 	}
 }
 
-
-DurationProcessor::DurationProcessor(uint64_t duration, double drift) : m_duration(duration), m_drift(drift) {}
 
 DurationProcessor::DurationState DurationProcessor::getState() {
 	return m_state;
@@ -477,6 +605,56 @@ void DurationProcessor::reset() {
 	m_position = 0;
 }
 
+void DurationProcessor::setDuration(uint64_t duration) {
+	m_duration = duration;
+}
+
+void DurationProcessor::setDrift(double drift) {
+	m_drift = drift;
+}
+
+DurationConstantProcessor::DurationConstantProcessor(uint64_t duration, double drift) {
+	setDuration(duration);
+	setDrift(drift);
+}
+
+void DurationConstantProcessor::prepareForStart() {}
+
+
+DurationVariableFactorProcessor::DurationVariableFactorProcessor(std::shared_ptr<ValueProcessor> value, double samplesFactor) : m_value(value), m_samplesFactor(samplesFactor) {}
+
+void DurationVariableFactorProcessor::prepareForStart() {
+	double value = m_value->process();
+	double refactoredValue = (m_samplesFactor != 1.f) ? value * m_samplesFactor : value;
+	
+	if (refactoredValue >= 1.f) {
+		uint64_t duration = floor(refactoredValue);
+		setDuration(duration);
+		setDrift(refactoredValue - duration);
+	} else {
+		setDuration(1);
+		setDrift(0.);
+	}
+}
+
+
+DurationVariableHzProcessor::DurationVariableHzProcessor(std::shared_ptr<ValueProcessor> value, double sampleRate) : m_value(value), m_sampleRate(sampleRate) {}
+
+void DurationVariableHzProcessor::prepareForStart() {
+	double value = m_value->process();
+	double refactoredValue = m_sampleRate / value;
+	
+	if (refactoredValue >= 1.f) {
+		uint64_t duration = floor(refactoredValue);
+		setDuration(duration);
+		setDrift(refactoredValue - duration);
+	} else {
+		setDuration(1);
+		setDrift(0.);
+	}
+}
+
+
 SegmentProcessor::SegmentProcessor(SegmentProcessor& segmentProcessor) :
 	m_scriptSegment(segmentProcessor.m_scriptSegment),
 	m_duration(segmentProcessor.m_duration),
@@ -495,11 +673,11 @@ SegmentProcessor::SegmentProcessor(
 	EventListener* eventListener) :
 		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_ongoingActions(ongoingActions), m_eventListener(eventListener) {}
 
-void SegmentProcessor::pushStartActions(std::vector<std::shared_ptr<ActionProcessor>> startActions) {
+void SegmentProcessor::pushStartActions(vector<shared_ptr<ActionProcessor>> startActions) {
 	m_startActions.insert(m_startActions.begin(), startActions.begin(), startActions.end());
 }
 
-void SegmentProcessor::pushEndActions(std::vector<std::shared_ptr<ActionProcessor>> endActions) {
+void SegmentProcessor::pushEndActions(vector<shared_ptr<ActionProcessor>> endActions) {
 	m_endActions.insert(m_endActions.end(), endActions.begin(), endActions.end());
 }
 
@@ -516,6 +694,7 @@ double SegmentProcessor::process(double drift) {
 			m_eventListener->segmentStarted();
 		}
 		processStartActions();
+		m_duration->prepareForStart();
 		starting = true; // The glide actions will have to be processed from their start position.
 	}
 
@@ -529,7 +708,7 @@ double SegmentProcessor::process(double drift) {
 			processOngoingActions(starting, false);
 			break;
 		case DurationProcessor::DurationState::STATE_END:
-			processOngoingActions(false, true);
+			processOngoingActions(starting, true);
 			processEndActions();
 			break;
 	}

@@ -4,9 +4,10 @@
 #include <stdarg.h>
 
 using namespace timeseq;
+using namespace std;
 
-std::string timeseq::createValidationErrorMessage(ValidationErrorCode code, ...) {
-	std::ostringstream errorMessage;
+string timeseq::createValidationErrorMessage(ValidationErrorCode code, ...) {
+	ostringstream errorMessage;
 
 	va_list args;
 	va_start(args, code);
@@ -22,9 +23,9 @@ std::string timeseq::createValidationErrorMessage(ValidationErrorCode code, ...)
 	return errorMessage.str();
 }
 
-std::string timeseq::createValidationErrorLocation(std::vector<std::string> location) {
-	std::ostringstream errorLocation;
-	for (const std::string& entry : location) {
+string timeseq::createValidationErrorLocation(vector<string> location) {
+	ostringstream errorLocation;
+	for (const string& entry : location) {
 		errorLocation << "/";
 		errorLocation << entry;
 	}

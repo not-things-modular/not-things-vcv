@@ -8,10 +8,49 @@
 				{
 					"auto-start": true,
 					"loop": true,
+					"x-description": "Calculate the frequencies every 100 millisecond based on the input 1V/Oct value",
+					"segments": [
+						{
+							"duration": { "millis": 50 },
+							"actions": [
+								{
+									"set-variable": {
+										"name": "frequency",
+										"value": {
+											"input": 1,
+											"calc": [ { "vtof": true } ]
+										}
+									}
+								},
+								{
+									"set-variable": {
+										"name": "frequency-2x",
+										"value": {
+											"variable": "frequency",
+											"calc": [ { "mult": 2 } ]
+										}
+									}
+								},
+								{
+									"set-variable": {
+										"name": "frequency-4x",
+										"value": {
+											"variable": "frequency",
+											"calc": [ { "mult": 4 } ]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
                     "x-description": "Create a square wave by looping two segments that switch between 5V and -5V",
 					"segments": [
 						{
-							"duration": { "hz": 261.63 },
+							"duration": { "hz": { "variable": "frequency-2x" } },
 							"actions": [
 								{
 									"set-value": {
@@ -22,7 +61,7 @@
 							]
 						},
 						{
-							"duration": { "hz": 261.63 },
+							"duration": { "hz": { "variable": "frequency-2x" } },
 							"actions": [
 								{
 									"set-value": {
@@ -40,7 +79,7 @@
                     "x-description": "Create a sawtooth wave by looping a single gliding segment that moves from -5V to 5V and then immediately drops back to -5V when it loops",
 					"segments": [
 						{
-							"duration": { "hz": 130.815 },
+							"duration": { "hz": { "variable": "frequency" } },
 							"actions": [
 								{
 									"timing": "glide",
@@ -58,7 +97,7 @@
                     "x-description": "Create a triangle wave by looping two segments: one that glides from -5V to 5V and another that glides back from 5V to -5V",
 					"segments": [
 						{
-							"duration": { "hz": 261.63 },
+							"duration": { "hz": { "variable": "frequency-2x" } },
 							"actions": [
 								{
 									"timing": "glide",
@@ -69,7 +108,7 @@
 							]
 						},
 						{
-							"duration": { "hz": 261.63 },
+							"duration": { "hz": { "variable": "frequency-2x" } },
 							"actions": [
 								{
 									"timing": "glide",
@@ -87,7 +126,7 @@
                     "x-description": "Create a sine-like wave by looping four segments that use glide actions with easing factors that will approach a sine shape",
 					"segments": [
 						{
-							"duration": { "hz": 523.26 },
+							"duration": { "hz": { "variable": "frequency-4x" } },
 							"actions": [
 								{
 									"timing": "glide",
@@ -100,7 +139,7 @@
 							]
 						},
 						{
-							"duration": { "hz": 523.26 },
+							"duration": { "hz": { "variable": "frequency-4x" } },
 							"actions": [
 								{
 									"timing": "glide",
@@ -113,7 +152,7 @@
 							]
 						},
 						{
-							"duration": { "hz": 523.26 },
+							"duration": { "hz": { "variable": "frequency-4x" } },
 							"actions": [
 								{
 									"timing": "glide",
@@ -126,7 +165,7 @@
 							]
 						},
 						{
-							"duration": { "hz": 523.26 },
+							"duration": { "hz": { "variable": "frequency-4x" } },
 							"actions": [
 								{
 									"timing": "glide",

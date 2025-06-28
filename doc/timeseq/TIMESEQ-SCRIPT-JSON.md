@@ -12,6 +12,7 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
     * [lanes](#lane) - The core sequencing object of TimeSeq
       * [segments](#segment) - The core timing object of TimeSeq
         * [duration](#duration) - Identify the length of a *segment*
+          * [variable-length duration](#variable-length-durations) - duration lengths based on *value*s
         * [segment-block](#segment-block) - Allow grouping of several *segment*s
         * [action](#action) - The core functional component of TimeSeq
           * [if](#if) - Allow conditional executing of *action*s
@@ -23,6 +24,7 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
               * [output](#output) - Identifies an output port and channel
               * [rand](#rand) - Generates a random voltage
               * [calc](#calc) - Allows mathematical calculations with *value*s
+                * [tuning](#tuning)s - Quantization tunings
           * [set-variable](#set-variable) - Set an internal variable
             * [value](#value) - Evaluates to a voltage
           * [set-polyphony](#set-polyphony) - Sets the number of channels on an output port
@@ -33,6 +35,14 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
   * [input-triggers](#input-trigger) - Fire internal triggers based on external trigger signals
   * global-[action](#action) - *Action*s to perform during script start
   * [component-pool](#component-pool) - A pool of reusable JSON objects
+
+## Versions
+
+As new features are added, the `version` of the script is updated. The [script version](TIMESEQ-SCRIPT-VERSION.md) page gives an overview of these changes.
+
+## JSON Schema
+
+To facilitate editing of the JSON script in JSON Schema aware editors, a schema can be 
 
 ## JSON Property types
 
@@ -55,14 +65,15 @@ The `global-actions` property allows specific *action*s to be executed when a sc
 
 If there is a need to generate internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers) based on external trigger sources, the `input-triggers` property allows input ports to be set up for receiving external trigger signals.
 
-In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [component reuse](TIMESEQ-SCRIPT.md#component-reuse) section of the main TimeSeq script documentation file for more details.
+In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [referencing](TIMESEQ-SCRIPT.md#referencing) section of the main TimeSeq script documentation file for more details.
 
 ### Properties
 
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
-| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently only `1.0.0` is supported. |
+| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
+| `$schema` | no | uri string | Allows JSON schema validation to be performed by schema-aware JSON editors. See the [script version](TIMESEQ-SCRIPT-VERSION.md) page for the schema URIs that can be used. The value given to this property will not influence TimeSeq parsing or processing itself. |
 | `timelines` | no | [timeline](#timeline) list | A list of *timeline*s that will drive the sequencer. |
 | `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
 | `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing gate/trigger signals on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
@@ -183,7 +194,7 @@ The running state of a lane can be controlled using triggers:
 | `auto-start` | no | boolean | If set to `true`, the lane will start automatically when the script is loaded. If set to `false` the lane will remain stopped when the script is loaded. Defaults to `true` |
 | `loop`| no | boolean | If set to `true`, the lane will restart from its first segment once its last segment has completed. Otherwise the lane will stop once its last segment completes. Defaults to `false` |
 | `repeat` | no | unsigned number | Specifies how many times the *segment*s in the lane should be repeated before stopping the lane. Both values `0` and `1` mean that the segments are executed once. This property has no impact if `loop` is set to `true`. Defaults to `0` |
-| `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
+| `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
 | `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty.|
 | `stop-trigger` | no | string | The id of the internal trigger that will cause this lane to stop running. A stop trigger on an an inactive lane has no impact on the state of that lane. Defaults to empty. |
 | `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this lane will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
@@ -239,16 +250,17 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
 
 ### Properties
 
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `segment-blocks` | no | [segment-block](#segment-block) list | A list of reusable *segment-block* objects. |
-| `segments`| no | [segment](#segment) list | A list of reusable *segment* objects. |
-| `inputs` | no | [input](#input) list | A list of reusable *input* objects. |
-| `outputs` | no | [output](#output) list | A list of reusable *output* objects. |
-| `calcs` | no | [calc](#calc) list | A list of reusable *calc* objects. |
-| `values` | no | [value](#value) list | A list of reusable *value* objects. |
-| `actions` | no | [action](#action) list | A list of reusable *action* objects. |
-| `ifs` | no | [if](#if) list | A list of reusable *if* objects. |
+| property | required | type | since | description |
+| --- | --- | --- | --- | --- |
+| `segment-blocks` | no | [segment-block](#segment-block) list | | A list of reusable *segment-block* objects. |
+| `segments`| no | [segment](#segment) list | | A list of reusable *segment* objects. |
+| `inputs` | no | [input](#input) list | | A list of reusable *input* objects. |
+| `outputs` | no | [output](#output) list | | A list of reusable *output* objects. |
+| `calcs` | no | [calc](#calc) list | | A list of reusable *calc* objects. |
+| `values` | no | [value](#value) list | | A list of reusable *value* objects. |
+| `actions` | no | [action](#action) list | | A list of reusable *action* objects. |
+| `ifs` | no | [if](#if) list | | A list of reusable *if* objects. |
+| `tunings` | no | [tuning](#tuning) list | *1.1.0* | A list of *tuning* objects that can be used in *quantize* *calc*s |
 
 ### Example
 
@@ -352,7 +364,7 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `samples` | no | unsigned number | The number of samples that the *segment* will last. Relative to the `sample-rate` of the [time-scale](#time-scale) of the current [timeline](#timeline), or to the active VCV Rack sample rate if none was specified on the *timeline*  |
-| `millis`| no | unsigned float | Number of seconds that the *segment* will last |
+| `millis`| no | unsigned float | Number of milliseconds that the *segment* will last |
 | `beats` | no | unsigned float | Number of beats that the *segment* will last, Relative to the `bpm` of the [time-scale](#time-scale) of the current [timeline](#timeline) |
 | `bars` | no | unsigned number | Number of bars that the *segment* will last, Relative to the `bpb` of the [time-scale](#time-scale) of the current [timeline](#timeline). Can not be used without `beats` |
 | `hz` | no | unsigned float | Expresses the duration of the *segment* in Hertz, or fractions of a second |
@@ -381,6 +393,46 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 {
     "beats": 0,
     "bars": 2
+}
+```
+
+### Variable-length durations
+
+Instead of using a fixed numeric value for the duration (e.g. `"beats": 0.25`), it is also possible to use a [value](#value) for the `samples`, `millis`, `beats` or `hz` properties. This allows the duration of the segment to vary based on the evaluated voltage of the *variable*. Each time a *segment* starts, if the duration is set to a *value* object instead of a fixed numeric, that *value* will be evaluated and the result will be used as duration *segment*. The next time that *segment* is executed, the *value* will be re-evaluated and may result in a different duration.
+
+Since the [action](#action)s of a *segment* can have an impact on the resulting voltage of a *value*, a fixed order of operations is followed:
+
+* First all actions of the *segment* with a `start` timing will be executed
+* Then the *duration* of the *segment* is calculated
+* Then the `glide` and `gate` actions are executed
+* Finally, when the segment ends, the `end` actions are executed
+
+This means that `start` actions can be used in a segment to influence the *duration* of that segment. However, once this *length* has been determined, the remaining actions (`glide`, `gate` or `end`) will not influence it anymore, even if they modify properties that the original *duration* calculation was based on.
+
+Just like constant-length durations, a variable-length durations can not be made shorter then one sample. If the *duration* evaluates to a length shorter then one sample, it will be made to last one sample instead. Fractional sample durations (longer then 1 sample) are supported however, resulting in drift compensation by TimeSeq over time.
+
+When using a *value*-based `beats` duration, it is not possible to also specify a `bars` property.
+
+*Variable-length durations were introduced in TimeSeq script version 1.1.0.*
+
+### Examples of Variable-length Durations
+
+The duration is expressed in `beats`, its length is determined by the voltage of input 2:
+
+```json
+{
+    "beats": { "input": 2 }
+}
+```
+
+The duration is expressed in `millis`, which is set to the current value of the `my-segment-duration` variable that gets truncated (i.e. the decimal part removed, only the whole value is used)
+
+```json
+{
+    "millis": {
+        "variable": "my-segment-duration",
+        "calc": { "trunc": true }
+    }
 }
 ```
 
@@ -861,13 +913,15 @@ Throughout the TimeSeq script, whenever a voltage is needed, a value is used to 
 * Reading the current voltage from an [output](#output) port
 * Using a [rand](#rand)om voltage generator
 
+Since `voltage` values are usually expected to be between -10V and 10V, the constant `voltage` value will by default be limited to this range. In some scenarios (e.g. when specifying *segment* lengths in variable-length [duration](#duration)s), there may be a need to specify a constant value outside this range. The range check on a `voltage` value can be disabled by setting the `no-limit` property of a value to `true`.
+
 When the `note` property is used, it must be a 2 or 3 character string, where the first character specifies the note name (A-G), the second specifies the octave (0-9) and the third (optional) character can either use `+` to indicate a sharp, or `-` to indicate a flat. E.g: `C4+` will result in the 1V/Oct value of a middle C#, while a `A3-` will result in an A flat below middle C.
 
 If a `variable` property is used and no variable with a matching name was previously set using a [set-variable](#set-variable) *action, 0V will be used instead.
 
 Additional mathematical operations are possible on a value using the `calc` property. This allows simple [calc](#calc)ulations to be performed by either adding, subtracting, dividing or multiplying this value with another value. The `calc` property expects a list of [calc](#calc) objects. Even if only one calculation is to be performed, it should still be supplied as a list (with one element). The calculations will then be executed in the order that they appear in the list. While voltage values are usually expected to fall into the -10V to 10V range in VCV Rack, calculations will not enforce this limit, and the result of the calculation can fall outside of that range.
 
-Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** the *calc* operations have been applied to the voltage value.
+Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** the *calc* operations have been applied to the voltage value. If more control is needed over the quantization , such as quantizing to a specific scale or a set of custom voltages, a [calc](#calc) with a `quantize` operation should be used instead.
 
 Exactly one of the `voltage`, `note`, `variable`, `input`, `output` or `rand` properties must be specified for a value.
 
@@ -875,16 +929,17 @@ Note: values always resolve into a voltage, which is then used by the object tha
 
 ### Properties
 
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `voltage` | no | float | An exact constant voltage value between `-10` and `10`. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for voltage values |
-| `note`| no | string | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for note values |
-| `variable`| no | string | The name of the variable to use. |
-| `input` | no | [input](#input) | Reads the current voltage from one of the TimeSeq inputs. |
-| `output` | no | [output](#output) | Reads the current voltage from one of the TimeSeq outputs. |
-| `rand` | no | [rand](#rand) | Uses a random voltage value (within a specified voltage range). |
-| `calc` | no | [calc](#calc) list | Allows mathematical operations to be applied to the voltage of this value, using the voltage of another value. |
-| `quantize` | no | boolean | If set to `true`, the voltage of this value will be quantized to the nearest 1V/Oct note value **after** any optional calculations have been performed. If set to `false`, the voltage value will be used as-is after any optional calculations have been performed. Defaults to `false`. |
+| property | required | type | since | description |
+| --- | --- | --- | --- | --- |
+| `voltage` | no | float | | An exact constant voltage value between `-10` and `10`. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for voltage values. |
+| `no-limit`| no | boolean | *1.1.0* | Can only be used in combination with `voltage`. When set to `true`, the default check that enforces a voltage value between `-10` and `10` will be disabled. |
+| `note`| no | string | | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for note values |
+| `variable`| no | string | | The name of the variable to use. |
+| `input` | no | [input](#input) | | Reads the current voltage from one of the TimeSeq inputs. |
+| `output` | no | [output](#output) | | Reads the current voltage from one of the TimeSeq outputs. |
+| `rand` | no | [rand](#rand) | | Uses a random voltage value (within a specified voltage range). |
+| `calc` | no | [calc](#calc) list | | Allows mathematical operations to be applied to the voltage of this value, using the voltage of another value. |
+| `quantize` | no | boolean | | If set to `true`, the voltage of this value will be quantized to the nearest 1V/Oct note value **after** any optional calculations have been performed. If set to `false`, the voltage value will be used as-is after any optional calculations have been performed. Defaults to `false`. |
 
 ### Examples
 
@@ -1125,27 +1180,45 @@ The generated random value will be between the `lower` and `upper` [value](#valu
 
 ## calc
 
-Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, each calculation either adds or subtracts another value from the current voltage, multiplies them, or divides the current voltage by the specified value.
+Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, each calculation modifies the value (e.g. adds or subtracts another value from the current voltage).
 
-To safeguard against calculation errors, a division by zero will result in 0V.
+To safeguard against calculation errors, a division by zero will result in 0V and a remainder after division by zero will also result in 0V.
 
-The possible mathematical operations that are available are:
+The possible operations that are available are:
 
-* `add` or adding a value to the current voltage,
+* `add` for adding a value to the current voltage,
 * `sub` for subtracting a value from the current voltage,
 * `mult` for multiplying the current voltage with a value,
-* `div` for dividing the current voltage by a value.
+* `div` for dividing the current voltage by a value,
+* `max` for determining the highest of two values,
+* `min` for determining the lowest of two values,
+* `remain` for calculating the remainder after division by another value,
+* `trunc` for getting the non-decimal part of a value,
+* `frac` for getting the decimal part of a value,
+* `round` for rounding the value up, down or to the nearest non-decimal number,
+* `quantize` for quantizing to a [tuning](#tuning)
+* `sign` for enforcing that the sign of a value is either positive or negative.
+* `vtof` for converting a 1V/Oct value into a frequency
 
-Each calc must specify exactly one mathematical operation.
+While multiple calcs can be added to the calculation list of a *value*, each calc within that list must specify exactly one mathematical operation.
 
 ### Properties
 
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `add` | no | [value](#value) | Adds a value to the current voltage. |
-| `sub` | no | [value](#value) | Subtracts a value from the current voltage. |
-| `mult` | no | [value](#value) | Multiplies the current voltage with a value. |
-| `div` | no | [value](#value) | Divides the current voltage by a value. |
+| property | required | type | since | description |
+| --- | --- | --- | --- | --- |
+| `add` | no | [value](#value) |  | Adds a value to the current voltage. |
+| `sub` | no | [value](#value) |  | Subtracts a value from the current voltage. |
+| `mult` | no | [value](#value) |  | Multiplies the current voltage with a value. |
+| `div` | no | [value](#value) |  | Divides the current voltage by a value. |
+| `max` | no | [value](#value) | *1.1.0* | Compares the current voltage with the supplied value and uses the higher of the two. |
+| `min` | no | [value](#value) | *1.1.0* | Compares the current voltage with the supplied value and uses the lower of the two. |
+| `remain` | no | [value](#value) | *1.1.0* | Divides the current voltage by a value and uses the remainder after division. |
+| `trunc` | no | boolean | *1.1.0* | Removes the decimal part of the current voltage, keeping only the whole number. The result keeps the same sign (positive or negative) as the original voltage. Must be set to `true`. |
+| `frac` | no | boolean | *1.1.0* | Removes the whole number part of the current voltage, keeping only the decimal part. The result keeps the same sign (positive or negative) as the original voltage. Must be set to `true`. |
+| `round` | no | string | *1.1.0* | Can be either `up` to round up, `down`to round down or `near` to round to the nearest whole number. |
+| `quantize` | no | [tuning](#tuning) | *1.1.0* | Quantizes the current voltage to the nearest voltage in the specified tuning's `notes`. |
+| `sign` | no | string | *1.1.0* | Can be set to either `pos` or `neg`. Keeps the current voltage's value but forces it to be positive or negative, depending on which one is specified. |
+| `vtof` | no | boolean | *1.1.0* | Interprets the current voltage as a 1V/Oct value and returns the corresponding audio frequency value. Must be set to `true`. |
 
 ### Examples
 
@@ -1176,5 +1249,88 @@ The voltage of channel 8 on output port 5, with a random value between 0.5 and 1
         },
         { "mult": { "voltage": 2 } }
     ]
+}
+```
+
+The maximum of either channel 4 on input 3, or channel 5 on input 4:
+
+```json
+{
+    "input": { "index": 3, "channel": 4 },
+    "calc": [
+        { "max": { "input": { "index": 4, "cannel": 5 } } }
+    ]
+}
+```
+
+The voltage on input 6, quantized to the *tuning* with id `c-maj-pent`, and subsequently 1V (i.e. 1 octave) added to it:
+
+```json
+{
+    "input": 6,
+    "calc": [
+        { "quantize": { "ref": "c-maj-pent" } },
+        { "add": 1 }
+    ]
+}
+```
+
+The decimal part of the voltage that is currently stored in variable `my-voltage`:
+
+```json
+{
+    "variable": "my-voltage",
+    "calc": [
+        { "frac": true }
+    ]
+}
+```
+
+## tuning
+
+While a [value](#value) can be quantized to the nearest semitone using its `quantize` property, tunings allow values to be quantized to a scale. The `notes` property of a tuning contains the list of notes that should be quantized towards. Notes can be expressed in two ways:
+
+* A string value where the first character specifies the note name (from A-G), and the optional second character specifies the accidental: `+` for a sharp and `-` for a flat. E.g.: `A-`, `F+`, `C+`, `B-`, `G`
+* A float value that specifies the note value as a 1V/Oct value.
+
+Quantization of values is always done in the octave range of the original value. As such, which supplying a tuning note as a float value, only the decimal part of the quantization note will be taken into account.
+
+To quantize a value to a tuning, a [calc](#calc) must be added to the [value](#value), using the tuning as *calc* `quantize` property, either directly inline or through a `ref`. The value will then be quantized up or down towards the nearest `notes` entry in the tuning (ignoring the octave information of the value).
+
+*Tunings were introduced in TimeSeq script version 1.1.0.*
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `id` | yes | string | The identifier of the tuning. |
+| `notes` | yes | string/float list | The list of notes to quantize to, either as a float or a string as described above. |
+
+### Examples
+
+A tuning for a C minor pentatonic scale, with the notes specified using their note names:
+
+```json
+{
+    "id": "c-minor-pentatonic",
+    "notes": [ "c", "e-", "f", "g", "b-" ]
+}
+```
+
+The same C minor pentatonic scale, but this time using a combination of note names and 1V/Oct float values:
+
+```json
+{
+    "id": "c-minor-pentatonic",
+    "notes": [ 0, "e-", "f", 0.5833, "b-" ]
+}
+```
+
+A tuning that uses 1V/Oct values that don't follow the usual semitone notes:
+
+```json
+{
+    "id": "non-semitone-tuning",
+    "notes": [ 0, 0.1579, 0.3158, 0.4211, 0.5789, 0.7368, 0.8947 ]
 }
 ```

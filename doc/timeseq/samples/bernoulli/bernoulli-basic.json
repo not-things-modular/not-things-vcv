@@ -1,6 +1,7 @@
 {
+	"$schema": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json",
 	"type": "not-things_timeseq_script",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"timelines": [
 		{
 			"lanes": [
@@ -86,7 +87,7 @@
 	],
 	"input-triggers": [
 		{
-			"x-description": "Monitor input 1 for an input trigger that will activate our Bernoulli Gate logic through an internall trigger",
+			"x-description": "Monitor input 1 for an input trigger that will activate our Bernoulli Gate logic through an internal trigger",
 			"id": "determine-output",
 			"input": 1
 		}

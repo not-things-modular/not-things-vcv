@@ -3,7 +3,7 @@
 #include "core/timeseq-core.hpp"
 #include <sstream>
 #include <stdarg.h>
-#include <cctype>
+#include "util/notes.hpp"
 
 using namespace std;
 using namespace timeseq;
@@ -23,7 +23,7 @@ ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableH
 	m_randomValueGenerator = randomValueGenerator;
 }
 
-shared_ptr<Processor> ProcessorScriptParser::parseScript(std::shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string> location) {
+shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string> location) {
 	ProcessorScriptParseContext context;
 
 	context.script = script.get();
@@ -245,7 +245,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(Process
 	return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener));
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<ScriptAction>& actions, vector<string> location, vector<string> actionsLocation, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<ScriptAction>& actions, vector<string> location, vector<string> actionsLocation, vector<string> segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
 		location.push_back("segments");
@@ -270,7 +270,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 			int count = 0;
 
 			actionsLocation.push_back("actions");
-			for (std::vector<ScriptAction>::iterator it = actions.begin(); it != actions.end(); it++) {
+			for (vector<ScriptAction>::iterator it = actions.begin(); it != actions.end(); it++) {
 				actionsLocation.push_back(to_string(count));
 
 				vector<string> actionLocation;
@@ -335,49 +335,82 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 }
 
 shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, vector<string> location) {
-	uint64_t duration = 0;
-	double drift = 0;
+	if (scriptDuration->samples || scriptDuration->millis || scriptDuration->beats || scriptDuration->hz) {
+		// Construct a constant duration processor
+		uint64_t duration = 0;
+		double drift = 0;
 
-	if (scriptDuration->samples) {
-		float activeSampleRate = m_sampleRateReader->getSampleRate();
-		if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
-			double refactoredDuration = (double) (*scriptDuration->samples.get()) * activeSampleRate / (*timeScale->sampleRate.get());
-			duration = uint64_max(floor(refactoredDuration), 1);
-			drift = refactoredDuration - duration;
-		} else{
-			duration = *scriptDuration->samples.get();
-		}
-	} else if (scriptDuration->millis) {
-		double refactoredDuration = (double) (*scriptDuration->millis.get()) * m_sampleRateReader->getSampleRate() / 1000;
-		duration = uint64_max(floor(refactoredDuration), 1);
-		drift = refactoredDuration - duration;
-	} else if (scriptDuration->beats) {
-		if ((timeScale) && (timeScale->bpm)) {
-			int bpm = *timeScale->bpm.get();
-			double beats = *scriptDuration->beats.get();
-			if (scriptDuration->bars) {
-				if (timeScale->bpb) {
-					beats += ((*scriptDuration->bars.get()) * (*timeScale->bpb.get()));
-				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
-					return shared_ptr<DurationProcessor>();
-				}
+		if (scriptDuration->samples) {
+			float activeSampleRate = m_sampleRateReader->getSampleRate();
+			if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
+				double refactoredDuration = (double) (*scriptDuration->samples.get()) * activeSampleRate / (*timeScale->sampleRate.get());
+				duration = uint64_max(floor(refactoredDuration), 1);
+				drift = refactoredDuration - duration;
+			} else{
+				duration = *scriptDuration->samples.get();
 			}
-
-			double refactoredDuration = m_sampleRateReader->getSampleRate() * beats * 60 / bpm;
+		} else if (scriptDuration->millis) {
+			double refactoredDuration = (double) (*scriptDuration->millis.get()) * m_sampleRateReader->getSampleRate() / 1000;
 			duration = uint64_max(floor(refactoredDuration), 1);
 			drift = refactoredDuration - duration;
-		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
-			return shared_ptr<DurationProcessor>();
-		}
-	} else if (scriptDuration->hz) {
-		double refactoredDuration = (double) m_sampleRateReader->getSampleRate() / (*scriptDuration->hz.get());
-		duration = uint64_max(floor(refactoredDuration), 1);
-		drift = refactoredDuration - duration;
-	}
+		} else if (scriptDuration->beats) {
+			if ((timeScale) && (timeScale->bpm)) {
+				int bpm = *timeScale->bpm.get();
+				double beats = *scriptDuration->beats.get();
+				if (scriptDuration->bars) {
+					if (timeScale->bpb) {
+						beats += ((*scriptDuration->bars.get()) * (*timeScale->bpb.get()));
+					} else {
+						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
+						return shared_ptr<DurationProcessor>();
+					}
+				}
 
-	return shared_ptr<DurationProcessor>(new DurationProcessor(duration, drift));
+				double refactoredDuration = m_sampleRateReader->getSampleRate() * beats * 60 / bpm;
+				duration = uint64_max(floor(refactoredDuration), 1);
+				drift = refactoredDuration - duration;
+			} else {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
+				return shared_ptr<DurationProcessor>();
+			}
+		} else if (scriptDuration->hz) {
+			double refactoredDuration = (double) m_sampleRateReader->getSampleRate() / (*scriptDuration->hz.get());
+			duration = uint64_max(floor(refactoredDuration), 1);
+			drift = refactoredDuration - duration;
+		}
+
+		return make_shared<DurationConstantProcessor>(duration, drift);
+	} else if (scriptDuration->hzValue) {
+		// Construct a variable duration processor with a sample rate
+		shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptDuration->hzValue.get(), location, vector<string>());
+		return make_shared<DurationVariableHzProcessor>(valueProcessor, m_sampleRateReader->getSampleRate());
+	} else {
+		// Construct a variable duration processor with a factor
+		shared_ptr<ValueProcessor> valueProcessor;
+		double factor = 1.f;
+
+		if (scriptDuration->samplesValue) {
+			float activeSampleRate = m_sampleRateReader->getSampleRate();
+			if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
+				factor = activeSampleRate / (*timeScale->sampleRate.get());
+			}
+			valueProcessor = parseValue(context, scriptDuration->samplesValue.get(), location, vector<string>());
+		} else if (scriptDuration->millisValue) {
+			factor = (double) m_sampleRateReader->getSampleRate() / 1000;
+			valueProcessor = parseValue(context, scriptDuration->millisValue.get(), location, vector<string>());
+		} else if (scriptDuration->beatsValue) {
+			if ((timeScale) && (timeScale->bpm)) {
+				int bpm = *timeScale->bpm.get();
+				factor = (double) m_sampleRateReader->getSampleRate() * 60 / bpm;
+				valueProcessor = parseValue(context, scriptDuration->beatsValue.get(), location, vector<string>());
+			} else {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
+				return shared_ptr<DurationProcessor>();
+			}
+		}
+
+		return make_shared<DurationVariableFactorProcessor>(valueProcessor, factor);
+	}
 }
 
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
@@ -518,7 +551,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(Processor
 	return shared_ptr<ActionProcessor>(new ActionSetLabelProcessor(scriptSetLabel->index - 1, scriptSetLabel->label, m_portHandler, ifProcessor));
 }
 
-std::shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
 	ScriptAssert* scriptAssert = scriptAction->assert.get();
 
 	location.push_back("expect");
@@ -581,18 +614,13 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 	return shared_ptr<ValueProcessor>();
 }
 
-// Take the letter of the note in lowercase, subtract 'a' from it, take the value in this array at that position
-// => the result can be multiplied with 1/12 to get the matchin 1V/oct value.
-const int note_to_index [] = { 9, 11, 0, 2, 4, 5, 7};
-
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
 	float value = 0.f;
 	if (scriptValue->voltage) {
 		value = *scriptValue->voltage.get();
 	} else if (scriptValue->note) {
 		string note = *scriptValue->note.get();
-		char x = tolower(note[0]);
-		int noteIndex = note_to_index[(x - 'a')];
+		int noteIndex = noteNameToIndex(note[0]);
 		if (note.length() > 2) {
 			if (note[2] == '-') {
 				noteIndex -= 1;
@@ -643,26 +671,107 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 
 shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {
 	if (scriptCalc->ref.length() == 0) {
+		bool valueProcessor = false;
+		bool truncProcessor = false;
+		bool fracProcessor = false;
+		bool roundProcessor = false;
+		bool quantizeProcessor = false;
+		bool signProcessor = false;
+		bool vtofProcessor = false;
+
 		switch (scriptCalc->operation) {
 			case ScriptCalc::CalcOperation::ADD:
 				location.push_back("add");
+				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::SUB:
 				location.push_back("sub");
+				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::DIV:
 				location.push_back("div");
+				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::MULT:
 				location.push_back("mult");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::MAX:
+				location.push_back("max");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::MIN:
+				location.push_back("min");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::REMAIN:
+				location.push_back("remain");
+				valueProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::TRUNC:
+				location.push_back("trunc");
+				truncProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::FRAC:
+				location.push_back("frac");
+				fracProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::ROUND:
+				location.push_back("round");
+				roundProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::QUANTIZE:
+				location.push_back("quantize");
+				quantizeProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::SIGN:
+				location.push_back("sign");
+				signProcessor = true;
+				break;
+			case ScriptCalc::CalcOperation::VTOF:
+				location.push_back("vtof");
+				vtofProcessor = true;
 				break;
 		}
 
-		shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
+		shared_ptr<CalcProcessor> calcProcessor;
+
+		if (valueProcessor) {
+			shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
+			calcProcessor = make_shared<CalcValueProcessor>(scriptCalc, valueProcessor);
+		} else if (truncProcessor) {
+			calcProcessor = make_shared<CalcTruncProcessor>();
+		} else if (fracProcessor) {
+			calcProcessor = make_shared<CalcFracProcessor>();
+		} else if (roundProcessor) {
+			calcProcessor = make_shared<CalcRoundProcessor>(scriptCalc);
+		} else if (quantizeProcessor) {
+			ScriptTuning* scriptTuning = nullptr;
+			if (scriptCalc->tuning->ref.length() == 0) {
+				scriptTuning = scriptCalc->tuning.get();
+			} else {
+				for (vector<ScriptTuning>::iterator it = context->script->tunings.begin(); it != context->script->tunings.end(); it++) {
+					if (it->id == scriptCalc->tuning->ref) {
+						scriptTuning = &(*it);
+						break;
+					}
+				}
+			}
+
+			if (scriptTuning != nullptr) {
+				calcProcessor = make_shared<CalcQuantizeProcessor>(scriptTuning);
+			} else {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_QuantizeTuningNotFound, "Could not find the referenced tuning with id '", scriptCalc->tuning->ref.c_str(), "' in the script tunings.");
+			}
+		} else if (signProcessor) {
+			calcProcessor = make_shared<CalcSignProcessor>(scriptCalc);
+		} else if (vtofProcessor) {
+			calcProcessor = make_shared<CalcVtoFProcessor>();
+		}
 
 		location.pop_back();
 
-		return shared_ptr<CalcProcessor>(new CalcProcessor(scriptCalc, valueProcessor));
+		return calcProcessor;
 	} else {
 		if (find(valueStack.begin(), valueStack.end(), string("c-") + scriptCalc->ref) == valueStack.end()) {
 			int count = 0;

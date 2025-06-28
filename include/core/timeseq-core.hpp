@@ -80,11 +80,12 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 		std::shared_ptr<JsonLoader> m_jsonLoader;
 		std::shared_ptr<ProcessorLoader> m_processorLoader;
 
+		bool m_reset = false;
 		std::shared_ptr<Script> m_script;
 		std::shared_ptr<Processor> m_processor;
 		// The loading of a new processor happens on another thread than the processing thread.
 		// If that happens while we're processing, keep the "old" processor referenced as dangling so it doesn't get immediately destroyed
-		std::shared_ptr<Processor> m_danglingProcessor;
+		std::vector<std::shared_ptr<Processor>> m_danglingProcessors;
 
 		std::unordered_map<std::string, float> m_variables;
 		std::vector<std::string> m_triggers[2];

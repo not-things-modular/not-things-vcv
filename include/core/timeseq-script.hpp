@@ -57,11 +57,24 @@ struct ScriptRand {
 	std::unique_ptr<ScriptValue> upper;
 };
 
+struct ScriptTuning : ScriptRefObject {
+	std::vector<float> notes;
+};
+
 struct ScriptCalc : ScriptRefObject {
-	enum CalcOperation { ADD, SUB, DIV, MULT };
+	enum CalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN, TRUNC, FRAC, ROUND, QUANTIZE, SIGN, VTOF };
+	enum RoundType { UP, DOWN, NEAR };
+	enum SignType { POS, NEG };
 
 	CalcOperation operation;
+	// The value to use for an ADD, SUB, DIV, MULT, MAX, MIN or REMAIN
 	std::unique_ptr<ScriptValue> value;
+	// The direction to round to
+	std::unique_ptr<RoundType> roundType;
+	// The id of the tuning to quantize into
+	std::unique_ptr<ScriptTuning> tuning;
+	// The sign to apply
+	std::unique_ptr<SignType> signType;
 };
 
 /**
@@ -171,10 +184,14 @@ struct ScriptAction : ScriptRefObject {
 
 struct ScriptDuration {
 	std::unique_ptr<uint64_t> samples;
+	std::unique_ptr<ScriptValue> samplesValue;
 	std::unique_ptr<float> millis;
+	std::unique_ptr<ScriptValue> millisValue;
 	std::unique_ptr<uint64_t> bars;
 	std::unique_ptr<float> beats;
+	std::unique_ptr<ScriptValue> beatsValue;
 	std::unique_ptr<float> hz;
+	std::unique_ptr<ScriptValue> hzValue;
 };
 
 struct ScriptSegment : ScriptRefObject {
@@ -234,6 +251,7 @@ struct Script {
 	std::vector<ScriptValue> values;
 	std::vector<ScriptAction> actions;
 	std::vector<ScriptIf> ifs;
+	std::vector<ScriptTuning> tunings;
 };
 
 }

@@ -31,6 +31,7 @@ struct ScriptLane;
 struct ScriptSegment;
 struct ScriptSegmentBlock;
 struct ScriptCalc;
+struct ScriptTuning;
 struct Script;
 struct ValueProcessor;
 struct PortHandler;
@@ -42,13 +43,58 @@ struct AssertListener;
 
 
 struct CalcProcessor {
-	CalcProcessor(ScriptCalc *scriptCalc, std::shared_ptr<ValueProcessor> value);
+	virtual double calc(double value) = 0;
+};
 
-	double calc(double value);
+struct CalcValueProcessor : CalcProcessor {
+	enum ValueCalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN };
+
+	CalcValueProcessor(ScriptCalc* scriptCalc, std::shared_ptr<ValueProcessor> value);
+
+	double calc(double value) override;
 
 	nt_private:
-		ScriptCalc *m_scriptCalc;
+		ValueCalcOperation m_operation;
 		std::shared_ptr<ValueProcessor> m_value;
+};
+
+struct CalcTruncProcessor : CalcProcessor {
+	double calc(double value) override;
+};
+
+struct CalcFracProcessor : CalcProcessor {
+	double calc(double value) override;
+};
+
+struct CalcRoundProcessor : CalcProcessor {
+	CalcRoundProcessor(ScriptCalc* scriptCalc);
+
+	double calc(double value) override;
+
+	nt_private:
+		ScriptCalc* m_scriptCalc;
+};
+
+struct CalcQuantizeProcessor : CalcProcessor {
+	CalcQuantizeProcessor(ScriptTuning* scriptTuning);
+
+	double calc(double value) override;
+
+	nt_private:
+		std::vector<std::array<float, 2>> m_quantizeValues;
+};
+
+struct CalcSignProcessor : CalcProcessor {
+	CalcSignProcessor(ScriptCalc* scriptCalc);
+
+	double calc(double value) override;
+
+	nt_private:
+		bool m_positive;
+};
+
+struct CalcVtoFProcessor : CalcProcessor {
+	double calc(double value) override;
 };
 
 struct ValueProcessor {
@@ -286,7 +332,7 @@ struct ActionGateProcessor : ActionOngoingProcessor {
 struct DurationProcessor {
 	enum DurationState { STATE_START, STATE_PROGRESS, STATE_END };
 
-	DurationProcessor(uint64_t duration, double drift);
+	virtual void prepareForStart() = 0;
 
 	DurationState getState();
 	uint64_t getPosition();
@@ -295,11 +341,40 @@ struct DurationProcessor {
 	double process(double drift);
 	void reset();
 
+	void setDuration(uint64_t duration);
+	void setDrift(double drift);
+
 	nt_private:
 		DurationState m_state = STATE_START;
 		uint64_t m_duration;
 		double m_drift;
 		uint64_t m_position;
+};
+
+struct DurationConstantProcessor : DurationProcessor {
+	DurationConstantProcessor(uint64_t duration, double drift);
+
+	void prepareForStart() override;
+};
+
+struct DurationVariableFactorProcessor : DurationProcessor {
+	DurationVariableFactorProcessor(std::shared_ptr<ValueProcessor> value, double samplesFactor);
+
+	void prepareForStart() override;
+
+	nt_private:
+		std::shared_ptr<ValueProcessor> m_value;
+		double m_samplesFactor;
+};
+
+struct DurationVariableHzProcessor : DurationProcessor {
+	DurationVariableHzProcessor(std::shared_ptr<ValueProcessor> value, double sampleRate);
+
+	void prepareForStart() override;
+
+	nt_private:
+		std::shared_ptr<ValueProcessor> m_value;
+		double m_sampleRate;
 };
 
 struct SegmentProcessor {

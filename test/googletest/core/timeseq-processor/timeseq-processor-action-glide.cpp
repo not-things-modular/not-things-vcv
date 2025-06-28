@@ -635,3 +635,38 @@ TEST(TimeSeqProcessorGlideAction, GlideActionWithNegativeIfConditionShouldDoNoth
 		script.second->process();
 	}
 }
+
+TEST(TimeSeqProcessorGlideAction, GlideActionWithOneSampleDurationShouldSetEndValue) {
+	testing::NiceMock<MockEventListener> mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson();
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "timing", "glide" },
+					{ "start-value", { { "voltage", 0.f } } },
+					{ "end-value", { { "voltage", 4.5f } } },
+					{ "variable", "output-variable" }
+				}
+			}) } } }) } },
+		}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+
+		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 4.5f)).Times(1);
+	}
+
+	script.second->process();
+}

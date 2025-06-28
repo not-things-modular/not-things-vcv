@@ -1,0 +1,1174 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json",
+	"title": "TimeSeq Script 1.1.0",
+	"$ref": "#/definitions/script",
+	"definitions": {
+		"script": {
+			"description": "The root element of a TimeSeq JSON script",
+			"type": "object",
+			"properties": {
+				"$schema": {
+					"type": "string",
+					"format": "uri"
+				},
+				"type": {
+					"description": "Identifies this file as a not-things TimeSeq JSON script.",
+					"const": "not-things_timeseq_script"
+				},
+				"version": {
+					"description": "The version of the not-things TimeSeq JSON script specification that the document conforms to.",
+					"const": "1.1.0"
+				},
+				"timelines": {
+					"description": "The timeline instances that will be executed in this script.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/timeline"
+					}
+				},
+				"global-actions": {
+					"descriptions": "A list of actions that will be executed when the script is loaded.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					}
+				},
+				"input-triggers": {
+					"description": "A list of input-triggers for this script.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/input-trigger"
+					}
+				},
+				"component-pool": {
+					"$ref": "#/definitions/component-pool"
+				}
+			},
+			"required": [ "type", "version" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "$schema", "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"component-pool": {
+			"description": "A pool of reusable objects that can be referenced from elsewhere in the script.",
+			"type": "object",
+			"properties": {
+				"segment-blocks": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/segment-block" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/segment-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"inputs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/input-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"outputs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/output-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"calcs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/calc-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"values": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/value-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"actions": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/action-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"ifs": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/if-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				},
+				"tunings": {
+					"type": "array",
+					"items": {
+						"allOf": [
+							{ "$ref": "#/definitions/tuning-full" },
+							{ "$ref": "#/definitions/referenceable" }
+						]
+					}
+				}
+			}
+		},
+		"timeline": {
+			"type": "object",
+			"properties": {
+				"time-scale": {
+					"$ref": "#/definitions/time-scale"
+				},
+				"loop-lock": {
+					"description": "Identifies if lanes in this timeline will only loop when all have completed, or will loop individually",
+					"type": "boolean",
+					"default": false
+				},
+				"lanes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/lane"
+					}
+				}
+			},
+			"required": [ "lanes" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "time-scale", "loop-lock", "lanes" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"time-scale": {
+			"description": "Identifies how timing calculations should be performed in a timeline",
+			"type": "object",
+			"properties": {
+				"sample-rate": {
+					"description": "If a segment in the timeline of this time-scale has a duration expressed in samples, these samples will be relative to this sample-rate instead of the active sample rate of VCV Rack.",
+					"type": "integer",
+					"minimum": 1
+				},
+				"bpm": {
+					"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Minute.",
+					"type": "integer",
+					"minimum": 1
+				},
+				"bpb": {
+					"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Minute.",
+					"type": "integer",
+					"minimum": 1
+				}
+			},
+			"anyOf": [
+				{ "required": [ "sample-rate" ] },
+				{ "required": [ "bpm" ] }
+			],
+			"dependencies": {
+				"bpb": { "required": [ "bpm" ] }
+			},
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "sample-rate", "bpm", "bpb" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"lane": {
+			"description": "The sequencing core of the not-things TimeSeq script, allowing segments to be scheduled in order.",
+			"type": "object",
+			"properties": {
+				"segments": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/segment"
+					}
+				},
+				"auto-start": {
+					"description": "Indicate if this lane should automatically start when the script is started.",
+					"type": "boolean",
+					"default": true
+				},
+				"loop": {
+					"description": "Loop to the first segment once the last segment in the lane has completed.",
+					"type": "boolean",
+					"default": false
+				},
+				"repeat": {
+					"description": "How many times the segments in this lane should be repeated. Values 0 and 1 mean that the segments are only executed once. Has no impact if loop is set to true.",
+					"type": "integer",
+					"minimum": 0
+				},
+				"start-trigger": {
+					"description": "The id of the internal trigger that will cause this lane to start running if it is not already running.",
+					"type": "string",
+					"minLength": 1
+				},
+				"restart-trigger": {
+					"description": "The id of the internal trigger that will cause this lane to start running from its first segment, or restart from its first segment if it is already running.",
+					"type": "string",
+					"minLength": 1
+				},
+				"stop-trigger": {
+					"description": "The id of the internal trigger that will cause this lane to stop if it is currently running.",
+					"type": "string",
+					"minLength": 1
+				},
+				"disable-ui": {
+					"description": "Specifies if the L LED on the UI should light up when this lane loops.",
+					"type": "boolean",
+					"default": false
+				}
+			},
+			"required": [ "segments" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "segments", "auto-start", "loop", "repeat", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"segment": {
+			"oneOf": [
+				{ "$ref": "#/definitions/segment-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"segment-full": {
+			"type": "object",
+			"properties": {
+				"duration": {
+					"$ref": "#/definitions/duration"
+				},
+				"actions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/action"
+					}
+				},
+				"segment-block": {
+					"description": "The id of a segment-block that will be inserted in the place of this segment. Can not be combined with duration and disable-ui.",
+					"type": "string",
+					"minLength": 1
+				},
+				"disable-ui": {
+					"description": "Specifies if the S LED on the UI should light up when this segment starts.",
+					"type": "boolean",
+					"default": false
+				}
+			},
+			"oneOf": [
+				{ "required": [ "duration" ] },
+				{ "required": [ "segment-block" ] }
+			],
+			"allOf": [
+				{
+					"not": {
+						"properties": {
+							"duration": { "type": "object" },
+							"segment-block": { "type": "string" }
+						},
+						"required": [ "duration", "segment-block" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"disable-ui": { "type": "boolean" },
+							"segment-block": { "type": "string" }
+						},
+						"required": [ "disable-ui", "segment-block" ]
+					}
+				}
+			],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "duration", "actions", "segment-block", "disable-ui" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"duration": {
+			"description": "Specifies how long a segment should last.",
+			"type": "object",
+			"properties": {
+				"samples": {
+					"description": "Specifies the segment duration in number of samples.",
+					"oneOf": [
+						{
+							"type": "integer",
+							"minimum": 1
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				},
+				"millis": {
+					"description": "Specifies the segment duration in number of milliseconds.",
+					"oneOf": [
+						{
+							"type": "number",
+							"exclusiveMinimum": 0
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				},
+				"beats": {
+					"description": "Specifies the segment duration in number of beats. The timeline time-scale must have 'bmp' set to specify how long one beat lasts.",
+					"oneOf": [
+						{
+							"type": "number"
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				},
+				"bars": {
+					"description": "Specifies the segment duration in number of beats. Can only be used in combination with 'beats'. The timeline time-scale must have 'bpb' set to specify how many beats go in a bar.",
+					"type": "integer",
+					"minimum": 1
+				},
+				"hz": {
+					"description": "Specifies the segment duration in Hertz.",
+					"oneOf": [
+						{
+							"type": "number",
+							"exclusiveMinimum": 0
+						},
+						{ "$ref": "#/definitions/value-full" }
+					]
+				}
+			},
+			"minProperties": 1,
+			"oneOf": [
+				{ "required": [ "samples" ], "not": { "required": [ "millis", "beats", "bars", "hz" ] } },
+				{ "required": [ "millis" ], "not": { "required": [ "samples", "beats", "bars", "hz" ] } },
+				{ "required": [ "beats" ], "not": { "required": [ "millis", "samples", "hz" ] } },
+				{ "required": [ "hz" ], "not": { "required": [ "millis", "samples", "beats", "bars" ] } }
+			],
+			"dependencies": {
+				"bars": { "required": [ "beats" ] }
+			},
+			"if": {
+				"properties": { "bars": { "type": "integer" } },
+				"required": [ "bars" ]
+			},
+			"then": {
+				"properties": { "beats": { "minimum": 0 } }
+			},
+			"else": {
+				"properties": { "beats": { "exclusiveMinimum": 0 } }
+			},
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "samples", "millis", "beats", "bars", "hz" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"value": {
+			"description": "A value that evaluates to a voltage.",
+			"oneOf": [
+				{
+					"$ref": "#/definitions/value-full"
+				},
+				{
+					"type": "number",
+					"minimum": -10,
+					"maximum": 10
+				},
+				{
+					"$ref": "#/definitions/value-note"
+				},
+				{
+					"$ref": "#/definitions/reference"
+				}
+			]
+		},
+		"value-note": {
+			"description": "A fixed note value, translated into the corresponding 1V/Oct value.",
+			"type": "string",
+			"pattern": "^[A-Ga-g][0-9](?:[+-])?$"
+		},
+		"value-full": {
+			"type": "object",
+			"properties": {
+				"voltage": {
+					"description": "A fixed voltage. Unless 'no-limit' is set to 'true', the value must be within the -10 to 10 voltage range.",
+					"type": "number"
+				},
+				"no-limit": {
+					"description": "Can only be used in combination with 'voltage'. If set to 'true', disables the -10 to 10 limitation of the voltage value.",
+					"type": "boolean",
+					"default": false
+				},
+				"note": {
+					"$ref": "#/definitions/value-note"
+				},
+				"variable": {
+					"description": "Use a previously set variable as voltage value source.",
+					"type": "string",
+					"minLength": 1
+				},
+				"input": {
+					"$ref": "#/definitions/input"
+				},
+				"output": {
+					"$ref": "#/definitions/output"
+				},
+				"rand": {
+					"$ref": "#/definitions/rand"
+				},
+				"calc": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/calc"
+					}
+				},
+				"quantize": {
+					"description": "Allows the value to be quantized to the nearest note value.",
+					"type": "boolean",
+					"default": false
+				}
+			},
+			"if": {
+				"properties": { "no-limit": { "const": true } },
+				"required": [ "no-limit" ]
+			},
+			"else": {
+				"properties": { "voltage": { "minimum": -10, "maximum": 10 } }
+			},
+			"minProperties": 1,
+			"oneOf": [
+				{ "required": [ "voltage" ], "not": { "required": [ "note", "variable", "input", "output", "rand" ] } },
+				{ "required": [ "note" ], "not": { "required": [ "voltage", "variable", "input", "output", "rand" ] } },
+				{ "required": [ "variable" ], "not": { "required": [ "voltage", "note", "input", "output", "rand" ] } },
+				{ "required": [ "input" ], "not": { "required": [ "voltage", "note", "variable", "output", "rand" ] } },
+				{ "required": [ "output" ], "not": { "required": [ "voltage", "note", "variable", "input", "rand" ] } },
+				{ "required": [ "rand" ], "not": { "required": [ "voltage", "note", "variable", "input", "output" ] } }
+			],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "voltage", "no-limit", "note", "variable", "input", "output", "rand", "calc" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"action": {
+			"oneOf": [
+				{ "$ref": "#/definitions/action-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"action-full": {
+			"description": "Executes an action as part of segment processing.",
+			"type": "object",
+			"oneOf": [
+				{
+					"properties": {
+						"timing": {
+							"enum": [ "start", "end" ],
+							"default": "start"
+						},
+						"set-value": {
+							"$ref": "#/definitions/set-value"
+						},
+						"set-polyphony": {
+							"$ref": "#/definitions/set-polyphony"
+						},
+						"set-label": {
+							"$ref": "#/definitions/set-label"
+						},
+						"set-variable": {
+							"$ref": "#/definitions/set-variable"
+						},
+						"assert": {
+							"$ref": "#/definitions/assert"
+						},
+						"trigger": {
+							"description": "Fires an internal trigger with the specified id.",
+							"type": "string",
+							"minLength": 1
+						},
+						"if": {
+							"$ref": "#/definitions/if"
+						}
+					},
+					"minProperties": 1,
+					"oneOf": [
+						{ "required": [ "set-value" ], "not": { "required": [ "set-polyphony", "set-label", "set-variable", "assert", "trigger" ] } },
+						{ "required": [ "set-polyphony" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "trigger" ] } },
+						{ "required": [ "set-label" ], "not": { "required": [ "set-value", "set-polyphony", "set-variable", "assert", "trigger" ] } },
+						{ "required": [ "set-variable" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "assert", "trigger" ] } },
+						{ "required": [ "assert" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "trigger" ] } },
+						{ "required": [ "trigger" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "trigger" ] } }
+					],
+					"propertyNames": {
+						"anyOf": [
+							{ "enum": [ "id", "timing", "set-value", "set-polyphony", "set-label", "set-variable", "assert", "trigger", "if" ] },
+							{ "pattern": "^x-" }
+						]
+					}
+				},
+				{
+					"properties": {
+						"timing": {
+							"const": "glide"
+						},
+						"start-value": {
+							"$ref": "#/definitions/value"
+						},
+						"end-value": {
+							"$ref": "#/definitions/value"
+						},
+						"ease-factor": {
+							"type": "number",
+							"minimum": -5,
+							"maximum": 5,
+							"default": 0
+						},
+						"ease-algorithm": {
+							"enum": [ "sig", "pow" ],
+							"default": "sig"
+						},
+						"output": {
+							"$ref": "#/definitions/output"
+						},
+						"variable": {
+							"description": "Name of the variable that should be set to the current glide value.",
+							"type": "string",
+							"minLength": 1
+						},
+						"if": {
+							"$ref": "#/definitions/if"
+						}
+					},
+					"required": [ "timing", "start-value", "end-value" ],
+					"oneOf": [
+						{ "required": [ "output" ], "not": { "required": [ "variable" ] } },
+						{ "required": [ "variable" ], "not": { "required": [ "output" ] } }
+					],
+					"propertyNames": {
+						"anyOf": [
+							{ "enum": [ "id", "timing", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if" ] },
+							{ "pattern": "^x-" }
+						]
+					}
+				},
+				{
+					"properties": {
+						"timing": {
+							"const": "gate"
+						},
+						"output": {
+							"$ref": "#/definitions/output"
+						},
+						"gate-high-ratio": {
+							"type": "number",
+							"minimum": 0,
+							"maximum": 1,
+							"default": 0.5
+						},
+						"if": {
+							"$ref": "#/definitions/if"
+						}
+					},
+					"required": [ "timing", "output" ],
+					"propertyNames": {
+						"anyOf": [
+							{ "enum": [ "id", "timing", "output", "gate-high-ratio", "if" ] },
+							{ "pattern": "^x-" }
+						]
+					}
+				}
+			]
+		},
+		"input": {
+			"oneOf": [
+				{ "$ref": "#/definitions/input-full" },
+				{
+					"description": "An input in shorthand notation, referencing the first channel of the input with the specified index.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 8
+				},
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"input-full": {
+			"description": "One of the channels on an input port of TimeSeq.",
+			"type": "object",
+			"properties": {
+				"index": {
+					"description": "The index of the input (1-based).",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 8
+				},
+				"channel": {
+					"description": "The channel to use within the input signal.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 16
+				}
+			},
+			"required": [ "index" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "index", "channel" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"output": {
+			"oneOf": [
+				{ "$ref": "#/definitions/output-full" },
+				{
+					"description": "An output in shorthand notation, referencing the first channel of the output with the specified index.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 8
+				},
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"output-full": {
+			"description": "One of the channels on an output port of TimeSeq.",
+			"type": "object",
+			"properties": {
+				"index": {
+					"description": "The index of the output (1-based).",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 8
+				},
+				"channel": {
+					"description": "The channel to use within the output signal.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 16
+				}
+			},
+			"required": [ "index" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "index", "channel" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"rand": {
+			"description": "Generate a random value in a specified lower and upper range",
+			"type": "object",
+			"properties": {
+				"lower": {
+					"$ref": "#/definitions/value"
+				},
+				"upper": {
+					"$ref": "#/definitions/value"
+				}
+			},
+			"required": [ "lower", "upper" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "lower", "upper" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"calc": {
+			"oneOf": [
+				{ "$ref": "#/definitions/calc-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"calc-full": {
+			"description": "Performs a calculation operation on a value voltage.",
+			"type": "object",
+			"properties": {
+				"add": {
+					"description": "Adds a value to the current voltage result.",
+					"$ref": "#/definitions/value"
+				},
+				"sub": {
+					"description": "Subtracts a value from the current voltage result.",
+					"$ref": "#/definitions/value"
+				},
+				"mult": {
+					"description": "Multiplies a value with the current voltage result.",
+					"$ref": "#/definitions/value"
+				},
+				"div": {
+					"description": "Divides the current voltage result by a value.",
+					"$ref": "#/definitions/value"
+				},
+				"max": {
+					"description": "Takes the maximum of the current voltage and another value.",
+					"$ref": "#/definitions/value"
+				},
+				"min": {
+					"description": "Takes the minimum of the current voltage and another value.",
+					"$ref": "#/definitions/value"
+				},
+				"remain": {
+					"description": "Divides the current voltage by a value and uses the remainder of the division.",
+					"$ref": "#/definitions/value"
+				},
+				"trunc": {
+					"description": "Takes the whole part of the current voltage, discarding the decimal data (i.e. truncate)",
+					"const": true
+				},
+				"frac": {
+					"description": "Takes the decimal part of the current voltage, discarding the whole part (i.e. fractional)",
+					"const": true
+				},
+				"round": {
+					"description": "Rounds the current voltage either up, down or to the nearest whole value.",
+					"enum": [ "up", "down", "near" ]
+				},
+				"quantize": {
+					"description": "Quantizes the current voltage to a tuning.",
+					"$ref": "#/definitions/tuning"
+				},
+				"sign": {
+					"description": "Changes the sign of the current voltage to positive or negative (if needed).",
+					"enum": [ "pos", "neg" ]
+				},
+				"vtof": {
+					"description": "Interprets the current voltage as a 1V/Oct value and converts it into a frequency value.",
+					"const": true
+				}
+			},
+			"oneOf": [
+				{ "required": [ "add" ], "not": { "required": [ "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "sub" ], "not": { "required": [ "add", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "mult" ], "not": { "required": [ "add", "sub", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "div" ], "not": { "required": [ "add", "sub", "mult", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "max" ], "not": { "required": [ "add", "sub", "mult", "div", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "min" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "remain" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "trunc" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "frac", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "frac" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "round", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "round" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "quantize", "sign", "vtof" ] } },
+				{ "required": [ "quantize" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "sign", "vtof" ] } },
+				{ "required": [ "sign" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "vtof" ] } },
+				{ "required": [ "vtof" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign" ] } }
+			],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"if": {
+			"oneOf": [
+				{ "$ref": "#/definitions/if-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"if-full": {
+			"description": "A conditional that allows values to be compared.",
+			"type": "object",
+			"properties": {
+				"eq": {
+					"description": "Checks that two values are equal.",
+					"$ref": "#/definitions/if-child-values"
+				},
+				"ne": {
+					"description": "Checks that two values are not equal.",
+					"$ref": "#/definitions/if-child-values"
+				},
+				"lt": {
+					"description": "Checks that the first value is less than the second.",
+					"$ref": "#/definitions/if-child-values"
+				},
+				"lte": {
+					"description": "Checks that the first value is less than or equal to the second.",
+					"$ref": "#/definitions/if-child-values"
+				},
+				"gt": {
+					"description": "Checks that the first value is greater than the second.",
+					"$ref": "#/definitions/if-child-values"
+				},
+				"gte": {
+					"description": "Checks that the first value is greater than or equal to the second.",
+					"$ref": "#/definitions/if-child-values"
+				},
+				"and": {
+					"description": "Checks that two if conditionals are both true.",
+					"$ref": "#/definitions/if-child-ifs"
+				},
+				"or": {
+					"description": "Checks that at least one of the two if conditionals is true.",
+					"$ref": "#/definitions/if-child-ifs"
+				},
+				"tolerance": {
+					"description": "Specifies how much two values may differ while still being considered equal. For usage in combination with 'eq' or 'ne'.",
+					"type": "number",
+					"minimum": 0,
+					"default": 0
+				}
+			},
+			"oneOf": [
+				{ "required": [ "eq" ], "not": { "required": [ "ne", "lt", "lte", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "ne" ], "not": { "required": [ "eq", "lt", "lte", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "lt" ], "not": { "required": [ "eq", "ne", "lte", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "lte" ], "not": { "required": [ "eq", "ne", "lt", "gt", "gte", "and", "or" ] } },
+				{ "required": [ "gt" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gte", "and", "or" ] } },
+				{ "required": [ "gte" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "and", "or" ] } },
+				{ "required": [ "and" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "gte", "or" ] } },
+				{ "required": [ "or" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "gte", "and" ] } }
+			],
+			"allOf": [
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"lt": { "type": "array" }
+						},
+						"required": [ "tolerance", "lt" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"lte": { "type": "array" }
+						},
+						"required": [ "tolerance", "lte" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"gt": { "type": "array" }
+						},
+						"required": [ "tolerance", "gt" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"gte": { "type": "array" }
+						},
+						"required": [ "tolerance", "gte" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"and": { "type": "array" }
+						},
+						"required": [ "tolerance", "and" ]
+					}
+				},
+				{
+					"not": {
+						"properties": {
+							"tolerance": { "type": "number" },
+							"or": { "type": "array" }
+						},
+						"required": [ "tolerance", "or" ]
+					}
+				}
+			],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "eq", "ne", "lt", "lte", "gt", "gte", "and", "or", "tolerance" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"if-child-values": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/value"
+			},
+			"minItems": 2,
+			"maxItems": 2
+		},
+		"if-child-ifs": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/if"
+			},
+			"minItems": 2,
+			"maxItems": 2
+		},
+		"input-trigger": {
+			"description": "Monitor an input port for incoming trigger or gate signals and fire an internal trigger when one is detected.",
+			"type": "object",
+			"properties": {
+				"id": {
+					"description": "The id of the internal trigger that will be fired if a trigger signal is detected on the input port.",
+					"type": "string",
+					"minLength": 1
+				},
+				"input": {
+					"description": "The input port on which to listen for trigger signals.",
+					"$ref": "#/definitions/input"
+				}
+			},
+			"required": [ "id", "input" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "input" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"segment-block": {
+			"description": "A group of segments that can be inserted into a sequence.",
+			"type": "object",
+			"properties": {
+				"segments": {
+					"description": "The list of segments for this block",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/segment"
+					}
+				},
+				"repeat": {
+					"description": "Specifies how many times the segments in the segment block should be repeated before moving to the next step in the sequence",
+					"type": "integer",
+					"minimum": 1
+				}
+			},
+			"required": [ "segments" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "segments", "repeat" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"tuning": {
+			"oneOf": [
+				{ "$ref": "#/definitions/tuning-full" },
+				{ "$ref": "#/definitions/reference" }
+			]
+		},
+		"tuning-full": {
+			"description": "A tuning/scale to which values can be quantized using the 'quantize' action.",
+			"type": "object",
+			"properties": {
+				"id": {
+					"description": "The id of the tuning that can be used to reference it.",
+					"type": "string",
+					"minLength": 1
+				},
+				"notes": {
+					"description": "The notes / 1V/Oct voltages that are part of this tuning.",
+					"type": "array",
+					"items": {
+						"oneOf": [
+							{
+								"description": "A tuning note identified by a 1V/Oct voltage value",
+								"type": "number"
+							},
+							{
+								"description": "A tuning note identified by a note name and optional accidental",
+								"type": "string",
+								"pattern": "^[A-Ga-g](?:[+-])?$"
+							}
+						]
+					},
+					"additionalItems": false,
+					"minItems": 1
+				}
+			},
+			"required": [ "notes" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "notes" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"set-value": {
+			"description": "Update the voltage on one of the output ports",
+			"type": "object",
+			"properties": {
+				"output": {
+					"description": "The output port on which to set the voltage",
+					"$ref": "#/definitions/output"
+				},
+				"value": {
+					"description": "The value to set the output port voltage to.",
+					"$ref": "#/definitions/value"
+				}
+			},
+			"required": [ "output", "value" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "output", "value" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"set-polyphony": {
+			"description": "Set the number of channels on an output port.",
+			"type": "object",
+			"properties": {
+				"index": {
+					"description": "Which output port to set the polyphony on.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 8
+				},
+				"channels": {
+					"description": "The number of channels the output port should have.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 16
+				}
+			},
+			"required": [ "index", "channels" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "index", "channels" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"set-label": {
+			"description": "Set the label of a TimeSeq output port.",
+			"type": "object",
+			"properties": {
+				"index": {
+					"description": "The index of the output port on which to set the label.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 8
+				},
+				"label": {
+					"description": "The label to assign to the output port.",
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"required": [ "index", "label" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "index", "label" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"set-variable": {
+			"description": "Set a variable to a value voltage.",
+			"type": "object",
+			"properties": {
+				"name": {
+					"description": "The name of the variable that will be assigned a value.",
+					"type": "string",
+					"minLength": 1
+				},
+				"value": {
+					"$ref": "#/definitions/value"
+				}
+			},
+			"required": [ "name", "value" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "name", "value" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"assert": {
+			"description": "Perform an assertion, validation that the specified expectation is met.",
+			"type": "object",
+			"properties": {
+				"expect": {
+					"description": "The expectation that must evaluate to true in order for the assertions to succeed.",
+					"$ref": "#/definitions/if"
+				},
+				"name": {
+					"description": "The name that will be used when triggering an assert failure",
+					"type": "string",
+					"minLength": 1
+				},
+				"stop-on-fail": {
+					"description": "Indicates if TimeSeq should stop executing the script when the assertion fails.",
+					"type": "boolean",
+					"default": true
+				}
+			},
+			"required": [ "expect", "name" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "expect", "name", "stop-on-fail" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"reference": {
+			"description": "A reference to an object instance in the component-pool of the script.",
+			"type": "object",
+			"properties": {
+				"ref": {
+					"description": "The id of the referenced object.",
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"required": [ "ref" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "ref" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"referenceable": {
+			"description": "An object in the component-pool that can be referenced by id from elsewhere.",
+			"type": "object",
+			"properties": {
+				"id": {
+					"description": "The id of the referenceable object.",
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"required": [ "id" ]
+		}
+	},
+	"changelog": [
+		{
+			"version": "1.0.0",
+			"date": "2025-06-27",
+			"changes": [
+				"Initial version of the TimeSeq Script 1.1.0 JSON Schema definition"
+			]
+		}
+	]
+}

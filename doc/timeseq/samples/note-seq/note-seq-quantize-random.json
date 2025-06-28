@@ -70,15 +70,49 @@
 							"segment-block": "arp"
 						}
 					]
+				},
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "beats": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 4,
+										"value": {
+											"rand": {
+												"lower": 1,
+												"upper": 2
+											},
+											"calc": [
+												{ "quantize": { "ref": "c-major-pentatonic" } }
+											]
+										}
+									}
+								},
+								{
+									"timing": "gate",
+									"output": 5
+								}
+							]
+						}
+					]
 				}
 			]
 		}
 	],
 	"component-pool": {
+		"tunings": [
+			{
+				"id": "c-major-pentatonic",
+				"notes": [ "c", "d", "e", "g", "a" ]
+			}
+		],
         "actions": [
             {
                 "id": "arp-gate-action",
-				"x-description": "The addition of the 'if' condition will cause the gate to only trigger if the random 'play-note' variable is above 2.5.",
                 "timing": "gate",
 				"if": { "ref": "should-play-note" },
                 "output": 3
@@ -100,10 +134,15 @@
 		"ifs": [
 			{
 				"id": "should-play-note",
-				"x-description": "A note should only be played if the randomized 'play-note' variable is above 2.5",
 				"gt": [
 					{ "variable": "play-note" },
-					2.5
+					{
+						"input": 1,
+						"calc": [
+							{ "div": 2 },
+							{ "add": 2.5 }
+						]
+					}
 				]
 			}
 		],
@@ -122,7 +161,6 @@
 							{ "ref": "determine-chance" },
 							{
 								"timing": "start",
-								"x-description": "The addition of the 'if' condition will cause the note to only change if the random 'play-note' variable is above 2.5.",
 								"if": { "ref": "should-play-note" },
 								"set-value": { "output": 2, "value": { "variable": "chord-note-1" } }
 							},

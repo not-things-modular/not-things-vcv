@@ -4,7 +4,7 @@ TEST(TimeSeqJsonScript, ParseWithoutTypeShouldFail) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = {
-		{ "version", SCRIPT_VERSION },
+		{ "version", SCRIPT_VERSION_1_0_0 },
 		{ "timelines", json::array() }
 	};
 
@@ -18,7 +18,7 @@ TEST(TimeSeqJsonScript, ParseWithInvalidTypeShouldFail) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not_not-things_timeseq_script" },
-		{ "version", SCRIPT_VERSION },
+		{ "version", SCRIPT_VERSION_1_0_0 },
 		{ "timelines", json::array() }
 	};
 
@@ -179,6 +179,20 @@ TEST(TimeSeqJsonScript, ParseScriptWithUnknownPropertiesShouldFail) {
 	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/");
 	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
 	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScript, ParseScriptShouldAllowJSONSchemaProperty) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = {
+		{ "type", "not-things_timeseq_script" },
+		{ "version", "1.0.0" },
+		{ "timelines", json::array() },
+		{ "$schema", "some-schema-url" },
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
 }
 
 TEST(TimeSeqJsonScript, ParseScriptShouldAllowUnknownPropertyWithXPrefix) {

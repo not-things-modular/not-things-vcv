@@ -5,7 +5,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithoutTimelines) {
 	JsonLoader jsonLoader;
 	json json = {
 		{ "type", "not-things_timeseq_script" },
-		{ "version", SCRIPT_VERSION },
+		{ "version", SCRIPT_VERSION_1_0_0 },
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
