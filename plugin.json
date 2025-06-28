@@ -1,7 +1,7 @@
 {
   "slug": "not-things",
   "name": "not-things",
-  "version": "2.0.5-SNAPSHOT",
+  "version": "2.0.5",
   "license": "GPL-3.0-or-later",
   "brand": "not-things",
   "author": "Johan Vanbockryck",
