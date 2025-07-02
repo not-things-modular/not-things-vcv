@@ -43,10 +43,10 @@ struct RameligData {
 		stepDistribution[RANDOM_MOVE] = stepDistribution[RANDOM_JUMP] + randomMoveChance;
 		stepDistribution[AROUND_CURRENT] = stepDistribution[RANDOM_MOVE] + moveUpChance + remainChance + moveDownChance;
 
-		moveDistribution[TO_MOVE_INDEX(UP_TWO)] = moveUpChance * moveTwoChance / 10;
+		moveDistribution[TO_MOVE_INDEX(UP_TWO)] = moveUpChance * moveTwoChance;
 		moveDistribution[TO_MOVE_INDEX(UP_ONE)] = moveUpChance;
 		moveDistribution[TO_MOVE_INDEX(REMAIN)] = moveUpChance + remainChance;
-		moveDistribution[TO_MOVE_INDEX(DOWN_ONE)] = moveDistribution[TO_MOVE_INDEX(REMAIN)] + (moveDownChance * (10 - moveTwoChance) / 10);
+		moveDistribution[TO_MOVE_INDEX(DOWN_ONE)] = moveDistribution[TO_MOVE_INDEX(REMAIN)] + (moveDownChance * (1 - moveTwoChance));
 		moveDistribution[TO_MOVE_INDEX(DOWN_TWO)] = moveDistribution[TO_MOVE_INDEX(REMAIN)] + moveDownChance;
 	}
 
@@ -91,7 +91,6 @@ float quantize(float value, std::vector<int>& indices, float lowerLimit, float u
 	for (int i = 0; i < indices.size(); i++) {
 		if (fract <= notes[indices[i]]) {
 			note = notes[indices[i]];
-		} else {
 			break;
 		}
 	}
@@ -123,7 +122,7 @@ RameligModule::RameligModule() {
 	m_data->currentOctave = 0;
 	m_data->currentScaleIndex = 0;
 
-	m_data->randomJumpChance = 0.2f;
+	m_data->randomJumpChance = 0.3f;
 	m_data->randomMoveChance = 0.2f;
 	m_data->moveUpChance = 0.9f;
 	m_data->remainChance = 0.3f;
@@ -143,8 +142,15 @@ void RameligModule::process(const ProcessArgs& args) {
 		float upperLimit = inputs[IN_UPPER_LIMIT].getVoltage();
 		float lowerLimit = inputs[IN_LOWER_LIMIT].getVoltage();
 
-		switch (m_data->determineChance(m_generator)) {
-			case RANDOM_JUMP:
+		RameligStepActions x = m_data->determineChance(m_generator);
+		outputs[OUT_GATE].setVoltage(x);
+		switch (x) {
+			case RANDOM_JUMP: {
+				float value = std::uniform_real_distribution<float>(lowerLimit, upperLimit)(m_generator);
+				value = quantize(value, m_data->scales[m_data->currentScale], lowerLimit, upperLimit, m_notes);
+				outputs[OUT_CV].setVoltage(value);
+				break;
+			}
 			case RANDOM_MOVE: {
 				float value = std::uniform_real_distribution<float>(lowerLimit, upperLimit)(m_generator);
 				value = quantize(value, m_data->scales[m_data->currentScale], lowerLimit, upperLimit, m_notes);
@@ -230,7 +236,7 @@ void RameligModule::process(const ProcessArgs& args) {
 
 		float result = (float) m_data->currentOctave + m_notes[m_data->scales[m_data->currentScale][m_data->currentScaleIndex]];
 		outputs[OUT_CV].setVoltage(result);
-		
+
 		// if (std::uniform_real_distribution<float>(0.f, 100.f)(m_generator) < m_data->randChance) {
 		// 	float value = std::uniform_real_distribution<float>(lowerLimit, upperLimit)(m_generator);
 		// 	value = quantize(value, m_data->indices);
