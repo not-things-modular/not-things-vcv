@@ -12,9 +12,9 @@ enum RameligStepActions {
 
 	UP_TWO = 3,
 	UP_ONE = 4,
-	REMAIN = 5,
-	DOWN_ONE = 6,
-	DOWN_TWO = 7
+	DOWN_ONE = 5,
+	DOWN_TWO = 6,
+	REMAIN = 7
 };
 
 #define TO_MOVE_INDEX(stepAction) stepAction - UP_TWO
@@ -25,6 +25,7 @@ struct RameligData {
 
 	int currentOctave;
 	int currentScaleIndex;
+	bool lastWasRemain;
 
 	float randomJumpChance; // The chance that the melody line will jump for one note and then return to the original position
 	float randomMoveChance; // The chance that the melody line will move to another position and stay there
@@ -34,9 +35,12 @@ struct RameligData {
 	float moveDownChance; // How likely it is that a move will go down
 
 	float moveTwoChance; // How likely it is that a move will be two positions
+	float remainRepeatFactor; // If the previous step was a remain, how much of the remainChance should be used to for this step
 
 	std::array<float, 3> stepDistribution; // The distribution of possible step actions: random jump, random move, or move around current position
 	std::array<float, 5> moveDistribution; // The distribution of possible movements around the curren position: up two, up one, remain, down one and down two
+
+	std::array<int, 8> results;
 
 	void calculateDistributions() {
 		stepDistribution[RANDOM_JUMP] = randomJumpChance;
@@ -45,13 +49,17 @@ struct RameligData {
 
 		moveDistribution[TO_MOVE_INDEX(UP_TWO)] = moveUpChance * moveTwoChance;
 		moveDistribution[TO_MOVE_INDEX(UP_ONE)] = moveUpChance;
-		moveDistribution[TO_MOVE_INDEX(REMAIN)] = moveUpChance + remainChance;
-		moveDistribution[TO_MOVE_INDEX(DOWN_ONE)] = moveDistribution[TO_MOVE_INDEX(REMAIN)] + (moveDownChance * (1 - moveTwoChance));
-		moveDistribution[TO_MOVE_INDEX(DOWN_TWO)] = moveDistribution[TO_MOVE_INDEX(REMAIN)] + moveDownChance;
+		moveDistribution[TO_MOVE_INDEX(DOWN_ONE)] = moveUpChance + (moveDownChance * (1 - moveTwoChance));
+		moveDistribution[TO_MOVE_INDEX(DOWN_TWO)] = moveUpChance + moveDownChance;
+		moveDistribution[TO_MOVE_INDEX(REMAIN)] = moveDistribution[TO_MOVE_INDEX(DOWN_TWO)] + remainChance;
 	}
 
 	RameligStepActions determineChance(std::minstd_rand &generator) {
-		float chance = std::uniform_real_distribution<float>(0.f, stepDistribution[AROUND_CURRENT])(generator);
+		float upperLimit = stepDistribution[AROUND_CURRENT];
+		if (lastWasRemain) {
+			upperLimit -= remainChance * (1 - remainRepeatFactor);
+		}
+		float chance = std::uniform_real_distribution<float>(0.f, upperLimit)(generator);
 
 		RameligStepActions result = AROUND_CURRENT;
 		for (unsigned int i = 0; i < 3; i++) {
@@ -63,7 +71,7 @@ struct RameligData {
 
 		// TODO: Bias upwards or downwards when moving near the edges of the allowed values
 		if (result == AROUND_CURRENT) {
-			chance -= randomJumpChance;
+			chance -= stepDistribution[RANDOM_MOVE];
 			result = DOWN_TWO;
 			for (unsigned int i = 0; i < 5; i++) {
 				if (moveDistribution[i] > chance) {
@@ -73,11 +81,12 @@ struct RameligData {
 			}
 		}
 
+		results[result] = results[result] + 1;
 		return result;
 	}
 };
 
-float quantize(float value, std::vector<int>& indices, float lowerLimit, float upperLimit, std::vector<float>& notes) {
+std::pair<float, int> quantize(float value, std::vector<int>& indices, float lowerLimit, float upperLimit, std::vector<float>& notes) {
 	float oct;
 	float fract;
 	if (value < 0) {
@@ -87,15 +96,38 @@ float quantize(float value, std::vector<int>& indices, float lowerLimit, float u
 		fract = std::modf(value, &oct);
 	}
 
-	float note = -1.f + notes.back();
+	// If the following loop doesn't find a result, it means we'll have to quantize downwards
+	unsigned int index = indices.size() - 1;
+	oct--;
+
+	// Look for the first note in the scale that is above the fractal part of the input value
 	for (int i = 0; i < indices.size(); i++) {
 		if (fract <= notes[indices[i]]) {
-			note = notes[indices[i]];
+			// We found a note in the scale to quantize to, so take that note and undo the octave down we did before.
+			index = i;
+			oct++;
 			break;
 		}
 	}
 
-	return oct + note;
+	// Make sure the quantized result remains within the limits
+	while (oct + notes[index] < lowerLimit) {
+		index++;
+		if (index >= indices.size()) {
+			oct++;
+			index = 0;
+		}
+	}
+
+	while (oct + notes[index] > upperLimit) {
+		index--;
+		if (index < 0) {
+			oct--;
+			index = indices.size() - 1;
+		}
+	}
+
+	return std::make_pair(oct, index);
 }
 
 
@@ -116,11 +148,12 @@ RameligModule::RameligModule() {
 	}
 
 	m_data = new RameligData();
-	m_data->scales[0] = { 0, 2, 4, 7, 9 };
+	m_data->scales[0] = { 0, 2, 4, /**/5, 7, 9, /**/11 };
 	m_data->currentScale = 0;
 
 	m_data->currentOctave = 0;
 	m_data->currentScaleIndex = 0;
+	m_data->lastWasRemain = false;
 
 	m_data->randomJumpChance = 0.3f;
 	m_data->randomMoveChance = 0.2f;
@@ -129,6 +162,9 @@ RameligModule::RameligModule() {
 	m_data->moveDownChance = 0.9f;
 
 	m_data->moveTwoChance = 0.3f;
+	m_data->remainRepeatFactor = 0.3f;
+
+	m_data->results = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	m_data->calculateDistributions();
 }
@@ -142,30 +178,21 @@ void RameligModule::process(const ProcessArgs& args) {
 		float upperLimit = inputs[IN_UPPER_LIMIT].getVoltage();
 		float lowerLimit = inputs[IN_LOWER_LIMIT].getVoltage();
 
+		float value = std::uniform_real_distribution<float>(lowerLimit, upperLimit)(m_generator);
 		RameligStepActions x = m_data->determineChance(m_generator);
 		outputs[OUT_GATE].setVoltage(x);
 		switch (x) {
 			case RANDOM_JUMP: {
-				float value = std::uniform_real_distribution<float>(lowerLimit, upperLimit)(m_generator);
-				value = quantize(value, m_data->scales[m_data->currentScale], lowerLimit, upperLimit, m_notes);
-				outputs[OUT_CV].setVoltage(value);
+				std::pair<float, int> quantized = quantize(value, m_data->scales[m_data->currentScale], lowerLimit, upperLimit, m_notes);
+				outputs[OUT_CV].setVoltage(quantized.first + m_notes[quantized.second]);
 				break;
 			}
 			case RANDOM_MOVE: {
-				float value = std::uniform_real_distribution<float>(lowerLimit, upperLimit)(m_generator);
-				value = quantize(value, m_data->scales[m_data->currentScale], lowerLimit, upperLimit, m_notes);
-				outputs[OUT_CV].setVoltage(value);
+				std::pair<float, int> quantized = quantize(value, m_data->scales[m_data->currentScale], lowerLimit, upperLimit, m_notes);
+				outputs[OUT_CV].setVoltage(quantized.first + m_notes[quantized.second]);
 
-				float whole;
-				float fract = std::modf(value, &whole);
-				m_data->currentOctave = (int) whole;
-				m_data->currentScaleIndex = 0;
-				for (int i = 0; i < m_data->scales[m_data->currentScaleIndex].size(); i++) {
-					if (m_notes[m_data->scales[m_data->currentScaleIndex][i]] == fract) {
-						m_data->currentScaleIndex = i;
-						break;
-					}
-				}
+				m_data->currentOctave = (int) quantized.first;
+				m_data->currentScaleIndex = quantized.second;
 				break;
 			}
 			case UP_TWO: {
@@ -233,6 +260,8 @@ void RameligModule::process(const ProcessArgs& args) {
 				}
 			}
 		}
+
+		m_data->lastWasRemain = (x == REMAIN);
 
 		float result = (float) m_data->currentOctave + m_notes[m_data->scales[m_data->currentScale][m_data->currentScaleIndex]];
 		outputs[OUT_CV].setVoltage(result);
