@@ -55,7 +55,7 @@ bool RameligDistributionData::operator==(const RameligDistributionData& other) c
 
 bool RameligDistributionData::operator!=(const RameligDistributionData& other) const {
 	return randomJumpChance != other.randomJumpChance ||
-		randomJumpStayOrReturnFactor != other.randomJumpStayOrReturnFactor ||
+		randomMoveChance != other.randomMoveChance ||
 		moveUpChance != other.moveUpChance ||
 		remainChance != other.remainChance ||
 		moveDownChance != other.moveDownChance ||
@@ -132,17 +132,19 @@ float RameligCore::process(RameligCoreData& data, float lowerLimit, float upperL
 
 		// If the movement pushed us outside of the limits, move in the other direction
 		if (((movement > 0) && (result > upperLimit)) || ((movement < 0) && (result < lowerLimit))) {
+			quantized.first = m_state.currentOctave;
+			quantized.second = m_state.currentScaleIndex;
 			quantized = move(quantized, -movement);
 			result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state.data.scale);
 		}
 
 		m_state.currentOctave = quantized.first;
 		m_state.currentScaleIndex = quantized.second;
+		m_state.lastResult = result;
 	}
 
-	// Remember what we did in this cycle
+	// Remember if we had a remain action in this cycle
 	m_state.lastWasRemain = (action == REMAIN);
-	m_state.lastResult = result;
 	// Processing is done, so clear the dirty flag
 	m_state.isDirty = false;
 
@@ -150,8 +152,8 @@ float RameligCore::process(RameligCoreData& data, float lowerLimit, float upperL
 }
 
 void RameligCore::calculateDistribution() {
-	m_state.actionDistribution[RameligActions::RANDOM_JUMP] = m_state.data.distributionData.randomJumpChance * m_state.data.distributionData.randomJumpStayOrReturnFactor;
-	m_state.actionDistribution[RameligActions::RANDOM_MOVE] = m_state.data.distributionData.randomJumpChance;
+	m_state.actionDistribution[RameligActions::RANDOM_JUMP] = m_state.data.distributionData.randomJumpChance;
+	m_state.actionDistribution[RameligActions::RANDOM_MOVE] = m_state.actionDistribution[RameligActions::RANDOM_JUMP] + m_state.data.distributionData.randomMoveChance;
 	m_state.actionDistribution[RameligActions::UP_TWO] = m_state.actionDistribution[RameligActions::RANDOM_MOVE] + m_state.data.distributionData.moveUpChance * m_state.data.distributionData.moveTwoFactor;
 	m_state.actionDistribution[RameligActions::UP_ONE] = m_state.actionDistribution[RameligActions::RANDOM_MOVE] + m_state.data.distributionData.moveUpChance;
 	m_state.actionDistribution[RameligActions::DOWN_ONE] = m_state.actionDistribution[RameligActions::UP_ONE] + m_state.data.distributionData.moveDownChance * (1 - m_state.data.distributionData.moveTwoFactor);

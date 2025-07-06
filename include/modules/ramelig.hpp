@@ -12,7 +12,8 @@ struct RameligModule : NTModule {
 
 		PARAM_CHANCE_RANDOM_JUMP,
 		PARAM_TRIG_RANDOM_JUMP,
-		PARAM_FACTOR_JUMP_REMAIN,
+		PARAM_CHANCE_RANDOM_MOVE,
+		PARAM_TRIG_RANDOM_MOVE,
 		
 		PARAM_CHANCE_MOVE_UP,
 		PARAM_CHANCE_REMAIN,
@@ -32,6 +33,7 @@ struct RameligModule : NTModule {
 		IN_UPPER_LIMIT,
 
 		IN_CHANCE_RANDOM_JUMP,
+		IN_CHANCE_RANDOM_MOVE,
 
 		IN_CHANCE_MOVE_UP,
 		IN_CHANCE_REMAIN,
@@ -43,7 +45,6 @@ struct RameligModule : NTModule {
 	};
 	enum OutputId {
 		OUT_CV,
-		OUT_GATE,
 		OUT_RANDOM_JUMP,
 		OUT_RANDOM_REMAIN,
 		NUM_OUTPUTS
@@ -62,7 +63,17 @@ struct RameligModule : NTModule {
 		RameligCore m_rameligCore;
 		RameligCoreData m_rameligCoreData;
 
-		rack::dsp::TSchmittTrigger<float> m_trigger;
+		rack::dsp::TSchmittTrigger<float> m_scaleButtonTriggers[12];
+		std::array<bool, 12> m_scales[12];
+		int m_activeScaleIndex;
+		std::vector<int> m_activeScaleIndices;
+
+		rack::dsp::TSchmittTrigger<float> m_inputTrigger;
+
+		int determineActiveScale();
+		void updateScale();
+
+		float getParamValue(ParamId paramId, float lowerLimit, float upperLimit, InputId inputId, float inputScaling);
 };
 
 struct RameligWidget : NTModuleWidget {

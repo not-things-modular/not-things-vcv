@@ -18,7 +18,7 @@ enum RameligActions {
 
 struct RameligDistributionData {
 	float randomJumpChance;
-	float randomJumpStayOrReturnFactor;
+	float randomMoveChance;
 
 	float moveUpChance;
 	float remainChance;
