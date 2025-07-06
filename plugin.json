@@ -90,6 +90,13 @@
 		"description": "Time Based Sequencer",
 		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/TIMESEQ.html",
 		"tags": [ "Utility", "Sequencer", "Polyphonic" ]
+	},
+	{
+		"slug": "ramelig",
+		"name": "Ramelig",
+		"description": "Random Melody Line Generator",
+		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAMELIG.html",
+		"tags": [ "Utility", "" ]
 	}
   ]
 }
