@@ -62,6 +62,9 @@ struct RameligModule : NTModule {
 
 	RameligModule();
 
+	json_t* dataToJson() override;
+	void dataFromJson(json_t* rootJ) override;
+
 	void process(const ProcessArgs& args) override;
 
 	private:

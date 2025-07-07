@@ -53,6 +53,49 @@ RameligModule::RameligModule() {
 	updateScale();
 }
 
+json_t* RameligModule::dataToJson() {
+	json_t* rootJ = NTModule::dataToJson();
+
+	json_t* scales = json_array();
+	for (int i = 0; i < 12; i++) {
+		json_int_t scale = 0;
+		for (size_t j = 0; j < m_scales[i].size(); j++) {
+			if (m_scales[i][j]) {
+				scale |= (1 << j);
+			}
+		}
+		json_array_append_new(scales, json_integer(scale));
+	}
+	json_object_set(rootJ,"ntRameligScales", scales);
+	json_decref(scales);
+
+	return rootJ;
+}
+
+void RameligModule::dataFromJson(json_t* rootJ) {
+	NTModule::dataFromJson(rootJ);
+
+	json_t* ntRameligScales = json_object_get(rootJ, "ntRameligScales");
+	if (json_is_array(ntRameligScales)) {
+		for (size_t i = 0; i < 12; i++) {
+			if (i < json_array_size(ntRameligScales)) {
+				json_t* scaleJ = json_array_get(ntRameligScales, i);
+				if (json_is_integer(scaleJ)) {
+					json_int_t scale = json_integer_value(scaleJ);
+					for (int j = 0; j < 12; j++) {
+						m_scales[i][j] = ((scale & (1 << j))) != 0;
+					}
+				} else {
+					m_scales[i] = { true, false, true, false, true, true, false, true, false, true, false, true };
+				}
+			} else {
+				m_scales[i] = { true, false, true, false, true, true, false, true, false, true, false, true };
+			}
+		}
+	}
+	updateScale();
+}
+
 void RameligModule::process(const ProcessArgs& args) {
 	// Detect when the active scale is changed
 	int activeScaleIndex = determineActiveScale();
@@ -152,7 +195,7 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 
 	addParam(createParamCentered<Trimpot>(Vec(32.5f, 137.f), module, RameligModule::PARAM_SCALE));
 
-	addParam(createLightParamCentered<VCVLightButton<MediumSimpleLight<RedLight>>>(Vec(32.5f, 87.f), module, RameligModule::PARAM_TRIGGER, RameligModule::LIGHT_TRIGGER));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<MediumSimpleLight<RedLight>>>>(Vec(32.5f, 87.f), module, RameligModule::PARAM_TRIGGER, RameligModule::LIGHT_TRIGGER));
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 47.f), module, RameligModule::IN_GATE));
 
