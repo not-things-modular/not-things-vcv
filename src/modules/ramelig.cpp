@@ -19,6 +19,7 @@ RameligModule::RameligModule() {
 	configInput(IN_SCALE, "Scale CV");
 
 	configOutput(OUT_CV, "CV");
+	configOutput(OUT_TRIGGER, "Trigger");
 	configOutput(OUT_RANDOM_JUMP, "Random jump triggered");
 	configOutput(OUT_RANDOM_REMAIN, "Random remain triggered");
 
@@ -35,6 +36,8 @@ RameligModule::RameligModule() {
 	configParam(PARAM_CHANCE_MOVE_DOWN, 0.f, 10.f, 9.f, "Move down chance");
 	configParam(PARAM_FACTOR_MOVE_TWO, 0.f, 10.f, 7.f, "Move by one or two steps factor");
 	configParam(PARAM_FACTOR_REMAIN_REPEAT, 0.f, 10.f, 7.f, "Remain repeat factor");
+
+	configButton(PARAM_TRIGGER, "Trigger");
 
 	ParamQuantity* pq = configParam(PARAM_SCALE, 0.f, 10.f, 0.f, "Scale");
 	pq->snapEnabled = true;
@@ -70,7 +73,14 @@ void RameligModule::process(const ProcessArgs& args) {
 		updateScale();
 	}
 
-	if (m_inputTrigger.process(inputs[IN_GATE].getVoltage(0), 0.f, 1.f)) {
+	// Check if the trigger button was pushed
+	bool triggerPushed = m_buttonTrigger.process(params[PARAM_TRIGGER].getValue());
+	if (triggerPushed) {
+		m_triggerPulse.trigger();
+	}
+
+	// Do the actual processing if needed
+	if ((m_inputTrigger.process(inputs[IN_GATE].getVoltage(0), 0.f, 1.f)) || (triggerPushed)) {
 		float upperLimit = getParamValue(PARAM_UPPER_LIMIT, -10.f, 10.f, IN_UPPER_LIMIT, 1.f);
 		float lowerLimit = getParamValue(PARAM_LOWER_LIMIT, -10.f, 10.f, IN_LOWER_LIMIT, 1.f);
 
@@ -84,6 +94,16 @@ void RameligModule::process(const ProcessArgs& args) {
 		m_rameligCoreData.distributionData.remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
 
 		outputs[OUT_CV].setVoltage(m_rameligCore.process(m_rameligCoreData, lowerLimit, upperLimit));
+		lights[LIGHT_TRIGGER].setBrightnessSmooth(1.f, args.sampleTime, 10.f);
+	} else if (lights[LIGHT_TRIGGER].getBrightness() > 0.f) {
+		lights[LIGHT_TRIGGER].setBrightnessSmooth(0.f, args.sampleTime, 10.f);
+	}
+
+	// Update the trigger output based on either the input trigger, or the trigger button pulse
+	if ((m_triggerPulse.process(args.sampleTime)) || (inputs[IN_GATE].getVoltage(0) >= 1.f)) {
+		outputs[OUT_TRIGGER].setVoltage(10.f);
+	} else {
+		outputs[OUT_TRIGGER].setVoltage(0.f);
 	}
 }
 
@@ -131,7 +151,9 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addParam(createParamCentered<Trimpot>(Vec(177.5f, 127.f), module, RameligModule::PARAM_FACTOR_REMAIN_REPEAT));
 
 	addParam(createParamCentered<Trimpot>(Vec(32.5f, 137.f), module, RameligModule::PARAM_SCALE));
-	
+
+	addParam(createLightParamCentered<VCVLightButton<MediumSimpleLight<RedLight>>>(Vec(32.5f, 87.f), module, RameligModule::PARAM_TRIGGER, RameligModule::LIGHT_TRIGGER));
+
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 47.f), module, RameligModule::IN_GATE));
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_LOWER_LIMIT));
@@ -159,7 +181,8 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(155.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 3, RameligModule::LIGHT_SCALE_NOTES + 3));
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(175.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 1, RameligModule::LIGHT_SCALE_NOTES + 1));
 
-	addOutput(createOutputCentered<NTPort>(Vec(61.f, 332.5f), module, RameligModule::OUT_CV));
+	addOutput(createOutputCentered<NTPort>(Vec(32.f, 332.5f), module, RameligModule::OUT_CV));
+	addOutput(createOutputCentered<NTPort>(Vec(72.f, 332.5f), module, RameligModule::OUT_TRIGGER));
 	addOutput(createOutputCentered<NTPort>(Vec(137.5f, 345.f), module, RameligModule::OUT_RANDOM_JUMP));
 	addOutput(createOutputCentered<NTPort>(Vec(177.5f, 345.f), module, RameligModule::OUT_RANDOM_REMAIN));
 }

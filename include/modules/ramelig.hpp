@@ -24,6 +24,8 @@ struct RameligModule : NTModule {
 		PARAM_SCALE,
 		ENUMS(PARAM_SCALE_NOTES, 12),
 		
+		PARAM_TRIGGER,
+
 		NUM_PARAMS
 	};
 	enum InputId {
@@ -45,13 +47,16 @@ struct RameligModule : NTModule {
 	};
 	enum OutputId {
 		OUT_CV,
+		OUT_TRIGGER,
 		OUT_RANDOM_JUMP,
 		OUT_RANDOM_REMAIN,
 		NUM_OUTPUTS
 	};
 	enum LightId {
 		ENUMS(LIGHT_SCALE_NOTES, 12),
+		LIGHT_TRIGGER,
 		LIGHT_RANDOM_JUMP,
+		LIGHT_RANDOM_REMAIN,
 		NUM_LIGHTS
 	};
 
@@ -69,6 +74,8 @@ struct RameligModule : NTModule {
 		std::vector<int> m_activeScaleIndices;
 
 		rack::dsp::TSchmittTrigger<float> m_inputTrigger;
+		rack::dsp::BooleanTrigger m_buttonTrigger;
+		rack::dsp::PulseGenerator m_triggerPulse;
 
 		int determineActiveScale();
 		void updateScale();
