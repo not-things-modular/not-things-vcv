@@ -64,8 +64,8 @@ bool RameligDistributionData::operator!=(const RameligDistributionData& other) c
 }
 
 
-RameligCore::RameligCore() : RameligCore(std::make_shared<UniformChanceGenerator>()) {}
-RameligCore::RameligCore(std::shared_ptr<ChanceGenerator> chanceGenerator) : m_chanceGenerator(chanceGenerator) {
+RameligCore::RameligCore(RameligActionListener *actionListener) : RameligCore(actionListener, std::make_shared<UniformChanceGenerator>()) {}
+RameligCore::RameligCore(RameligActionListener *actionListener, std::shared_ptr<ChanceGenerator> chanceGenerator) : m_chanceGenerator(chanceGenerator), m_actionListener(actionListener) {
 	for (int i = 0; i < 12; i++) {
 		m_notes[i] = (float) i / 12.f;
 	}
@@ -98,7 +98,7 @@ float RameligCore::process(RameligCoreData& data, float lowerLimit, float upperL
 
 	// Start from the previous result
 	float result = m_state.lastResult;
-	
+
 	// Perform the next action
 	RameligActions action = determineAction();
 	if ((action == RANDOM_JUMP) || (action == RANDOM_MOVE)) {
@@ -147,6 +147,11 @@ float RameligCore::process(RameligCoreData& data, float lowerLimit, float upperL
 	m_state.lastWasRemain = (action == REMAIN);
 	// Processing is done, so clear the dirty flag
 	m_state.isDirty = false;
+
+	// Notify the listener of the peformed action
+	if (m_actionListener != nullptr) {
+		m_actionListener->rameligActionPerformed(action);
+	}
 
 	return result;
 }
@@ -204,7 +209,7 @@ RameligActions RameligCore::determineAction() {
 
 std::pair<int, int> RameligCore::quantize(float value, float lowerLimit, float upperLimit) {
 	float oct;
-	int index;
+	int index = 0;
 	float fract;
 	if (value < 0) {
 		oct = std::floor(value); // The amount we'll have to subtract from the end result, since we'll make the decimal part positive to easier compare with the quantization notes list

@@ -5,7 +5,7 @@
 #include "core/ramelig-core.hpp"
 
 
-struct RameligModule : NTModule {
+struct RameligModule : NTModule, RameligActionListener {
 	enum ParamId {
 		PARAM_LOWER_LIMIT,
 		PARAM_UPPER_LIMIT,
@@ -14,23 +14,23 @@ struct RameligModule : NTModule {
 		PARAM_TRIG_RANDOM_JUMP,
 		PARAM_CHANCE_RANDOM_MOVE,
 		PARAM_TRIG_RANDOM_MOVE,
-		
+
 		PARAM_CHANCE_MOVE_UP,
 		PARAM_CHANCE_REMAIN,
 		PARAM_CHANCE_MOVE_DOWN,
 		PARAM_FACTOR_MOVE_TWO,
 		PARAM_FACTOR_REMAIN_REPEAT,
-		
+
 		PARAM_SCALE,
 		ENUMS(PARAM_SCALE_NOTES, 12),
-		
+
 		PARAM_TRIGGER,
 
 		NUM_PARAMS
 	};
 	enum InputId {
 		IN_GATE,
-		
+
 		IN_LOWER_LIMIT,
 		IN_UPPER_LIMIT,
 
@@ -42,7 +42,7 @@ struct RameligModule : NTModule {
 		IN_CHANCE_MOVE_DOWN,
 
 		IN_SCALE,
-		
+
 		NUM_INPUTS
 	};
 	enum OutputId {
@@ -67,6 +67,8 @@ struct RameligModule : NTModule {
 
 	void process(const ProcessArgs& args) override;
 
+	void rameligActionPerformed(RameligActions action) override;
+
 	private:
 		RameligCore m_rameligCore;
 		RameligCoreData m_rameligCoreData;
@@ -79,6 +81,8 @@ struct RameligModule : NTModule {
 		rack::dsp::TSchmittTrigger<float> m_inputTrigger;
 		rack::dsp::BooleanTrigger m_buttonTrigger;
 		rack::dsp::PulseGenerator m_triggerPulse;
+
+		dsp::ClockDivider m_lightDivider;
 
 		int determineActiveScale();
 		void updateScale();

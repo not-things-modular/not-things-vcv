@@ -5,7 +5,17 @@
 
 extern Model* modelRamelig;
 
-RameligModule::RameligModule() {
+void reduceLight(Light& light, float deltaTime, float lambda) {
+	if (light.getBrightness() > 0.f) {
+		if (light.getBrightness() > 0.0001f) {
+			light.setBrightnessSmooth(0.f, deltaTime, lambda);
+		} else {
+			light.setBrightness(0.f);
+		}
+	}
+}
+
+RameligModule::RameligModule() : m_rameligCore(this) {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
 	configInput(IN_GATE, "Clock");
@@ -51,6 +61,8 @@ RameligModule::RameligModule() {
 
 	m_activeScaleIndex = 0;
 	updateScale();
+
+	m_lightDivider.setDivision(128);
 }
 
 json_t* RameligModule::dataToJson() {
@@ -137,9 +149,11 @@ void RameligModule::process(const ProcessArgs& args) {
 		m_rameligCoreData.distributionData.remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
 
 		outputs[OUT_CV].setVoltage(m_rameligCore.process(m_rameligCoreData, lowerLimit, upperLimit));
-		lights[LIGHT_TRIGGER].setBrightnessSmooth(1.f, args.sampleTime, 10.f);
-	} else if (lights[LIGHT_TRIGGER].getBrightness() > 0.f) {
-		lights[LIGHT_TRIGGER].setBrightnessSmooth(0.f, args.sampleTime, 10.f);
+		lights[LIGHT_TRIGGER].setBrightness(1.f);
+	} else if (m_lightDivider.process()) {
+		reduceLight(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
+		reduceLight(lights[LIGHT_RANDOM_JUMP], args.sampleTime * 128, 15.f);
+		reduceLight(lights[LIGHT_RANDOM_REMAIN], args.sampleTime * 128, 15.f);
 	}
 
 	// Update the trigger output based on either the input trigger, or the trigger button pulse
@@ -150,13 +164,21 @@ void RameligModule::process(const ProcessArgs& args) {
 	}
 }
 
+void RameligModule::rameligActionPerformed(RameligActions action) {
+	if (action == RameligActions::RANDOM_JUMP) {
+		lights[LIGHT_RANDOM_JUMP].setBrightness(1.f);
+	} else if (action == RameligActions::RANDOM_MOVE) {
+		lights[LIGHT_RANDOM_REMAIN].setBrightness(1.f);
+	}
+}
+
 int RameligModule::determineActiveScale() {
 	return params[PARAM_SCALE].getValue();
 }
 
 void RameligModule::updateScale() {
 	std::vector<int> scaleIndices = {};
-	
+
 	for (int i = 0; i < 12; i++) {
 		if (m_scales[m_activeScaleIndex][i]) {
 			lights[LIGHT_SCALE_NOTES + i].setBrightness(1.f);
@@ -209,7 +231,7 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addInput(createInputCentered<NTPort>(Vec(97.5f, 87.f), module, RameligModule::IN_CHANCE_MOVE_DOWN));
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 172.f), module, RameligModule::IN_SCALE));
-	
+
 	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(65.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 11, RameligModule::LIGHT_SCALE_NOTES + 11));
 	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(85.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 9, RameligModule::LIGHT_SCALE_NOTES + 9));
 	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(105.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 7, RameligModule::LIGHT_SCALE_NOTES + 7));
@@ -228,6 +250,9 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addOutput(createOutputCentered<NTPort>(Vec(72.f, 332.5f), module, RameligModule::OUT_TRIGGER));
 	addOutput(createOutputCentered<NTPort>(Vec(137.5f, 345.f), module, RameligModule::OUT_RANDOM_JUMP));
 	addOutput(createOutputCentered<NTPort>(Vec(177.5f, 345.f), module, RameligModule::OUT_RANDOM_REMAIN));
+
+	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(150.f, 332.5f), module, RameligModule::LIGHT_RANDOM_JUMP));
+	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(190.f, 332.5f), module, RameligModule::LIGHT_RANDOM_REMAIN));
 }
 
 
