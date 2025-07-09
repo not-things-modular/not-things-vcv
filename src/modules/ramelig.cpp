@@ -49,9 +49,10 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 
 	configButton(PARAM_TRIGGER, "Trigger");
 
-	ParamQuantity* pq = configParam(PARAM_SCALE, 0.f, 10.f, 0.f, "Scale");
+	ParamQuantity* pq = configParam(PARAM_SCALE, 0.f, 9.f, 0.f, "Scale");
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
+	pq->displayOffset = 1.f;
 
 	const char* notes[] = { "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B" };
 	for (int i = 0; i < 12; i++) {
@@ -59,6 +60,7 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 		m_scales[i] = { true, false, true, false, true, true, false, true, false, true, false, true };
 	}
 
+	m_scaleMode = ScaleMode::SCALE_MODE_DECIMAL;
 	m_activeScaleIndex = 0;
 	updateScale();
 
@@ -81,11 +83,23 @@ json_t* RameligModule::dataToJson() {
 	json_object_set(rootJ,"ntRameligScales", scales);
 	json_decref(scales);
 
+	json_object_set(rootJ, "ntRameligScaleMode", json_integer(m_scaleMode));
+
 	return rootJ;
 }
 
 void RameligModule::dataFromJson(json_t* rootJ) {
 	NTModule::dataFromJson(rootJ);
+
+	json_t* ntRameligScaleMode = json_object_get(rootJ, "ntRameligScaleMode");
+	if (json_is_integer(ntRameligScaleMode)) {
+		json_int_t scaleMode = json_integer_value(ntRameligScaleMode);
+		if ((scaleMode > 0) && (scaleMode < ScaleMode::NUM_SCALE_MODES)) {
+			setScaleMode(static_cast<ScaleMode>(scaleMode));
+		} else {
+			setScaleMode(ScaleMode::SCALE_MODE_DECIMAL);
+		}
+	}
 
 	json_t* ntRameligScales = json_object_get(rootJ, "ntRameligScales");
 	if (json_is_array(ntRameligScales)) {
@@ -172,6 +186,26 @@ void RameligModule::rameligActionPerformed(RameligActions action) {
 	}
 }
 
+RameligModule::ScaleMode RameligModule::getScaleMode() {
+	return m_scaleMode;
+}
+
+void RameligModule::setScaleMode(ScaleMode scaleMode) {
+	m_scaleMode = scaleMode;
+
+	float scale = params[ParamId::PARAM_SCALE].getValue();
+	if (m_scaleMode == ScaleMode::SCALE_MODE_DECIMAL) {
+		if (scale > 9.f) {
+			scale = 9.f;
+		}
+		getParamQuantity(ParamId::PARAM_SCALE)->maxValue = 9.f;
+	} else {
+		getParamQuantity(ParamId::PARAM_SCALE)->maxValue = 11.f;
+	}
+	params[ParamId::PARAM_SCALE].setValue(scale);
+	updateScale();
+}
+
 int RameligModule::determineActiveScale() {
 	return params[PARAM_SCALE].getValue();
 }
@@ -232,19 +266,19 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 172.f), module, RameligModule::IN_SCALE));
 
-	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(65.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 11, RameligModule::LIGHT_SCALE_NOTES + 11));
-	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(85.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 9, RameligModule::LIGHT_SCALE_NOTES + 9));
-	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(105.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 7, RameligModule::LIGHT_SCALE_NOTES + 7));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(65.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 0, RameligModule::LIGHT_SCALE_NOTES + 0));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(85.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 2, RameligModule::LIGHT_SCALE_NOTES + 2));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(105.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 4, RameligModule::LIGHT_SCALE_NOTES + 4));
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(125.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 5, RameligModule::LIGHT_SCALE_NOTES + 5));
-	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(145.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 4, RameligModule::LIGHT_SCALE_NOTES + 4));
-	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(165.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 2, RameligModule::LIGHT_SCALE_NOTES + 2));
-	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(185.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 0, RameligModule::LIGHT_SCALE_NOTES + 0));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(145.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 7, RameligModule::LIGHT_SCALE_NOTES + 7));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(165.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 9, RameligModule::LIGHT_SCALE_NOTES + 9));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(185.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 11, RameligModule::LIGHT_SCALE_NOTES + 11));
 
-	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(75.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 10, RameligModule::LIGHT_SCALE_NOTES + 10));
-	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(95.f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 8, RameligModule::LIGHT_SCALE_NOTES + 8));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(75.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 1, RameligModule::LIGHT_SCALE_NOTES + 1));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(95.f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 3, RameligModule::LIGHT_SCALE_NOTES + 3));
 	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(130.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 6, RameligModule::LIGHT_SCALE_NOTES + 6));
-	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(155.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 3, RameligModule::LIGHT_SCALE_NOTES + 3));
-	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(175.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 1, RameligModule::LIGHT_SCALE_NOTES + 1));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(155.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 8, RameligModule::LIGHT_SCALE_NOTES + 8));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(175.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 10, RameligModule::LIGHT_SCALE_NOTES + 10));
 
 	addOutput(createOutputCentered<NTPort>(Vec(32.f, 332.5f), module, RameligModule::OUT_CV));
 	addOutput(createOutputCentered<NTPort>(Vec(72.f, 332.5f), module, RameligModule::OUT_TRIGGER));
@@ -254,6 +288,27 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(150.f, 332.5f), module, RameligModule::LIGHT_RANDOM_JUMP));
 	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(190.f, 332.5f), module, RameligModule::LIGHT_RANDOM_REMAIN));
 }
+
+void RameligWidget::appendContextMenu(Menu* menu) {
+	NTModuleWidget::appendContextMenu(menu);
+
+	RameligModule::ScaleMode scaleMode = getModule() ? dynamic_cast<RameligModule *>(getModule())->getScaleMode() : RameligModule::ScaleMode::SCALE_MODE_DECIMAL;
+	menu->addChild(new MenuSeparator);
+	menu->addChild(createSubmenuItem("Scale selection mode", "",
+		[this, scaleMode](Menu* menu) {
+			menu->addChild(createCheckMenuItem("Decimal", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_DECIMAL; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_DECIMAL); }));
+			menu->addChild(createCheckMenuItem("Chromatic", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_CHROMATIC; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_CHROMATIC); }));
+		}
+	));
+}
+
+void RameligWidget::setScaleMode(RameligModule::ScaleMode scaleMode) {
+	RameligModule* rameligModule = dynamic_cast<RameligModule *>(getModule());
+	if ((rameligModule != nullptr) && (scaleMode != rameligModule->getScaleMode())) {
+		rameligModule->setScaleMode(scaleMode);
+	}
+}
+
 
 
 Model* modelRamelig = createModel<RameligModule, RameligWidget>("ramelig");

@@ -60,6 +60,12 @@ struct RameligModule : NTModule, RameligActionListener {
 		NUM_LIGHTS
 	};
 
+	enum ScaleMode {
+		SCALE_MODE_DECIMAL,
+		SCALE_MODE_CHROMATIC,
+		NUM_SCALE_MODES
+	};
+
 	RameligModule();
 
 	json_t* dataToJson() override;
@@ -69,9 +75,14 @@ struct RameligModule : NTModule, RameligActionListener {
 
 	void rameligActionPerformed(RameligActions action) override;
 
+	ScaleMode getScaleMode();
+	void setScaleMode(ScaleMode scaleMode);
+
 	private:
 		RameligCore m_rameligCore;
 		RameligCoreData m_rameligCoreData;
+
+		ScaleMode m_scaleMode;
 
 		rack::dsp::TSchmittTrigger<float> m_scaleButtonTriggers[12];
 		std::array<bool, 12> m_scales[12];
@@ -92,4 +103,7 @@ struct RameligModule : NTModule, RameligActionListener {
 
 struct RameligWidget : NTModuleWidget {
 	RameligWidget(RameligModule* module);
+
+	void appendContextMenu(Menu* menu) override;
+	void setScaleMode(RameligModule::ScaleMode scaleMode);
 };
