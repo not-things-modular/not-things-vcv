@@ -71,46 +71,46 @@ RameligCore::RameligCore(RameligActionListener *actionListener, std::shared_ptr<
 	}
 }
 
-float RameligCore::process(RameligCoreData& data, float lowerLimit, float upperLimit) {
+float RameligCore::process(int channel, RameligCoreData& data, float lowerLimit, float upperLimit) {
 	std::pair<int, int> quantized;
 
 	// Update the distribution if needed
-	if (m_state.data.distributionData != data.distributionData) {
-		m_state.data.distributionData = data.distributionData;
-		m_state.isDirty = true;
-		calculateDistribution();
+	if (m_state[channel].data.distributionData != data.distributionData) {
+		m_state[channel].data.distributionData = data.distributionData;
+		m_state[channel].isDirty = true;
+		calculateDistribution(channel);
 	}
 
 	// Update the scale quantization values if needed
-	if (m_state.data.scale != data.scale) {
-		m_state.data.scale = data.scale;
-		m_state.isDirty = true;
-		calculateQuantization();
+	if (m_state[channel].data.scale != data.scale) {
+		m_state[channel].data.scale = data.scale;
+		m_state[channel].isDirty = true;
+		calculateQuantization(channel);
 	}
 
 	// If the state is dirty, quantize the lastResult to the current scale
-	if (m_state.isDirty) {
-		quantized = quantize(m_state.lastResult, lowerLimit, upperLimit);
-		m_state.currentOctave = quantized.first;
-		m_state.currentScaleIndex = quantized.second;
-		m_state.lastResult = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state.data.scale);
+	if (m_state[channel].isDirty) {
+		quantized = quantize(channel, m_state[channel].lastResult, lowerLimit, upperLimit);
+		m_state[channel].currentOctave = quantized.first;
+		m_state[channel].currentScaleIndex = quantized.second;
+		m_state[channel].lastResult = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state[channel].data.scale);
 	}
 
 	// Start from the previous result
-	float result = m_state.lastResult;
+	float result = m_state[channel].lastResult;
 
 	// Perform the next action
-	RameligActions action = determineAction();
+	RameligActions action = determineAction(channel);
 	if ((action == RANDOM_JUMP) || (action == RANDOM_MOVE)) {
 		float randomValue = m_chanceGenerator->generateJumpChance(lowerLimit, upperLimit);
-		quantized = quantize(randomValue, lowerLimit, upperLimit);
+		quantized = quantize(channel, randomValue, lowerLimit, upperLimit);
 		if (action == RANDOM_MOVE) {
-			m_state.currentOctave = quantized.first;
-			m_state.currentScaleIndex = quantized.second;
+			m_state[channel].currentOctave = quantized.first;
+			m_state[channel].currentScaleIndex = quantized.second;
 		}
-		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state.data.scale);
-		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state.data.scale);
-		quantized = quantize(randomValue, lowerLimit, upperLimit);
+		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state[channel].data.scale);
+		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state[channel].data.scale);
+		quantized = quantize(channel, randomValue, lowerLimit, upperLimit);
 	} else if (action != REMAIN) {
 		// Determine which movement we have to do
 		int movement;
@@ -125,80 +125,80 @@ float RameligCore::process(RameligCoreData& data, float lowerLimit, float upperL
 		}
 
 		// Perform the movement
-		quantized.first = m_state.currentOctave;
-		quantized.second = m_state.currentScaleIndex;
-		quantized = move(quantized, movement);
-		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state.data.scale);
+		quantized.first = m_state[channel].currentOctave;
+		quantized.second = m_state[channel].currentScaleIndex;
+		quantized = move(channel, quantized, movement);
+		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state[channel].data.scale);
 
 		// If the movement pushed us outside of the limits, move in the other direction
 		if (((movement > 0) && (result > upperLimit)) || ((movement < 0) && (result < lowerLimit))) {
-			quantized.first = m_state.currentOctave;
-			quantized.second = m_state.currentScaleIndex;
-			quantized = move(quantized, -movement);
-			result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state.data.scale);
+			quantized.first = m_state[channel].currentOctave;
+			quantized.second = m_state[channel].currentScaleIndex;
+			quantized = move(channel, quantized, -movement);
+			result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_state[channel].data.scale);
 		}
 
-		m_state.currentOctave = quantized.first;
-		m_state.currentScaleIndex = quantized.second;
-		m_state.lastResult = result;
+		m_state[channel].currentOctave = quantized.first;
+		m_state[channel].currentScaleIndex = quantized.second;
+		m_state[channel].lastResult = result;
 	}
 
 	// Remember if we had a remain action in this cycle
-	m_state.lastWasRemain = (action == REMAIN);
+	m_state[channel].lastWasRemain = (action == REMAIN);
 	// Processing is done, so clear the dirty flag
-	m_state.isDirty = false;
+	m_state[channel].isDirty = false;
 
 	// Notify the listener of the peformed action
 	if (m_actionListener != nullptr) {
-		m_actionListener->rameligActionPerformed(action);
+		m_actionListener->rameligActionPerformed(channel, action);
 	}
 
 	return result;
 }
 
-void RameligCore::calculateDistribution() {
-	m_state.actionDistribution[RameligActions::RANDOM_JUMP] = m_state.data.distributionData.randomJumpChance;
-	m_state.actionDistribution[RameligActions::RANDOM_MOVE] = m_state.actionDistribution[RameligActions::RANDOM_JUMP] + m_state.data.distributionData.randomMoveChance;
-	m_state.actionDistribution[RameligActions::UP_TWO] = m_state.actionDistribution[RameligActions::RANDOM_MOVE] + m_state.data.distributionData.moveUpChance * m_state.data.distributionData.moveTwoFactor;
-	m_state.actionDistribution[RameligActions::UP_ONE] = m_state.actionDistribution[RameligActions::RANDOM_MOVE] + m_state.data.distributionData.moveUpChance;
-	m_state.actionDistribution[RameligActions::DOWN_ONE] = m_state.actionDistribution[RameligActions::UP_ONE] + m_state.data.distributionData.moveDownChance * (1 - m_state.data.distributionData.moveTwoFactor);
-	m_state.actionDistribution[RameligActions::DOWN_TWO] = m_state.actionDistribution[RameligActions::UP_ONE] + m_state.data.distributionData.moveDownChance;
-	m_state.actionDistribution[RameligActions::REMAIN] = m_state.actionDistribution[RameligActions::DOWN_TWO] + m_state.data.distributionData.remainChance;
+void RameligCore::calculateDistribution(int channel) {
+	m_state[channel].actionDistribution[RameligActions::RANDOM_JUMP] = m_state[channel].data.distributionData.randomJumpChance;
+	m_state[channel].actionDistribution[RameligActions::RANDOM_MOVE] = m_state[channel].actionDistribution[RameligActions::RANDOM_JUMP] + m_state[channel].data.distributionData.randomMoveChance;
+	m_state[channel].actionDistribution[RameligActions::UP_TWO] = m_state[channel].actionDistribution[RameligActions::RANDOM_MOVE] + m_state[channel].data.distributionData.moveUpChance * m_state[channel].data.distributionData.moveTwoFactor;
+	m_state[channel].actionDistribution[RameligActions::UP_ONE] = m_state[channel].actionDistribution[RameligActions::RANDOM_MOVE] + m_state[channel].data.distributionData.moveUpChance;
+	m_state[channel].actionDistribution[RameligActions::DOWN_ONE] = m_state[channel].actionDistribution[RameligActions::UP_ONE] + m_state[channel].data.distributionData.moveDownChance * (1 - m_state[channel].data.distributionData.moveTwoFactor);
+	m_state[channel].actionDistribution[RameligActions::DOWN_TWO] = m_state[channel].actionDistribution[RameligActions::UP_ONE] + m_state[channel].data.distributionData.moveDownChance;
+	m_state[channel].actionDistribution[RameligActions::REMAIN] = m_state[channel].actionDistribution[RameligActions::DOWN_TWO] + m_state[channel].data.distributionData.remainChance;
 }
 
-void RameligCore::calculateQuantization() {
+void RameligCore::calculateQuantization(int channel) {
 	// The quantizationValues contains a list of floats, so that you have to quantize to the index if:
 	// - The list item at that index is lower or equal to the current value
 	// - The list item at (index + 1) is higher than the current value
-	std::vector<int>& scale = m_state.data.scale;
-	m_state.quantizationValues.clear();
+	std::vector<int>& scale = m_state[channel].data.scale;
+	m_state[channel].quantizationValues.clear();
 
 	if (scale.size() > 1) {
 		// The first item is the lower limit, so it is the average of the first note in this scale and the last note of the previous one
-		m_state.quantizationValues.push_back((m_notes[scale.back()] - 1.f + m_notes.front()) / 2);
+		m_state[channel].quantizationValues.push_back((m_notes[scale.back()] - 1.f + m_notes.front()) / 2);
 		// Now loop through all items in the scale and the average of that item combined with the next one
 		for (unsigned int i = 0; i < scale.size() - 1; i++) {
-			m_state.quantizationValues.push_back((m_notes[scale[i]] + m_notes[scale[i + 1]]) / 2.f);
+			m_state[channel].quantizationValues.push_back((m_notes[scale[i]] + m_notes[scale[i + 1]]) / 2.f);
 		}
 		// Finally add the average of the last item in this scale and the first of the next scale, which is the upper boundry of the range for the last item in this scale
-		m_state.quantizationValues.push_back((m_notes[scale.front()] + 1.f + m_notes[scale.back()]) / 2);
+		m_state[channel].quantizationValues.push_back((m_notes[scale.front()] + 1.f + m_notes[scale.back()]) / 2);
 	} else {
 		// There is only one item in the scale, so just add the range it.
-		m_state.quantizationValues.push_back(m_notes[scale[0]] - .5f);
-		m_state.quantizationValues.push_back(m_notes[scale[0]]);
+		m_state[channel].quantizationValues.push_back(m_notes[scale[0]] - .5f);
+		m_state[channel].quantizationValues.push_back(m_notes[scale[0]]);
 	}
 }
 
-RameligActions RameligCore::determineAction() {
-	float upperLimit = m_state.actionDistribution[REMAIN];
-	if (m_state.lastWasRemain) {
-		upperLimit -= m_state.data.distributionData.remainChance * (1 - m_state.data.distributionData.remainRepeatFactor);
+RameligActions RameligCore::determineAction(int channel) {
+	float upperLimit = m_state[channel].actionDistribution[REMAIN];
+	if (m_state[channel].lastWasRemain) {
+		upperLimit -= m_state[channel].data.distributionData.remainChance * (1 - m_state[channel].data.distributionData.remainRepeatFactor);
 	}
 	float chance = m_chanceGenerator->generateActionChance(0.f, upperLimit);
 
 	RameligActions result = RameligActions::RANDOM_JUMP;
 	for (unsigned int i = 0; i < 7; i++) {
-		if (m_state.actionDistribution[i] >= chance) {
+		if (m_state[channel].actionDistribution[i] >= chance) {
 			result = static_cast<RameligActions>(i);
 			break;
 		}
@@ -207,7 +207,7 @@ RameligActions RameligCore::determineAction() {
 	return result;
 }
 
-std::pair<int, int> RameligCore::quantize(float value, float lowerLimit, float upperLimit) {
+std::pair<int, int> RameligCore::quantize(int channel, float value, float lowerLimit, float upperLimit) {
 	float oct;
 	int index = 0;
 	float fract;
@@ -218,18 +218,18 @@ std::pair<int, int> RameligCore::quantize(float value, float lowerLimit, float u
 		fract = std::modf(value, &oct);
 	}
 
-	if (fract < m_state.quantizationValues.front()) {
+	if (fract < m_state[channel].quantizationValues.front()) {
 		// If the value is below the first item in the quantization list, we'll have to quantize towards the last note of the previous octave
 		oct--;
-		index = m_state.data.scale.size() - 1;
-	} else if (fract > m_state.quantizationValues.back()) {
+		index = m_state[channel].data.scale.size() - 1;
+	} else if (fract > m_state[channel].quantizationValues.back()) {
 		// If the value is above the last item in the quantization list, we'll have to quantize towards the first note of the next octave
 		oct++;
 		index = 0;
 	} else {
 		// Look for the position in the quantization values list where the next item in the list is above the current value
-		for (int i = 0; i < (int) m_state.quantizationValues.size() - 1; i++) {
-			if (fract <= m_state.quantizationValues[i + 1]) {
+		for (int i = 0; i < (int) m_state[channel].quantizationValues.size() - 1; i++) {
+			if (fract <= m_state[channel].quantizationValues[i + 1]) {
 				// We found the index in the scale to quantize to, so take that index and undo the octave-up we did before.
 				index = i;
 				break;
@@ -238,35 +238,35 @@ std::pair<int, int> RameligCore::quantize(float value, float lowerLimit, float u
 	}
 
 	// Make sure the quantized result remains within the limits
-	while (oct + m_notes[m_state.data.scale[index]] < lowerLimit) {
+	while (oct + m_notes[m_state[channel].data.scale[index]] < lowerLimit) {
 		index++;
-		if (index >= (int) m_state.data.scale.size()) {
+		if (index >= (int) m_state[channel].data.scale.size()) {
 			oct++;
 			index = 0;
 		}
 	}
 
-	while (oct + m_notes[m_state.data.scale[index]] > upperLimit) {
+	while (oct + m_notes[m_state[channel].data.scale[index]] > upperLimit) {
 		index--;
 		if (index < 0) {
 			oct--;
-			index = m_state.data.scale.size() - 1;
+			index = m_state[channel].data.scale.size() - 1;
 		}
 	}
 
 	return std::make_pair(oct, index);
 }
 
-std::pair<int, int> RameligCore::move(std::pair<int, int>& current, int movement) {
+std::pair<int, int> RameligCore::move(int channel, std::pair<int, int>& current, int movement) {
 	int oct = current.first;
 	int index = current.second + movement;
-	if (index >= (int) m_state.data.scale.size()) {
+	if (index >= (int) m_state[channel].data.scale.size()) {
 		oct++;
 		index = 0;
 	}
 	if (index < 0) {
 		oct--;
-		index = m_state.data.scale.size() - 1;
+		index = m_state[channel].data.scale.size() - 1;
 	}
 
 	return std::make_pair(oct, index);

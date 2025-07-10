@@ -72,15 +72,17 @@ struct RameligModule : NTModule, RameligActionListener {
 	void dataFromJson(json_t* rootJ) override;
 
 	void process(const ProcessArgs& args) override;
+	void onPortChange(const PortChangeEvent& e) override;
 
-	void rameligActionPerformed(RameligActions action) override;
+	void rameligActionPerformed(int channel, RameligActions action) override;
 
 	ScaleMode getScaleMode();
 	void setScaleMode(ScaleMode scaleMode);
 
 	private:
 		RameligCore m_rameligCore;
-		RameligCoreData m_rameligCoreData;
+		RameligCoreData m_rameligCoreData[16];
+		int m_channelCount;
 
 		ScaleMode m_scaleMode;
 
@@ -89,7 +91,7 @@ struct RameligModule : NTModule, RameligActionListener {
 		int m_activeScaleIndex;
 		std::vector<int> m_activeScaleIndices;
 
-		rack::dsp::TSchmittTrigger<float> m_inputTrigger;
+		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16];
 		rack::dsp::BooleanTrigger m_buttonTrigger;
 		rack::dsp::PulseGenerator m_triggerPulse;
 
@@ -98,7 +100,9 @@ struct RameligModule : NTModule, RameligActionListener {
 		int determineActiveScale();
 		void updateScale();
 
-		float getParamValue(ParamId paramId, float lowerLimit, float upperLimit, InputId inputId, float inputScaling);
+		void updatePolyphony(bool forceUpdateOutputs);
+
+		float getParamValue(ParamId paramId, int channel, float lowerLimit, float upperLimit, InputId inputId, float inputScaling);
 };
 
 struct RameligWidget : NTModuleWidget {

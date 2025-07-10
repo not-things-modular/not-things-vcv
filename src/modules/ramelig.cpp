@@ -65,6 +65,7 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 	m_activeScaleIndex = 0;
 	updateScale();
 
+	m_channelCount = 1;
 	m_lightDivider.setDivision(128);
 }
 
@@ -124,6 +125,9 @@ void RameligModule::dataFromJson(json_t* rootJ) {
 }
 
 void RameligModule::process(const ProcessArgs& args) {
+	// Make sure the output polyphony is up to date
+	updatePolyphony(false);
+
 	// Detect when the active scale is changed
 	int activeScaleIndex = determineActiveScale();
 	if (activeScaleIndex != m_activeScaleIndex) {
@@ -148,38 +152,49 @@ void RameligModule::process(const ProcessArgs& args) {
 	if (triggerPushed) {
 		m_triggerPulse.trigger();
 	}
+	// And determine if the trigger pulse should case the trigger outputs to be high
+	bool pulseTriggered = m_triggerPulse.process(args.sampleTime);
 
-	// Do the actual processing if needed
-	if ((m_inputTrigger.process(inputs[IN_GATE].getVoltage(0), 0.f, 1.f)) || (triggerPushed)) {
-		float upperLimit = getParamValue(PARAM_UPPER_LIMIT, -10.f, 10.f, IN_UPPER_LIMIT, 1.f);
-		float lowerLimit = getParamValue(PARAM_LOWER_LIMIT, -10.f, 10.f, IN_LOWER_LIMIT, 1.f);
+	bool oneTriggered = false;
+	for (int channel = 0; channel < m_channelCount; channel++) {
+		// Do the actual processing if needed
+		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel), 0.f, 1.f)) || (triggerPushed)) {
+			float upperLimit = getParamValue(PARAM_UPPER_LIMIT, channel, -10.f, 10.f, IN_UPPER_LIMIT, 1.f);
+			float lowerLimit = getParamValue(PARAM_LOWER_LIMIT, channel, -10.f, 10.f, IN_LOWER_LIMIT, 1.f);
 
-		m_rameligCoreData.scale = m_activeScaleIndices;
-		m_rameligCoreData.distributionData.randomJumpChance = getParamValue(PARAM_CHANCE_RANDOM_JUMP, 0.f, 10.f, IN_CHANCE_RANDOM_JUMP, 1.f) / 10.f;
-		m_rameligCoreData.distributionData.randomMoveChance = getParamValue(PARAM_CHANCE_RANDOM_MOVE, 0.f, 10.f, IN_CHANCE_RANDOM_MOVE, 1.f) / 10.f;
-		m_rameligCoreData.distributionData.moveUpChance = getParamValue(PARAM_CHANCE_MOVE_UP, 0.f, 10.f, IN_CHANCE_MOVE_UP, 1.f) / 10.f;
-		m_rameligCoreData.distributionData.remainChance = getParamValue(PARAM_CHANCE_REMAIN, 0.f, 10.f, IN_CHANCE_REMAIN, 1.f) / 10.f;
-		m_rameligCoreData.distributionData.moveDownChance = getParamValue(PARAM_CHANCE_MOVE_DOWN, 0.f, 10.f, IN_CHANCE_MOVE_DOWN, 1.f) / 10.f;
-		m_rameligCoreData.distributionData.moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
-		m_rameligCoreData.distributionData.remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
+			m_rameligCoreData[channel].scale = m_activeScaleIndices;
+			m_rameligCoreData[channel].distributionData.randomJumpChance = getParamValue(PARAM_CHANCE_RANDOM_JUMP, channel, 0.f, 10.f, IN_CHANCE_RANDOM_JUMP, 1.f) / 10.f;
+			m_rameligCoreData[channel].distributionData.randomMoveChance = getParamValue(PARAM_CHANCE_RANDOM_MOVE, channel, 0.f, 10.f, IN_CHANCE_RANDOM_MOVE, 1.f) / 10.f;
+			m_rameligCoreData[channel].distributionData.moveUpChance = getParamValue(PARAM_CHANCE_MOVE_UP, channel, 0.f, 10.f, IN_CHANCE_MOVE_UP, 1.f) / 10.f;
+			m_rameligCoreData[channel].distributionData.remainChance = getParamValue(PARAM_CHANCE_REMAIN, channel, 0.f, 10.f, IN_CHANCE_REMAIN, 1.f) / 10.f;
+			m_rameligCoreData[channel].distributionData.moveDownChance = getParamValue(PARAM_CHANCE_MOVE_DOWN, channel, 0.f, 10.f, IN_CHANCE_MOVE_DOWN, 1.f) / 10.f;
+			m_rameligCoreData[channel].distributionData.moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
+			m_rameligCoreData[channel].distributionData.remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
 
-		outputs[OUT_CV].setVoltage(m_rameligCore.process(m_rameligCoreData, lowerLimit, upperLimit));
-		lights[LIGHT_TRIGGER].setBrightness(1.f);
-	} else if (m_lightDivider.process()) {
+			outputs[OUT_CV].setVoltage(m_rameligCore.process(channel, m_rameligCoreData[channel], lowerLimit, upperLimit), channel);
+			lights[LIGHT_TRIGGER].setBrightness(1.f);
+			oneTriggered = true;
+		}
+
+		// Update the trigger output based on either the input trigger, or the trigger button pulse
+		if ((pulseTriggered) || (inputs[IN_GATE].getVoltage(channel) >= 1.f)) {
+			outputs[OUT_TRIGGER].setVoltage(10.f, channel);
+		} else {
+			outputs[OUT_TRIGGER].setVoltage(0.f, channel);
+		}
+	}
+
+	if ((!oneTriggered) && (m_lightDivider.process())) {
 		reduceLight(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
 		reduceLight(lights[LIGHT_RANDOM_JUMP], args.sampleTime * 128, 15.f);
 		reduceLight(lights[LIGHT_RANDOM_REMAIN], args.sampleTime * 128, 15.f);
 	}
-
-	// Update the trigger output based on either the input trigger, or the trigger button pulse
-	if ((m_triggerPulse.process(args.sampleTime)) || (inputs[IN_GATE].getVoltage(0) >= 1.f)) {
-		outputs[OUT_TRIGGER].setVoltage(10.f);
-	} else {
-		outputs[OUT_TRIGGER].setVoltage(0.f);
-	}
+}
+void RameligModule::onPortChange(const PortChangeEvent& e) {
+	updatePolyphony(true);
 }
 
-void RameligModule::rameligActionPerformed(RameligActions action) {
+void RameligModule::rameligActionPerformed(int channel, RameligActions action) {
 	if (action == RameligActions::RANDOM_JUMP) {
 		lights[LIGHT_RANDOM_JUMP].setBrightness(1.f);
 	} else if (action == RameligActions::RANDOM_MOVE) {
@@ -201,7 +216,7 @@ int RameligModule::determineActiveScale() {
 	int scale = 0;
 	if (inputs[IN_SCALE].isConnected()) {
 		if (m_scaleMode == ScaleMode::SCALE_MODE_DECIMAL) {
-			float in = std::min(std::max(inputs[IN_SCALE].getVoltage(0), -9.99f), 9.99f);
+			float in = std::min(std::max(inputs[IN_SCALE].getVoltage(), -9.99f), 9.99f);
 			scale = std::floor((in + 10) * 12 / 10);
 		}
 	}
@@ -227,8 +242,25 @@ void RameligModule::updateScale() {
 	}
 }
 
-float RameligModule::getParamValue(ParamId paramId, float lowerLimit, float upperLimit, InputId inputId, float inputScaling) {
-	float value = params[paramId].getValue() + (inputs[inputId].getVoltage(0) * inputScaling);
+void RameligModule::updatePolyphony(bool forceUpdateOutputs) {
+	int channels = std::max(inputs[IN_GATE].getChannels(), 1);
+
+	// Make sure the output polyphony is up to date
+	if ((forceUpdateOutputs) || (channels != m_channelCount)) {
+		m_channelCount = channels;
+		outputs[OUT_CV].setChannels(m_channelCount);
+		outputs[OUT_TRIGGER].setChannels(m_channelCount);
+		outputs[OUT_RANDOM_JUMP].setChannels(m_channelCount);
+		outputs[OUT_RANDOM_REMAIN].setChannels(m_channelCount);
+	}
+}
+
+float RameligModule::getParamValue(ParamId paramId, int channel, float lowerLimit, float upperLimit, InputId inputId, float inputScaling) {
+	// If the input is not polyphonic, use the first (monophonic) channel for all channels
+	if (!inputs[inputId].isPolyphonic()) {
+		channel = 0;
+	}
+	float value = params[paramId].getValue() + (inputs[inputId].getVoltage(channel) * inputScaling);
 	return std::max(std::min(value, upperLimit), lowerLimit);
 }
 

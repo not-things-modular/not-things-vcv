@@ -58,26 +58,26 @@ struct ChanceGenerator {
 
 struct RameligActionListener {
 	virtual ~RameligActionListener() {};
-	virtual void rameligActionPerformed(RameligActions action) = 0;
+	virtual void rameligActionPerformed(int channel, RameligActions action) = 0;
 };
 
 struct RameligCore {
 	RameligCore(RameligActionListener *actionListener);
 	RameligCore(RameligActionListener *actionListener, std::shared_ptr<ChanceGenerator> chanceGenerator);
 
-	float process(RameligCoreData& data, float lowerLimit, float upperLimit);
+	float process(int channel, RameligCoreData& data, float lowerLimit, float upperLimit);
 
 	private:
 		std::shared_ptr<ChanceGenerator> m_chanceGenerator;
-		RameligCoreState m_state;
+		RameligCoreState m_state[16];
 		std::array<float, 12> m_notes;
 
 		RameligActionListener *m_actionListener;
 
-		void calculateDistribution();
-		void calculateQuantization();
+		void calculateDistribution(int channel);
+		void calculateQuantization(int channel);
 
-		RameligActions determineAction();
-		std::pair<int, int> quantize(float value, float lowerLimit, float upperLimit);
-		std::pair<int, int> move(std::pair<int, int>& current, int movement);
+		RameligActions determineAction(int channel);
+		std::pair<int, int> quantize(int channel, float value, float lowerLimit, float upperLimit);
+		std::pair<int, int> move(int channel, std::pair<int, int>& current, int movement);
 };
