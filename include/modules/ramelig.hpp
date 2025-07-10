@@ -81,7 +81,7 @@ struct RameligModule : NTModule, RameligActionListener {
 
 	private:
 		RameligCore m_rameligCore;
-		RameligCoreData m_rameligCoreData[16];
+		RameligDistributionData m_rameligDistributionData[16];
 		int m_channelCount;
 
 		ScaleMode m_scaleMode;

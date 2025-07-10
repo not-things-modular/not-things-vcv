@@ -64,6 +64,7 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 	m_scaleMode = ScaleMode::SCALE_MODE_DECIMAL;
 	m_activeScaleIndex = 0;
 	updateScale();
+	m_rameligCore.setScale(m_activeScaleIndices);
 
 	m_channelCount = 1;
 	m_lightDivider.setDivision(128);
@@ -145,6 +146,7 @@ void RameligModule::process(const ProcessArgs& args) {
 	}
 	if (scaleChanged) {
 		updateScale();
+		m_rameligCore.setScale(m_activeScaleIndices);
 	}
 
 	// Check if the trigger button was pushed
@@ -152,7 +154,7 @@ void RameligModule::process(const ProcessArgs& args) {
 	if (triggerPushed) {
 		m_triggerPulse.trigger();
 	}
-	// And determine if the trigger pulse should case the trigger outputs to be high
+	// And determine if the trigger pulse should cause the trigger outputs to be high
 	bool pulseTriggered = m_triggerPulse.process(args.sampleTime);
 
 	bool oneTriggered = false;
@@ -162,16 +164,15 @@ void RameligModule::process(const ProcessArgs& args) {
 			float upperLimit = getParamValue(PARAM_UPPER_LIMIT, channel, -10.f, 10.f, IN_UPPER_LIMIT, 1.f);
 			float lowerLimit = getParamValue(PARAM_LOWER_LIMIT, channel, -10.f, 10.f, IN_LOWER_LIMIT, 1.f);
 
-			m_rameligCoreData[channel].scale = m_activeScaleIndices;
-			m_rameligCoreData[channel].distributionData.randomJumpChance = getParamValue(PARAM_CHANCE_RANDOM_JUMP, channel, 0.f, 10.f, IN_CHANCE_RANDOM_JUMP, 1.f) / 10.f;
-			m_rameligCoreData[channel].distributionData.randomMoveChance = getParamValue(PARAM_CHANCE_RANDOM_MOVE, channel, 0.f, 10.f, IN_CHANCE_RANDOM_MOVE, 1.f) / 10.f;
-			m_rameligCoreData[channel].distributionData.moveUpChance = getParamValue(PARAM_CHANCE_MOVE_UP, channel, 0.f, 10.f, IN_CHANCE_MOVE_UP, 1.f) / 10.f;
-			m_rameligCoreData[channel].distributionData.remainChance = getParamValue(PARAM_CHANCE_REMAIN, channel, 0.f, 10.f, IN_CHANCE_REMAIN, 1.f) / 10.f;
-			m_rameligCoreData[channel].distributionData.moveDownChance = getParamValue(PARAM_CHANCE_MOVE_DOWN, channel, 0.f, 10.f, IN_CHANCE_MOVE_DOWN, 1.f) / 10.f;
-			m_rameligCoreData[channel].distributionData.moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
-			m_rameligCoreData[channel].distributionData.remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
+			m_rameligDistributionData[channel].randomJumpChance = getParamValue(PARAM_CHANCE_RANDOM_JUMP, channel, 0.f, 10.f, IN_CHANCE_RANDOM_JUMP, 1.f) / 10.f;
+			m_rameligDistributionData[channel].randomMoveChance = getParamValue(PARAM_CHANCE_RANDOM_MOVE, channel, 0.f, 10.f, IN_CHANCE_RANDOM_MOVE, 1.f) / 10.f;
+			m_rameligDistributionData[channel].moveUpChance = getParamValue(PARAM_CHANCE_MOVE_UP, channel, 0.f, 10.f, IN_CHANCE_MOVE_UP, 1.f) / 10.f;
+			m_rameligDistributionData[channel].remainChance = getParamValue(PARAM_CHANCE_REMAIN, channel, 0.f, 10.f, IN_CHANCE_REMAIN, 1.f) / 10.f;
+			m_rameligDistributionData[channel].moveDownChance = getParamValue(PARAM_CHANCE_MOVE_DOWN, channel, 0.f, 10.f, IN_CHANCE_MOVE_DOWN, 1.f) / 10.f;
+			m_rameligDistributionData[channel].moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
+			m_rameligDistributionData[channel].remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
 
-			outputs[OUT_CV].setVoltage(m_rameligCore.process(channel, m_rameligCoreData[channel], lowerLimit, upperLimit), channel);
+			outputs[OUT_CV].setVoltage(m_rameligCore.process(channel, m_rameligDistributionData[channel], lowerLimit, upperLimit), channel);
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
 			oneTriggered = true;
 		}

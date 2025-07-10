@@ -31,13 +31,8 @@ struct RameligDistributionData {
 	bool operator!=(const RameligDistributionData& other) const;
 };
 
-struct RameligCoreData {
-	std::vector<int> scale;
-	RameligDistributionData distributionData;
-};
-
 struct RameligCoreState {
-	RameligCoreData data;
+	RameligDistributionData distributionData;
 
 	int currentOctave = 0.f;
 	int currentScaleIndex = 0.f;
@@ -47,7 +42,6 @@ struct RameligCoreState {
 	bool isDirty = true;
 
 	std::array<float, 7> actionDistribution;
-	std::vector<float> quantizationValues;
 };
 
 struct ChanceGenerator {
@@ -65,17 +59,21 @@ struct RameligCore {
 	RameligCore(RameligActionListener *actionListener);
 	RameligCore(RameligActionListener *actionListener, std::shared_ptr<ChanceGenerator> chanceGenerator);
 
-	float process(int channel, RameligCoreData& data, float lowerLimit, float upperLimit);
+	void setScale(std::vector<int>& scale);
+	float process(int channel, RameligDistributionData& distributionData, float lowerLimit, float upperLimit);
 
 	private:
 		std::shared_ptr<ChanceGenerator> m_chanceGenerator;
 		RameligCoreState m_state[16];
 		std::array<float, 12> m_notes;
 
+		std::vector<int> m_scale;
+		std::vector<float> m_quantizationValues;
+
 		RameligActionListener *m_actionListener;
 
 		void calculateDistribution(int channel);
-		void calculateQuantization(int channel);
+		void calculateQuantization();
 
 		RameligActions determineAction(int channel);
 		std::pair<int, int> quantize(int channel, float value, float lowerLimit, float upperLimit);
