@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2.0.6 (TBD)
+
+* **Solim**
+  * Updated limit displays to show nearest quantized note (up or down) instead of always showing the note above (UI update only)
+
 ## 2.0.5 (25-06-28)
 
 * **Global**: Setup GitHub Ppages for documentation
