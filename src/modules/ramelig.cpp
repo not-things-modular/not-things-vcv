@@ -1,6 +1,7 @@
 #include "modules/ramelig.hpp"
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
+#include <algorithm>
 
 
 extern Model* modelRamelig;
@@ -49,7 +50,7 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 
 	configButton(PARAM_TRIGGER, "Trigger");
 
-	ParamQuantity* pq = configParam(PARAM_SCALE, 0.f, 9.f, 0.f, "Scale");
+	ParamQuantity* pq = configParam(PARAM_SCALE, 0.f, 11.f, 0.f, "Scale");
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
 	pq->displayOffset = 1.f;
@@ -192,22 +193,19 @@ RameligModule::ScaleMode RameligModule::getScaleMode() {
 
 void RameligModule::setScaleMode(ScaleMode scaleMode) {
 	m_scaleMode = scaleMode;
-
-	float scale = params[ParamId::PARAM_SCALE].getValue();
-	if (m_scaleMode == ScaleMode::SCALE_MODE_DECIMAL) {
-		if (scale > 9.f) {
-			scale = 9.f;
-		}
-		getParamQuantity(ParamId::PARAM_SCALE)->maxValue = 9.f;
-	} else {
-		getParamQuantity(ParamId::PARAM_SCALE)->maxValue = 11.f;
-	}
-	params[ParamId::PARAM_SCALE].setValue(scale);
 	updateScale();
 }
 
+
 int RameligModule::determineActiveScale() {
-	return params[PARAM_SCALE].getValue();
+	int scale = 0;
+	if (inputs[IN_SCALE].isConnected()) {
+		if (m_scaleMode == ScaleMode::SCALE_MODE_DECIMAL) {
+			float in = std::min(std::max(inputs[IN_SCALE].getVoltage(0), -9.99f), 9.99f);
+			scale = std::floor((in + 10) * 12 / 10);
+		}
+	}
+	return (scale + (int) params[PARAM_SCALE].getValue()) % 12;
 }
 
 void RameligModule::updateScale() {
