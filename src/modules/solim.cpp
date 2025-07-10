@@ -5,6 +5,7 @@
 #include "modules/solim-input-octaver.hpp"
 #include "modules/solim-output.hpp"
 #include "modules/solim-output-octaver.hpp"
+#include "util/notes.hpp"
 
 extern Model* modelSolimInput;
 extern Model* modelSolimInputOctaver;
@@ -146,16 +147,22 @@ void SolimModule::draw(const widget::Widget::DrawArgs& args) {
 	float upperLimit = m_solimCore->getActiveValues(0).upperLimit;
 	if (m_upperDisplay != nullptr && m_lastUpperDisplayed != upperLimit) {
 		limit = static_cast<int>(upperLimit + 5);
+		if (upperLimit - (limit - 5) > 11.5f / 12) {
+			// If the calculated limit is almost a full voltage off from the original value, the quantize jumped over an octave boundary, so add that octave.
+			limit++;
+		}
 		m_upperDisplay->setScale(limit < 0 ? 0 : limit > 9 ? 9 : limit);
-		limit = static_cast<int>((upperLimit + 5 - static_cast<int>(upperLimit + 5)) * 12);
-		m_upperDisplay->setNote(limit < 0 ? 0 : limit > 11 ? 11 : limit);
+		m_upperDisplay->setNote(voltageToChromaticIndex(upperLimit));
 		m_lastUpperDisplayed = upperLimit;
 	}
 	if (m_lowerDisplay != nullptr && m_lastLowerDisplayed != lowerLimit) {
 		limit = static_cast<int>(lowerLimit + 5);
+		if (lowerLimit - (limit - 5) > 11.5f / 12) {
+			// If the calculated limit is almost a full voltage off from the original value, the quantize jumped over an octave boundary, so add that octave.
+			limit++;
+		}
 		m_lowerDisplay->setScale(limit < 0 ? 0 : limit > 9 ? 9 : limit);
-		limit = static_cast<int>((lowerLimit + 5 - static_cast<int>(lowerLimit + 5)) * 12);
-		m_lowerDisplay->setNote(limit < 0 ? 0 : limit > 11 ? 11 : limit);
+		m_lowerDisplay->setNote(voltageToChromaticIndex(lowerLimit));
 		m_lastLowerDisplayed = lowerLimit;
 	}
 }

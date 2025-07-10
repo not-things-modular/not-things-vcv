@@ -52,10 +52,12 @@ TEST(SolimTest, DrawShouldUpdateNoteDisplays) {
 	solimModule.m_upperDisplay = new NoteDisplay();
 	initializeSolimModule(solimModule);
 
+	// The scales in the display start with -1 on position index 0, so the getScale() value (=index in the array) will be 1 higher then what shows up on the display
+
 	SolimValueSet solimValueSet;
 	EXPECT_CALL(*solimCore, getActiveValues(0)).WillRepeatedly(testing::ReturnRef(solimValueSet));
 
-	solimValueSet.lowerLimit = -0.9999f;
+	solimValueSet.lowerLimit = -0.9999f; // Should be quantized to the C3 that is just above it
 	solimValueSet.upperLimit = 1.0001f;
 	solimModule.draw(widget::Widget::DrawArgs());
 	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 4);
@@ -63,21 +65,45 @@ TEST(SolimTest, DrawShouldUpdateNoteDisplays) {
 	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 6);
 	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 0);
 
-	solimValueSet.lowerLimit = -1.00001f;
+	solimValueSet.lowerLimit = -1.00001f; // Should still be quantized to the C3 that is just below
 	solimValueSet.upperLimit = 1.0001f;
 	solimModule.draw(widget::Widget::DrawArgs());
-	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 3);
-	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 11);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 4); 
+	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 0);
 	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 6);
 	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 0);
 
-	solimValueSet.lowerLimit = -1.00001f;
-	solimValueSet.upperLimit = -4.250f;
+	solimValueSet.lowerLimit = -1.0001f - (1.f / 24); // Just crosses the boundary between C3 and B2, so should be quantized to B2
+	solimValueSet.upperLimit = -4.250f; // Should end up on note 9
 	solimModule.draw(widget::Widget::DrawArgs());
 	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 3);
 	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 11);
 	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 0);
 	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 9);
+
+	solimValueSet.lowerLimit = -1.5001f - (1.f / 24); // Just crosses the boundary between notes 6 and 5
+	solimValueSet.upperLimit = .9999f; // Should end up as a C5
+	solimModule.draw(widget::Widget::DrawArgs());
+	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 3);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 5);
+	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 6);
+	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 0);
+
+	solimValueSet.lowerLimit = 1.0001f; // Should end up as C5
+	solimValueSet.upperLimit = 1.0001f + (1.f / 24); // Should just cross over between C5 and C#5
+	solimModule.draw(widget::Widget::DrawArgs());
+	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 6);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 0);
+	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 6);
+	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 1);
+
+	solimValueSet.lowerLimit = 1.9999f; // Should end up as C6
+	solimValueSet.upperLimit = 1.4999f ; // Should end up in the middle of octave 5
+	solimModule.draw(widget::Widget::DrawArgs());
+	EXPECT_EQ(solimModule.m_lowerDisplay->getScale(), 7);
+	EXPECT_EQ(solimModule.m_lowerDisplay->getNote(), 0);
+	EXPECT_EQ(solimModule.m_upperDisplay->getScale(), 6);
+	EXPECT_EQ(solimModule.m_upperDisplay->getNote(), 6);
 
 	delete solimModule.m_lowerDisplay;
 	delete solimModule.m_upperDisplay;
