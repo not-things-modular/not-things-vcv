@@ -80,7 +80,7 @@ void RameligCore::setScale(std::vector<int>& scale) {
 	}
 }
 
-float RameligCore::process(int channel, RameligDistributionData& data, float lowerLimit, float upperLimit) {
+float RameligCore::process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, float lowerLimit, float upperLimit) {
 	std::pair<int, int> quantized;
 
 	// Update the distribution if needed
@@ -102,17 +102,23 @@ float RameligCore::process(int channel, RameligDistributionData& data, float low
 	float result = m_state[channel].lastResult;
 
 	// Perform the next action
-	RameligActions action = determineAction(channel);
+	RameligActions action;
+	if (forceMove) {
+		action = RameligActions::RANDOM_MOVE;
+	} else if (forceJump) {
+		action = RameligActions::RANDOM_JUMP;
+	} else {
+		action = determineAction(channel);
+	}
 	if ((action == RANDOM_JUMP) || (action == RANDOM_MOVE)) {
 		float randomValue = m_chanceGenerator->generateJumpChance(lowerLimit, upperLimit);
 		quantized = quantize(channel, randomValue, lowerLimit, upperLimit);
+		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_scale);
 		if (action == RANDOM_MOVE) {
 			m_state[channel].currentOctave = quantized.first;
 			m_state[channel].currentScaleIndex = quantized.second;
+			m_state[channel].lastResult = result;
 		}
-		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_scale);
-		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_scale);
-		quantized = quantize(channel, randomValue, lowerLimit, upperLimit);
 	} else if (action != REMAIN) {
 		// Determine which movement we have to do
 		int movement;

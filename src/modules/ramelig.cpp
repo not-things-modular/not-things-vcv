@@ -33,7 +33,7 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 	configOutput(OUT_CV, "CV");
 	configOutput(OUT_TRIGGER, "Trigger");
 	configOutput(OUT_RANDOM_JUMP, "Random jump triggered");
-	configOutput(OUT_RANDOM_REMAIN, "Random remain triggered");
+	configOutput(OUT_RANDOM_MOVE, "Random remain triggered");
 
 	configParam(PARAM_LOWER_LIMIT, -10.f, 10.f, -1.f, "Lower limit", " V");
 	configParam(PARAM_UPPER_LIMIT, -10.f, 10.f, 1.f, "Upper limit", " V");
@@ -131,14 +131,13 @@ void RameligModule::process(const ProcessArgs& args) {
 	updatePolyphony(false);
 
 	// Detect when the active scale is changed
+	bool scaleChanged = false;
 	int activeScaleIndex = determineActiveScale();
 	if (activeScaleIndex != m_activeScaleIndex) {
 		m_activeScaleIndex = activeScaleIndex;
-		updateScale();
+		scaleChanged = true;
 	}
-
 	// Detect when the user changes the scale through the scale buttons
-	bool scaleChanged = false;
 	for (int i = 0; i < 12; i++) {
 		if (m_scaleButtonTriggers[i].process(params[PARAM_SCALE_NOTES + i].getValue(), 0.f, 1.f)) {
 			m_scales[m_activeScaleIndex][i] = !m_scales[m_activeScaleIndex][i];
@@ -160,6 +159,10 @@ void RameligModule::process(const ProcessArgs& args) {
 
 	bool oneTriggered = false;
 	for (int channel = 0; channel < m_channelCount; channel++) {
+		// Determine if there is a force move or jump for this channel
+		m_forceMove[channel] = m_buttonMove.process(params[PARAM_TRIG_RANDOM_MOVE].getValue()) || m_forceMove[channel]; // Check the param first on the so that the BooleanTrigger.process detects the state change asap, even if there was already a force move
+		m_forceJump[channel] = m_buttonJump.process(params[PARAM_TRIG_RANDOM_JUMP].getValue()) || m_forceJump[channel]; // Check the param first on the so that the BooleanTrigger.process detects the state change asap, even if there was already a force jump
+
 		// Do the actual processing if needed
 		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel), 0.f, 1.f)) || (triggerPushed)) {
 			float upperLimit = getParamValue(PARAM_UPPER_LIMIT, channel, -10.f, 10.f, IN_UPPER_LIMIT, 1.f);
@@ -173,34 +176,72 @@ void RameligModule::process(const ProcessArgs& args) {
 			m_rameligDistributionData[channel].moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
 			m_rameligDistributionData[channel].remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
 
-			outputs[OUT_CV].setVoltage(m_rameligCore.process(channel, m_rameligDistributionData[channel], lowerLimit, upperLimit), channel);
+			outputs[OUT_CV].setVoltage(m_rameligCore.process(channel, m_rameligDistributionData[channel], m_forceMove[channel], m_forceJump[channel], lowerLimit, upperLimit), channel);
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
 			oneTriggered = true;
+
+			// Reset any possible force move or jump flags for this channel since they have been used now
+			m_forceMove[channel] = m_forceJump[channel] = false;
 		}
 
 		// Update the trigger output based on either the input trigger, or the trigger button pulse
-		if ((pulseTriggered) || (inputs[IN_GATE].getVoltage(channel) >= 1.f)) {
-			outputs[OUT_TRIGGER].setVoltage(10.f, channel);
-		} else {
-			outputs[OUT_TRIGGER].setVoltage(0.f, channel);
+		if (outputs[OUT_TRIGGER].isConnected()) {
+			if ((pulseTriggered) || (inputs[IN_GATE].getVoltage(channel) >= 1.f)) {
+				outputs[OUT_TRIGGER].setVoltage(10.f, channel);
+			} else {
+				outputs[OUT_TRIGGER].setVoltage(0.f, channel);
+			}
+		}
+
+		// Update the jump and move outputs based on their pulses
+		if (outputs[OUT_RANDOM_JUMP].isConnected()) {
+			if (m_jumpPulse[channel].process(args.sampleTime)) {
+				outputs[OUT_RANDOM_JUMP].setVoltage(10.f, channel);
+			} else {
+				outputs[OUT_RANDOM_JUMP].setVoltage(0.f, channel);
+			}
+		}
+		if (outputs[OUT_RANDOM_MOVE].isConnected()) {
+			if (m_movePulse[channel].process(args.sampleTime)) {
+				outputs[OUT_RANDOM_MOVE].setVoltage(10.f, channel);
+			} else {
+				outputs[OUT_RANDOM_MOVE].setVoltage(0.f, channel);
+			}
 		}
 	}
 
+	// If none of the channels triggered in this cycle, reduce the LED lights that indicated that one of the actions was triggered (if needed)
 	if ((!oneTriggered) && (m_lightDivider.process())) {
 		reduceLight(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
 		reduceLight(lights[LIGHT_RANDOM_JUMP], args.sampleTime * 128, 15.f);
-		reduceLight(lights[LIGHT_RANDOM_REMAIN], args.sampleTime * 128, 15.f);
+		reduceLight(lights[LIGHT_RANDOM_MOVE], args.sampleTime * 128, 15.f);
 	}
 }
 void RameligModule::onPortChange(const PortChangeEvent& e) {
 	updatePolyphony(true);
+
+	if (e.type == Port::Type::OUTPUT) {
+		if (e.portId == OUT_TRIGGER) {
+			m_triggerPulse.reset();
+		} else if (e.portId == OUT_RANDOM_JUMP) {
+			for (int i = 0; i < 16; i++) {
+				m_jumpPulse[i].reset();
+			}
+		} else if (e.portId == OUT_RANDOM_MOVE) {
+			for (int i = 0; i < 16; i++) {
+				m_movePulse[i].reset();
+			}
+		}
+	}
 }
 
 void RameligModule::rameligActionPerformed(int channel, RameligActions action) {
 	if (action == RameligActions::RANDOM_JUMP) {
 		lights[LIGHT_RANDOM_JUMP].setBrightness(1.f);
+		m_jumpPulse[channel].trigger();
 	} else if (action == RameligActions::RANDOM_MOVE) {
-		lights[LIGHT_RANDOM_REMAIN].setBrightness(1.f);
+		lights[LIGHT_RANDOM_MOVE].setBrightness(1.f);
+		m_movePulse[channel].trigger();
 	}
 }
 
@@ -257,7 +298,7 @@ void RameligModule::updatePolyphony(bool forceUpdateOutputs) {
 		outputs[OUT_CV].setChannels(m_channelCount);
 		outputs[OUT_TRIGGER].setChannels(m_channelCount);
 		outputs[OUT_RANDOM_JUMP].setChannels(m_channelCount);
-		outputs[OUT_RANDOM_REMAIN].setChannels(m_channelCount);
+		outputs[OUT_RANDOM_MOVE].setChannels(m_channelCount);
 	}
 }
 
@@ -319,10 +360,10 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addOutput(createOutputCentered<NTPort>(Vec(32.f, 332.5f), module, RameligModule::OUT_CV));
 	addOutput(createOutputCentered<NTPort>(Vec(72.f, 332.5f), module, RameligModule::OUT_TRIGGER));
 	addOutput(createOutputCentered<NTPort>(Vec(137.5f, 345.f), module, RameligModule::OUT_RANDOM_JUMP));
-	addOutput(createOutputCentered<NTPort>(Vec(177.5f, 345.f), module, RameligModule::OUT_RANDOM_REMAIN));
+	addOutput(createOutputCentered<NTPort>(Vec(177.5f, 345.f), module, RameligModule::OUT_RANDOM_MOVE));
 
 	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(150.f, 332.5f), module, RameligModule::LIGHT_RANDOM_JUMP));
-	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(190.f, 332.5f), module, RameligModule::LIGHT_RANDOM_REMAIN));
+	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(190.f, 332.5f), module, RameligModule::LIGHT_RANDOM_MOVE));
 }
 
 void RameligWidget::appendContextMenu(Menu* menu) {
@@ -330,10 +371,10 @@ void RameligWidget::appendContextMenu(Menu* menu) {
 
 	RameligModule::ScaleMode scaleMode = getModule() ? dynamic_cast<RameligModule *>(getModule())->getScaleMode() : RameligModule::ScaleMode::SCALE_MODE_DECIMAL;
 	menu->addChild(new MenuSeparator);
-	menu->addChild(createSubmenuItem("Scale selection mode", "",
+	menu->addChild(createSubmenuItem("Scale CV mode", "",
 		[this, scaleMode](Menu* menu) {
-			menu->addChild(createCheckMenuItem("Decimal", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_DECIMAL; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_DECIMAL); }));
-			menu->addChild(createCheckMenuItem("Chromatic", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_CHROMATIC; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_CHROMATIC); }));
+			menu->addChild(createCheckMenuItem("Decimal (0V-10V)", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_DECIMAL; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_DECIMAL); }));
+			menu->addChild(createCheckMenuItem("Chromatic (1V/Oct)", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_CHROMATIC; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_CHROMATIC); }));
 		}
 	));
 }

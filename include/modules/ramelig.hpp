@@ -49,14 +49,14 @@ struct RameligModule : NTModule, RameligActionListener {
 		OUT_CV,
 		OUT_TRIGGER,
 		OUT_RANDOM_JUMP,
-		OUT_RANDOM_REMAIN,
+		OUT_RANDOM_MOVE,
 		NUM_OUTPUTS
 	};
 	enum LightId {
 		ENUMS(LIGHT_SCALE_NOTES, 12),
 		LIGHT_TRIGGER,
 		LIGHT_RANDOM_JUMP,
-		LIGHT_RANDOM_REMAIN,
+		LIGHT_RANDOM_MOVE,
 		NUM_LIGHTS
 	};
 
@@ -94,6 +94,13 @@ struct RameligModule : NTModule, RameligActionListener {
 		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16];
 		rack::dsp::BooleanTrigger m_buttonTrigger;
 		rack::dsp::PulseGenerator m_triggerPulse;
+
+		rack::dsp::BooleanTrigger m_buttonMove;
+		bool m_forceMove[16];
+		rack::dsp::PulseGenerator m_movePulse[16];
+		rack::dsp::BooleanTrigger m_buttonJump;
+		bool m_forceJump[16];
+		rack::dsp::PulseGenerator m_jumpPulse[16];
 
 		dsp::ClockDivider m_lightDivider;
 
