@@ -1,6 +1,7 @@
 #include "modules/ramelig.hpp"
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
+#include "util/notes.hpp"
 #include <algorithm>
 
 
@@ -219,6 +220,10 @@ int RameligModule::determineActiveScale() {
 		if (m_scaleMode == ScaleMode::SCALE_MODE_DECIMAL) {
 			float in = std::min(std::max(inputs[IN_SCALE].getVoltage(), -9.99f), 9.99f);
 			scale = std::floor((in + 10) * 12 / 10);
+		} else {
+			float n;
+			float in = std::modf(inputs[IN_SCALE].getVoltage(), &n);
+			scale = voltageToChromaticIndex(in);
 		}
 	}
 	return (scale + (int) params[PARAM_SCALE].getValue()) % 12;
@@ -307,7 +312,7 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(75.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 1, RameligModule::LIGHT_SCALE_NOTES + 1));
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(95.f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 3, RameligModule::LIGHT_SCALE_NOTES + 3));
-	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(130.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 6, RameligModule::LIGHT_SCALE_NOTES + 6));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(135.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 6, RameligModule::LIGHT_SCALE_NOTES + 6));
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(155.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 8, RameligModule::LIGHT_SCALE_NOTES + 8));
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(175.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 10, RameligModule::LIGHT_SCALE_NOTES + 10));
 
