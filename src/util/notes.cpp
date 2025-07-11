@@ -43,6 +43,6 @@ int voltageToChromaticIndex(float voltage) {
 	} else if (note < (11.f / 12) + (1.f / 24)) {
 		return 11;
 	} else {
-		return 0;
+		return 12;
 	}
 }

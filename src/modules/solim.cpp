@@ -142,27 +142,30 @@ void SolimModule::process(const ProcessArgs& args) {
 }
 
 void SolimModule::draw(const widget::Widget::DrawArgs& args) {
-	int limit;
 	float lowerLimit = m_solimCore->getActiveValues(0).lowerLimit;
 	float upperLimit = m_solimCore->getActiveValues(0).upperLimit;
 	if (m_upperDisplay != nullptr && m_lastUpperDisplayed != upperLimit) {
-		limit = static_cast<int>(upperLimit + 5);
-		if (upperLimit - (limit - 5) > 11.5f / 12) {
-			// If the calculated limit is almost a full voltage off from the original value, the quantize jumped over an octave boundary, so add that octave.
+		int limit = static_cast<int>(upperLimit + 5);
+		int note = voltageToChromaticIndex(upperLimit);
+		if (note > 11) {
+			// The note was quantized up towards the next octave, so add that octave to the scale instead.
 			limit++;
+			note -= 12;
 		}
 		m_upperDisplay->setScale(limit < 0 ? 0 : limit > 9 ? 9 : limit);
-		m_upperDisplay->setNote(voltageToChromaticIndex(upperLimit));
+		m_upperDisplay->setNote(note);
 		m_lastUpperDisplayed = upperLimit;
 	}
 	if (m_lowerDisplay != nullptr && m_lastLowerDisplayed != lowerLimit) {
-		limit = static_cast<int>(lowerLimit + 5);
-		if (lowerLimit - (limit - 5) > 11.5f / 12) {
-			// If the calculated limit is almost a full voltage off from the original value, the quantize jumped over an octave boundary, so add that octave.
+		int limit = static_cast<int>(lowerLimit + 5);
+		int note = voltageToChromaticIndex(lowerLimit);
+		if (note > 11) {
+			// The note was quantized up towards the next octave, so add that octave to the scale instead.
 			limit++;
+			note -= 12;
 		}
 		m_lowerDisplay->setScale(limit < 0 ? 0 : limit > 9 ? 9 : limit);
-		m_lowerDisplay->setNote(voltageToChromaticIndex(lowerLimit));
+		m_lowerDisplay->setNote(note);
 		m_lastLowerDisplayed = lowerLimit;
 	}
 }
