@@ -44,8 +44,8 @@ struct RameligCoreState {
 	std::array<float, 7> actionDistribution;
 };
 
-struct ChanceGenerator {
-	virtual ~ChanceGenerator() {};
+struct RameligChanceGenerator {
+	virtual ~RameligChanceGenerator() {};
 	virtual float generateJumpChance(float lower, float upper) = 0;
 	virtual float generateActionChance(float lower, float upper) = 0;
 };
@@ -57,13 +57,13 @@ struct RameligActionListener {
 
 struct RameligCore {
 	RameligCore(RameligActionListener *actionListener);
-	RameligCore(RameligActionListener *actionListener, std::shared_ptr<ChanceGenerator> chanceGenerator);
+	RameligCore(RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator);
 
 	void setScale(std::vector<int>& scale);
 	float process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, float lowerLimit, float upperLimit);
 
 	private:
-		std::shared_ptr<ChanceGenerator> m_chanceGenerator;
+		std::shared_ptr<RameligChanceGenerator> m_chanceGenerator;
 		RameligCoreState m_state[16];
 		std::array<float, 12> m_notes;
 

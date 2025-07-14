@@ -217,6 +217,7 @@ void RameligModule::process(const ProcessArgs& args) {
 		reduceLight(lights[LIGHT_RANDOM_MOVE], args.sampleTime * 128, 15.f);
 	}
 }
+
 void RameligModule::onPortChange(const PortChangeEvent& e) {
 	updatePolyphony(true);
 
@@ -233,6 +234,10 @@ void RameligModule::onPortChange(const PortChangeEvent& e) {
 			}
 		}
 	}
+}
+
+void RameligModule::onUnBypass(const UnBypassEvent& e) {
+	updatePolyphony(true);
 }
 
 void RameligModule::rameligActionPerformed(int channel, RameligActions action) {

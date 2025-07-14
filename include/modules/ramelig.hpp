@@ -73,6 +73,7 @@ struct RameligModule : NTModule, RameligActionListener {
 
 	void process(const ProcessArgs& args) override;
 	void onPortChange(const PortChangeEvent& e) override;
+	void onUnBypass(const UnBypassEvent& e) override;
 
 	void rameligActionPerformed(int channel, RameligActions action) override;
 

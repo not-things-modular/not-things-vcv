@@ -4,8 +4,8 @@
 #define QUANTIZED_TO_VOLTAGE(quantized, notes, scale) ((float) quantized.first + notes[scale[quantized.second]])
 
 
-struct UniformChanceGenerator : ChanceGenerator {
-	UniformChanceGenerator() {
+struct RameligUniformChanceGenerator : RameligChanceGenerator {
+	RameligUniformChanceGenerator() {
 		m_jumpLower = -1.f;
 		m_jumpUpper = 1.f;
 		m_jumpDistribution = std::uniform_real_distribution<float>(m_jumpLower, m_jumpUpper);
@@ -14,7 +14,7 @@ struct UniformChanceGenerator : ChanceGenerator {
 		m_actionDistribution = std::uniform_real_distribution<float>(m_actionLower, m_actionUpper);
 	}
 
-	~UniformChanceGenerator() {}
+	~RameligUniformChanceGenerator() {}
 
 	float generateJumpChance(float lower, float upper) override {
 		if ((lower != m_jumpLower) || (upper != m_jumpUpper)) {
@@ -64,8 +64,8 @@ bool RameligDistributionData::operator!=(const RameligDistributionData& other) c
 }
 
 
-RameligCore::RameligCore(RameligActionListener *actionListener) : RameligCore(actionListener, std::make_shared<UniformChanceGenerator>()) {}
-RameligCore::RameligCore(RameligActionListener *actionListener, std::shared_ptr<ChanceGenerator> chanceGenerator) : m_chanceGenerator(chanceGenerator), m_actionListener(actionListener) {
+RameligCore::RameligCore(RameligActionListener *actionListener) : RameligCore(actionListener, std::make_shared<RameligUniformChanceGenerator>()) {}
+RameligCore::RameligCore(RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator) : m_chanceGenerator(chanceGenerator), m_actionListener(actionListener) {
 	for (int i = 0; i < 12; i++) {
 		m_notes[i] = (float) i / 12.f;
 	}
