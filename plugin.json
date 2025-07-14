@@ -96,7 +96,14 @@
 		"name": "Ramelig",
 		"description": "Random Melody Line Generator",
 		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAMELIG.html",
-		"tags": [ "Utility", "" ]
+		"tags": [ "Utility" ]
+	},
+	{
+		"slug": "ratrilig",
+		"name": "Ratrilig",
+		"description": "Random Trigger Line Generator",
+		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
+		"tags": [ "Utility" ]
 	}
   ]
 }

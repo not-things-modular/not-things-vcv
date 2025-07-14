@@ -15,6 +15,7 @@ extern Model* modelPolySameDiff;
 extern Model* modelTimeSeq;
 
 extern Model* modelRamelig;
+extern Model* modelRatrilig;
 
 Plugin* pluginInstance;
 
@@ -32,4 +33,5 @@ void init(Plugin* p) {
 	p->addModel(modelPolySameDiff);
 	p->addModel(modelTimeSeq);
 	p->addModel(modelRamelig);
+	p->addModel(modelRatrilig);
 }
