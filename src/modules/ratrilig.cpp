@@ -1,6 +1,7 @@
 #include "modules/ratrilig.hpp"
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
+#include "components/ratrilig-display.hpp"
 
 
 extern Model* modelRatrilig;
@@ -79,6 +80,10 @@ void RatriligModule::process(const ProcessArgs& args) {
 			data.groupBiasAmount = params[PARAM_GROUP_BIAS_AMOUNT].getValue();
 			data.groupBiasDirection = params[PARAM_GROUP_BIAS_DIRECTION].getValue();
 			m_ratriligCore.process(channel, data);
+
+			if (m_ratriligDisplay) {
+				m_ratriligDisplay->setData(&data);
+			}
 		}
 
 		// Update the trigger output based on either the input trigger, or the trigger button pulse
@@ -100,6 +105,10 @@ void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
 		m_channelCount = channels;
 		outputs[OUT_GATE].setChannels(m_channelCount);
 	}
+}
+
+void RatriligModule::setRatriligDisplay(RatriligDisplay* ratriligDisplay) {
+	m_ratriligDisplay = ratriligDisplay;
 }
 
 RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig") {
@@ -136,6 +145,13 @@ RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_c
 	addParam(createParamCentered<Trimpot>(Vec(180.f, 282.5f), module, RatriligModule::PARAM_GROUP_BIAS_DIRECTION));
 
 	addOutput(createOutputCentered<NTPort>(Vec(32.f - 5.f, 332.5f), module, RatriligModule::OUT_GATE));
+
+	RatriligDisplay* ratriligDisplay = createWidget<RatriligDisplay>(Vec(64.f, 307.f));
+	ratriligDisplay->setSize(Vec(136.f, 50.f));
+	addChild(ratriligDisplay);
+	if (module != nullptr) {
+		module->setRatriligDisplay(ratriligDisplay);
+	}
 }
 
 

@@ -6,6 +6,7 @@
 
 struct RatriligData;
 struct RatriligState;
+struct RatriligDisplay;
 
 
 struct RatriligModule : NTModule {
@@ -63,8 +64,11 @@ struct RatriligModule : NTModule {
 
 	void updatePolyphony(bool forceUpdateOutputs);
 
+	void setRatriligDisplay(RatriligDisplay* ratriligDisplay);
+
 	private:
 		RatriligCore m_ratriligCore;
+		RatriligDisplay* m_ratriligDisplay = nullptr;
 
 		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16];
 		rack::dsp::BooleanTrigger m_buttonTrigger;

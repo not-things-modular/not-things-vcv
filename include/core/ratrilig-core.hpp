@@ -7,24 +7,24 @@
 
 
 struct RatriligData {
-	float density;
+	float density = 0.f;
 
-	int clusterSize;
-	float clusterEnabledChance;
-	float clusterDensityFactor;
+	int clusterSize = 4;
+	float clusterEnabledChance = 0.f;
+	float clusterDensityFactor = 0.f;
 
-	int groupSize;
-	float groupEnabledChance;
-	float groupDensityFactor;
+	int groupSize = 4;
+	float groupEnabledChance = 0.f;
+	float groupDensityFactor = 0.f;
 
-	int phraseSize;
-	float phraseEnabledChance;
-	float phraseDensityFactor;
+	int phraseSize = 4;
+	float phraseEnabledChance = 0.f;
+	float phraseDensityFactor = 0.f;
 
-	float clusterBiasAmount;
-	float clusterBiasDirection;
-	float groupBiasAmount;
-	float groupBiasDirection;
+	float clusterBiasAmount = 0.f;
+	float clusterBiasDirection = 0.f;
+	float groupBiasAmount = 0.f;
+	float groupBiasDirection = 0.f;
 };
 
 struct RatriligCoreState {
