@@ -5,6 +5,16 @@
 // NVGcolor DARK_RED = nvgRGBA(0x20, 0x20, 0x20, 0xFF);
 
 
+bool isBBiased(int index, int size, float biasDirection) {
+	if ((index == 0) && (biasDirection == 0.f)) {
+		return true;
+	} else if (((float) index / size > biasDirection) && ((float) (index + 1) / size <= biasDirection)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 extern Plugin* pluginInstance;
 
 RatriligDisplay::RatriligDisplay() {
@@ -18,20 +28,25 @@ RatriligDisplay::~RatriligDisplay() {
 }
 
 void RatriligDisplay::drawLayer(const DrawArgs& args, int layer) {
-	if (layer != 1) {
-		return;
-	}
+	// if (layer != 1) {
+	// 	return;
+	// }
 
-	float width = box.getWidth();
-	float height = box.getHeight();
+	float width = box.getWidth() - 4.f;
+	float height = box.getHeight() - 4.f;
 
 	nvgSave(args.vg);
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
-	nvgStrokeWidth(args.vg, 0.1f);
-	nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x0, 0x0, 0x80));
-	nvgFillColor(args.vg, nvgRGBA(0x0, 0xFF, 0x0, 0x80));
+	nvgStrokeWidth(args.vg, .75f);
+	// nvgStrokeColor(args.vg, nvgRGBA(0xFF, 0x0, 0x0, 0xFF));
+	// nvgFillColor(args.vg, nvgRGBA(0x80, 0x80, 0x0, 0x50));
+	// nvgBeginPath(args.vg);
+	// nvgRect(args.vg, 3, 3, box.getWidth() - 5, box.getHeight() - 5);
+	// nvgStroke(args.vg);
+
+	nvgFillColor(args.vg, nvgRGBA(0x0, 0xFF, 0x0, 0xFF));
 
 	*m_drawData = *m_data;
 	int totalCount = m_drawData->phraseSize * m_drawData->groupSize * m_drawData->clusterSize;
@@ -39,10 +54,30 @@ void RatriligDisplay::drawLayer(const DrawArgs& args, int layer) {
 	for (int pi = 0; pi < m_drawData->phraseSize; pi++) {
 		for (int gi = 0; gi < m_drawData->groupSize; gi++) {
 			for (int ci = 0; ci < m_drawData->clusterSize; ci++) {
+				float probability = m_drawData->density;
+				if (isBBiased(ci, m_drawData->groupSize, m_drawData->clusterBiasDirection)) {
+					probability += m_drawData->clusterBiasAmount;
+				}
+				if (isBBiased(gi, m_drawData->phraseSize, m_drawData->groupBiasDirection)) {
+					probability += m_drawData->groupBiasAmount;
+				}
+				if (probability > 1.f) {
+					probability = 1.f;
+				}
+				float rWidth = width / (m_drawData->clusterSize * m_drawData->groupSize);
+				float rHeight = height / (m_drawData->phraseSize);
+				float x = 2.f + (ci + (gi * m_drawData->clusterSize)) * rWidth;
+				float y = 2.f + pi * rHeight;
 				nvgBeginPath(args.vg);
-				nvgFillColor(args.vg, nvgRGBA(0x0, 0xFF, 0x0, 0x80));
-				nvgRect(args.vg, width / totalCount * count, 0, width / totalCount * (count + 1), height * m_drawData->density / 100);
+				nvgStrokeColor(args.vg, nvgRGBAf(1.f, 0.f, 0.f, probability));
+				nvgRect(args.vg, x + .1f, y + .1f, rWidth - .2f, rHeight - .2f);
+				// nvgFill(args.vg);
 				nvgStroke(args.vg);
+				// nvgMoveTo(args.vg, 2.f + width * count / totalCount, 2.f + height * (1 - probability));
+				// nvgLineTo(args.vg, 2.f + width * count / totalCount, 2.f + height);
+				// nvgRect(args.vg, 2.f + (width * count / totalCount), 2.f + (height * (1 - probability)), width / totalCount, height * probability);
+				// nvgRect(args.vg, width / totalCount * count, 0, width / totalCount * (count + 1), height * m_drawData->density / 100);
+
 				count++;
 			}
 		}
