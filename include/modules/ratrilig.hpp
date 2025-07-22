@@ -6,9 +6,10 @@
 
 struct RatriligData;
 struct RatriligState;
+struct RatriligProgress;
 
 
-struct RatriligModule : NTModule {
+struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 	enum ParamId {
 		PARAM_CLUSTER_SIZE,
 		PARAM_GROUP_SIZE,
@@ -60,10 +61,19 @@ struct RatriligModule : NTModule {
 	RatriligModule();
 
 	void process(const ProcessArgs& args) override;
+	void draw(const widget::Widget::DrawArgs& args) override;
 
-	void updatePolyphony(bool forceUpdateOutputs);
+	void valueChanged(int channel, int phrase, int group, int cluster, float value, bool enabled) override;
+	void clusterStarted(int channel) override;
+	void groupStarted(int channel) override;
+	void phraseStarted(int channel) override;
+
+
+	void setRatriligProgress(RatriligProgress* ratriligProgress);
 
 	private:
+		RatriligProgress* m_ratriligProgress;
+
 		RatriligCore m_ratriligCore;
 
 		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16];
@@ -73,6 +83,8 @@ struct RatriligModule : NTModule {
 		rack::dsp::BooleanTrigger m_buttonReset;
 
 		int m_channelCount;
+
+		void updatePolyphony(bool forceUpdateOutputs);
 };
 
 struct RatriligWidget : NTModuleWidget {

@@ -31,8 +31,8 @@ struct RatriligUniformChanceGenerator : RatriligChanceGenerator {
 
 
 
-RatriligCore::RatriligCore() : RatriligCore(std::make_shared<RatriligUniformChanceGenerator>()) {}
-RatriligCore::RatriligCore(std::shared_ptr<RatriligChanceGenerator> chanceGenerator) : m_chanceGenerator(chanceGenerator) {
+RatriligCore::RatriligCore(RatriligCoreListener* listener) : RatriligCore(listener, std::make_shared<RatriligUniformChanceGenerator>()) {}
+RatriligCore::RatriligCore(RatriligCoreListener* listener, std::shared_ptr<RatriligChanceGenerator> chanceGenerator) : m_listener(listener), m_chanceGenerator(chanceGenerator) {
 }
 
 void RatriligCore::process(int channel, RatriligData& data) {
@@ -87,6 +87,19 @@ void RatriligCore::process(int channel, RatriligData& data) {
 	m_state[channel].high = false;
 	if ((m_state[channel].phraseEnabled) && (m_state[channel].groupEnabled) && (m_state[channel].clusterEnabled)) {
 		m_state[channel].high = m_chanceGenerator->generateChance() < m_state[channel].density;
+	}
+
+	if (m_listener != nullptr) {
+		m_listener->valueChanged(channel, m_state[channel].phraseIndex, m_state[channel].groupIndex, m_state[channel].clusterIndex, m_state[channel].density, m_state[channel].high);
+		if (m_state[channel].clusterIndex == 0) {
+			m_listener->clusterStarted(channel);
+		}
+		if (m_state[channel].groupIndex == 0) {
+			m_listener->groupStarted(channel);
+		}
+		if (m_state[channel].phraseIndex == 0) {
+			m_listener->phraseStarted(channel);
+		}
 	}
 }
 

@@ -1,13 +1,16 @@
 #include "modules/ratrilig.hpp"
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
+#include "components/ratrilig-progress.hpp"
 
 
 extern Model* modelRatrilig;
 
 
-RatriligModule::RatriligModule() {
+RatriligModule::RatriligModule() : m_ratriligCore(this) {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
+	m_ratriligProgress = nullptr;
 
 	configInput(IN_GATE, "Clock");
 	configInput(IN_RESET, "Clock");
@@ -92,6 +95,43 @@ void RatriligModule::process(const ProcessArgs& args) {
 	}
 }
 
+void RatriligModule::draw(const widget::Widget::DrawArgs& args) {
+	if (m_ratriligProgress != nullptr) {
+		m_ratriligProgress->setClusterCount(params[PARAM_CLUSTER_SIZE].getValue());
+		m_ratriligProgress->setGroupCount(params[PARAM_GROUP_SIZE].getValue());
+		m_ratriligProgress->setPhraseCount(params[PARAM_PHRASE_SIZE].getValue());
+	}
+}
+
+void RatriligModule::valueChanged(int channel, int phrase, int group, int cluster, float value, bool enabled) {
+	if ((m_ratriligProgress != nullptr) && (channel == 0)) {
+		int clusterSize = params[PARAM_CLUSTER_SIZE].getValue();
+		int groupSize = params[PARAM_GROUP_SIZE].getValue();
+		m_ratriligProgress->setPositionValue(phrase * groupSize * clusterSize + group * clusterSize + cluster, enabled ? value : 0.f);
+	}
+}
+
+void RatriligModule::clusterStarted(int channel) {
+
+}
+
+void RatriligModule::groupStarted(int channel) {
+
+}
+
+void RatriligModule::phraseStarted(int channel) {
+
+}
+
+void RatriligModule::setRatriligProgress(RatriligProgress* ratriligProgress) {
+	m_ratriligProgress = ratriligProgress;
+	if (m_ratriligProgress != nullptr) {
+		m_ratriligProgress->setClusterCount(params[PARAM_CLUSTER_SIZE].getValue());
+		m_ratriligProgress->setGroupCount(params[PARAM_GROUP_SIZE].getValue());
+		m_ratriligProgress->setPhraseCount(params[PARAM_PHRASE_SIZE].getValue());
+	}
+}
+
 void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
 	int channels = std::max(inputs[IN_GATE].getChannels(), 1);
 
@@ -130,12 +170,19 @@ RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_c
 	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 140.f), module, RatriligModule::PARAM_PHRASE_DENSITY_FACTOR));
 	addInput(createInputCentered<NTPort>(Vec(182.5f, 180.f), module, RatriligModule::IN_PHRASE_DENSITY));
 
-	addParam(createParamCentered<Trimpot>(Vec(96.f, 268.f), module, RatriligModule::PARAM_CLUSTER_BIAS_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(121.f, 268.f), module, RatriligModule::PARAM_CLUSTER_BIAS_DIRECTION));
-	addParam(createParamCentered<Trimpot>(Vec(161.f, 268.f), module, RatriligModule::PARAM_GROUP_BIAS_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(186.f, 268.f), module, RatriligModule::PARAM_GROUP_BIAS_DIRECTION));
+	addParam(createParamCentered<Trimpot>(Vec(95.5f, 267.f), module, RatriligModule::PARAM_CLUSTER_BIAS_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(122.5f, 267.f), module, RatriligModule::PARAM_CLUSTER_BIAS_DIRECTION));
+	addParam(createParamCentered<Trimpot>(Vec(157.5f, 267.f), module, RatriligModule::PARAM_GROUP_BIAS_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(184.5f, 267.f), module, RatriligModule::PARAM_GROUP_BIAS_DIRECTION));
 
 	addOutput(createOutputCentered<NTPort>(Vec(177.f, 332.5f), module, RatriligModule::OUT_GATE));
+
+	RatriligProgress* ratriligProgress = createWidget<RatriligProgress>(Vec(14.5f, 316.5f));
+	ratriligProgress->setSize(Vec(96.5f, 32.f));
+	addChild(ratriligProgress);
+	if (module != nullptr) {
+		module->setRatriligProgress(ratriligProgress);
+	}
 }
 
 

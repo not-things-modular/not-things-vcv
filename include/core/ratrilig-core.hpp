@@ -52,15 +52,25 @@ struct RatriligChanceGenerator {
 	virtual float generateChance() = 0;
 };
 
+struct RatriligCoreListener {
+	virtual ~RatriligCoreListener() {};
+	
+	virtual void valueChanged(int channel, int phrase, int group, int cluster, float value, bool enabled) = 0;
+	virtual void clusterStarted(int channel) = 0;
+	virtual void groupStarted(int channel) = 0;
+	virtual void phraseStarted(int channel) = 0;
+};
+
 struct RatriligCore {
-	RatriligCore();
-	RatriligCore(std::shared_ptr<RatriligChanceGenerator> chanceGenerator);
+	RatriligCore(RatriligCoreListener* listener);
+	RatriligCore(RatriligCoreListener* listener, std::shared_ptr<RatriligChanceGenerator> chanceGenerator);
 
 	void process(int channel, RatriligData& data);
 	void reset(int channel);
 	bool isHigh(int channel);
 
 	private:
+		RatriligCoreListener* m_listener;
 		std::shared_ptr<RatriligChanceGenerator> m_chanceGenerator;
 		RatriligCoreState m_state[16];
 };
