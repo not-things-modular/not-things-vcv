@@ -103,39 +103,39 @@ void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
 }
 
 RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig") {
-	addInput(createInputCentered<NTPort>(Vec(32.5f - 5.f, 47.f), module, RatriligModule::IN_GATE));
-	addParam(createParamCentered<VCVButton>(Vec(32.5f - 5.f, 87.f), module, RatriligModule::PARAM_TRIGGER));
+	addInput(createInputCentered<NTPort>(Vec(32.5f, 47.f), module, RatriligModule::IN_GATE));
+	addParam(createParamCentered<VCVButton>(Vec(32.5f, 87.f), module, RatriligModule::PARAM_TRIGGER));
 
-	addInput(createInputCentered<NTPort>(Vec(32.5f - 5.f, 127.f), module, RatriligModule::IN_RESET));
-	addParam(createParamCentered<VCVButton>(Vec(32.5f - 5.f, 167.f), module, RatriligModule::PARAM_RESET));
+	addInput(createInputCentered<NTPort>(Vec(32.5f, 127.f), module, RatriligModule::IN_RESET));
+	addParam(createParamCentered<VCVButton>(Vec(32.5f, 167.f), module, RatriligModule::PARAM_RESET));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(32.5f - 5.f, 227.f + 5.f), module, RatriligModule::PARAM_DENSITY));
-	addInput(createInputCentered<NTPort>(Vec(32.5f - 5.f, 267.f + 5.f), module, RatriligModule::IN_DENSITY));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(32.5f, 227.f + 5.f), module, RatriligModule::PARAM_DENSITY));
+	addInput(createInputCentered<NTPort>(Vec(32.5f, 267.f + 5.f), module, RatriligModule::IN_DENSITY));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f, 55.f), module, RatriligModule::PARAM_CLUSTER_SIZE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f, 100.f), module, RatriligModule::PARAM_CLUSTER_CHANCE));
-	addInput(createInputCentered<NTPort>(Vec(92.5f, 140.f), module, RatriligModule::IN_CLUSTER_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f, 190.f), module, RatriligModule::PARAM_CLUSTER_DENSITY_FACTOR));
-	addInput(createInputCentered<NTPort>(Vec(92.5f, 230.f), module, RatriligModule::IN_CLUSTER_DENSITY));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 55.f), module, RatriligModule::PARAM_CLUSTER_SIZE));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 97.5f), module, RatriligModule::PARAM_CLUSTER_CHANCE));
+	// addInput(createInputCentered<NTPort>(Vec(102.5f, 140.f), module, RatriligModule::IN_CLUSTER_CHANCE));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 140.f), module, RatriligModule::PARAM_CLUSTER_DENSITY_FACTOR));
+	addInput(createInputCentered<NTPort>(Vec(102.5f, 180.f), module, RatriligModule::IN_CLUSTER_DENSITY));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f + 45.f, 55.f), module, RatriligModule::PARAM_GROUP_SIZE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f + 45.f, 100.f), module, RatriligModule::PARAM_GROUP_CHANCE));
-	addInput(createInputCentered<NTPort>(Vec(92.5f + 45.f, 140.f), module, RatriligModule::IN_GROUP_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f + 45.f, 190.f), module, RatriligModule::PARAM_GROUP_DENSITY_FACTOR));
-	addInput(createInputCentered<NTPort>(Vec(92.5f + 45.f, 230.f), module, RatriligModule::IN_GROUP_DENSITY));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 55.f), module, RatriligModule::PARAM_GROUP_SIZE));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 97.5f), module, RatriligModule::PARAM_GROUP_CHANCE));
+	// addInput(createInputCentered<NTPort>(Vec(142.5f, 140.f), module, RatriligModule::IN_GROUP_CHANCE));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 140.f), module, RatriligModule::PARAM_GROUP_DENSITY_FACTOR));
+	addInput(createInputCentered<NTPort>(Vec(142.5f, 180.f), module, RatriligModule::IN_GROUP_DENSITY));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f + 90.f, 55.f), module, RatriligModule::PARAM_PHRASE_SIZE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f + 90.f, 100.f), module, RatriligModule::PARAM_PHRASE_CHANCE));
-	addInput(createInputCentered<NTPort>(Vec(92.5f + 90.f, 140.f), module, RatriligModule::IN_PHRASE_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(92.5f + 90.f, 190.f), module, RatriligModule::PARAM_PHRASE_DENSITY_FACTOR));
-	addInput(createInputCentered<NTPort>(Vec(92.5f + 90.f, 230.f), module, RatriligModule::IN_PHRASE_DENSITY));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 55.f), module, RatriligModule::PARAM_PHRASE_SIZE));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 97.5f), module, RatriligModule::PARAM_PHRASE_CHANCE));
+	// addInput(createInputCentered<NTPort>(Vec(182.5f, 140.f), module, RatriligModule::IN_PHRASE_CHANCE));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 140.f), module, RatriligModule::PARAM_PHRASE_DENSITY_FACTOR));
+	addInput(createInputCentered<NTPort>(Vec(182.5f, 180.f), module, RatriligModule::IN_PHRASE_DENSITY));
 
-	addParam(createParamCentered<Trimpot>(Vec(90.f, 282.5f), module, RatriligModule::PARAM_CLUSTER_BIAS_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(115.f, 282.5f), module, RatriligModule::PARAM_CLUSTER_BIAS_DIRECTION));
-	addParam(createParamCentered<Trimpot>(Vec(155.f, 282.5f), module, RatriligModule::PARAM_GROUP_BIAS_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(180.f, 282.5f), module, RatriligModule::PARAM_GROUP_BIAS_DIRECTION));
+	addParam(createParamCentered<Trimpot>(Vec(96.f, 268.f), module, RatriligModule::PARAM_CLUSTER_BIAS_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(121.f, 268.f), module, RatriligModule::PARAM_CLUSTER_BIAS_DIRECTION));
+	addParam(createParamCentered<Trimpot>(Vec(161.f, 268.f), module, RatriligModule::PARAM_GROUP_BIAS_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(186.f, 268.f), module, RatriligModule::PARAM_GROUP_BIAS_DIRECTION));
 
-	addOutput(createOutputCentered<NTPort>(Vec(32.f - 5.f, 332.5f), module, RatriligModule::OUT_GATE));
+	addOutput(createOutputCentered<NTPort>(Vec(177.f, 332.5f), module, RatriligModule::OUT_GATE));
 }
 
 

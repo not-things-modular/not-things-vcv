@@ -317,13 +317,13 @@ float RameligModule::getParamValue(ParamId paramId, int channel, float lowerLimi
 }
 
 RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ramelig") {
-	addParam(createParamCentered<Rogan1PWhite>(Vec(32.5f, 232.5f), module, RameligModule::PARAM_LOWER_LIMIT));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(72.5f, 232.5f), module, RameligModule::PARAM_UPPER_LIMIT));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 232.5f), module, RameligModule::PARAM_LOWER_LIMIT));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 232.5f), module, RameligModule::PARAM_UPPER_LIMIT));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_JUMP));
-	addParam(createParamCentered<VCVButton>(Vec(137.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_JUMP));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_MOVE));
-	addParam(createParamCentered<VCVButton>(Vec(177.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_MOVE));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(32.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_JUMP));
+	addParam(createParamCentered<VCVButton>(Vec(32.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_JUMP));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(72.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_MOVE));
+	addParam(createParamCentered<VCVButton>(Vec(72.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_MOVE));
 
 	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_UP));
 	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 47.f), module, RameligModule::PARAM_CHANCE_REMAIN));
@@ -337,11 +337,13 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 47.f), module, RameligModule::IN_GATE));
 
-	addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_LOWER_LIMIT));
-	addInput(createInputCentered<NTPort>(Vec(72.5f, 272.5f), module, RameligModule::IN_UPPER_LIMIT));
+	addInput(createInputCentered<NTPort>(Vec(137.5f, 272.5f), module, RameligModule::IN_LOWER_LIMIT));
+	addInput(createInputCentered<NTPort>(Vec(177.5f, 272.5f), module, RameligModule::IN_UPPER_LIMIT));
+	// addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_LOWER_LIMIT));
+	// addInput(createInputCentered<NTPort>(Vec(72.5f, 272.5f), module, RameligModule::IN_UPPER_LIMIT));
 
-	addInput(createInputCentered<NTPort>(Vec(137.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_JUMP));
-	addInput(createInputCentered<NTPort>(Vec(177.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_MOVE));
+	addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_JUMP));
+	addInput(createInputCentered<NTPort>(Vec(72.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_MOVE));
 	addInput(createInputCentered<NTPort>(Vec(137.5f, 87.f), module, RameligModule::IN_CHANCE_MOVE_UP));
 	addInput(createInputCentered<NTPort>(Vec(177.5f, 87.f), module, RameligModule::IN_CHANCE_REMAIN));
 	addInput(createInputCentered<NTPort>(Vec(97.5f, 87.f), module, RameligModule::IN_CHANCE_MOVE_DOWN));
@@ -362,13 +364,13 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(155.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 8, RameligModule::LIGHT_SCALE_NOTES + 8));
 	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(175.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 10, RameligModule::LIGHT_SCALE_NOTES + 10));
 
-	addOutput(createOutputCentered<NTPort>(Vec(32.f, 332.5f), module, RameligModule::OUT_CV));
-	addOutput(createOutputCentered<NTPort>(Vec(72.f, 332.5f), module, RameligModule::OUT_TRIGGER));
-	addOutput(createOutputCentered<NTPort>(Vec(137.5f, 345.f), module, RameligModule::OUT_RANDOM_JUMP));
-	addOutput(createOutputCentered<NTPort>(Vec(177.5f, 345.f), module, RameligModule::OUT_RANDOM_MOVE));
+	addOutput(createOutputCentered<NTPort>(Vec(137.5f, 332.5f), module, RameligModule::OUT_CV));
+	addOutput(createOutputCentered<NTPort>(Vec(177.5f, 332.5f), module, RameligModule::OUT_TRIGGER));
+	// addOutput(createOutputCentered<NTPort>(Vec(137.5f, 345.f), module, RameligModule::OUT_RANDOM_JUMP));
+	// addOutput(createOutputCentered<NTPort>(Vec(177.5f, 345.f), module, RameligModule::OUT_RANDOM_MOVE));
 
-	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(150.f, 332.5f), module, RameligModule::LIGHT_RANDOM_JUMP));
-	addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(190.f, 332.5f), module, RameligModule::LIGHT_RANDOM_MOVE));
+	// addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(150.f, 332.5f), module, RameligModule::LIGHT_RANDOM_JUMP));
+	// addChild(createLightCentered<SmallLight<DimmedLight<RedLight>>>(Vec(190.f, 332.5f), module, RameligModule::LIGHT_RANDOM_MOVE));
 }
 
 void RameligWidget::appendContextMenu(Menu* menu) {
