@@ -7,6 +7,7 @@
 struct RatriligData;
 struct RatriligState;
 struct RatriligProgress;
+struct RatriligBias;
 
 
 struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
@@ -70,9 +71,13 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 
 
 	void setRatriligProgress(RatriligProgress* ratriligProgress);
+	void setRatriligClusterBias(RatriligBias* ratriligBias);
+	void setRatriligGroupBias(RatriligBias* ratriligBias);
 
 	private:
 		RatriligProgress* m_ratriligProgress;
+		RatriligBias* m_ratriligClusterBias;
+		RatriligBias* m_ratriligGroupBias;
 
 		RatriligCore m_ratriligCore;
 

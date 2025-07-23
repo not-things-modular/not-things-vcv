@@ -2,6 +2,7 @@
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
 #include "components/ratrilig-progress.hpp"
+#include "components/ratrilig-bias.hpp"
 
 
 extern Model* modelRatrilig;
@@ -96,10 +97,20 @@ void RatriligModule::process(const ProcessArgs& args) {
 }
 
 void RatriligModule::draw(const widget::Widget::DrawArgs& args) {
+	int clusterSize = params[PARAM_CLUSTER_SIZE].getValue();
+	int groupSize = params[PARAM_GROUP_SIZE].getValue();
+	int phraseSize = params[PARAM_PHRASE_SIZE].getValue();
+
 	if (m_ratriligProgress != nullptr) {
-		m_ratriligProgress->setClusterCount(params[PARAM_CLUSTER_SIZE].getValue());
-		m_ratriligProgress->setGroupCount(params[PARAM_GROUP_SIZE].getValue());
-		m_ratriligProgress->setPhraseCount(params[PARAM_PHRASE_SIZE].getValue());
+		m_ratriligProgress->setClusterCount(clusterSize);
+		m_ratriligProgress->setGroupCount(groupSize);
+		m_ratriligProgress->setPhraseCount(phraseSize);
+	}
+	if (m_ratriligClusterBias != nullptr) {
+		m_ratriligClusterBias->setBias(params[PARAM_CLUSTER_BIAS_DIRECTION].getValue(), groupSize);
+	}
+	if (m_ratriligGroupBias != nullptr) {
+		m_ratriligGroupBias->setBias(params[PARAM_GROUP_BIAS_DIRECTION].getValue(), phraseSize);
 	}
 }
 
@@ -130,6 +141,14 @@ void RatriligModule::setRatriligProgress(RatriligProgress* ratriligProgress) {
 		m_ratriligProgress->setGroupCount(params[PARAM_GROUP_SIZE].getValue());
 		m_ratriligProgress->setPhraseCount(params[PARAM_PHRASE_SIZE].getValue());
 	}
+}
+
+void RatriligModule::setRatriligClusterBias(RatriligBias* ratriligBias) {
+	m_ratriligClusterBias = ratriligBias;
+}
+
+void RatriligModule::setRatriligGroupBias(RatriligBias* ratriligBias) {
+	m_ratriligGroupBias = ratriligBias;
 }
 
 void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
@@ -182,6 +201,20 @@ RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_c
 	addChild(ratriligProgress);
 	if (module != nullptr) {
 		module->setRatriligProgress(ratriligProgress);
+	}
+
+	RatriligBias* ratriligClusterBias = createWidget<RatriligBias>(Vec(84.f, 290.f));
+	ratriligClusterBias->setSize(Vec(50.f, 8.f));
+	addChild(ratriligClusterBias);
+	if (module != nullptr) {
+		module->setRatriligClusterBias(ratriligClusterBias);
+	}
+
+	RatriligBias* ratriligGroupBias = createWidget<RatriligBias>(Vec(146.f, 290.f));
+	ratriligGroupBias->setSize(Vec(50.f, 8.f));
+	addChild(ratriligGroupBias);
+	if (module != nullptr) {
+		module->setRatriligGroupBias(ratriligGroupBias);
 	}
 }
 
