@@ -7,6 +7,7 @@
 
 
 extern Model* modelRatrilig;
+extern Model* modelRatriligExpander;
 
 
 RatriligModule::RatriligModule() : m_ratriligCore(this) {
@@ -51,6 +52,7 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 
 void RatriligModule::process(const ProcessArgs& args) {
 	RatriligData data;
+	Module* expander = getRatriligExpander();
 
 	// Make sure the output polyphony is up to date
 	updatePolyphony(false);
@@ -66,13 +68,13 @@ void RatriligModule::process(const ProcessArgs& args) {
 		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel), 0.f, 1.f)) || (triggerPushed)) {
 			data.density = getValue(PARAM_DENSITY, IN_DENSITY, channel) / 100.f;
 			data.clusterSize = params[PARAM_CLUSTER_SIZE].getValue();
-			data.clusterSkipChance = params[PARAM_CLUSTER_CHANCE].getValue() / 100.f;
+			data.clusterSkipChance = getValue(PARAM_CLUSTER_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CLUSTER, channel) / 100.f;
 			data.clusterDensityFactor = getValue(PARAM_CLUSTER_DENSITY_FACTOR, IN_CLUSTER_DENSITY, channel) / 100.f;
 			data.groupSize = params[PARAM_GROUP_SIZE].getValue();
-			data.groupSkipChance = params[PARAM_GROUP_CHANCE].getValue() / 100.f;
+			data.groupSkipChance = getValue(PARAM_GROUP_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_GROUP, channel) / 100.f;
 			data.groupDensityFactor = getValue(PARAM_GROUP_DENSITY_FACTOR, IN_GROUP_DENSITY, channel) / 100.f;
 			data.phraseSize = params[PARAM_PHRASE_SIZE].getValue();
-			data.phraseSkipChance = params[PARAM_PHRASE_CHANCE].getValue() / 100.f;
+			data.phraseSkipChance = getValue(PARAM_PHRASE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_PHRASE, channel) / 100.f;
 			data.phraseDensityFactor = getValue(PARAM_PHRASE_DENSITY_FACTOR, IN_PHRASE_DENSITY, channel) / 100.f;
 			data.clusterBiasAmount = params[PARAM_CLUSTER_BIAS_AMOUNT].getValue();
 			data.clusterBiasDirection = params[PARAM_CLUSTER_BIAS_DIRECTION].getValue();
@@ -157,15 +159,24 @@ void RatriligModule::valueChanged(int channel, int phrase, int group, int cluste
 }
 
 void RatriligModule::clusterStarted(int channel) {
-
+	Module* expander = getRatriligExpander();
+	if (expander != nullptr) {
+		dynamic_cast<RatriligExpanderModule*>(expander)->triggerCluster();
+	}
 }
 
 void RatriligModule::groupStarted(int channel) {
-
+	Module* expander = getRatriligExpander();
+	if (expander != nullptr) {
+		dynamic_cast<RatriligExpanderModule*>(expander)->triggerGroup();
+	}
 }
 
 void RatriligModule::phraseStarted(int channel) {
-
+	Module* expander = getRatriligExpander();
+	if (expander != nullptr) {
+		dynamic_cast<RatriligExpanderModule*>(expander)->triggerPhrase();
+	}
 }
 
 void RatriligModule::setRatriligProgress(RatriligProgress* ratriligProgress) {
@@ -220,6 +231,31 @@ float RatriligModule::getValue(ParamId paramId, InputId inputId, int channel) {
 	}
 
 	return (value > 100.f) ? 100.f : (value < 0.f) ? 0.f : value;
+}
+
+float RatriligModule::getValue(ParamId paramId, Module* expander, RatriligExpanderModule::InputId inputId, int channel) {
+	float value = params[paramId].getValue();
+	if (expander != nullptr) {
+		if (expander->inputs[inputId].isPolyphonic()) {
+			value += expander->inputs[inputId].getVoltage(channel) * 20.f;
+		} else if (expander->inputs[inputId].isMonophonic()) {
+			value += expander->inputs[inputId].getVoltage(0) * 20.f;
+		}
+	}
+
+	return (value > 100.f) ? 100.f : (value < 0.f) ? 0.f : value;
+}
+
+Module* RatriligModule::getRatriligExpander() {
+	Expander& expander = getRightExpander();
+	if ((expander.module != nullptr) && (expander.module->getModel() == modelRatriligExpander)) {
+		return expander.module;
+	}
+	expander = getLeftExpander();
+	if ((expander.module != nullptr) && (expander.module->getModel() == modelRatriligExpander)) {
+		return expander.module;
+	}
+	return nullptr;
 }
 
 RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig") {

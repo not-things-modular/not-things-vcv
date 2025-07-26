@@ -2,6 +2,7 @@
 #include "not-things.hpp"
 
 #include "core/ratrilig-core.hpp"
+#include "ratrilig-expander.hpp"
 
 
 struct RatriligData;
@@ -100,6 +101,9 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		void updatePolyphony(bool forceUpdateOutputs);
 
 		float getValue(ParamId paramId, InputId inputId, int channel);
+		float getValue(ParamId paramId, Module* expander, RatriligExpanderModule::InputId inputId, int channel);
+
+		Module* getRatriligExpander();
 };
 
 struct RatriligWidget : NTModuleWidget {

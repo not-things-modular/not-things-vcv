@@ -29,6 +29,15 @@ struct RatriligExpanderModule : NTModule {
 	RatriligExpanderModule();
 
 	void process(const ProcessArgs& args) override;
+
+	void triggerCluster();
+	void triggerGroup();
+	void triggerPhrase();
+
+	private:
+		rack::dsp::PulseGenerator m_clusterPulse;
+		rack::dsp::PulseGenerator m_groupPulse;
+		rack::dsp::PulseGenerator m_phrasePulse;
 };
 
 struct RatriligExpanderWidget : NTModuleWidget {

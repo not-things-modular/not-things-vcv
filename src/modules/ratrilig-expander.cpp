@@ -15,21 +15,42 @@ RatriligExpanderModule::RatriligExpanderModule() {
 }
 
 void RatriligExpanderModule::process(const ProcessArgs& args) {
+	outputs[OUT_TRIG_CLUSTER].setVoltage(m_clusterPulse.process(args.sampleTime));
+	outputs[OUT_TRIG_GROUP].setVoltage(m_groupPulse.process(args.sampleTime));
+	outputs[OUT_TRIG_PHRASE].setVoltage(m_phrasePulse.process(args.sampleTime));
 
+	lights[LIGHT_TRIG_CLUSTER].setBrightnessSmooth(0.f, args.sampleTime);
+	lights[LIGHT_TRIG_GROUP].setBrightnessSmooth(0.f, args.sampleTime);
+	lights[LIGHT_TRIG_PHRASE].setBrightnessSmooth(0.f, args.sampleTime);
+}
+
+void RatriligExpanderModule::triggerCluster() {
+	m_clusterPulse.trigger();
+	lights[LIGHT_TRIG_CLUSTER].setBrightnessSmooth(1.f, .01f);
+}
+
+void RatriligExpanderModule::triggerGroup() {
+	m_groupPulse.trigger();
+	lights[LIGHT_TRIG_GROUP].setBrightnessSmooth(1.f, .01f);
+}
+
+void RatriligExpanderModule::triggerPhrase() {
+	m_phrasePulse.trigger();
+	lights[LIGHT_TRIG_PHRASE].setBrightnessSmooth(1.f, .01f);
 }
 
 RatriligExpanderWidget::RatriligExpanderWidget(RatriligExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig-expander") {
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 52.5f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 97.5f), module, RatriligExpanderModule::IN_SKIP_GROUP));
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 142.5f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 55.f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 100.f), module, RatriligExpanderModule::IN_SKIP_GROUP));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 145.f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
 
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 232.5f), module, RatriligExpanderModule::OUT_TRIG_CLUSTER));
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 277.5f), module, RatriligExpanderModule::OUT_TRIG_GROUP));
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 322.5f), module, RatriligExpanderModule::OUT_TRIG_PHRASE));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 235.5f), module, RatriligExpanderModule::OUT_TRIG_CLUSTER));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 282.5f), module, RatriligExpanderModule::OUT_TRIG_GROUP));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 327.5f), module, RatriligExpanderModule::OUT_TRIG_PHRASE));
 
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(35.f, 220.f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(35.f, 265.f), module, RatriligExpanderModule::IN_SKIP_GROUP));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(35.f, 310.f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 225.f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 270.f), module, RatriligExpanderModule::IN_SKIP_GROUP));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 315.f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
 }
 
 

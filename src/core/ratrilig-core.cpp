@@ -36,6 +36,10 @@ RatriligCore::RatriligCore(RatriligCoreListener* listener, std::shared_ptr<Ratri
 }
 
 void RatriligCore::process(int channel, RatriligData& data) {
+	bool clusterStarted = false;
+	bool groupStarted = false;
+	bool phraseStarted = false;
+
 	// Check if we're starting a new cluster
 	if (++m_state[channel].clusterIndex >= data.clusterSize) {
 		// Check if we're starting a new group
@@ -43,6 +47,7 @@ void RatriligCore::process(int channel, RatriligData& data) {
 			// Check if we're starting a new phrase
 			if (++m_state[channel].phraseIndex >= data.phraseSize) {
 				m_state[channel].phraseIndex = 0;
+				phraseStarted = true;
 				m_state[channel].phraseEnabled = m_chanceGenerator->generateChance() >= data.phraseSkipChance;
 				if (m_state[channel].phraseEnabled) {
 					m_state[channel].phraseDensityFactor = data.phraseDensityFactor * ((m_chanceGenerator->generateChance() - .5f) * 2);
@@ -53,6 +58,7 @@ void RatriligCore::process(int channel, RatriligData& data) {
 
 			// Restart the group and check if it should be biased
 			m_state[channel].groupIndex = 0;
+			groupStarted = true;
 
 			if ((data.groupBiasAmount > 0.f) && (isBiased(m_state[channel].phraseIndex, data.phraseSize, data.groupBiasDirection))) {
 				// A biased group is always enabled
@@ -72,6 +78,7 @@ void RatriligCore::process(int channel, RatriligData& data) {
 
 		// Restart the cluster and check if it should be biased
 		m_state[channel].clusterIndex = 0;
+		clusterStarted = true;
 
 		if ((data.clusterBiasAmount > 0.f) && (isBiased(m_state[channel].groupIndex, data.groupSize, data.clusterBiasDirection))) {
 			// A biased cluster is always enabled
@@ -101,13 +108,13 @@ void RatriligCore::process(int channel, RatriligData& data) {
 
 	if (m_listener != nullptr) {
 		m_listener->valueChanged(channel, m_state[channel].phraseIndex, m_state[channel].groupIndex, m_state[channel].clusterIndex, std::min(m_state[channel].density, 1.f), chance, m_state[channel].high);
-		if (m_state[channel].clusterIndex == 0) {
+		if (clusterStarted) {
 			m_listener->clusterStarted(channel);
 		}
-		if (m_state[channel].groupIndex == 0) {
+		if (groupStarted) {
 			m_listener->groupStarted(channel);
 		}
-		if (m_state[channel].phraseIndex == 0) {
+		if (phraseStarted) {
 			m_listener->phraseStarted(channel);
 		}
 
