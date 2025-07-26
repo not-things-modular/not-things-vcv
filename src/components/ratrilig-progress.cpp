@@ -1,5 +1,6 @@
 #include "components/ratrilig-progress.hpp"
 #include "core/timeseq-core.hpp"
+#include "util/scale.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -24,14 +25,17 @@ void RatriligProgress::drawLayer(const DrawArgs& args, int layer) {
 	int clusterCount = m_clusterCount;
 	int count = 0;
 
-	float height = (box.getHeight() - 4) / phraseCount;
-	float width = (box.getWidth() - 4 - (groupCount - 1)) / (groupCount * clusterCount);
-
-	if (width > 1.1f) {
+	int separator;
+	if ((groupCount * clusterCount) <= 70.f) {
 		nvgStrokeWidth(args.vg, .5f);
+		separator = 2;
 	} else {
 		nvgStrokeWidth(args.vg, .25f);
+		separator = 1;
 	}
+
+	float height = (box.getHeight() - 4) / phraseCount;
+	float width = (box.getWidth() - 4 - (groupCount - 1) * separator) / (groupCount * clusterCount);
 
 	float x = 2.f;
 	float y = 2.f;
@@ -42,7 +46,7 @@ void RatriligProgress::drawLayer(const DrawArgs& args, int layer) {
 				nvgRect(args.vg, x, y, width, height);
 				if (count <= m_position) {
 					nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
-					nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, m_values[count] * 0xFF));
+					nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, m_values[count]));
 					nvgFill(args.vg);
 				} else {
 					nvgStrokeColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0x55));
@@ -61,8 +65,8 @@ void RatriligProgress::drawLayer(const DrawArgs& args, int layer) {
 				count++;
 				x += width;
 			}
-			
-			x += 1.f;
+
+			x += separator;
 		}
 		x = 2.f;
 		y += height;
@@ -86,5 +90,5 @@ void RatriligProgress::setPhraseCount(int phraseCount) {
 
 void RatriligProgress::setPositionValue(int position, float value) {
 	m_position = position;
-	m_values[position] = value;
+	m_values[position] = powScale(value, .75f) * 0xFF;
 }

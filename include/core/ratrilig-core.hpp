@@ -10,15 +10,15 @@ struct RatriligData {
 	float density;
 
 	int clusterSize;
-	float clusterEnabledChance;
+	float clusterSkipChance;
 	float clusterDensityFactor;
 
 	int groupSize;
-	float groupEnabledChance;
+	float groupSkipChance;
 	float groupDensityFactor;
 
 	int phraseSize;
-	float phraseEnabledChance;
+	float phraseSkipChance;
 	float phraseDensityFactor;
 
 	float clusterBiasAmount;
@@ -54,8 +54,12 @@ struct RatriligChanceGenerator {
 
 struct RatriligCoreListener {
 	virtual ~RatriligCoreListener() {};
-	
-	virtual void valueChanged(int channel, int phrase, int group, int cluster, float value, bool enabled) = 0;
+
+	virtual void clusterStateChanged(int channel, bool enabled, float density, float bias) = 0;
+	virtual void groupStateChanged(int channel, bool enabled, float density, float bias) = 0;
+	virtual void phraseStateChanged(int channel, bool enabled, float density) = 0;
+
+	virtual void valueChanged(int channel, int phrase, int group, int cluster, float target, float value, bool enabled) = 0;
 	virtual void clusterStarted(int channel) = 0;
 	virtual void groupStarted(int channel) = 0;
 	virtual void phraseStarted(int channel) = 0;

@@ -8,6 +8,7 @@ struct RatriligData;
 struct RatriligState;
 struct RatriligProgress;
 struct RatriligBias;
+struct RatriligProbability;
 
 
 struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
@@ -39,10 +40,6 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		IN_GATE,
 		IN_RESET,
 
-		IN_CLUSTER_CHANCE,
-		IN_GROUP_CHANCE,
-		IN_PHRASE_CHANCE,
-
 		IN_DENSITY,
 		IN_CLUSTER_DENSITY,
 		IN_GROUP_DENSITY,
@@ -64,7 +61,10 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 
-	void valueChanged(int channel, int phrase, int group, int cluster, float value, bool enabled) override;
+	void clusterStateChanged(int channel, bool enabled, float density, float bias) override;
+	void groupStateChanged(int channel, bool enabled, float density, float bias) override;
+	void phraseStateChanged(int channel, bool enabled, float density) override;
+	void valueChanged(int channel, int phrase, int group, int cluster, float target, float value, bool enabled) override;
 	void clusterStarted(int channel) override;
 	void groupStarted(int channel) override;
 	void phraseStarted(int channel) override;
@@ -73,11 +73,19 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 	void setRatriligProgress(RatriligProgress* ratriligProgress);
 	void setRatriligClusterBias(RatriligBias* ratriligBias);
 	void setRatriligGroupBias(RatriligBias* ratriligBias);
+	void setRatriligClusterProbability(RatriligProbability* ratriligClusterProbability);
+	void setRatriligGroupProbability(RatriligProbability* ratriligGroupProbability);
+	void setRatriligPhraseProbability(RatriligProbability* ratriligPhraseProbability);
+	void setRatriligGlobalProbability(RatriligProbability* ratriligGlobalProbability);
 
 	private:
-		RatriligProgress* m_ratriligProgress;
-		RatriligBias* m_ratriligClusterBias;
-		RatriligBias* m_ratriligGroupBias;
+		RatriligProgress* m_ratriligProgress = nullptr;
+		RatriligBias* m_ratriligClusterBias = nullptr;
+		RatriligBias* m_ratriligGroupBias = nullptr;
+		RatriligProbability* m_ratriligClusterProbability = nullptr;
+		RatriligProbability* m_ratriligGroupProbability = nullptr;
+		RatriligProbability* m_ratriligPhraseProbability = nullptr;
+		RatriligProbability* m_ratriligGlobalProbability = nullptr;
 
 		RatriligCore m_ratriligCore;
 
@@ -90,6 +98,8 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		int m_channelCount;
 
 		void updatePolyphony(bool forceUpdateOutputs);
+
+		float getValue(ParamId paramId, InputId inputId, int channel);
 };
 
 struct RatriligWidget : NTModuleWidget {

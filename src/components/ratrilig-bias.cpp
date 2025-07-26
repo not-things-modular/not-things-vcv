@@ -4,8 +4,6 @@
 #include <array>
 #include <cmath>
 
-extern Plugin* pluginInstance;
-
 RatriligBias::RatriligBias() {
 
 }

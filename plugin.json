@@ -104,6 +104,13 @@
 		"description": "Random Trigger Line Generator",
 		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
 		"tags": [ "Utility" ]
+	},
+	{
+		"slug": "ratrilig-expander",
+		"name": "RT-X",
+		"description": "Ratrilig Expander",
+		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
+		"tags": [ "Utility" ]
 	}
   ]
 }
