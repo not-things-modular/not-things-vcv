@@ -106,6 +106,13 @@
 		"tags": [ "Utility" ]
 	},
 	{
+		"slug": "ramelig-expander",
+		"name": "RM-X",
+		"description": "Ramelig Expander",
+		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAMELIG.html",
+		"tags": [ "Utility" ]
+	},
+	{
 		"slug": "ratrilig-expander",
 		"name": "RT-X",
 		"description": "Ratrilig Expander",

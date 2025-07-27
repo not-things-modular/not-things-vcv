@@ -1,4 +1,5 @@
 #include "modules/ramelig.hpp"
+#include "modules/ramelig-expander.hpp"
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
 #include "util/notes.hpp"
@@ -6,6 +7,7 @@
 
 
 extern Model* modelRamelig;
+extern Model* modelRameligExpander;
 
 void reduceLight(Light& light, float deltaTime, float lambda) {
 	if (light.getBrightness() > 0.f) {
@@ -32,8 +34,6 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 
 	configOutput(OUT_CV, "CV");
 	configOutput(OUT_TRIGGER, "Trigger");
-	configOutput(OUT_RANDOM_JUMP, "Random jump triggered");
-	configOutput(OUT_RANDOM_MOVE, "Random remain triggered");
 
 	configParam(PARAM_LOWER_LIMIT, -10.f, 10.f, -1.f, "Lower limit", " V");
 	configParam(PARAM_UPPER_LIMIT, -10.f, 10.f, 1.f, "Upper limit", " V");
@@ -160,6 +160,17 @@ void RameligModule::process(const ProcessArgs& args) {
 	bool oneTriggered = false;
 	for (int channel = 0; channel < m_channelCount; channel++) {
 		// Determine if there is a force move or jump for this channel
+		RameligExpanderModule* expander = getRameligExpander();
+		if (expander != nullptr) {
+			int inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_TRIG_MOVE].isPolyphonic() ? channel : 0;
+			m_forceMove[channel] = m_triggerMove->process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_MOVE].getVoltage(inputChannel)) || m_forceMove[channel];
+			inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_TRIG_JUMP].isPolyphonic() ? channel : 0;
+			m_forceJump[channel] = m_triggerJump->process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_JUMP].getVoltage(inputChannel)) || m_forceJump[channel];
+		} else {
+			// No expander, so reset the trigger detectors
+			m_triggerMove->process(0.f);
+			m_triggerJump->process(0.f);
+		}
 		m_forceMove[channel] = m_buttonMove.process(params[PARAM_TRIG_RANDOM_MOVE].getValue()) || m_forceMove[channel]; // Check the param first on the so that the BooleanTrigger.process detects the state change asap, even if there was already a force move
 		m_forceJump[channel] = m_buttonJump.process(params[PARAM_TRIG_RANDOM_JUMP].getValue()) || m_forceJump[channel]; // Check the param first on the so that the BooleanTrigger.process detects the state change asap, even if there was already a force jump
 
@@ -192,29 +203,11 @@ void RameligModule::process(const ProcessArgs& args) {
 				outputs[OUT_TRIGGER].setVoltage(0.f, channel);
 			}
 		}
-
-		// Update the jump and move outputs based on their pulses
-		if (outputs[OUT_RANDOM_JUMP].isConnected()) {
-			if (m_jumpPulse[channel].process(args.sampleTime)) {
-				outputs[OUT_RANDOM_JUMP].setVoltage(10.f, channel);
-			} else {
-				outputs[OUT_RANDOM_JUMP].setVoltage(0.f, channel);
-			}
-		}
-		if (outputs[OUT_RANDOM_MOVE].isConnected()) {
-			if (m_movePulse[channel].process(args.sampleTime)) {
-				outputs[OUT_RANDOM_MOVE].setVoltage(10.f, channel);
-			} else {
-				outputs[OUT_RANDOM_MOVE].setVoltage(0.f, channel);
-			}
-		}
 	}
 
 	// If none of the channels triggered in this cycle, reduce the LED lights that indicated that one of the actions was triggered (if needed)
 	if ((!oneTriggered) && (m_lightDivider.process())) {
 		reduceLight(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
-		reduceLight(lights[LIGHT_RANDOM_JUMP], args.sampleTime * 128, 15.f);
-		reduceLight(lights[LIGHT_RANDOM_MOVE], args.sampleTime * 128, 15.f);
 	}
 }
 
@@ -224,14 +217,6 @@ void RameligModule::onPortChange(const PortChangeEvent& e) {
 	if (e.type == Port::Type::OUTPUT) {
 		if (e.portId == OUT_TRIGGER) {
 			m_triggerPulse.reset();
-		} else if (e.portId == OUT_RANDOM_JUMP) {
-			for (int i = 0; i < 16; i++) {
-				m_jumpPulse[i].reset();
-			}
-		} else if (e.portId == OUT_RANDOM_MOVE) {
-			for (int i = 0; i < 16; i++) {
-				m_movePulse[i].reset();
-			}
 		}
 	}
 }
@@ -242,11 +227,17 @@ void RameligModule::onUnBypass(const UnBypassEvent& e) {
 
 void RameligModule::rameligActionPerformed(int channel, RameligActions action) {
 	if (action == RameligActions::RANDOM_JUMP) {
-		lights[LIGHT_RANDOM_JUMP].setBrightness(1.f);
-		m_jumpPulse[channel].trigger();
+		RameligExpanderModule* expander = getRameligExpander();
+
+		if (expander != nullptr) {
+			expander->triggerJump();
+		}
 	} else if (action == RameligActions::RANDOM_MOVE) {
-		lights[LIGHT_RANDOM_MOVE].setBrightness(1.f);
-		m_movePulse[channel].trigger();
+		RameligExpanderModule* expander = getRameligExpander();
+
+		if (expander != nullptr) {
+			expander->triggerMove();
+		}
 	}
 }
 
@@ -302,8 +293,12 @@ void RameligModule::updatePolyphony(bool forceUpdateOutputs) {
 		m_channelCount = channels;
 		outputs[OUT_CV].setChannels(m_channelCount);
 		outputs[OUT_TRIGGER].setChannels(m_channelCount);
-		outputs[OUT_RANDOM_JUMP].setChannels(m_channelCount);
-		outputs[OUT_RANDOM_MOVE].setChannels(m_channelCount);
+
+		RameligExpanderModule* expander = getRameligExpander();
+		if (expander != nullptr) {
+			expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setChannels(m_channelCount);
+			expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_MOVE].setChannels(m_channelCount);
+		}
 	}
 }
 
@@ -314,6 +309,18 @@ float RameligModule::getParamValue(ParamId paramId, int channel, float lowerLimi
 	}
 	float value = params[paramId].getValue() + (inputs[inputId].getVoltage(channel) * inputScaling);
 	return std::max(std::min(value, upperLimit), lowerLimit);
+}
+
+RameligExpanderModule* RameligModule::getRameligExpander() {
+	Expander& expander = getRightExpander();
+	if ((expander.module != nullptr) && (expander.module->getModel() == modelRameligExpander)) {
+		return dynamic_cast<RameligExpanderModule*>(expander.module);
+	}
+	expander = getLeftExpander();
+	if ((expander.module != nullptr) && (expander.module->getModel() == modelRameligExpander)) {
+		return dynamic_cast<RameligExpanderModule*>(expander.module);
+	}
+	return nullptr;
 }
 
 RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ramelig") {
@@ -339,8 +346,6 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 
 	addInput(createInputCentered<NTPort>(Vec(137.5f, 272.5f), module, RameligModule::IN_LOWER_LIMIT));
 	addInput(createInputCentered<NTPort>(Vec(177.5f, 272.5f), module, RameligModule::IN_UPPER_LIMIT));
-	// addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_LOWER_LIMIT));
-	// addInput(createInputCentered<NTPort>(Vec(72.5f, 272.5f), module, RameligModule::IN_UPPER_LIMIT));
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_JUMP));
 	addInput(createInputCentered<NTPort>(Vec(72.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_MOVE));

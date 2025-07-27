@@ -5,6 +5,9 @@
 #include "core/ramelig-core.hpp"
 
 
+struct RameligExpanderModule;
+
+
 struct RameligModule : NTModule, RameligActionListener {
 	enum ParamId {
 		PARAM_LOWER_LIMIT,
@@ -48,15 +51,11 @@ struct RameligModule : NTModule, RameligActionListener {
 	enum OutputId {
 		OUT_CV,
 		OUT_TRIGGER,
-		OUT_RANDOM_JUMP,
-		OUT_RANDOM_MOVE,
 		NUM_OUTPUTS
 	};
 	enum LightId {
 		ENUMS(LIGHT_SCALE_NOTES, 12),
 		LIGHT_TRIGGER,
-		LIGHT_RANDOM_JUMP,
-		LIGHT_RANDOM_MOVE,
 		NUM_LIGHTS
 	};
 
@@ -97,9 +96,11 @@ struct RameligModule : NTModule, RameligActionListener {
 		rack::dsp::PulseGenerator m_triggerPulse;
 
 		rack::dsp::BooleanTrigger m_buttonMove;
+		rack::dsp::TSchmittTrigger<float> m_triggerMove[16];
 		bool m_forceMove[16];
 		rack::dsp::PulseGenerator m_movePulse[16];
 		rack::dsp::BooleanTrigger m_buttonJump;
+		rack::dsp::TSchmittTrigger<float> m_triggerJump[16];
 		bool m_forceJump[16];
 		rack::dsp::PulseGenerator m_jumpPulse[16];
 
@@ -111,6 +112,7 @@ struct RameligModule : NTModule, RameligActionListener {
 		void updatePolyphony(bool forceUpdateOutputs);
 
 		float getParamValue(ParamId paramId, int channel, float lowerLimit, float upperLimit, InputId inputId, float inputScaling);
+		RameligExpanderModule* getRameligExpander();
 };
 
 struct RameligWidget : NTModuleWidget {
