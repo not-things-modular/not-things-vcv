@@ -52,7 +52,7 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 
 void RatriligModule::process(const ProcessArgs& args) {
 	RatriligData data;
-	Module* expander = getRatriligExpander();
+	RatriligExpanderModule* expander = getRatriligExpander();
 
 	// Make sure the output polyphony is up to date
 	updatePolyphony(false);
@@ -121,6 +121,9 @@ void RatriligModule::draw(const widget::Widget::DrawArgs& args) {
 	}
 }
 
+void RatriligModule::onExpanderChange(const ExpanderChangeEvent& e) {
+	updatePolyphony(true);
+}
 
 void RatriligModule::clusterStateChanged(int channel, bool enabled, float density, float bias) {
 	if ((channel == 0) && (m_ratriligClusterProbability != nullptr)) {
@@ -159,23 +162,23 @@ void RatriligModule::valueChanged(int channel, int phrase, int group, int cluste
 }
 
 void RatriligModule::clusterStarted(int channel) {
-	Module* expander = getRatriligExpander();
+	RatriligExpanderModule* expander = getRatriligExpander();
 	if (expander != nullptr) {
-		dynamic_cast<RatriligExpanderModule*>(expander)->triggerCluster();
+		expander->triggerCluster(channel);
 	}
 }
 
 void RatriligModule::groupStarted(int channel) {
-	Module* expander = getRatriligExpander();
+	RatriligExpanderModule* expander = getRatriligExpander();
 	if (expander != nullptr) {
-		dynamic_cast<RatriligExpanderModule*>(expander)->triggerGroup();
+		expander->triggerGroup(channel);
 	}
 }
 
 void RatriligModule::phraseStarted(int channel) {
-	Module* expander = getRatriligExpander();
+	RatriligExpanderModule* expander = getRatriligExpander();
 	if (expander != nullptr) {
-		dynamic_cast<RatriligExpanderModule*>(expander)->triggerPhrase();
+		expander->triggerPhrase(channel);
 	}
 }
 
@@ -217,8 +220,15 @@ void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
 
 	// Make sure the output polyphony is up to date
 	if ((forceUpdateOutputs) || (channels != m_channelCount)) {
+		RatriligExpanderModule* expander = getRatriligExpander();
+
 		m_channelCount = channels;
 		outputs[OUT_GATE].setChannels(m_channelCount);
+		if (expander != nullptr) {
+			expander->outputs[RatriligExpanderModule::OUT_TRIG_CLUSTER].setChannels(channels);
+			expander->outputs[RatriligExpanderModule::OUT_TRIG_GROUP].setChannels(channels);
+			expander->outputs[RatriligExpanderModule::OUT_TRIG_PHRASE].setChannels(channels);
+		}
 	}
 }
 
@@ -246,14 +256,14 @@ float RatriligModule::getValue(ParamId paramId, Module* expander, RatriligExpand
 	return (value > 100.f) ? 100.f : (value < 0.f) ? 0.f : value;
 }
 
-Module* RatriligModule::getRatriligExpander() {
-	Expander& expander = getRightExpander();
-	if ((expander.module != nullptr) && (expander.module->getModel() == modelRatriligExpander)) {
-		return expander.module;
+RatriligExpanderModule* RatriligModule::getRatriligExpander() {
+	Expander* expander = &getRightExpander();
+	if ((expander->module != nullptr) && (expander->module->getModel() == modelRatriligExpander)) {
+		return dynamic_cast<RatriligExpanderModule*>(expander->module);
 	}
-	expander = getLeftExpander();
-	if ((expander.module != nullptr) && (expander.module->getModel() == modelRatriligExpander)) {
-		return expander.module;
+	expander = &getLeftExpander();
+	if ((expander->module != nullptr) && (expander->module->getModel() == modelRatriligExpander)) {
+		return dynamic_cast<RatriligExpanderModule*>(expander->module);
 	}
 	return nullptr;
 }

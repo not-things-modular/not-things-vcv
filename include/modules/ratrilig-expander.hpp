@@ -30,14 +30,14 @@ struct RatriligExpanderModule : NTModule {
 
 	void process(const ProcessArgs& args) override;
 
-	void triggerCluster();
-	void triggerGroup();
-	void triggerPhrase();
+	void triggerCluster(int channel);
+	void triggerGroup(int channel);
+	void triggerPhrase(int channel);
 
 	private:
-		rack::dsp::PulseGenerator m_clusterPulse;
-		rack::dsp::PulseGenerator m_groupPulse;
-		rack::dsp::PulseGenerator m_phrasePulse;
+		rack::dsp::PulseGenerator m_clusterPulse[16];
+		rack::dsp::PulseGenerator m_groupPulse[16];
+		rack::dsp::PulseGenerator m_phrasePulse[16];
 };
 
 struct RatriligExpanderWidget : NTModuleWidget {

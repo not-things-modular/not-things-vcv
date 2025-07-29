@@ -225,18 +225,22 @@ void RameligModule::onUnBypass(const UnBypassEvent& e) {
 	updatePolyphony(true);
 }
 
+void RameligModule::onExpanderChange(const ExpanderChangeEvent& e) {
+	updatePolyphony(true);
+}
+
 void RameligModule::rameligActionPerformed(int channel, RameligActions action) {
 	if (action == RameligActions::RANDOM_JUMP) {
 		RameligExpanderModule* expander = getRameligExpander();
 
 		if (expander != nullptr) {
-			expander->triggerJump();
+			expander->triggerJump(channel);
 		}
 	} else if (action == RameligActions::RANDOM_MOVE) {
 		RameligExpanderModule* expander = getRameligExpander();
 
 		if (expander != nullptr) {
-			expander->triggerMove();
+			expander->triggerMove(channel);
 		}
 	}
 }
@@ -312,13 +316,13 @@ float RameligModule::getParamValue(ParamId paramId, int channel, float lowerLimi
 }
 
 RameligExpanderModule* RameligModule::getRameligExpander() {
-	Expander& expander = getRightExpander();
-	if ((expander.module != nullptr) && (expander.module->getModel() == modelRameligExpander)) {
-		return dynamic_cast<RameligExpanderModule*>(expander.module);
+	Expander *expander = &getRightExpander();
+	if ((expander->module != nullptr) && (expander->module->getModel() == modelRameligExpander)) {
+		return dynamic_cast<RameligExpanderModule*>(expander->module);
 	}
-	expander = getLeftExpander();
-	if ((expander.module != nullptr) && (expander.module->getModel() == modelRameligExpander)) {
-		return dynamic_cast<RameligExpanderModule*>(expander.module);
+	expander = &getLeftExpander();
+	if ((expander->module != nullptr) && (expander->module->getModel() == modelRameligExpander)) {
+		return dynamic_cast<RameligExpanderModule*>(expander->module);
 	}
 	return nullptr;
 }

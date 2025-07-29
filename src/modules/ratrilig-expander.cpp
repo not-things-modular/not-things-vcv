@@ -15,27 +15,29 @@ RatriligExpanderModule::RatriligExpanderModule() {
 }
 
 void RatriligExpanderModule::process(const ProcessArgs& args) {
-	outputs[OUT_TRIG_CLUSTER].setVoltage(m_clusterPulse.process(args.sampleTime));
-	outputs[OUT_TRIG_GROUP].setVoltage(m_groupPulse.process(args.sampleTime));
-	outputs[OUT_TRIG_PHRASE].setVoltage(m_phrasePulse.process(args.sampleTime));
+	for (int i = 0; i < outputs[OUT_TRIG_CLUSTER].getChannels(); i++) {
+		outputs[OUT_TRIG_CLUSTER].setVoltage(m_clusterPulse[i].process(args.sampleTime));
+		outputs[OUT_TRIG_GROUP].setVoltage(m_groupPulse[i].process(args.sampleTime));
+		outputs[OUT_TRIG_PHRASE].setVoltage(m_phrasePulse[i].process(args.sampleTime));
+	}
 
 	lights[LIGHT_TRIG_CLUSTER].setBrightnessSmooth(0.f, args.sampleTime);
 	lights[LIGHT_TRIG_GROUP].setBrightnessSmooth(0.f, args.sampleTime);
 	lights[LIGHT_TRIG_PHRASE].setBrightnessSmooth(0.f, args.sampleTime);
 }
 
-void RatriligExpanderModule::triggerCluster() {
-	m_clusterPulse.trigger();
+void RatriligExpanderModule::triggerCluster(int channel) {
+	m_clusterPulse[channel].trigger();
 	lights[LIGHT_TRIG_CLUSTER].setBrightnessSmooth(1.f, .01f);
 }
 
-void RatriligExpanderModule::triggerGroup() {
-	m_groupPulse.trigger();
+void RatriligExpanderModule::triggerGroup(int channel) {
+	m_groupPulse[channel].trigger();
 	lights[LIGHT_TRIG_GROUP].setBrightnessSmooth(1.f, .01f);
 }
 
-void RatriligExpanderModule::triggerPhrase() {
-	m_phrasePulse.trigger();
+void RatriligExpanderModule::triggerPhrase(int channel) {
+	m_phrasePulse[channel].trigger();
 	lights[LIGHT_TRIG_PHRASE].setBrightnessSmooth(1.f, .01f);
 }
 

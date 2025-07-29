@@ -61,6 +61,7 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 
 	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
+	void onExpanderChange(const ExpanderChangeEvent& e) override;
 
 	void clusterStateChanged(int channel, bool enabled, float density, float bias) override;
 	void groupStateChanged(int channel, bool enabled, float density, float bias) override;
@@ -69,7 +70,6 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 	void clusterStarted(int channel) override;
 	void groupStarted(int channel) override;
 	void phraseStarted(int channel) override;
-
 
 	void setRatriligProgress(RatriligProgress* ratriligProgress);
 	void setRatriligClusterBias(RatriligBias* ratriligBias);
@@ -103,7 +103,7 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		float getValue(ParamId paramId, InputId inputId, int channel);
 		float getValue(ParamId paramId, Module* expander, RatriligExpanderModule::InputId inputId, int channel);
 
-		Module* getRatriligExpander();
+		RatriligExpanderModule* getRatriligExpander();
 };
 
 struct RatriligWidget : NTModuleWidget {
