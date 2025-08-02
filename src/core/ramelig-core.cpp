@@ -80,7 +80,12 @@ void RameligCore::setScale(std::vector<int>& scale) {
 	}
 }
 
-float RameligCore::process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, float lowerLimit, float upperLimit) {
+void RameligCore::guideLast(int channel, float value) {
+	m_state[channel].lastResult = value;
+	m_state[channel].isDirty = true;
+}
+
+float RameligCore::process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, bool forceRemain, float lowerLimit, float upperLimit) {
 	std::pair<int, int> quantized;
 
 	// Update the distribution if needed
@@ -107,6 +112,8 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 		action = RameligActions::RANDOM_MOVE;
 	} else if (forceJump) {
 		action = RameligActions::RANDOM_JUMP;
+	} else if (forceRemain) {
+		action = RameligActions::REMAIN;
 	} else {
 		action = determineAction(channel);
 	}

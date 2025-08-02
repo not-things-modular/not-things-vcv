@@ -60,7 +60,8 @@ struct RameligCore {
 	RameligCore(RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator);
 
 	void setScale(std::vector<int>& scale);
-	float process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, float lowerLimit, float upperLimit);
+	void guideLast(int channel, float value);
+	float process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, bool forceRemain, float lowerLimit, float upperLimit);
 
 	private:
 		std::shared_ptr<RameligChanceGenerator> m_chanceGenerator;

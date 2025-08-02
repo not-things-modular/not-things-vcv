@@ -12,8 +12,6 @@ RameligExpanderModule::RameligExpanderModule() {
 
 	configOutput(OUT_TRIG_JUMP, "Jump trigger");
 	configOutput(OUT_TRIG_MOVE, "Move trigger");
-
-	configSwitch(PARAM_QUANTIZE, 0.f, 1.f, 0.f, "Quantize guide value to scale", {"No", "Yes"});
 }
 
 void RameligExpanderModule::process(const ProcessArgs& args) {
@@ -47,8 +45,6 @@ RameligExpanderWidget::RameligExpanderWidget(RameligExpanderModule* module): NTM
 
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 258.5f-18.f+7.f), module, RameligExpanderModule::IN_GUIDE_CV));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 303.5f-18.f+7.f), module, RameligExpanderModule::IN_GUIDE_GATE));
-
-	addParam(createLightParamCentered<VCVLightLatch<SmallSimpleLight<DimmedLight<GreenLight>>>>(Vec(22.5f, 303.5f-18.f+43.f), module, RameligExpanderModule::PARAM_QUANTIZE, RameligExpanderModule::LIGHT_QUANTIZE));
 }
 
 

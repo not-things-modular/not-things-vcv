@@ -127,6 +127,9 @@ void RameligModule::dataFromJson(json_t* rootJ) {
 }
 
 void RameligModule::process(const ProcessArgs& args) {
+	RameligExpanderModule* expander = getRameligExpander();
+	bool guiding[16] = { false };
+
 	// Make sure the output polyphony is up to date
 	updatePolyphony(false);
 
@@ -149,6 +152,18 @@ void RameligModule::process(const ProcessArgs& args) {
 		m_rameligCore.setScale(m_activeScaleIndices);
 	}
 
+	// Detect if the expander is guiding the melody
+	if (expander != nullptr) {
+		for (int i = 0; i < m_channelCount; i++) {
+			int inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_GATE].isPolyphonic() ? i : 0;
+			guiding[i] = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_GATE].getVoltage(inputChannel) >= 1.f;
+			if (guiding[i]) {
+				inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_CV].isPolyphonic() ? i : 0;
+				m_rameligCore.guideLast(i, expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_CV].getVoltage(inputChannel));
+			}
+		}
+	}
+
 	// Check if the trigger button was pushed
 	bool triggerPushed = m_buttonTrigger.process(params[PARAM_TRIGGER].getValue());
 	if (triggerPushed) {
@@ -160,7 +175,6 @@ void RameligModule::process(const ProcessArgs& args) {
 	bool oneTriggered = false;
 	for (int channel = 0; channel < m_channelCount; channel++) {
 		// Determine if there is a force move or jump for this channel
-		RameligExpanderModule* expander = getRameligExpander();
 		if (expander != nullptr) {
 			int inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_TRIG_MOVE].isPolyphonic() ? channel : 0;
 			m_forceMove[channel] = m_triggerMove->process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_MOVE].getVoltage(inputChannel)) || m_forceMove[channel];
@@ -187,7 +201,7 @@ void RameligModule::process(const ProcessArgs& args) {
 			m_rameligDistributionData[channel].moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
 			m_rameligDistributionData[channel].remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
 
-			outputs[OUT_CV].setVoltage(m_rameligCore.process(channel, m_rameligDistributionData[channel], m_forceMove[channel], m_forceJump[channel], lowerLimit, upperLimit), channel);
+			outputs[OUT_CV].setVoltage(m_rameligCore.process(channel, m_rameligDistributionData[channel], m_forceMove[channel], m_forceJump[channel], guiding[channel], lowerLimit, upperLimit), channel);
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
 			oneTriggered = true;
 

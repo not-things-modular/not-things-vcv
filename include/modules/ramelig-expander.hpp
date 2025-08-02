@@ -5,7 +5,6 @@
 
 struct RameligExpanderModule : NTModule {
 	enum ParamId {
-		PARAM_QUANTIZE,
 		NUM_PARAMS
 	};
 	enum InputId {
@@ -23,7 +22,6 @@ struct RameligExpanderModule : NTModule {
 	enum LightId {
 		LIGHT_TRIG_JUMP,
 		LIGHT_TRIG_MOVE,
-		LIGHT_QUANTIZE,
 		NUM_LIGHTS
 	};
 
