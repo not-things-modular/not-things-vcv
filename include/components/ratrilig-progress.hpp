@@ -10,14 +10,14 @@ struct RatriligProgress : widget::Widget {
 	void drawLayer(const DrawArgs& args, int layer) override;
 
 	void setClusterCount(int clusterCount);
-	void setGroupCount(int groupCount);
 	void setPhraseCount(int phraseCount);
+	void setCycleCount(int cycleCount);
 	void setPositionValue(int position, float value);
 
 	private:
 		int m_clusterCount = 8;
-		int m_groupCount = 4;
 		int m_phraseCount = 4;
+		int m_cycleCount = 4;
 
 		int m_position = 20;
 

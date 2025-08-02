@@ -20,13 +20,13 @@ void RatriligProgress::drawLayer(const DrawArgs& args, int layer) {
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
-	int phraseCount = m_phraseCount;
-	int groupCount = m_groupCount;
 	int clusterCount = m_clusterCount;
+	int phraseCount = m_phraseCount;
+	int cycleCount = m_cycleCount;
 	int count = 0;
 
 	int separator;
-	if ((groupCount * clusterCount) <= 70.f) {
+	if ((phraseCount * clusterCount) <= 70.f) {
 		nvgStrokeWidth(args.vg, .5f);
 		separator = 2;
 	} else {
@@ -34,13 +34,13 @@ void RatriligProgress::drawLayer(const DrawArgs& args, int layer) {
 		separator = 1;
 	}
 
-	float height = (box.getHeight() - 4) / phraseCount;
-	float width = (box.getWidth() - 4 - (groupCount - 1) * separator) / (groupCount * clusterCount);
+	float height = (box.getHeight() - 4) / cycleCount;
+	float width = (box.getWidth() - 4 - (phraseCount - 1) * separator) / (phraseCount * clusterCount);
 
 	float x = 2.f;
 	float y = 2.f;
-	for (int phrase = 0; phrase < phraseCount; phrase++) {
-		for (int group = 0; group < groupCount; group++) {
+	for (int cycle = 0; cycle < cycleCount; cycle++) {
+		for (int phrase = 0; phrase < phraseCount; phrase++) {
 			for (int cluster = 0; cluster < clusterCount; cluster++) {
 				nvgBeginPath(args.vg);
 				nvgRect(args.vg, x, y, width, height);
@@ -80,12 +80,12 @@ void RatriligProgress::setClusterCount(int clusterCount) {
 	m_clusterCount = clusterCount;
 }
 
-void RatriligProgress::setGroupCount(int groupCount) {
-	m_groupCount = groupCount;
-}
-
 void RatriligProgress::setPhraseCount(int phraseCount) {
 	m_phraseCount = phraseCount;
+}
+
+void RatriligProgress::setCycleCount(int cycleCount) {
+	m_cycleCount = cycleCount;
 }
 
 void RatriligProgress::setPositionValue(int position, float value) {

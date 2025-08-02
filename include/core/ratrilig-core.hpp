@@ -13,36 +13,36 @@ struct RatriligData {
 	float clusterSkipChance;
 	float clusterDensityFactor;
 
-	int groupSize;
-	float groupSkipChance;
-	float groupDensityFactor;
-
 	int phraseSize;
 	float phraseSkipChance;
 	float phraseDensityFactor;
 
+	int cycleSize;
+	float cycleSkipChance;
+	float cycleDensityFactor;
+
 	float clusterBiasAmount;
 	float clusterBiasDirection;
-	float groupBiasAmount;
-	float groupBiasDirection;
+	float phraseBiasAmount;
+	float phraseBiasDirection;
 };
 
 struct RatriligCoreState {
 	int clusterIndex = 1024;
-	int groupIndex = 1024;
 	int phraseIndex = 1024;
+	int cycleIndex = 1024;
 
 	bool clusterEnabled = true;
-	bool groupEnabled = true;
 	bool phraseEnabled = true;
+	bool cycleEnabled = true;
 
 	float density = 0.f;
 	float clusterDensityFactor = 0.f;
-	float groupDensityFactor = 0.f;
 	float phraseDensityFactor = 0.f;
+	float cycleDensityFactor = 0.f;
 
 	float clusterBiasAmount;
-	float groupBiasAmount;
+	float phraseBiasAmount;
 
 	bool high;
 };
@@ -56,13 +56,13 @@ struct RatriligCoreListener {
 	virtual ~RatriligCoreListener() {};
 
 	virtual void clusterStateChanged(int channel, bool enabled, float density, float bias) = 0;
-	virtual void groupStateChanged(int channel, bool enabled, float density, float bias) = 0;
-	virtual void phraseStateChanged(int channel, bool enabled, float density) = 0;
+	virtual void phraseStateChanged(int channel, bool enabled, float density, float bias) = 0;
+	virtual void cycleStateChanged(int channel, bool enabled, float density) = 0;
 
-	virtual void valueChanged(int channel, int phrase, int group, int cluster, float target, float value, bool enabled) = 0;
+	virtual void valueChanged(int channel, int cycle, int phrase, int cluster, float target, float value, bool enabled) = 0;
 	virtual void clusterStarted(int channel) = 0;
-	virtual void groupStarted(int channel) = 0;
 	virtual void phraseStarted(int channel) = 0;
+	virtual void cycleStarted(int channel) = 0;
 };
 
 struct RatriligCore {

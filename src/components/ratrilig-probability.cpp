@@ -91,7 +91,7 @@ void RatriligProbability::setDensityFactor(float factor) {
 }
 
 void RatriligProbability::setBias(float bias) {
-	m_bias = bias;
+	m_bias = bias * (157.5f*2);
 	calculateTargets();
 }
 
