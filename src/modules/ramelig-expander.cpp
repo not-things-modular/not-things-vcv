@@ -35,16 +35,15 @@ void RameligExpanderModule::triggerMove(int channel) {
 }
 
 RameligExpanderWidget::RameligExpanderWidget(RameligExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ramelig-expander") {
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 70.5f-18.f), module, RameligExpanderModule::IN_TRIG_JUMP));
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 155.5f-18.f), module, RameligExpanderModule::IN_TRIG_MOVE));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 68.5f), module, RameligExpanderModule::IN_GUIDE_CV));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 113.5f), module, RameligExpanderModule::IN_GUIDE_GATE));
 
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 113.f-19.f), module, RameligExpanderModule::OUT_TRIG_JUMP));
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 198.f-19.f), module, RameligExpanderModule::OUT_TRIG_MOVE));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 81.5f), module, RameligExpanderModule::OUT_TRIG_JUMP));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 166.5f), module, RameligExpanderModule::OUT_TRIG_MOVE));
-
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 258.5f-18.f+7.f), module, RameligExpanderModule::IN_GUIDE_CV));
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 303.5f-18.f+7.f), module, RameligExpanderModule::IN_GUIDE_GATE));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 206.5f), module, RameligExpanderModule::IN_TRIG_JUMP));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 291.f), module, RameligExpanderModule::IN_TRIG_MOVE));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 248.f), module, RameligExpanderModule::OUT_TRIG_JUMP));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 332.5f), module, RameligExpanderModule::OUT_TRIG_MOVE));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 235.5f), module, RameligExpanderModule::OUT_TRIG_JUMP));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 320.f), module, RameligExpanderModule::OUT_TRIG_MOVE));
 }
 
 

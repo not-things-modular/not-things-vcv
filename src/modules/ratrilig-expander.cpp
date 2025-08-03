@@ -46,17 +46,17 @@ void RatriligExpanderModule::triggerCycle(int channel) {
 }
 
 RatriligExpanderWidget::RatriligExpanderWidget(RatriligExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig-expander") {
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 55.f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 100.f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 145.f), module, RatriligExpanderModule::IN_SKIP_CYCLE));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 232.5f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 277.5f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 322.5f), module, RatriligExpanderModule::IN_SKIP_CYCLE));
 
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 235.5f), module, RatriligExpanderModule::OUT_TRIG_CLUSTER));
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 327.5f), module, RatriligExpanderModule::OUT_TRIG_PHRASE));
-	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 282.5f), module, RatriligExpanderModule::OUT_TRIG_CYCLE));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 68.5f), module, RatriligExpanderModule::OUT_TRIG_CLUSTER));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 113.5f), module, RatriligExpanderModule::OUT_TRIG_PHRASE));
+	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 158.5f), module, RatriligExpanderModule::OUT_TRIG_CYCLE));
 
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 225.f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 315.f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 270.f), module, RatriligExpanderModule::IN_SKIP_CYCLE));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 56.f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 101.f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 146.f), module, RatriligExpanderModule::IN_SKIP_CYCLE));
 }
 
 
