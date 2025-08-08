@@ -22,6 +22,7 @@ struct RaphralicModule : NTModule {
 		NUM_PARAMS
 	};
 	enum InputId {
+		IN_CLOCK,
 		IN_GATE,
 		IN_CV,
 		IN_SKIP,
@@ -35,7 +36,7 @@ struct RaphralicModule : NTModule {
 		OUT_GATE,
 		OUT_CV,
 		OUT_REPLAY,
-		
+
 		NUM_OUTPUTS
 	};
 	enum LightId {
