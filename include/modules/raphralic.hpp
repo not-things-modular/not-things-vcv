@@ -1,6 +1,8 @@
 #pragma once
 #include "not-things.hpp"
 
+#include "../util/valuemonitor.hpp"
+
 
 struct RaphralicModule : NTModule {
 	enum ParamId {
@@ -48,6 +50,8 @@ struct RaphralicModule : NTModule {
 	void process(const ProcessArgs& args) override;
 
 	private:
+		GateValueMonitor<1> m_gateMonitor;
+		VoltageValueMonitor<> m_cvMonitor;
 };
 
 struct RaphralicWidget : NTModuleWidget {

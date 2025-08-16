@@ -3,6 +3,7 @@
 
 #include "core/ratrilig-core.hpp"
 #include "ratrilig-expander.hpp"
+#include <array>
 
 
 struct RatriligData;
@@ -96,9 +97,14 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		rack::dsp::TSchmittTrigger<float> m_inputReset[16];
 		rack::dsp::BooleanTrigger m_buttonReset;
 
+		std::array<float, 16> m_clusterSkipping;
+		std::array<float, 16> m_phraseSkipping;
+		std::array<float, 16> m_cycleSkipping;
+
 		int m_channelCount;
 
 		void updatePolyphony(bool forceUpdateOutputs);
+		void updateExpanderSkipOutputs();
 
 		float getValue(ParamId paramId, InputId inputId, int channel);
 		float getValue(ParamId paramId, Module* expander, RatriligExpanderModule::InputId inputId, int channel);
