@@ -32,8 +32,8 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 	pq->smoothEnabled = false;
 
 	configParam(PARAM_CLUSTER_CHANCE, 0.f, 100.f, 20.f, "Cluster skip chance");
-	configParam(PARAM_PHRASE_CHANCE, 0.f, 100.f, 0.f, "Phrase skip chance");
-	configParam(PARAM_CYCLE_CHANCE, 0.f, 100.f, 15.f, "Cycle skip chance");
+	configParam(PARAM_PHRASE_CHANCE, 0.f, 100.f, 15.f, "Phrase skip chance");
+	configParam(PARAM_CYCLE_CHANCE, 0.f, 100.f, 0.f, "Cycle skip chance");
 
 	configParam(PARAM_DENSITY, 0.f, 100.f, 55.f, "Gate density");
 	configParam(PARAM_CLUSTER_DENSITY_FACTOR, 0.f, 100.f, 15.f, "Gates in cluster density factor");
@@ -47,10 +47,6 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 
 	configButton(PARAM_TRIGGER, "Trigger");
 	configButton(PARAM_RESET, "Reset");
-
-	m_clusterSkipping.fill(0.f);
-	m_phraseSkipping.fill(0.f);
-	m_cycleSkipping.fill(0.f);
 }
 
 void RatriligModule::process(const ProcessArgs& args) {
@@ -126,7 +122,6 @@ void RatriligModule::draw(const widget::Widget::DrawArgs& args) {
 
 void RatriligModule::onExpanderChange(const ExpanderChangeEvent& e) {
 	updatePolyphony(true);
-	updateExpanderSkipOutputs();
 }
 
 void RatriligModule::clusterStateChanged(int channel, bool enabled, float density, float bias) {
@@ -135,8 +130,6 @@ void RatriligModule::clusterStateChanged(int channel, bool enabled, float densit
 		m_ratriligClusterProbability->setDensity(density);
 		m_ratriligClusterProbability->setBias(bias);
 	}
-	m_clusterSkipping[channel] = enabled ? 0.f : 10.f;
-	updateExpanderSkipOutputs();
 }
 
 void RatriligModule::phraseStateChanged(int channel, bool enabled, float density, float bias) {
@@ -145,8 +138,6 @@ void RatriligModule::phraseStateChanged(int channel, bool enabled, float density
 		m_ratriligPhraseProbability->setDensity(density);
 		m_ratriligPhraseProbability->setBias(bias);
 	}
-	m_phraseSkipping[channel] = enabled ? 0.f : 10.f;
-	updateExpanderSkipOutputs();
 }
 
 void RatriligModule::cycleStateChanged(int channel, bool enabled, float density) {
@@ -154,8 +145,6 @@ void RatriligModule::cycleStateChanged(int channel, bool enabled, float density)
 		m_ratriligCycleProbability->setEnabled(enabled);
 		m_ratriligCycleProbability->setDensity(density);
 	}
-	m_cycleSkipping[channel] = enabled ? 0.f : 10.f;
-	updateExpanderSkipOutputs();
 }
 
 void RatriligModule::valueChanged(int channel, int cycle, int phrase, int cluster, float target, float value, bool enabled) {
@@ -238,20 +227,7 @@ void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
 			expander->outputs[RatriligExpanderModule::OUT_TRIG_CLUSTER].setChannels(channels);
 			expander->outputs[RatriligExpanderModule::OUT_TRIG_PHRASE].setChannels(channels);
 			expander->outputs[RatriligExpanderModule::OUT_TRIG_CYCLE].setChannels(channels);
-			expander->outputs[RatriligExpanderModule::OUT_SKIP_CLUSTER].setChannels(channels);
-			expander->outputs[RatriligExpanderModule::OUT_SKIP_PHRASE].setChannels(channels);
-			expander->outputs[RatriligExpanderModule::OUT_SKIP_CYCLE].setChannels(channels);
-			updateExpanderSkipOutputs();
 		}
-	}
-}
-
-void RatriligModule::updateExpanderSkipOutputs() {
-	RatriligExpanderModule* expander = getRatriligExpander();
-	if (expander != nullptr) {
-		expander->outputs[RatriligExpanderModule::OutputId::OUT_SKIP_CLUSTER].writeVoltages(m_clusterSkipping.data());
-		expander->outputs[RatriligExpanderModule::OutputId::OUT_SKIP_PHRASE].writeVoltages(m_phraseSkipping.data());
-		expander->outputs[RatriligExpanderModule::OutputId::OUT_SKIP_CYCLE].writeVoltages(m_cycleSkipping.data());
 	}
 }
 

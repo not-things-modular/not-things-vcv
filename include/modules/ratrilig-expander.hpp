@@ -17,9 +17,6 @@ struct RatriligExpanderModule : NTModule {
 		OUT_TRIG_CLUSTER,
 		OUT_TRIG_PHRASE,
 		OUT_TRIG_CYCLE,
-		OUT_SKIP_CLUSTER,
-		OUT_SKIP_PHRASE,
-		OUT_SKIP_CYCLE,
 		NUM_OUTPUTS
 	};
 	enum LightId {
@@ -41,8 +38,6 @@ struct RatriligExpanderModule : NTModule {
 		rack::dsp::PulseGenerator m_clusterPulse[16];
 		rack::dsp::PulseGenerator m_phrasePulse[16];
 		rack::dsp::PulseGenerator m_cyclePulse[16];
-
-		bool isConnected();
 };
 
 struct RatriligExpanderWidget : NTModuleWidget {

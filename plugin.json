@@ -118,13 +118,6 @@
 		"description": "Ratrilig Expander",
 		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
 		"tags": [ "Utility" ]
-	},
-	{
-		"slug": "raphralic",
-		"name": "Raphralic",
-		"description": "Random Phrase Line Capturer",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAPHRALIC.html",
-		"tags": [ "Utility" ]
 	}
   ]
 }

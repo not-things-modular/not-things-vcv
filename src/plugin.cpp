@@ -16,7 +16,6 @@ extern Model* modelTimeSeq;
 
 extern Model* modelRamelig;
 extern Model* modelRatrilig;
-extern Model* modelRaphralic;
 extern Model* modelRameligExpander;
 extern Model* modelRatriligExpander;
 
@@ -37,7 +36,6 @@ void init(Plugin* p) {
 	p->addModel(modelTimeSeq);
 	p->addModel(modelRamelig);
 	p->addModel(modelRatrilig);
-	p->addModel(modelRaphralic);
 	p->addModel(modelRameligExpander);
 	p->addModel(modelRatriligExpander);
 }
