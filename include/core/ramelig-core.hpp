@@ -63,6 +63,8 @@ struct RameligCore {
 	void guideLast(int channel, float value);
 	float process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, bool forceRemain, float lowerLimit, float upperLimit);
 
+	void calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution);
+
 	private:
 		std::shared_ptr<RameligChanceGenerator> m_chanceGenerator;
 		RameligCoreState m_state[16];

@@ -82,14 +82,32 @@ void RatriligModule::process(const ProcessArgs& args) {
 			m_ratriligCore.process(channel, data);
 		}
 
-		// Update the trigger output based on either the input trigger, or the trigger button pulse
-		if (outputs[OUT_GATE].isConnected()) {
+		// Update the trigger output based on either the input trigger, or the trigger button pulse and update the expander outputs
+		if ((outputs[OUT_GATE].isConnected()) || (expander != nullptr)) {
 			if ((m_buttonTrigger.isHigh()) || (m_ratriligCore.isHigh(channel) && inputs[IN_GATE].getVoltage(channel) >= 1.f)) {
 				outputs[OUT_GATE].setVoltage(10.f, channel);
+
+				if (expander != nullptr) {
+					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CLUSTER].setVoltage(m_clusterStarted[channel] ? 10.f : 0.f);
+					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_PHRASE].setVoltage(m_phraseStarted[channel] ? 10.f : 0.f);
+					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CYCLE].setVoltage(m_cycleStarted[channel] ? 10.f : 0.f);
+				}
 			} else {
 				outputs[OUT_GATE].setVoltage(0.f, channel);
+
+				// The input is not high, so reset the expander outputs and started flags back to false if needed
+				if (expander != nullptr) {
+					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CLUSTER].setVoltage(0.f);
+					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_PHRASE].setVoltage(0.f);
+					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CYCLE].setVoltage(0.f);
+				}
+				m_clusterStarted[channel] = false;
+				m_phraseStarted[channel] = false;
+				m_cycleStarted[channel] = false;
 			}
 		}
+
+		// If there is an expander, update the
 	}
 }
 
@@ -162,22 +180,28 @@ void RatriligModule::valueChanged(int channel, int cycle, int phrase, int cluste
 
 void RatriligModule::clusterStarted(int channel) {
 	RatriligExpanderModule* expander = getRatriligExpander();
+
+	m_clusterStarted[channel] = true;
 	if (expander != nullptr) {
-		expander->triggerCluster(channel);
+		expander->lights[RatriligExpanderModule::LIGHT_TRIG_CLUSTER].setBrightnessSmooth(1.f, .01f);
 	}
 }
 
 void RatriligModule::phraseStarted(int channel) {
 	RatriligExpanderModule* expander = getRatriligExpander();
+
+	m_phraseStarted[channel] = true;
 	if (expander != nullptr) {
-		expander->triggerPhrase(channel);
+		expander->lights[RatriligExpanderModule::LIGHT_TRIG_PHRASE].setBrightnessSmooth(1.f, .01f);
 	}
 }
 
 void RatriligModule::cycleStarted(int channel) {
 	RatriligExpanderModule* expander = getRatriligExpander();
+
+	m_cycleStarted[channel] = true;
 	if (expander != nullptr) {
-		expander->triggerCycle(channel);
+		expander->lights[RatriligExpanderModule::LIGHT_TRIG_CYCLE].setBrightnessSmooth(1.f, .01f);
 	}
 }
 
@@ -228,6 +252,13 @@ void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
 			expander->outputs[RatriligExpanderModule::OUT_TRIG_PHRASE].setChannels(channels);
 			expander->outputs[RatriligExpanderModule::OUT_TRIG_CYCLE].setChannels(channels);
 		}
+	}
+
+	// Set all the 'started' flags for the channels that are out of range to false
+	for (int i = channels; i < 16; i++) {
+		m_clusterStarted[i] = false;
+		m_phraseStarted[i] = false;
+		m_cycleStarted[i] = false;
 	}
 }
 

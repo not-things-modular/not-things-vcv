@@ -19,37 +19,9 @@ RatriligExpanderModule::RatriligExpanderModule() {
 }
 
 void RatriligExpanderModule::process(const ProcessArgs& args) {
-	for (int i = 0; i < outputs[OUT_TRIG_CLUSTER].getChannels(); i++) {
-		outputs[OUT_TRIG_CLUSTER].setVoltage(m_clusterPulse[i].process(args.sampleTime) ? 10.f : 0.f);
-	}
-	for (int i = 0; i < outputs[OUT_TRIG_PHRASE].getChannels(); i++) {
-		outputs[OUT_TRIG_PHRASE].setVoltage(m_phrasePulse[i].process(args.sampleTime) ? 10.f : 0.f);
-	}
-	for (int i = 0; i < outputs[OUT_TRIG_CYCLE].getChannels(); i++) {
-		outputs[OUT_TRIG_CYCLE].setVoltage(m_cyclePulse[i].process(args.sampleTime) ? 10.f : 0.f);
-	}
-
 	lights[LIGHT_TRIG_CLUSTER].setBrightnessSmooth(0.f, args.sampleTime);
 	lights[LIGHT_TRIG_PHRASE].setBrightnessSmooth(0.f, args.sampleTime);
 	lights[LIGHT_TRIG_CYCLE].setBrightnessSmooth(0.f, args.sampleTime);
-}
-
-void RatriligExpanderModule::triggerCluster(int channel) {
-	m_clusterPulse[channel].trigger();
-	outputs[OUT_TRIG_CLUSTER].setVoltage(10.f);
-	lights[LIGHT_TRIG_CLUSTER].setBrightnessSmooth(1.f, .01f);
-}
-
-void RatriligExpanderModule::triggerPhrase(int channel) {
-	m_phrasePulse[channel].trigger();
-	outputs[OUT_TRIG_PHRASE].setVoltage(10.f);
-	lights[LIGHT_TRIG_PHRASE].setBrightnessSmooth(1.f, .01f);
-}
-
-void RatriligExpanderModule::triggerCycle(int channel) {
-	m_cyclePulse[channel].trigger();
-	outputs[OUT_TRIG_CYCLE].setVoltage(10.f);
-	lights[LIGHT_TRIG_CYCLE].setBrightnessSmooth(1.f, .01f);
 }
 
 RatriligExpanderWidget::RatriligExpanderWidget(RatriligExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig-expander") {

@@ -99,6 +99,10 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 
 		int m_channelCount;
 
+		std::array<bool, 16> m_clusterStarted;
+		std::array<bool, 16> m_phraseStarted;
+		std::array<bool, 16> m_cycleStarted;
+
 		void updatePolyphony(bool forceUpdateOutputs);
 
 		float getValue(ParamId paramId, InputId inputId, int channel);

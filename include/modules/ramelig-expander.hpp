@@ -28,13 +28,6 @@ struct RameligExpanderModule : NTModule {
 	RameligExpanderModule();
 
 	void process(const ProcessArgs& args) override;
-
-	void triggerJump(int channel);
-	void triggerMove(int channel);
-
-	private:
-		rack::dsp::PulseGenerator m_jumpPulse[16];
-		rack::dsp::PulseGenerator m_movePulse[16];
 };
 
 struct RameligExpanderWidget : NTModuleWidget {

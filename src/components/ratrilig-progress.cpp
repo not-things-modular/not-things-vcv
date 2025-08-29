@@ -1,5 +1,4 @@
 #include "components/ratrilig-progress.hpp"
-#include "core/timeseq-core.hpp"
 #include "util/scale.hpp"
 #include <algorithm>
 #include <array>

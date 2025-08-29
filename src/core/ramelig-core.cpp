@@ -172,13 +172,17 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 }
 
 void RameligCore::calculateDistribution(int channel) {
-	m_state[channel].actionDistribution[RameligActions::RANDOM_JUMP] = m_state[channel].distributionData.randomJumpChance;
-	m_state[channel].actionDistribution[RameligActions::RANDOM_MOVE] = m_state[channel].actionDistribution[RameligActions::RANDOM_JUMP] + m_state[channel].distributionData.randomMoveChance;
-	m_state[channel].actionDistribution[RameligActions::UP_TWO] = m_state[channel].actionDistribution[RameligActions::RANDOM_MOVE] + m_state[channel].distributionData.moveUpChance * m_state[channel].distributionData.moveTwoFactor;
-	m_state[channel].actionDistribution[RameligActions::UP_ONE] = m_state[channel].actionDistribution[RameligActions::RANDOM_MOVE] + m_state[channel].distributionData.moveUpChance;
-	m_state[channel].actionDistribution[RameligActions::DOWN_ONE] = m_state[channel].actionDistribution[RameligActions::UP_ONE] + m_state[channel].distributionData.moveDownChance * (1 - m_state[channel].distributionData.moveTwoFactor);
-	m_state[channel].actionDistribution[RameligActions::DOWN_TWO] = m_state[channel].actionDistribution[RameligActions::UP_ONE] + m_state[channel].distributionData.moveDownChance;
-	m_state[channel].actionDistribution[RameligActions::REMAIN] = m_state[channel].actionDistribution[RameligActions::DOWN_TWO] + m_state[channel].distributionData.remainChance;
+	calculateDistribution(m_state[channel].distributionData, m_state[channel].actionDistribution);
+}
+
+void RameligCore::calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution) {
+	distribution[RameligActions::RANDOM_JUMP] = data.randomJumpChance;
+	distribution[RameligActions::RANDOM_MOVE] = distribution[RameligActions::RANDOM_JUMP] + data.randomMoveChance;
+	distribution[RameligActions::UP_TWO] = distribution[RameligActions::RANDOM_MOVE] + data.moveUpChance * data.moveTwoFactor;
+	distribution[RameligActions::UP_ONE] = distribution[RameligActions::RANDOM_MOVE] + data.moveUpChance;
+	distribution[RameligActions::DOWN_ONE] = distribution[RameligActions::UP_ONE] + data.moveDownChance * (1 - data.moveTwoFactor);
+	distribution[RameligActions::DOWN_TWO] = distribution[RameligActions::UP_ONE] + data.moveDownChance;
+	distribution[RameligActions::REMAIN] = distribution[RameligActions::DOWN_TWO] + data.remainChance;
 }
 
 void RameligCore::calculateQuantization() {
@@ -276,7 +280,9 @@ std::pair<int, int> RameligCore::move(int channel, std::pair<int, int>& current,
 	int index = current.second + movement;
 	if (index >= (int) m_scale.size()) {
 		oct++;
-		index = 0;
+		while (index >= (int) m_scale.size()) {
+			index -= m_scale.size();
+		}
 	}
 	if (index < 0) {
 		oct--;

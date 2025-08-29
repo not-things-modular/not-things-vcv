@@ -6,9 +6,10 @@
 
 
 struct RameligExpanderModule;
+struct RameligDistribution;
 
 
-struct RameligModule : NTModule, RameligActionListener {
+struct RameligModule : NTModule, DrawListener, RameligActionListener {
 	enum ParamId {
 		PARAM_LOWER_LIMIT,
 		PARAM_UPPER_LIMIT,
@@ -71,6 +72,7 @@ struct RameligModule : NTModule, RameligActionListener {
 	void dataFromJson(json_t* rootJ) override;
 
 	void process(const ProcessArgs& args) override;
+	void draw(const widget::Widget::DrawArgs& args) override;
 	void onPortChange(const PortChangeEvent& e) override;
 	void onUnBypass(const UnBypassEvent& e) override;
 	void onExpanderChange(const ExpanderChangeEvent& e) override;
@@ -80,10 +82,14 @@ struct RameligModule : NTModule, RameligActionListener {
 	ScaleMode getScaleMode();
 	void setScaleMode(ScaleMode scaleMode);
 
+	void setRameligDistribution(RameligDistribution* rameligDistribution);
+
 	private:
 		RameligCore m_rameligCore;
 		RameligDistributionData m_rameligDistributionData[16];
 		int m_channelCount;
+
+		RameligDistribution* m_rameligDistribution;
 
 		ScaleMode m_scaleMode;
 
@@ -106,6 +112,12 @@ struct RameligModule : NTModule, RameligActionListener {
 		rack::dsp::PulseGenerator m_jumpPulse[16];
 
 		dsp::ClockDivider m_lightDivider;
+
+		std::array<float, 16> m_values;
+		std::array<bool, 16> m_jumped;
+		std::array<bool, 16> m_moved;
+
+		void readDistributionData(int channel, RameligDistributionData& rameligDistributionData);
 
 		int determineActiveScale();
 		void updateScale();

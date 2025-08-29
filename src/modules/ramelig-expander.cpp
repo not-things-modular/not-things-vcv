@@ -15,28 +15,13 @@ RameligExpanderModule::RameligExpanderModule() {
 }
 
 void RameligExpanderModule::process(const ProcessArgs& args) {
-	for (int i = 0; i < outputs[OUT_TRIG_JUMP].getChannels(); i++) {
-		outputs[OUT_TRIG_JUMP].setVoltage(m_jumpPulse[i].process(args.sampleTime) ? 10.f : 0.f, i);
-		outputs[OUT_TRIG_MOVE].setVoltage(m_movePulse[i].process(args.sampleTime) ? 10.f : 0.f, i);
-	}
-
 	lights[LIGHT_TRIG_JUMP].setBrightnessSmooth(0.f, args.sampleTime);
 	lights[LIGHT_TRIG_MOVE].setBrightnessSmooth(0.f, args.sampleTime);
 }
 
-void RameligExpanderModule::triggerJump(int channel) {
-	m_jumpPulse[channel].trigger();
-	lights[LIGHT_TRIG_JUMP].setBrightnessSmooth(1.f, .01f);
-}
-
-void RameligExpanderModule::triggerMove(int channel) {
-	m_movePulse[channel].trigger();
-	lights[LIGHT_TRIG_MOVE].setBrightnessSmooth(1.f, .01f);
-}
-
 RameligExpanderWidget::RameligExpanderWidget(RameligExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ramelig-expander") {
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 68.5f), module, RameligExpanderModule::IN_GUIDE_CV));
-	addInput(createInputCentered<NTPort>(Vec(22.5f, 113.5f), module, RameligExpanderModule::IN_GUIDE_GATE));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 68.5f), module, RameligExpanderModule::IN_GUIDE_GATE));
+	addInput(createInputCentered<NTPort>(Vec(22.5f, 113.5f), module, RameligExpanderModule::IN_GUIDE_CV));
 
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 206.5f), module, RameligExpanderModule::IN_TRIG_JUMP));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 291.f), module, RameligExpanderModule::IN_TRIG_MOVE));
