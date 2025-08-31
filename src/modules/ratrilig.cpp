@@ -47,6 +47,8 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 
 	configButton(PARAM_TRIGGER, "Trigger");
 	configButton(PARAM_RESET, "Reset");
+
+	m_triggerLightDivider.setDivision(128);
 }
 
 void RatriligModule::process(const ProcessArgs& args) {
@@ -59,6 +61,7 @@ void RatriligModule::process(const ProcessArgs& args) {
 	// Check if the trigger button was pushed
 	bool triggerPushed = m_buttonTrigger.process(params[PARAM_TRIGGER].getValue());
 	bool resetPushed = m_buttonReset.process(params[PARAM_RESET].getValue());
+	bool oneTriggered = false;
 
 	for (int channel = 0; channel < m_channelCount; channel++) {
 		if ((m_inputReset[channel].process(inputs[IN_RESET].getVoltage(channel), 0.f, 1.f)) || (resetPushed)) {
@@ -80,6 +83,9 @@ void RatriligModule::process(const ProcessArgs& args) {
 			data.phraseBiasAmount = params[PARAM_PHRASE_BIAS_AMOUNT].getValue();
 			data.phraseBiasDirection = params[PARAM_PHRASE_BIAS_DIRECTION].getValue();
 			m_ratriligCore.process(channel, data);
+
+			lights[LIGHT_TRIGGER].setBrightness(1.f);
+			oneTriggered = true;
 		}
 
 		// Update the trigger output based on either the input trigger, or the trigger button pulse and update the expander outputs
@@ -107,7 +113,10 @@ void RatriligModule::process(const ProcessArgs& args) {
 			}
 		}
 
-		// If there is an expander, update the
+		// If none of the channels triggered in this cycle, reduce the LED lights that indicated that one of the actions was triggered (if needed)
+		if ((!oneTriggered) && (m_triggerLightDivider.process())) {
+			reduceLightWithThreshold(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
+		}
 	}
 }
 
@@ -300,7 +309,8 @@ RatriligExpanderModule* RatriligModule::getRatriligExpander() {
 
 RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig") {
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 47.f), module, RatriligModule::IN_GATE));
-	addParam(createParamCentered<VCVButton>(Vec(32.5f, 87.f), module, RatriligModule::PARAM_TRIGGER));
+
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<MediumSimpleLight<RedLight>>>>(Vec(32.5f, 87.f), module, RatriligModule::PARAM_TRIGGER, RatriligModule::LIGHT_TRIGGER));
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 127.f), module, RatriligModule::IN_RESET));
 	addParam(createParamCentered<VCVButton>(Vec(32.5f, 167.f), module, RatriligModule::PARAM_RESET));

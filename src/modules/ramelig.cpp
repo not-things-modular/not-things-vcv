@@ -10,16 +10,6 @@
 extern Model* modelRamelig;
 extern Model* modelRameligExpander;
 
-void reduceLight(Light& light, float deltaTime, float lambda) {
-	if (light.getBrightness() > 0.f) {
-		if (light.getBrightness() > 0.0001f) {
-			light.setBrightnessSmooth(0.f, deltaTime, lambda);
-		} else {
-			light.setBrightness(0.f);
-		}
-	}
-}
-
 RameligModule::RameligModule() : m_rameligCore(this) {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
@@ -69,7 +59,7 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 	m_rameligCore.setScale(m_activeScaleIndices);
 
 	m_channelCount = 1;
-	m_lightDivider.setDivision(128);
+	m_triggerLightDivider.setDivision(128);
 
 	m_rameligDistribution = nullptr;
 }
@@ -233,8 +223,8 @@ void RameligModule::process(const ProcessArgs& args) {
 	}
 
 	// If none of the channels triggered in this cycle, reduce the LED lights that indicated that one of the actions was triggered (if needed)
-	if ((!oneTriggered) && (m_lightDivider.process())) {
-		reduceLight(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
+	if ((!oneTriggered) && (m_triggerLightDivider.process())) {
+		reduceLightWithThreshold(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
 	}
 }
 

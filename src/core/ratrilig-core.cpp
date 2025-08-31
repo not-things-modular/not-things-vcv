@@ -135,10 +135,12 @@ void RatriligCore::reset(int channel) {
 	
 	m_state[channel].high = false;
 
-	m_listener->valueChanged(channel, m_state[channel].cycleIndex, m_state[channel].phraseIndex, m_state[channel].clusterIndex, std::min(m_state[channel].density, 1.f), 0.f, m_state[channel].high);
-	m_listener->clusterStateChanged(channel, m_state[channel].clusterEnabled, m_state[channel].clusterDensityFactor, m_state[channel].clusterBiasAmount);
-	m_listener->phraseStateChanged(channel, m_state[channel].phraseEnabled, m_state[channel].phraseDensityFactor, m_state[channel].phraseBiasAmount);
-	m_listener->cycleStateChanged(channel, m_state[channel].cycleEnabled, m_state[channel].cycleDensityFactor);
+	if (m_listener != nullptr) {
+		m_listener->valueChanged(channel, 0.f, 0.f, 0.f, std::min(m_state[channel].density, 1.f), 0.f, m_state[channel].high);
+		m_listener->clusterStateChanged(channel, m_state[channel].clusterEnabled, m_state[channel].clusterDensityFactor, m_state[channel].clusterBiasAmount);
+		m_listener->phraseStateChanged(channel, m_state[channel].phraseEnabled, m_state[channel].phraseDensityFactor, m_state[channel].phraseBiasAmount);
+		m_listener->cycleStateChanged(channel, m_state[channel].cycleEnabled, m_state[channel].cycleDensityFactor);
+	}
 }
 
 bool RatriligCore::isHigh(int channel)  {

@@ -55,6 +55,7 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		NUM_OUTPUTS
 	};
 	enum LightId {
+		LIGHT_TRIGGER,
 		NUM_LIGHTS
 	};
 
@@ -93,6 +94,7 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 
 		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16];
 		rack::dsp::BooleanTrigger m_buttonTrigger;
+		dsp::ClockDivider m_triggerLightDivider;
 
 		rack::dsp::TSchmittTrigger<float> m_inputReset[16];
 		rack::dsp::BooleanTrigger m_buttonReset;

@@ -111,7 +111,7 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 		bool m_forceJump[16];
 		rack::dsp::PulseGenerator m_jumpPulse[16];
 
-		dsp::ClockDivider m_lightDivider;
+		dsp::ClockDivider m_triggerLightDivider;
 
 		std::array<float, 16> m_values;
 		std::array<bool, 16> m_jumped;

@@ -39,3 +39,5 @@ struct DimmedLight : TBase {
 		}
 	}
 };
+
+void reduceLightWithThreshold(Light& light, float deltaTime, float lambda = 30.f);
