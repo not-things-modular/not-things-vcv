@@ -1256,7 +1256,7 @@
 			}
 		},
 		"remove-from-sequence": {
-			"description": "Deletes a value from sequence.",
+			"description": "Removes a value from sequence.",
 			"type": "object",
 			"properties": {
 				"id": {
@@ -1312,18 +1312,12 @@
 			"description": "A value from a sequence",
 			"oneOf": [
 				{
-					"$ref": "#/definitions/sequence-full"
-				},
-				{
 					"type": "string",
-					"description": "Reference the sequence by just the id. Will extract the current value from the sequence subsequently move the sequence forward (with wrap-around if needed).",
+					"description": "Reference the sequence by just the id. Will extract the current value from the sequence and subsequently move the sequence forward (with wrap-around if needed).",
 					"minLength": 1
 				},
 				{
 					"$ref": "#/definitions/sequence-value-full"
-				},
-				{
-					"$ref": "#/definitions/reference"
 				}
 			]
 		},

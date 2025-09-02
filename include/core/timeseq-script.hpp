@@ -57,6 +57,20 @@ struct ScriptRand {
 	std::unique_ptr<ScriptValue> upper;
 };
 
+struct ScriptSequence : ScriptRefObject {
+	bool shared;
+	std::vector<ScriptValue> values;
+};
+
+enum ScriptSequenceMoveDirection { FORWARD, BACKWARD, RANDOM, NONE };
+
+struct ScriptSequenceValue {
+	std::string id;
+	ScriptSequenceMoveDirection moveBefore;
+	ScriptSequenceMoveDirection moveAfter;
+	bool wrap;
+};
+
 struct ScriptTuning : ScriptRefObject {
 	std::vector<float> notes;
 };
@@ -112,6 +126,10 @@ struct ScriptValue : ScriptRefObject {
 	 * @brief Uses a random voltage as value
 	 */
 	std::unique_ptr<ScriptRand> rand;
+	/**
+	 * @brief Uses a value from a sequence
+	 */
+	std::unique_ptr<ScriptSequenceValue> sequence;
 
 	/**
 	 * @brief A sequence of calculation to perform on the value
@@ -158,6 +176,27 @@ struct ScriptAssert {
 	bool stopOnFail;
 };
 
+struct ScriptMoveSequence {
+	std::string id;
+
+	ScriptSequenceMoveDirection direction;
+	bool wrap;
+
+	std::unique_ptr<int> position;
+};
+
+struct ScriptAddToSequence {
+	std::string id;
+	ScriptValue value;
+	int position;
+	bool asConstantVoltage;
+};
+
+struct ScriptRemoveFromSequence {
+	std::string id;
+	int position;
+};
+
 struct ScriptAction : ScriptRefObject {
 	enum ActionTiming { START, END, GLIDE, GATE };
 	enum EaseAlgorithm { POW, SIG };
@@ -171,6 +210,11 @@ struct ScriptAction : ScriptRefObject {
 	std::unique_ptr<ScriptSetLabel> setLabel;
 	std::unique_ptr<ScriptAssert> assert;
 	std::string trigger;
+
+	std::unique_ptr<ScriptMoveSequence> moveSequence;
+	std::string clearSequence;
+	std::unique_ptr<ScriptAddToSequence> addToSequence;
+	std::unique_ptr<ScriptRemoveFromSequence> removeFromSequence;
 
 	std::unique_ptr<ScriptValue> startValue;
 	std::unique_ptr<ScriptValue> endValue;
@@ -252,6 +296,7 @@ struct Script {
 	std::vector<ScriptAction> actions;
 	std::vector<ScriptIf> ifs;
 	std::vector<ScriptTuning> tunings;
+	std::vector<ScriptSequence> sequences;
 };
 
 }

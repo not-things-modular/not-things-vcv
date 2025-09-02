@@ -48,6 +48,8 @@ enum ValidationErrorCode {
 	Script_ComponentPoolObject = 128,
 	Script_TuningsArray = 129, // Since 1.1.0
 	Script_TuningObject = 130, // Since 1.1.0
+	Script_SequencesArray = 131, // Since 1.2.0
+	Script_SequenceObject = 132, // Since 1.2.0
 
 	Timeline_TimeScaleObject = 200,
 	Timeline_LanesMissing = 201,
@@ -145,6 +147,11 @@ enum ValidationErrorCode {
 	Action_GateHighRatioFloat = 926,
 	Action_GateHighRatioRange = 927,
 	Action_GateOutput = 928,
+	Action_MoveSequenceObject = 929, // Since 1.2.0
+	Action_ClearSequenceString = 930, // Since 1.2.0
+	Action_ClearSequenceLength = 931, // Since 1.2.0
+	Action_AddToSequenceObject = 932, // Since 1.2.0
+	Action_RemoveFromSequenceObject = 933, // Since 1.2.0
 
 	SetValue_OutputObject = 1000,
 	SetValue_ValueObject = 1001,
@@ -229,7 +236,33 @@ enum ValidationErrorCode {
 	Tuning_NotesArray = 2101, // Since 1.1.0
 	Tuning_NotesArraySize = 2102, // Since 1.1.0
 	Tuning_NoteFloatOrString = 2103, // Since 1.1.0
-	Tuning_NoteFormat = 2104 // Since 1.1.0
+	Tuning_NoteFormat = 2104, // Since 1.1.0
+
+	Sequence_RefOrInstance = 2200, // Since 1.2.0
+	Sequence_SharedBoolean = 2201, // Since 1.2.0
+	Sequence_SharedOutsideOfComponentPool = 2202, // Since 1.2.0
+	Sequence_ValuesArray = 2203, // Since 1.2.0
+	Sequence_ValueObject = 2204, // Since 1.2.0
+	Sequence_StringOrObject = 2205, // Since 1.2.0
+	Sequence_EmptyString = 2206, // Since 1.2.0
+	Sequence_IdString = 2207, // Since 1.2.0
+	Sequence_IdLength = 2208, // Since 1.2.0
+	Sequence_MoveDirectionString = 2209, // Since 1.2.0
+	Sequence_MoveDirectionEnum = 2210, // Since 1.2.0
+	Sequence_WrapBoolean = 2211, // Since 1.2.0
+
+	MoveSequence_IdString = 2300, // Since 1.2.0
+	MoveSequence_IdLength = 2301, // Since 1.2.0
+
+	AddToSequence_IdString = 2400, // Since 1.2.0
+	AddToSequence_IdLength = 2401, // Since 1.2.0
+	AddToSequence_ValueObject = 2402, // Since 1.2.0
+	AddToSequence_PositionNumber = 2403, // Since 1.2.0
+	AddToSequence_AsConstantVoltageBoolean = 2404, // Since 1.2.0
+
+	RemoveFromSequence_IdString = 2500, // Since 1.2.0
+	RemoveFromSequence_IdLength = 2501, // Since 1.2.0
+	RemoveFromSequence_PositionNumber = 2502, // Since 1.2.0
 };
 
 
