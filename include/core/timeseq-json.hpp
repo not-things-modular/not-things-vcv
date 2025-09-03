@@ -46,7 +46,7 @@ struct JsonScriptParser {
 	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> parseIfIfs(std::string ifOperator, const json& ifsJson, JsonScriptParseContext* context, std::vector<std::string> location);
 
 	ScriptSequenceValue parseSequenceValue(const json& sequenceJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
-	ScriptSequence parseSequence(const json& sequenceJson, bool allowRefs, bool allowShared, JsonScriptParseContext* context, std::vector<std::string> location);
+	ScriptSequence parseSequence(const json& sequenceJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
 
 	void populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
 };

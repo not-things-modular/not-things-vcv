@@ -59,6 +59,7 @@ struct ScriptRand {
 
 struct ScriptSequence : ScriptRefObject {
 	bool shared;
+	bool retrieveVoltageOnce;
 	std::vector<ScriptValue> values;
 };
 
@@ -179,7 +180,7 @@ struct ScriptAssert {
 struct ScriptMoveSequence {
 	std::string id;
 
-	ScriptSequenceMoveDirection direction;
+	std::unique_ptr<ScriptSequenceMoveDirection> direction;
 	bool wrap;
 
 	std::unique_ptr<int> position;

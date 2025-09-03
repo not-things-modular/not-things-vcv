@@ -1298,12 +1298,17 @@
 					"items": {
 						"$ref": "#/definitions/value"
 					}
+				},
+				"retrieve-voltage-once": {
+					"description": "Whether the voltage of a value should be retrieved once or repeatedly when it is requested multiple times without the position in the sequence changing in between.",
+					"type": "boolean",
+					"default": "false"
 				}
 			},
 			"required": [ "values" ],
 			"propertyNames": {
 				"anyOf": [
-					{ "enum": [ "id", "values", "shared" ] },
+					{ "enum": [ "id", "values", "shared", "retrieve-voltage-once" ] },
 					{ "pattern": "^x-" }
 				]
 			}

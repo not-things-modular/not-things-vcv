@@ -64,7 +64,7 @@ bool verifyAllowedProperties(const json& json, vector<string> propertyNames, boo
 	return count > 0;
 }
 
-ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDirectionJson, const char* property, vector<ValidationError> *validationErrors, vector<string> location) {
+ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDirectionJson, const char* property, ValidationErrorCode enumErrorCode, ValidationErrorCode stringErrorCode, vector<ValidationError> *validationErrors, vector<string> location) {
 	ScriptSequenceMoveDirection moveDirection = ScriptSequenceMoveDirection::NONE;
 
 	if (moveDirectionJson.is_string()) {
@@ -78,10 +78,10 @@ ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDir
 		} else if (moveDirectionString == "none") {
 			moveDirection = ScriptSequenceMoveDirection::NONE;
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Sequence_MoveDirectionEnum, "'", property, "' must be either 'forward', 'backward', 'random' or 'none'.");
+			ADD_VALIDATION_ERROR(validationErrors, location, enumErrorCode, "'", property, "' must be either 'forward', 'backward', 'random' or 'none'.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Sequence_MoveDirectionString, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
+		ADD_VALIDATION_ERROR(validationErrors, location, enumErrorCode, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
 	}
 
 	return moveDirection;
@@ -488,7 +488,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 					for (const json& sequence : sequenceElements) {
 						location.push_back(to_string(count));
 						if (sequence.is_object()) {
-							script->sequences.push_back(parseSequence(sequence, false, true, &context, location));
+							script->sequences.push_back(parseSequence(sequence, false, &context, location));
 							if (find(ids.begin(), ids.end(), script->sequences.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->actions.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->sequences.back().id.size() > 0) {
@@ -1543,13 +1543,10 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, JsonScriptPar
 }
 
 ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJson, JsonScriptParseContext* context, std::vector<std::string> location) {
-	static const vector<string> moveSequenceProperties = { "id", "direction", "wrap" };
+	static const vector<string> moveSequenceProperties = { "id", "direction", "wrap", "position" };
 	ScriptMoveSequence scriptMoveSequence;
 
 	verifyAllowedProperties(moveSequenceJson, moveSequenceProperties, false, context->validationErrors, location);
-
-	scriptMoveSequence.direction = ScriptSequenceMoveDirection::FORWARD;
-	scriptMoveSequence.wrap = true;
 
 	json::const_iterator id = moveSequenceJson.find("id");
 	if (id != moveSequenceJson.end()) {
@@ -1567,16 +1564,32 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 
 	json::const_iterator direction = moveSequenceJson.find("direction");
 	if (direction != moveSequenceJson.end()) {
-		scriptMoveSequence.direction = parseScriptSequenceMoveDirection(*direction, "direction", context->validationErrors, location);
+		scriptMoveSequence.direction.reset(new ScriptSequenceMoveDirection(parseScriptSequenceMoveDirection(*direction, "direction", ValidationErrorCode::MoveSequence_MoveDirectionEnum, ValidationErrorCode::MoveSequence_MoveDirectionString, context->validationErrors, location)));
+	}
+
+	json::const_iterator position = moveSequenceJson.find("position");
+	if (position != moveSequenceJson.end()) {
+		if (position->is_number_integer()) {
+			scriptMoveSequence.position.reset(new int(position->get<int>()));
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_PositionNumber, "'position' must be a number.");
+		}
 	}
 
 	json::const_iterator wrap = moveSequenceJson.find("wrap");
 	if (wrap != moveSequenceJson.end()) {
+		if (scriptMoveSequence.position) {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_NoWrapWithPosition, "'wrap' can not be used in combination with 'position'.");
+		}
 		if (wrap->is_boolean()) {
 			scriptMoveSequence.wrap = wrap->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_WrapBoolean, "'wrap' must be a boolean.");
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_WrapBoolean, "'wrap' must be a boolean.");
 		}
+	}
+
+	if ((scriptMoveSequence.direction) && (scriptMoveSequence.position)) {
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "Only one of 'direction' or 'position' can be used at a time.");
 	}
 
 	return scriptMoveSequence;
@@ -2290,7 +2303,7 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 	if (sequenceJson.is_string()) {
 		scriptSequenceValue.id = sequenceJson.get<string>();
 		if (scriptSequenceValue.id.length() == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_EmptyString, "'sequence' can not be an empty string.");
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_EmptyString, "'sequence' can not be an empty string.");
 		}
 	} else if (sequenceJson.is_object()) {
 		json::const_iterator id = sequenceJson.find("id");
@@ -2299,20 +2312,20 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 			if (idValue.length() > 0) {
 				scriptSequenceValue.id = idValue;
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_IdLength, "'id' can not be an empty string.");
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_IdString, "'id' is required and must be a string.");
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_IdString, "'id' is required and must be a string.");
 		}
 
 		json::const_iterator moveBefore = sequenceJson.find("move-before");
 		if (moveBefore != sequenceJson.end()) {
-			scriptSequenceValue.moveBefore = parseScriptSequenceMoveDirection(*moveBefore, "move-before", context->validationErrors, location);
+			scriptSequenceValue.moveBefore = parseScriptSequenceMoveDirection(*moveBefore, "move-before", ValidationErrorCode::SequenceValue_MoveDirectionEnum, ValidationErrorCode::SequenceValue_MoveDirectionString, context->validationErrors, location);
 		}
 
 		json::const_iterator moveAfter = sequenceJson.find("move-after");
 		if (moveAfter != sequenceJson.end()) {
-			scriptSequenceValue.moveAfter = parseScriptSequenceMoveDirection(*moveAfter, "move-after", context->validationErrors, location);
+			scriptSequenceValue.moveAfter = parseScriptSequenceMoveDirection(*moveAfter, "move-after", ValidationErrorCode::SequenceValue_MoveDirectionEnum, ValidationErrorCode::SequenceValue_MoveDirectionString, context->validationErrors, location);
 		}
 
 		json::const_iterator wrap = sequenceJson.find("wrap");
@@ -2320,18 +2333,18 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 			if (wrap->is_boolean()) {
 				scriptSequenceValue.wrap = wrap->get<bool>();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_WrapBoolean, "'wrap' must be a boolean.");
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_WrapBoolean, "'wrap' must be a boolean.");
 			}
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_StringOrObject, "A 'sequence' value should either be a string or an object.");
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_StringOrObject, "A 'sequence' value should either be a string or an object.");
 	}
 
 	return scriptSequenceValue;
 }
 
-ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, bool allowRefs, bool allowShared, JsonScriptParseContext* context, std::vector<std::string> location) {
-	static const char* cSequenceProperties[] = { "values", "shared" };
+ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
+	static const char* cSequenceProperties[] = { "values", "shared", "retrieve-voltage-once" };
 	static const vector<string> vSequenceProperties(begin(cSequenceProperties), end(cSequenceProperties));
 	ScriptSequence sequence;
 
@@ -2343,21 +2356,26 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, bool al
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_RefOrInstance, "A ref sequence can not be combined other non-ref sequence properties.");
 		}
 	} else {
-		// If shared is allowed, the default for it is true. If shared is not allowed, set it to false.
-		sequence.shared = allowShared;
+		sequence.shared = true;
 		json::const_iterator shared = sequenceJson.find("shared");
 		if (shared != sequenceJson.end()) {
-			if (allowShared) {
-				if (shared->is_boolean()) {
-					sequence.shared = shared->get<bool>();
-				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
-				}
+			if (shared->is_boolean()) {
+				sequence.shared = shared->get<bool>();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_SharedOutsideOfComponentPool, "'shared' can only be specified on sequences that are in the 'sequences' list of the the component-pool.");
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
 			}
 		}
 		
+		sequence.retrieveVoltageOnce = true;
+		json::const_iterator retrieveVoltageOnce = sequenceJson.find("retrieve-voltage-once");
+		if (retrieveVoltageOnce != sequenceJson.end()) {
+			if (retrieveVoltageOnce->is_boolean()) {
+				sequence.retrieveVoltageOnce = retrieveVoltageOnce->get<bool>();
+			} else {
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "'retrieve-voltage-once' must be a boolean.");
+			}
+		}
+
 		json::const_iterator values = sequenceJson.find("values");
 		if (values != sequenceJson.end()) {
 			if (values->is_array()) {

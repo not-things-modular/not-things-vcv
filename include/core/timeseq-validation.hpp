@@ -240,29 +240,39 @@ enum ValidationErrorCode {
 
 	Sequence_RefOrInstance = 2200, // Since 1.2.0
 	Sequence_SharedBoolean = 2201, // Since 1.2.0
-	Sequence_SharedOutsideOfComponentPool = 2202, // Since 1.2.0
+	Sequence_RetrieveVoltageOnceBoolean = 2202, // Since 1.2.0
 	Sequence_ValuesArray = 2203, // Since 1.2.0
 	Sequence_ValueObject = 2204, // Since 1.2.0
-	Sequence_StringOrObject = 2205, // Since 1.2.0
-	Sequence_EmptyString = 2206, // Since 1.2.0
-	Sequence_IdString = 2207, // Since 1.2.0
-	Sequence_IdLength = 2208, // Since 1.2.0
-	Sequence_MoveDirectionString = 2209, // Since 1.2.0
-	Sequence_MoveDirectionEnum = 2210, // Since 1.2.0
-	Sequence_WrapBoolean = 2211, // Since 1.2.0
 
-	MoveSequence_IdString = 2300, // Since 1.2.0
-	MoveSequence_IdLength = 2301, // Since 1.2.0
+	SequenceValue_EmptyString = 2301, // Since 1.2.0
+	SequenceValue_IdString = 2302, // Since 1.2.0
+	SequenceValue_IdLength = 2303, // Since 1.2.0
+	SequenceValue_MoveDirectionString = 2304, // Since 1.2.0
+	SequenceValue_MoveDirectionEnum = 2305, // Since 1.2.0
+	SequenceValue_WrapBoolean = 2306, // Since 1.2.0
+	SequenceValue_StringOrObject = 2307, // Since 1.2.0
+	SequenceValue_SequenceNotFound = 2308, // Since 1.2.0
 
-	AddToSequence_IdString = 2400, // Since 1.2.0
-	AddToSequence_IdLength = 2401, // Since 1.2.0
-	AddToSequence_ValueObject = 2402, // Since 1.2.0
-	AddToSequence_PositionNumber = 2403, // Since 1.2.0
-	AddToSequence_AsConstantVoltageBoolean = 2404, // Since 1.2.0
+	MoveSequence_IdString = 2400, // Since 1.2.0
+	MoveSequence_IdLength = 2401, // Since 1.2.0
+	MoveSequence_PositionNumber = 2402, // Since 1.2.0
+	MoveSequence_WrapBoolean = 2403, // Since 1.2.0
+	MoveSequence_MoveDirectionString = 2404, // Since 1.2.0
+	MoveSequence_MoveDirectionEnum = 2405, // Since 1.2.0
+	MoveSequence_NoWrapWithPosition = 2406, // Since 1.2.0
+	MoveSequence_EitherDirectionOrPosition = 2407, // Since 1.2.0
+	MoveSequence_SequenceNotFound = 2408, // Since 1.2.0
+	MoveSequence_NonSharedSequence = 2409, // Since 1.2.0
 
-	RemoveFromSequence_IdString = 2500, // Since 1.2.0
-	RemoveFromSequence_IdLength = 2501, // Since 1.2.0
-	RemoveFromSequence_PositionNumber = 2502, // Since 1.2.0
+	AddToSequence_IdString = 2500, // Since 1.2.0
+	AddToSequence_IdLength = 2501, // Since 1.2.0
+	AddToSequence_ValueObject = 2502, // Since 1.2.0
+	AddToSequence_PositionNumber = 2503, // Since 1.2.0
+	AddToSequence_AsConstantVoltageBoolean = 2504, // Since 1.2.0
+
+	RemoveFromSequence_IdString = 2600, // Since 1.2.0
+	RemoveFromSequence_IdLength = 2601, // Since 1.2.0
+	RemoveFromSequence_PositionNumber = 2602, // Since 1.2.0
 };
 
 
