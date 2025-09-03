@@ -18,7 +18,7 @@
 				},
 				"version": {
 					"description": "The version of the not-things TimeSeq JSON script specification that the document conforms to.",
-					"const": "1.1.0"
+					"const": "1.2.0"
 				},
 				"timelines": {
 					"description": "The timeline instances that will be executed in this script.",
@@ -467,13 +467,13 @@
 						"$ref": "#/definitions/calc"
 					}
 				},
+				"sequence": {
+					"$ref": "#/definitions/sequence-value"
+				},
 				"quantize": {
 					"description": "Allows the value to be quantized to the nearest note value.",
 					"type": "boolean",
 					"default": false
-				},
-				"sequence": {
-					"$ref": "#/definitions/sequence-value"
 				}
 			},
 			"if": {
@@ -495,7 +495,7 @@
 			],
 			"propertyNames": {
 				"anyOf": [
-					{ "enum": [ "id", "voltage", "no-limit", "note", "variable", "input", "output", "rand", "calc", "sequence" ] },
+					{ "enum": [ "id", "voltage", "no-limit", "note", "variable", "input", "output", "rand", "calc", "sequence", "quantize" ] },
 					{ "pattern": "^x-" }
 				]
 			}

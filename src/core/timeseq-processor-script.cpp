@@ -49,6 +49,12 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	}
 
 	int count = 0;
+	for (vector<ScriptSequence>::iterator it = script->sequences.begin(); it != script->sequences.end(); it++) {
+		vector<string> seqLocation = { "component-pool",  "sequences", to_string(count) };
+		parseSequence(&context, &(*it), seqLocation);
+	}
+
+	count = 0;
 	location.push_back("timelines");
 	vector<shared_ptr<TimelineProcessor>> timelineProcessors;
 	for (vector<ScriptTimeline>::iterator it = script->timelines.begin(); it != script->timelines.end(); it++) {
@@ -93,12 +99,6 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 		count++;
 	}
 	location.pop_back();
-
-	count = 0;
-	for (vector<ScriptSequence>::iterator it = script->sequences.begin(); it != script->sequences.end(); it++) {
-		vector<string> seqLocation = { "component-pool",  "sequences", to_string(count) };
-		parseSequence(&context, &(*it), seqLocation);
-	}
 
 	return shared_ptr<Processor>(new Processor(script, timelineProcessors, triggerProcessors, startActionProcessors));
 }

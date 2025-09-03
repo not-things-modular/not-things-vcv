@@ -471,13 +471,13 @@ void ActionMoveSequencePositionProcessor::processAction() {
 	m_sequencePositionProcessor->move(m_position);
 }
 
-ActionClearSequenceProcessor::ActionClearSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor) {}
+ActionClearSequenceProcessor::ActionClearSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor) {}
 
 void ActionClearSequenceProcessor::processAction() {
 	m_sequencePositionProcessor->getSequenceProcessor()->clear();
 }
 
-ActionAddToSequenceSequenceProcessor::ActionAddToSequenceSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<ValueProcessor> value, int position, bool asConstantVoltage, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_position(position), m_asConstantVoltage(asConstantVoltage) {}
+ActionAddToSequenceSequenceProcessor::ActionAddToSequenceSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<ValueProcessor> value, int position, bool asConstantVoltage, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_value(value), m_position(position), m_asConstantVoltage(asConstantVoltage) {}
 
 void ActionAddToSequenceSequenceProcessor::processAction() {
 	if (!m_asConstantVoltage) {
@@ -487,7 +487,7 @@ void ActionAddToSequenceSequenceProcessor::processAction() {
 	}
 }
 
-ActionRemoveFromSequenceProcessor::ActionRemoveFromSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_position(position) {}
+ActionRemoveFromSequenceProcessor::ActionRemoveFromSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
 
 void ActionRemoveFromSequenceProcessor::processAction() {
 	m_sequencePositionProcessor->getSequenceProcessor()->remove(m_position);
@@ -1009,7 +1009,7 @@ void SequenceProcessor::remove(int position) {
 	}
 }
 
-SequencePositionProcessor::SequencePositionProcessor(shared_ptr<SequenceProcessor> sequenceProcessor, shared_ptr<RandValueGenerator> randValueGenerator) : m_sequenceProcessor(sequenceProcessor), m_randValueGenerator(randValueGenerator), m_hasStoredVoltage(false) {}
+SequencePositionProcessor::SequencePositionProcessor(shared_ptr<SequenceProcessor> sequenceProcessor, shared_ptr<RandValueGenerator> randValueGenerator) : m_position(0), m_sequenceProcessor(sequenceProcessor), m_randValueGenerator(randValueGenerator), m_hasStoredVoltage(false) {}
 
 SequenceProcessor* SequencePositionProcessor::getSequenceProcessor() {
 	return m_sequenceProcessor.get();

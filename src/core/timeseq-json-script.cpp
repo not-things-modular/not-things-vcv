@@ -492,7 +492,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 							if (find(ids.begin(), ids.end(), script->sequences.back().id) != ids.end()) {
 								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->actions.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->sequences.back().id.size() > 0) {
-								ids.push_back(script->actions.back().id);
+								ids.push_back(script->sequences.back().id);
 							}
 						} else {
 							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SequenceObject, "'sequences' elements must be objects.");
@@ -1200,7 +1200,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if ((action.output) || (action.variable.length() > 0)) {
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
 			}
-			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.setLabel) && (!action.assert) && (action.trigger.size() == 0)) {
+			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.setLabel) && (!action.assert) && (action.trigger.size() == 0) && (!action.moveSequence) && (action.clearSequence.length() == 0) && (!action.addToSequence) && (!action.removeFromSequence)) {
 				string timingStr = timing != actionJson.end() ? *timing : "start";
 				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' must be present for '", timingStr.c_str(), "' timing.");
 			}
@@ -1822,14 +1822,11 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 		if (sequence != valueJson.end()) {
 			verifyVersion(VERSION_1_2_0, context, "value 'sequence'", location);
 			valueTypes++;
-			if (sequence->is_object()) {
-				location.push_back("sequence");
-				ScriptSequenceValue* scriptSequenceValue = new ScriptSequenceValue(parseSequenceValue(*sequence, true, context, location));
-				value.sequence.reset(scriptSequenceValue);
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_RandObject, "'rand' must be an object.");
-			}
+
+			location.push_back("sequence");
+			ScriptSequenceValue* scriptSequenceValue = new ScriptSequenceValue(parseSequenceValue(*sequence, true, context, location));
+			value.sequence.reset(scriptSequenceValue);
+			location.pop_back();
 		}
 
 		if (valueTypes == 0) {
@@ -2384,11 +2381,7 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, bool al
 				int count = 0;
 				vector<json> valueElements = (*values);
 				for (const json& value : valueElements) {
-					if (value.is_object()) {
-						sequence.values.push_back(parseValue(value, true, context, location, to_string(count), Sequence_ValueObject, "'values' elements must be objects."));
-					} else {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValueObject, "'values' elements must be objects.");
-					}
+					sequence.values.push_back(parseValue(value, true, context, location, to_string(count), Sequence_ValueObject, "'values' elements must be objects."));
 					count++;
 				}
 
