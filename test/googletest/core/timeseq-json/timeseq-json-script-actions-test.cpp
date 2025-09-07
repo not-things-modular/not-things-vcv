@@ -1058,7 +1058,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectStringOrNumberSta
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
-	expectError(validationErrors, ValidationErrorCode::Action_StartValueObject, "/component-pool/actions/0");
+	expectError(validationErrors, ValidationErrorCode::Action_StartValueObject, "/component-pool/actions/0/start-value");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnInvalidStartValue) {
@@ -1154,7 +1154,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectStringOrNumberEnd
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
-	expectError(validationErrors, ValidationErrorCode::Action_EndValueObject, "/component-pool/actions/0");
+	expectError(validationErrors, ValidationErrorCode::Action_EndValueObject, "/component-pool/actions/0/end-value");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnShorthandEndValueOutOfRange) {

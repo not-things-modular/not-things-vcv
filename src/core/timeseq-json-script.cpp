@@ -488,9 +488,9 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 					for (const json& sequence : sequenceElements) {
 						location.push_back(to_string(count));
 						if (sequence.is_object()) {
-							script->sequences.push_back(parseSequence(sequence, false, &context, location));
+							script->sequences.push_back(parseSequence(sequence, &context, location));
 							if (find(ids.begin(), ids.end(), script->sequences.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->actions.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->sequences.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->sequences.back().id.size() > 0) {
 								ids.push_back(script->sequences.back().id);
 							}
@@ -1686,25 +1686,21 @@ ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& r
 
 ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
 	ScriptValue scriptValue;
+	location.push_back(subLocation);
 
 	if (valueJson.is_object()) {
-		location.push_back(subLocation);
 		scriptValue = parseFullValue(valueJson, allowRefs, false, context, location);
-		location.pop_back();
 	} else if (valueJson.is_number()) {
 		json fullValueJson = { { "voltage", valueJson } };
-		location.push_back(subLocation);
 		scriptValue = parseFullValue(fullValueJson, allowRefs, true, context, location);
-		location.pop_back();
 	} else if (valueJson.is_string()) {
 		json fullValueJson = { { "note", valueJson } };
-		location.push_back(subLocation);
 		scriptValue = parseFullValue(fullValueJson, allowRefs, true, context, location);
-		location.pop_back();
 	} else {
 		ADD_VALIDATION_ERROR(context->validationErrors, location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
+	location.pop_back();
 	return scriptValue;
 }
 
@@ -2340,56 +2336,52 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 	return scriptSequenceValue;
 }
 
-ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
-	static const char* cSequenceProperties[] = { "values", "shared", "retrieve-voltage-once" };
+ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+	static const char* cSequenceProperties[] = { "id", "values", "shared", "retrieve-voltage-once" };
 	static const vector<string> vSequenceProperties(begin(cSequenceProperties), end(cSequenceProperties));
 	ScriptSequence sequence;
 
-	verifyAllowedProperties(sequenceJson, vSequenceProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(sequenceJson, vSequenceProperties, false, context->validationErrors, location);
+	populateRef(sequence, sequenceJson, false, context, location);
 
-	populateRef(sequence, sequenceJson, allowRefs, context, location);
-	if (sequence.ref.length() > 0) {
-		if (hasOneOf(sequenceJson, cSequenceProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_RefOrInstance, "A ref sequence can not be combined other non-ref sequence properties.");
+	sequence.shared = true;
+	json::const_iterator shared = sequenceJson.find("shared");
+	if (shared != sequenceJson.end()) {
+		if (shared->is_boolean()) {
+			sequence.shared = shared->get<bool>();
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
+		}
+	}
+	
+	sequence.retrieveVoltageOnce = true;
+	json::const_iterator retrieveVoltageOnce = sequenceJson.find("retrieve-voltage-once");
+	if (retrieveVoltageOnce != sequenceJson.end()) {
+		if (retrieveVoltageOnce->is_boolean()) {
+			sequence.retrieveVoltageOnce = retrieveVoltageOnce->get<bool>();
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "'retrieve-voltage-once' must be a boolean.");
+		}
+	}
+
+	json::const_iterator values = sequenceJson.find("values");
+	if (values != sequenceJson.end()) {
+		if (values->is_array()) {
+			location.push_back("values");
+
+			int count = 0;
+			vector<json> valueElements = (*values);
+			for (const json& value : valueElements) {
+				sequence.values.push_back(parseValue(value, true, context, location, to_string(count), Sequence_ValueObject, "'values' elements must be objects."));
+				count++;
+			}
+
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' must be an array.");
 		}
 	} else {
-		sequence.shared = true;
-		json::const_iterator shared = sequenceJson.find("shared");
-		if (shared != sequenceJson.end()) {
-			if (shared->is_boolean()) {
-				sequence.shared = shared->get<bool>();
-			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
-			}
-		}
-		
-		sequence.retrieveVoltageOnce = true;
-		json::const_iterator retrieveVoltageOnce = sequenceJson.find("retrieve-voltage-once");
-		if (retrieveVoltageOnce != sequenceJson.end()) {
-			if (retrieveVoltageOnce->is_boolean()) {
-				sequence.retrieveVoltageOnce = retrieveVoltageOnce->get<bool>();
-			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "'retrieve-voltage-once' must be a boolean.");
-			}
-		}
-
-		json::const_iterator values = sequenceJson.find("values");
-		if (values != sequenceJson.end()) {
-			if (values->is_array()) {
-				location.push_back("values");
-
-				int count = 0;
-				vector<json> valueElements = (*values);
-				for (const json& value : valueElements) {
-					sequence.values.push_back(parseValue(value, true, context, location, to_string(count), Sequence_ValueObject, "'values' elements must be objects."));
-					count++;
-				}
-
-				location.pop_back();
-			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' must be an array.");
-			}
-		}
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' is required and must be an array.");
 	}
 
 	return sequence;

@@ -707,7 +707,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandNonValueUpper) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Rand_UpperObject, "/component-pool/values/0/rand");
+	expectError(validationErrors, ValidationErrorCode::Rand_UpperObject, "/component-pool/values/0/rand/upper");
 }
 
 TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandInvalidUpperValue) {
@@ -752,7 +752,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandNonValueLower) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Rand_LowerObject, "/component-pool/values/0/rand");
+	expectError(validationErrors, ValidationErrorCode::Rand_LowerObject, "/component-pool/values/0/rand/lower");
 }
 
 TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandInvalidLowerValue) {

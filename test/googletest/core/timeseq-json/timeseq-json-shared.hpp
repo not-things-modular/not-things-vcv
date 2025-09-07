@@ -10,6 +10,7 @@ using namespace std;
 
 #define SCRIPT_VERSION_1_0_0 "1.0.0"
 #define SCRIPT_VERSION_1_1_0 "1.1.0"
+#define SCRIPT_VERSION_1_2_0 "1.2.0"
 
 
 shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<ValidationError> *validationErrors);
