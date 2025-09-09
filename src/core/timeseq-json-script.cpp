@@ -81,7 +81,7 @@ ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDir
 			ADD_VALIDATION_ERROR(validationErrors, location, enumErrorCode, "'", property, "' must be either 'forward', 'backward', 'random' or 'none'.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, enumErrorCode, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
+		ADD_VALIDATION_ERROR(validationErrors, location, stringErrorCode, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
 	}
 
 	return moveDirection;
@@ -2381,7 +2381,7 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, JsonScr
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' must be an array.");
 		}
 	} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' is required and must be an array.");
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' is required and must be an array.");
 	}
 
 	return sequence;

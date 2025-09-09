@@ -333,3 +333,35 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldParseSharedRetrieveVoltageOn
 	EXPECT_EQ(script->sequences[1].id, "sequence-2");
 	EXPECT_EQ(script->sequences[1].retrieveVoltageOnce, false);
 }
+
+TEST(TimeSeqJsonScriptSequence, ParseSequencesFailOnUnknownProperty) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "sequences", json::array({
+			{ { "id", "sequence-1" }, { "unknown-property", true }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/sequences/0");
+}
+
+TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldAllowUnknownXProperties) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "sequences", json::array({
+			{ { "id", "sequence-1" }, { "x-unknown-property", true }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	ASSERT_EQ(script->sequences.size(), 1u);
+	EXPECT_EQ(script->sequences[0].id, "sequence-1");
+}
