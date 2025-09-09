@@ -1620,11 +1620,7 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 
 	json::const_iterator value = addToSequenceJson.find("value");
 	if (value != addToSequenceJson.end()) {
-		if (value->is_object()) {
-			scriptAddToSequence.value = parseValue(*value, true, context, location, "value", ValidationErrorCode::AddToSequence_ValueObject, "'value' must be a value object.");
-		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_ValueObject, "'value' must be a value object.");
-		}
+		scriptAddToSequence.value = parseValue(*value, true, context, location, "value", ValidationErrorCode::AddToSequence_ValueObject, "'value' must be a value object.");
 	} else {
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_ValueObject, "'value' is required and must be a value object.");
 	}
@@ -1654,7 +1650,7 @@ ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& r
 	static const vector<string> removeFromSequenceProperties = { "id", "position" };
 	ScriptRemoveFromSequence scriptRemoveFromSquence;
 
-	verifyAllowedProperties(removeFromSequenceProperties, removeFromJson, false, context->validationErrors, location);
+	verifyAllowedProperties(removeFromJson, removeFromSequenceProperties, false, context->validationErrors, location);
 
 	scriptRemoveFromSquence.position = -1;
 
@@ -2353,7 +2349,7 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, JsonScr
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
 		}
 	}
-	
+
 	sequence.retrieveVoltageOnce = true;
 	json::const_iterator retrieveVoltageOnce = sequenceJson.find("retrieve-voltage-once");
 	if (retrieveVoltageOnce != sequenceJson.end()) {

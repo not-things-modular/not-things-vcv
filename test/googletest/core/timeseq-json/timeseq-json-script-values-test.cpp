@@ -1293,28 +1293,6 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldAllowUnknownPropertyWithXPrefixOnRa
 	expectNoErrors(validationErrors);
 }
 
-
-
-
-
-
-
-
-// TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithNonObjectInput) {
-// 	vector<ValidationError> validationErrors;
-// 	JsonLoader jsonLoader;
-// 	json json = getMinimalJson();
-// 	json["component-pool"] = {
-// 		{ "values", json::array({
-// 			{ { "id", "value-1" }, { "input", "1" } },
-// 		}) }
-// 	};
-
-// 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
-// 	ASSERT_EQ(validationErrors.size(), 1u);
-// 	expectError(validationErrors, ValidationErrorCode::Value_InputObject, "/component-pool/values/0");
-// }
-
 TEST(TimeSeqJsonScriptValue, ParsevalueShouldFailWithSequencePreVersion120) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;

@@ -1790,7 +1790,11 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 		{ { "ref", "action-ref" }, { "set-polyphony", { { "dummy", "value" } } } },
 		{ { "ref", "action-ref" }, { "assert", { { "dummy", "value" } } } },
 		{ { "ref", "action-ref" }, { "trigger", "trigger-name" } },
-		{ { "ref", "action-ref" }, { "gate-high-ratio", 0.1f } }
+		{ { "ref", "action-ref" }, { "gate-high-ratio", 0.1f } },
+		{ { "ref", "action-ref" }, { "move-sequence", "sequence-id" } },
+		{ { "ref", "action-ref" }, { "clear-sequence", "sequence-id" } },
+		{ { "ref", "action-ref" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", 1.f } } } },
+		{ { "ref", "action-ref" }, { "remove-from-sequence", { { "id", "sequence-id" }, { "position", 1 } } } }
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
@@ -1805,8 +1809,12 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/8");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/9");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/10");
-	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/1");
+	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/11");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/12");
+	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/13");
+	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/14");
+	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/15");
+	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/16");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGateActionWithNoGateHighRatio) {
@@ -2187,6 +2195,125 @@ TEST(TimeSeqJsonScriptAction, ParseAssertActionShouldAllowUnknownPropertyWithXPr
 						{ { "ref", "value-ref-2" } }
 					}) }
 				} },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseMoveSequenceActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "move-sequence", {
+				{ "id", "sequence-id" },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/move-sequence");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseMoveSequenceActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "move-sequence", {
+				{ "id", "sequence-id" },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", {
+				{ "id", "sequence-id" },
+				{ "value", 1.f },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/add-to-sequence");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", {
+				{ "id", "sequence-id" },
+				{ "value", 1.f },
+				{ "x-unknown-prop-1", "value" },
+				{ "x-unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceActionWithUnknownPropertiesShouldFail) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", {
+				{ "id", "sequence-id" },
+				{ "unknown-prop-1", "value" },
+				{ "unknown-prop-2", { { "child", "object" } } }
+			} } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/actions/0/remove-from-sequence");
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-1'"), std::string::npos) << validationErrors[0].message;
+	EXPECT_NE(validationErrors[0].message.find("'unknown-prop-2'"), std::string::npos) << validationErrors[0].message;
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceActionShouldAllowUnknownPropertyWithXPrefix) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", {
+				{ "id", "sequence-id" },
 				{ "x-unknown-prop-1", "value" },
 				{ "x-unknown-prop-2", { { "child", "object" } } }
 			} } }
