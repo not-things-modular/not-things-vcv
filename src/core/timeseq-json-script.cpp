@@ -29,7 +29,7 @@ void verifyVersion(int expectedVersion, JsonScriptParseContext* context, const c
 		map<int, string> versionMap = {
 			{ VERSION_1_0_0, "1.0.0" },
 			{ VERSION_1_1_0, "1.1.0" },
-			{ VERSION_1_1_0, "1.2.0" }
+			{ VERSION_1_2_0, "1.2.0" }
 		};
 
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Feature_Not_In_Version, feature, " requires version ", versionMap[expectedVersion].c_str(), " but the script has its version set to ", versionMap[context->version].c_str(), ".");
@@ -1043,7 +1043,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.moveSequence.reset(scriptMoveSequence);
 				location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_AssertObject, "'move-sequence' must be an object.");
+				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_MoveSequenceObject, "'move-sequence' must be an object.");
 			}
 		}
 

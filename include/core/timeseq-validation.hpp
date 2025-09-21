@@ -137,7 +137,7 @@ enum ValidationErrorCode {
 	Action_VariableLength = 916,
 	Action_IfObject = 917,
 	Action_NonGlideProperties = 918,
-	Action_MissingGlideValues = 919, 
+	Action_MissingGlideValues = 919,
 	Action_MissingGlideActions = 920,
 	Action_TooManyGlideActions = 921,
 	Action_GlidePropertiesOnNonGlideAction = 922,
