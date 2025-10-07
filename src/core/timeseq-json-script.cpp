@@ -1625,6 +1625,7 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_ValueObject, "'value' is required and must be a value object.");
 	}
 
+	scriptAddToSequence.position = -1;
 	json::const_iterator position = addToSequenceJson.find("position");
 	if (position != addToSequenceJson.end()) {
 		if (position->is_number_integer()) {
@@ -1634,6 +1635,7 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		}
 	}
 
+	scriptAddToSequence.asConstantVoltage = false;
 	json::const_iterator asConstantVoltage = addToSequenceJson.find("as-constant-voltage");
 	if (asConstantVoltage != addToSequenceJson.end()) {
 		if (asConstantVoltage->is_boolean()) {

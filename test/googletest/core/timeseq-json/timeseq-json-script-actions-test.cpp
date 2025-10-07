@@ -2446,7 +2446,7 @@ TEST(TimeSeqJsonScriptAction, ParseMoveSequenceShouldFailOnEmptyId) {
 	expectError(validationErrors, ValidationErrorCode::MoveSequence_IdLength, "/component-pool/actions/0/move-sequence");
 }
 
-TEST(TimeSeqJsonScriptAction, ParseMoveSequenceWithOnlyIdShouldUseDefaultsForOtherProperties) {
+TEST(TimeSeqJsonScriptAction, ParseMoveSequenceWithOnlyIdShouldUseDefaultOrEmptyForOtherProperties) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
@@ -2569,7 +2569,7 @@ TEST(TimeSeqJsonScriptAction, ParseMoveSequenceShouldParsePosition) {
 	EXPECT_FALSE(script->actions[3].moveSequence->direction);
 }
 
-TEST(TimeSeqJsonScriptAction, ParseMoveSequenceShouldFailOnNonInteger) {
+TEST(TimeSeqJsonScriptAction, ParseMoveSequenceShouldFailOnNonIntegerPosition) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
@@ -2660,4 +2660,262 @@ TEST(TimeSeqJsonScriptAction, ParseMoveSequenceShouldFailWhenDirectionIsCombined
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "/component-pool/actions/0/move-sequence");
 	expectError(validationErrors, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "/component-pool/actions/1/move-sequence");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseClearSequenceShouldRequireVersion120) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "clear-sequence", "sequence-id" } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseClearSequenceShouldFailOnNonStringValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "clear-sequence", 1 } },
+			{ { "id", "action-2" }, { "clear-sequence", json::array() } },
+			{ { "id", "action-3" }, { "clear-sequence", { { "id", "nope" } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::Action_ClearSequenceString, "/component-pool/actions/0");
+	expectError(validationErrors, ValidationErrorCode::Action_ClearSequenceString, "/component-pool/actions/1");
+	expectError(validationErrors, ValidationErrorCode::Action_ClearSequenceString, "/component-pool/actions/2");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseClearSequenceShouldFailOnEmptyStringValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "clear-sequence", "" } },
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_ClearSequenceLength, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseClearSequenceShouldParseSequenceId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "clear-sequence", "the-sequence-id" } },
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_EQ(script->actions[0].clearSequence, "the-sequence-id");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldRequireVersion120) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", 1.f } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldFailOnNonStringValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", "sequence-id" } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_AddToSequenceObject, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldFailWithMissingOrEmptyOrNonStringId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "value", 1.f } } } },
+			{ { "id", "action-2" }, { "add-to-sequence", { { "id", "" }, { "value", 1.f } } } },
+			{ { "id", "action-3" }, { "add-to-sequence", { { "id", 3.f }, { "value", 1.f } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_IdString, "/component-pool/actions/0/add-to-sequence");
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_IdLength, "/component-pool/actions/1/add-to-sequence");
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_IdString, "/component-pool/actions/2/add-to-sequence");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldFailWithMissingOrInvalidValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id" } } } },
+			{ { "id", "action-2" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", json::array() } } } },
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_ValueObject, "/component-pool/actions/0/add-to-sequence");
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_ValueObject, "/component-pool/actions/1/add-to-sequence/value");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldAllowDifferentTypesOfvalues) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.5f } } } },
+			{ { "id", "action-2" }, { "add-to-sequence", { { "id", "sequence-id-2" }, { "value", "c3" } } } },
+			{ { "id", "action-3" }, { "add-to-sequence", { { "id", "sequence-id-3" }, { "value", { { "voltage", 4.5f }} } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 3u);
+	ASSERT_TRUE(script->actions[0].addToSequence);
+	EXPECT_EQ(script->actions[0].addToSequence->id, "sequence-id-1");
+	ASSERT_TRUE(script->actions[0].addToSequence->value.voltage);
+	EXPECT_EQ(*script->actions[0].addToSequence->value.voltage, 1.5f);
+	ASSERT_TRUE(script->actions[1].addToSequence);
+	EXPECT_EQ(script->actions[1].addToSequence->id, "sequence-id-2");
+	ASSERT_TRUE(script->actions[1].addToSequence->value.note);
+	EXPECT_EQ(*script->actions[1].addToSequence->value.note, "c3");
+	ASSERT_TRUE(script->actions[2].addToSequence);
+	EXPECT_EQ(script->actions[2].addToSequence->id, "sequence-id-3");
+	ASSERT_TRUE(script->actions[2].addToSequence->value.voltage);
+	EXPECT_EQ(*script->actions[2].addToSequence->value.voltage, 4.5f);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldUseDefaultValuesForOptionalProperties) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.5f } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_TRUE(script->actions[0].addToSequence);
+	EXPECT_EQ(script->actions[0].addToSequence->position, -1);
+	ASSERT_FALSE(script->actions[0].addToSequence->asConstantVoltage);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldFailOnNonIntegerPosition) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", 1.2f }, { "position", 1.f } } } },
+			{ { "id", "action-2" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", 1.2f }, { "position", 1.5f } } } },
+			{ { "id", "action-3" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", 1.2f }, { "position", "1" } } } },
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_PositionNumber, "/component-pool/actions/0/add-to-sequence");
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_PositionNumber, "/component-pool/actions/1/add-to-sequence");
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_PositionNumber, "/component-pool/actions/2/add-to-sequence");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldParsePosition) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.2f }, { "position", -5 } } } },
+			{ { "id", "action-2" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.2f }, { "position", 0 } } } },
+			{ { "id", "action-3" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.2f }, { "position", 6 } } } },
+			{ { "id", "action-4" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.2f }, { "position", 69 } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 4u);
+	ASSERT_TRUE(script->actions[0].addToSequence);
+	EXPECT_EQ(script->actions[0].addToSequence->position, -5);
+	ASSERT_TRUE(script->actions[1].addToSequence);
+	EXPECT_EQ(script->actions[1].addToSequence->position, 0);
+	ASSERT_TRUE(script->actions[2].addToSequence);
+	EXPECT_EQ(script->actions[2].addToSequence->position, 6);
+	ASSERT_TRUE(script->actions[3].addToSequence);
+	EXPECT_EQ(script->actions[3].addToSequence->position, 69);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldFailOnNonBooleanAsConstantVoltage) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", 1.2f }, { "as-constant-voltage", "true" } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::AddToSequence_AsConstantVoltageBoolean, "/component-pool/actions/0/add-to-sequence");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldParseAsConstantVoltage) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.2f }, { "as-constant-voltage", true } } } },
+			{ { "id", "action-2" }, { "add-to-sequence", { { "id", "sequence-id-1" }, { "value", 1.2f }, { "as-constant-voltage", false } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 2u);
+	ASSERT_TRUE(script->actions[0].addToSequence);
+	EXPECT_EQ(script->actions[0].addToSequence->asConstantVoltage, true);
+	ASSERT_TRUE(script->actions[1].addToSequence);
+	EXPECT_EQ(script->actions[1].addToSequence->asConstantVoltage, false);
 }
