@@ -2742,7 +2742,7 @@ TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldRequireVersion120) {
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0");
 }
 
-TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldFailOnNonStringValue) {
+TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldFailOnNonObjectValue) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
@@ -2918,4 +2918,133 @@ TEST(TimeSeqJsonScriptAction, ParseAddToSequenceShouldParseAsConstantVoltage) {
 	EXPECT_EQ(script->actions[0].addToSequence->asConstantVoltage, true);
 	ASSERT_TRUE(script->actions[1].addToSequence);
 	EXPECT_EQ(script->actions[1].addToSequence->asConstantVoltage, false);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceShouldRequireVersion120) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", { { "id", "sequence-id" }, { "position", 1 } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceShouldFailOnNonObjectValue) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", "sequence-id" } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_RemoveFromSequenceObject, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceShouldFailWithoutId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", { { "position", 1 } } } },
+			{ { "id", "action-2" }, { "remove-from-sequence", { { "id", "" } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_IdString, "/component-pool/actions/0/remove-from-sequence");
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_IdLength, "/component-pool/actions/1/remove-from-sequence");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceShouldFailOnNonStringId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", { { "id", 1 } } } },
+			{ { "id", "action-2" }, { "remove-from-sequence", { { "id", json::array() } } } },
+			{ { "id", "action-3" }, { "remove-from-sequence", { { "id", { { "not", "a string" } } } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_IdString, "/component-pool/actions/0/remove-from-sequence");
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_IdString, "/component-pool/actions/1/remove-from-sequence");
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_IdString, "/component-pool/actions/2/remove-from-sequence");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceShouldFailOnNumericPosition) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", { { "id",  "sequence-id" }, { "position", "1" } } } },
+			{ { "id", "action-2" }, { "remove-from-sequence", { { "id",  "sequence-id" }, { "position", 2.f } } } },
+			{ { "id", "action-3" }, { "remove-from-sequence", { { "id",  "sequence-id" }, { "position", { { "is", "not a number" }} } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_GE(validationErrors.size(), 3u);
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_PositionNumber, "/component-pool/actions/0/remove-from-sequence");
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_PositionNumber, "/component-pool/actions/1/remove-from-sequence");
+	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_PositionNumber, "/component-pool/actions/2/remove-from-sequence");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceShouldDefaultPositionToMinusOne) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", { { "id", "sequence-id-1" } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_TRUE(script->actions[0].removeFromSequence);
+	EXPECT_EQ(script->actions[0].removeFromSequence->id, "sequence-id-1");
+	EXPECT_EQ(script->actions[0].removeFromSequence->position, -1);
+}
+
+TEST(TimeSeqJsonScriptAction, ParseRemoveFromSequenceShouldParsePosition) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "remove-from-sequence", { { "id", "sequence-id-1" }, { "position", -5 } } } },
+			{ { "id", "action-2" }, { "remove-from-sequence", { { "id", "sequence-id-2" }, { "position", 0 } } } },
+			{ { "id", "action-3" }, { "remove-from-sequence", { { "id", "sequence-id-3" }, { "position", 42 } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	expectNoErrors(validationErrors);
+	ASSERT_EQ(script->actions.size(), 3u);
+	ASSERT_TRUE(script->actions[0].removeFromSequence);
+	EXPECT_EQ(script->actions[0].removeFromSequence->id, "sequence-id-1");
+	EXPECT_EQ(script->actions[0].removeFromSequence->position, -5);
+	ASSERT_TRUE(script->actions[1].removeFromSequence);
+	EXPECT_EQ(script->actions[1].removeFromSequence->id, "sequence-id-2");
+	EXPECT_EQ(script->actions[1].removeFromSequence->position, 0);
+	ASSERT_TRUE(script->actions[2].removeFromSequence);
+	EXPECT_EQ(script->actions[2].removeFromSequence->id, "sequence-id-3");
+	EXPECT_EQ(script->actions[2].removeFromSequence->position, 42);
 }
