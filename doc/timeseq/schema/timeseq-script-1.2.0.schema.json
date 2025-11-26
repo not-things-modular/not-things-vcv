@@ -1278,17 +1278,6 @@
 				]
 			}
 		},
-		"sequence": {
-			"description": "A sequence of values.",
-			"oneOf": [
-				{
-					"$ref": "#/definitions/sequence-full"
-				},
-				{
-					"$ref": "#/definitions/reference"
-				}
-			]
-		},
 		"sequence-full": {
 			"type": "object",
 			"properties": {
