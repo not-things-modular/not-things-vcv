@@ -1576,6 +1576,7 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 		}
 	}
 
+	scriptMoveSequence.wrap = true;
 	json::const_iterator wrap = moveSequenceJson.find("wrap");
 	if (wrap != moveSequenceJson.end()) {
 		if (scriptMoveSequence.position) {
