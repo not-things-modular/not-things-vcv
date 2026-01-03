@@ -260,8 +260,8 @@ enum ValidationErrorCode {
 	MoveSequence_MoveDirectionString = 2404, // Since 1.2.0
 	MoveSequence_MoveDirectionEnum = 2405, // Since 1.2.0
 	MoveSequence_NoWrapWithPosition = 2406, // Since 1.2.0
-	MoveSequence_EitherDirectionOrPosition = 2407, // Since 1.2.0
-	MoveSequence_SequenceNotFound = 2408, // Since 1.2.0
+	MoveSequence_SequenceNotFound = 2407, // Since 1.2.0
+	MoveSequence_EitherDirectionOrPosition = 2408, // Since 1.2.0
 	MoveSequence_NonSharedSequence = 2409, // Since 1.2.0
 
 	AddToSequence_IdString = 2500, // Since 1.2.0

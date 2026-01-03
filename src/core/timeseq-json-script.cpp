@@ -1593,6 +1593,10 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "Only one of 'direction' or 'position' can be used at a time.");
 	}
 
+	if ((!scriptMoveSequence.direction) && (!scriptMoveSequence.position)) {
+		scriptMoveSequence.direction.reset(new ScriptSequenceMoveDirection(ScriptSequenceMoveDirection::FORWARD));
+	}
+
 	return scriptMoveSequence;
 }
 

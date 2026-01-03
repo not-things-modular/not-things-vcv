@@ -2460,9 +2460,10 @@ TEST(TimeSeqJsonScriptAction, ParseMoveSequenceWithOnlyIdShouldUseDefaultOrEmpty
 	expectNoErrors(validationErrors);
 	ASSERT_EQ(script->actions.size(), 1u);
 	ASSERT_TRUE(script->actions[0].moveSequence);
-	ASSERT_FALSE(script->actions[0].moveSequence->direction);
 	EXPECT_TRUE(script->actions[0].moveSequence->wrap);
 	EXPECT_FALSE(script->actions[0].moveSequence->position);
+	ASSERT_TRUE(script->actions[0].moveSequence->direction);
+	EXPECT_EQ(*script->actions[0].moveSequence->direction, ScriptSequenceMoveDirection::FORWARD);
 }
 
 TEST(TimeSeqJsonScriptAction, ParseMoveSequenceShouldParseDirectionValues) {
@@ -2483,7 +2484,8 @@ TEST(TimeSeqJsonScriptAction, ParseMoveSequenceShouldParseDirectionValues) {
 	expectNoErrors(validationErrors);
 	ASSERT_EQ(script->actions.size(), 5u);
 	ASSERT_TRUE(script->actions[0].moveSequence);
-	EXPECT_FALSE(script->actions[0].moveSequence->direction);
+	EXPECT_TRUE(script->actions[0].moveSequence->direction);
+	EXPECT_EQ(*script->actions[0].moveSequence->direction, ScriptSequenceMoveDirection::FORWARD);
 	ASSERT_TRUE(script->actions[1].moveSequence);
 	ASSERT_TRUE(script->actions[1].moveSequence->direction);
 	EXPECT_EQ(*script->actions[1].moveSequence->direction, ScriptSequenceMoveDirection::FORWARD);

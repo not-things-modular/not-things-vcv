@@ -605,10 +605,10 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorS
 shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
 	ScriptMoveSequence* moveSequence = &(*scriptAction->moveSequence);
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, moveSequence->id);
-	
+
 	if (!sequenceProcessor) {
 		if (hasNonSharedSequence(context, moveSequence->id)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", moveSequence->id.c_str(), "' is not a 'shared' sequence. Only shared sequences can be moved.");
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_NonSharedSequence, "The sequence with id '", moveSequence->id.c_str(), "' is not a 'shared' sequence. Only shared sequences can be moved.");
 		} else {
 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", moveSequence->id.c_str(), "' could not be found.");
 		}

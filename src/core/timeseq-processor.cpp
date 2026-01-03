@@ -459,13 +459,13 @@ void ActionTriggerProcessor::processAction() {
 	m_triggerHandler->setTrigger(m_trigger);
 }
 
-ActionMoveSequenceDirectionProcessor::ActionMoveSequenceDirectionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_direction(direction), m_wrap(wrap) {}
+ActionMoveSequenceDirectionProcessor::ActionMoveSequenceDirectionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_direction(direction), m_wrap(wrap) {}
 
 void ActionMoveSequenceDirectionProcessor::processAction() {
 	m_sequencePositionProcessor->move(m_direction, m_wrap);
 }
 
-ActionMoveSequencePositionProcessor::ActionMoveSequencePositionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_position(position) {}
+ActionMoveSequencePositionProcessor::ActionMoveSequencePositionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
 
 void ActionMoveSequencePositionProcessor::processAction() {
 	m_sequencePositionProcessor->move(m_position);
@@ -677,7 +677,7 @@ DurationVariableFactorProcessor::DurationVariableFactorProcessor(shared_ptr<Valu
 void DurationVariableFactorProcessor::prepareForStart() {
 	double value = m_value->process();
 	double refactoredValue = (m_samplesFactor != 1.f) ? value * m_samplesFactor : value;
-	
+
 	if (refactoredValue >= 1.f) {
 		uint64_t duration = floor(refactoredValue);
 		setDuration(duration);
@@ -694,7 +694,7 @@ DurationVariableHzProcessor::DurationVariableHzProcessor(shared_ptr<ValueProcess
 void DurationVariableHzProcessor::prepareForStart() {
 	double value = m_value->process();
 	double refactoredValue = m_sampleRate / value;
-	
+
 	if (refactoredValue >= 1.f) {
 		uint64_t duration = floor(refactoredValue);
 		setDuration(duration);
