@@ -269,10 +269,14 @@ enum ValidationErrorCode {
 	AddToSequence_ValueObject = 2502, // Since 1.2.0
 	AddToSequence_PositionNumber = 2503, // Since 1.2.0
 	AddToSequence_AsConstantVoltageBoolean = 2504, // Since 1.2.0
+	AddToSequence_SequenceNotFound = 2505, // Since 1.2.0
 
 	RemoveFromSequence_IdString = 2600, // Since 1.2.0
 	RemoveFromSequence_IdLength = 2601, // Since 1.2.0
 	RemoveFromSequence_PositionNumber = 2602, // Since 1.2.0
+	RemoveFromSequence_SequenceNotFound = 2603, // Since 1.2.0
+
+	ClearSequence_SequenceNotFound = 2700, // Since 1.2.0
 };
 
 

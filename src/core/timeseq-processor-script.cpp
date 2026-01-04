@@ -632,7 +632,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(Proc
 	if (sequenceProcessor) {
 		return make_shared<ActionClearSequenceProcessor>(sequenceProcessor, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", scriptAction->clearSequence.c_str(), "' could not be found.");
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::ClearSequence_SequenceNotFound, "The sequence with id '", scriptAction->clearSequence.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
@@ -652,7 +652,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(Proc
 	if (sequenceProcessor) {
 		return make_shared<ActionAddToSequenceSequenceProcessor>(sequenceProcessor, value, addToSequence->position, addToSequence->asConstantVoltage, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", addToSequence->id.c_str(), "' could not be found.");
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_SequenceNotFound, "The sequence with id '", addToSequence->id.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
@@ -667,7 +667,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction
 	if (sequenceProcessor) {
 		return make_shared<ActionRemoveFromSequenceProcessor>(sequenceProcessor, removeFromSequence->position, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", removeFromSequence->id.c_str(), "' could not be found.");
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::RemoveFromSequence_SequenceNotFound, "The sequence with id '", removeFromSequence->id.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
