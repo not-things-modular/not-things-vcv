@@ -538,3 +538,107 @@ TEST(TimeSeqProcessorChangeSequence, OutOfBoundsPositionAfterRemoveFromSequenceS
 		script.second->process();
 	}
 }
+
+TEST(TimeSeqProcessorChangeSequence, RemoveFromSequenceShouldDoNothingOnOutOfBoundsPosition) {
+	MockEventListener mockEventListener;
+	MockPortHandler mockPortHandler;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+
+	array<int, 5> sequence1 = { 1, 2, 3, 4, 5 };
+	array<int, 5> sequence2 = { 9, 8, 7, 6, 5 };
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			// Perform out-of-bounds removes after the first loop of the sequences
+			{ { "loop", false }, { "segments", json::array({ { { "duration", { { "samples", 6 } } }, { "actions", json::array({
+				{ { "timing", "end"}, { "remove-from-sequence", { { "id", "a-non-shared-sequence" }, { "position", 10 } } } },
+				{ { "timing", "end"}, { "remove-from-sequence", { { "id", "a-non-shared-sequence" }, { "position", 5 } } } },
+				{ { "timing", "end"}, { "remove-from-sequence", { { "id", "a-shared-sequence" }, { "position", 10 } } } },
+				{ { "timing", "end"}, { "remove-from-sequence", { { "id", "a-shared-sequence" }, { "position", 5 } } } },
+			}) } } }) } },
+			// The second lane loops over the sequences
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "set-value", { { "output", 1 }, { "value", { { "sequence", { { "id", "a-non-shared-sequence" } } } } } } } },
+				{ { "set-value", { { "output", 2 }, { "value", { { "sequence", { { "id", "a-shared-sequence" } } } } } } } }
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["sequences"] = json::array({
+		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", sequence1 } },
+		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", sequence2 } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+
+		for (int j = 0; j < 2; j++) {
+			for (int i = 0; i < 5; i++) {
+				EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+				EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, sequence1[i])).Times(1);
+				EXPECT_CALL(mockPortHandler, setOutputPortVoltage(1, 0, sequence2[i])).Times(1);
+			}
+		}
+	}
+
+	for (int i = 0; i < 10; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorChangeSequence, RemoveFromSequenceShouldHandleRemoveFromEndOnEmptySequence) {
+	MockEventListener mockEventListener;
+	MockPortHandler mockPortHandler;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(&mockPortHandler, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			// Perform out-of-bounds removes after the first loop of the sequences
+			{ { "loop", false }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "remove-from-sequence", { { "id", "a-non-shared-sequence" }, { "position", -1 } } } },
+				{ { "remove-from-sequence", { { "id", "a-shared-sequence" }, { "position", -1 } } } },
+			}) } } }) } },
+			// The second lane loops over the sequences
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "set-value", { { "output", 1 }, { "value", { { "sequence", { { "id", "a-non-shared-sequence" } } } } } } } },
+				{ { "set-value", { { "output", 2 }, { "value", { { "sequence", { { "id", "a-shared-sequence" } } } } } } } }
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["sequences"] = json::array({
+		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", json::array({}) } },
+		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({}) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+
+		for (int i = 0; i < 5; i++) {
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(0, 0, 0)).Times(1);
+			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(1, 0, 0)).Times(1);
+		}
+	}
+
+	for (int i = 0; i < 5; i++) {
+		script.second->process();
+	}
+}

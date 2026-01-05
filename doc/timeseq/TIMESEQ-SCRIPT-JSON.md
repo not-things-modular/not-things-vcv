@@ -23,6 +23,7 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
               * [input](#input) - Identifies an input port and channel
               * [output](#output) - Identifies an output port and channel
               * [rand](#rand) - Generates a random voltage
+              * [sequence value](#sequence-value) - Retrieves a value from a sequence and optionally moves the sequence position
               * [calc](#calc) - Allows mathematical calculations with *value*s
                 * [tuning](#tuning)s - Quantization tunings
           * [set-variable](#set-variable) - Set an internal variable
@@ -32,9 +33,14 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
           * [assert](#assert) - Allows TimeSeq to be used as a test tool for other modules
             * expect ([if](#if)) - A condition that can trigger an assert
           * `trigger` - Fire an internal trigger
+          * [move-sequence](#move-sequence) - Moves the position of a sequence
+          * [add-to-sequence](#add-to-sequence) - Adds a value to a sequence
+          * [remove-from-sequence](#remove-from-sequence) - Removes a value from a sequence
+          * `clear-sequence` - Clears all values from a sequence
   * [input-triggers](#input-trigger) - Fire internal triggers based on external trigger signals
   * global-[action](#action) - *Action*s to perform during script start
   * [component-pool](#component-pool) - A pool of reusable JSON objects
+    * [sequences](#sequence) - Sequences of values
 
 ## Versions
 
@@ -42,7 +48,7 @@ As new features are added, the `version` of the script is updated. The [script v
 
 ## JSON Schema
 
-To facilitate editing of the JSON script in JSON Schema aware editors, a schema can be 
+To facilitate easier editing of a TimeSeq JSON script, a JSON Schema definition is available for it. see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page for the schema definition links for the different script versions.
 
 ## JSON Property types
 
@@ -72,7 +78,7 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `type` | yes | string | Must be set to `not-things_timeseq_script` |
-| `version`| yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
+| `version` | yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
 | `$schema` | no | uri string | Allows JSON schema validation to be performed by schema-aware JSON editors. See the [script version](TIMESEQ-SCRIPT-VERSION.md) page for the schema URIs that can be used. The value given to this property will not influence TimeSeq parsing or processing itself. |
 | `timelines` | no | [timeline](#timeline) list | A list of *timeline*s that will drive the sequencer. |
 | `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
@@ -118,7 +124,7 @@ When running the script, each processing cycle will run through the *lane*s in t
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations of *segment*s in this timeline. |
-| `loop-lock`| no | boolean | If `true`, *lane*s will only loop once all other *lane*s have completed. If `false`, *lane*s loop immediately when finished. Defaults to `false` if not set. |
+| `loop-lock` | no | boolean | If `true`, *lane*s will only loop once all other *lane*s have completed. If `false`, *lane*s loop immediately when finished. Defaults to `false` if not set. |
 | `lanes` | yes | [lane](#lane) list | The *lane*s that contain the *segment* sequences for this timeline. |
 
 ### Example
@@ -157,7 +163,7 @@ A `bpb` value can only be set if there is also a `bpm` value set.
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `sample-rate` | no | unsigned number | The sample rate in which the `samples` duration of all *segment*s in the *timeline* are expressed. |
-| `bpm`| no | unsigned number | The number of Beats per Minute to use for all *segment*s in the *timeline* that specify their duration using `beats`. |
+| `bpm` | no | unsigned number | The number of Beats per Minute to use for all *segment*s in the *timeline* that specify their duration using `beats`. |
 | `bpb` | no | unsigned number | How many beats go into one bar for all *segment*s in the *timeline* that use a `bars` duration. `bpb` can only be set if `bpm` is also set. |
 
 ### Example
@@ -192,10 +198,10 @@ The running state of a lane can be controlled using triggers:
 | --- | --- | --- | --- |
 | `segments` | yes | [segment](#segment) list | The sequence of *segment*s that will be executed for this lane |
 | `auto-start` | no | boolean | If set to `true`, the lane will start automatically when the script is loaded. If set to `false` the lane will remain stopped when the script is loaded. Defaults to `true` |
-| `loop`| no | boolean | If set to `true`, the lane will restart from its first segment once its last segment has completed. Otherwise the lane will stop once its last segment completes. Defaults to `false` |
+| `loop` | no | boolean | If set to `true`, the lane will restart from its first segment once its last segment has completed. Otherwise the lane will stop once its last segment completes. Defaults to `false` |
 | `repeat` | no | unsigned number | Specifies how many times the *segment*s in the lane should be repeated before stopping the lane. Both values `0` and `1` mean that the segments are executed once. This property has no impact if `loop` is set to `true`. Defaults to `0` |
 | `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
-| `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty.|
+| `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty. |
 | `stop-trigger` | no | string | The id of the internal trigger that will cause this lane to stop running. A stop trigger on an an inactive lane has no impact on the state of that lane. Defaults to empty. |
 | `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this lane will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
 
@@ -226,7 +232,7 @@ When an input has been triggered, the internal trigger (identified by the `id` p
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `id` | yes | string | The id of the trigger that will be set when an input trigger is detected. |
-| `input`| yes | [input](#input) | The *input* that will be monitored for input triggers. |
+| `input` | yes | [input](#input) | The *input* that will be monitored for input triggers. |
 
 ### Example
 
@@ -253,7 +259,7 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
 | property | required | type | since | description |
 | --- | --- | --- | --- | --- |
 | `segment-blocks` | no | [segment-block](#segment-block) list | | A list of reusable *segment-block* objects. |
-| `segments`| no | [segment](#segment) list | | A list of reusable *segment* objects. |
+| `segments` | no | [segment](#segment) list | | A list of reusable *segment* objects. |
 | `inputs` | no | [input](#input) list | | A list of reusable *input* objects. |
 | `outputs` | no | [output](#output) list | | A list of reusable *output* objects. |
 | `calcs` | no | [calc](#calc) list | | A list of reusable *calc* objects. |
@@ -261,6 +267,7 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
 | `actions` | no | [action](#action) list | | A list of reusable *action* objects. |
 | `ifs` | no | [if](#if) list | | A list of reusable *if* objects. |
 | `tunings` | no | [tuning](#tuning) list | *1.1.0* | A list of *tuning* objects that can be used in *quantize* *calc*s |
+| `sequences` | no | [sequence](#sequence) list | *1.2.0* | A list of *sequence*s that can be used in [sequence values](#sequence-value) |
 
 ### Example
 
@@ -275,8 +282,14 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
             }
         ],
         "values": [
-              { "id": "one-and-a-half", "voltage": 1.5 },
-              { "id": "full", "voltage": 10 }
+            { "id": "one-and-a-half", "voltage": 1.5 },
+            { "id": "full", "voltage": 10 }
+        ],
+        "sequences": [
+            {
+                "id": "c-major-pentatonic",
+                "values": [ "c4", "d4", "e4", "g4", "a4" ]
+            }
         ]
     }
 }
@@ -305,7 +318,7 @@ The `actions` property can still be used together with the `segment-block` prope
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `duration` | yes | [duration](#duration) | Defines how long this segment will take to complete. |
-| `actions`| no | [action](#action) list | The actions that will be executed as part of this segment. See the description above for details about the timings of actions. |
+| `actions` | no | [action](#action) list | The actions that will be executed as part of this segment. See the description above for details about the timings of actions. |
 | `disable-ui` | no | boolean | If set to `true`, the *S* LED on the TimeSeq panel will light up when this *segment* starts. If set to `false`, a start of this *segment* will not cause the *S* LED on the TimeSeq panel to light up. Defaults to `true`. |
 | `segment-block` | no | string | The ID of a [segment-block](#segment-block) in the [component-pool](#component-pool) that will take the place of this segment. Can not be combined with the `duration`, and `disable-ui` properties. |
 
@@ -363,8 +376,8 @@ A Hertz duration indicates how often the *duration* of the *segment* should fit 
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `samples` | no | unsigned number | The number of samples that the *segment* will last. Relative to the `sample-rate` of the [time-scale](#time-scale) of the current [timeline](#timeline), or to the active VCV Rack sample rate if none was specified on the *timeline*  |
-| `millis`| no | unsigned float | Number of milliseconds that the *segment* will last |
+| `samples` | no | unsigned number | The number of samples that the *segment* will last. Relative to the `sample-rate` of the [time-scale](#time-scale) of the current [timeline](#timeline), or to the active VCV Rack sample rate if none was specified on the *timeline* |
+| `millis` | no | unsigned float | Number of milliseconds that the *segment* will last |
 | `beats` | no | unsigned float | Number of beats that the *segment* will last, Relative to the `bpm` of the [time-scale](#time-scale) of the current [timeline](#timeline) |
 | `bars` | no | unsigned number | Number of bars that the *segment* will last, Relative to the `bpb` of the [time-scale](#time-scale) of the current [timeline](#timeline). Can not be used without `beats` |
 | `hz` | no | unsigned float | Expresses the duration of the *segment* in Hertz, or fractions of a second |
@@ -449,7 +462,7 @@ The `segments` in the block will be executed in the order that they appear in th
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `segments` | yes | [segment](#segment) list | The list of segments in this *segment-block* |
-| `repeat`| no | unsigned number | The amount of times that the `segments` list should be repeated. |
+| `repeat` | no | unsigned number | The amount of times that the `segments` list should be repeated. |
 
 ### Example
 
@@ -492,6 +505,10 @@ Actions that have a `start` or an `end` `timing` will be executed once at the ap
 * Set a variable
 * Perform an assert
 * Fire an internal trigger (see the [triggers](TIMESEQ-SCRIPT.md#triggers) section on the script overview page for more details)
+* Move the current position of a shared [sequence](#sequence)
+* Add a [value](#value) to a sequence
+* Remove a value from a sequence
+* Clear (remove) all values from a sequence
 
 Each action must contain exactly one of these operation. If multiple operations need to be performed, separate actions will have to be created for each of them.
 
@@ -501,13 +518,17 @@ Except for the `trigger` action, all the action operations have their own *actio
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `timing` | no | string | Identifies the timing when this action will be executed. Can be either `start` or `end`. Defaults to `start`.|
-| `set-value`| no | [set-value](#set-value) | Sets a voltage on an output port. |
-| `set-polyphony`| no | [set-polyphony](#set-polyphony) | Sets the polyphony of an output port. |
-| `set-label`| no | [set-label](#set-label) | Sets the tooltip label of an output port. |
-| `set-variable`| no | [set-variable](#set-variable) | Sets a variable. |
-| `assert`| no | [assert](#assert) | Performs an assert. |
-| `trigger`| no | string | Fires an internal trigger with the specified id. |
+| `timing` | no | string | Identifies the timing when this action will be executed. Can be either `start` or `end`. Defaults to `start`. |
+| `set-value` | no | [set-value](#set-value) | Sets a voltage on an output port. |
+| `set-polyphony` | no | [set-polyphony](#set-polyphony) | Sets the polyphony of an output port. |
+| `set-label` | no | [set-label](#set-label) | Sets the tooltip label of an output port. |
+| `set-variable` | no | [set-variable](#set-variable) | Sets a variable. |
+| `assert` | no | [assert](#assert) | Performs an assert. |
+| `trigger` | no | string | Fires an internal trigger with the specified id. |
+| `move-sequence` | no | [move-sequence](#move-sequence) | Moves the current position of a sequence. |
+| `add-to-sequence` | no | [add-to-sequence](#add-to-sequence) | Adds a value to a sequence. |
+| `remove-from-sequence` | no | [remove-from-sequence](#remove-from-sequence) | Removes a value from a sequence. |
+| `clear-sequence` | no | string | Removes all `values` from the sequence with the specified identifier. |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
 #### Examples
@@ -539,6 +560,13 @@ Except for the `trigger` action, all the action operations have their own *actio
 }
 ```
 
+```json
+{
+    "timing": "start",
+    "clear-sequence": "my-sequence"
+}
+```
+
 ### Glide actions
 
 Actions with a `glide` timing gradually move from one value to another over the duration of a *segment*. The `start` *value* of the action will define at which voltage the glide starts, and the `end` *value* identifies the voltage the action will reach at the end of the *segment*.
@@ -557,11 +585,11 @@ A glide action has two possible targets to send its generated voltages to: eithe
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `start-value` | yes | [value](#value) | The *value* that the action should start the glide from. |
-| `end-value`| yes | [value](#value) | The *value* that the action should glide towards. |
-| `ease-factor`| no | float | Controls the rate at which the action will move from the `start` value to the `end` value. Must be between -5 and 5. Defaults to 0 |
-| `ease-algorithm`| no | string | The algorithm to use for easing calculations. Can be either `sig` or `pow`. Defaults to `sig` |
-| `output`| no | [output](#output) | The output port to which the calculated value should be sent |
-| `variable`| no | string | The name of the variable that should be set based on the calculated value of the action. |
+| `end-value` | yes | [value](#value) | The *value* that the action should glide towards. |
+| `ease-factor` | no | float | Controls the rate at which the action will move from the `start` value to the `end` value. Must be between -5 and 5. Defaults to 0 |
+| `ease-algorithm` | no | string | The algorithm to use for easing calculations. Can be either `sig` or `pow`. Defaults to `sig` |
+| `output` | no | [output](#output) | The output port to which the calculated value should be sent |
+| `variable` | no | string | The name of the variable that should be set based on the calculated value of the action. |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
 #### Example
@@ -591,7 +619,7 @@ Just like the other action types, a gate action can be made conditional using an
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `output`| yes | [output](#output) | The output port that will receive the gate signal |
+| `output` | yes | [output](#output) | The output port that will receive the gate signal |
 | `gate-high-ratio` | no | unsigned float | The position when the gate signal should go from high to low. Must be a value between `0` and `1`, with `0.5` aligning with half of the *segment* duration. Defaults to `0.5` |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
@@ -759,7 +787,7 @@ The voltage will be immediately assigned to the [output](#output) as part of the
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `value` | yes | [value](#value) | The value that will determine the voltage to use. |
-| `output`| yes | [output](#output) | The output port (and channel) to which the voltage should be applied. |
+| `output` | yes | [output](#output) | The output port (and channel) to which the voltage should be applied. |
 
 ### Example
 
@@ -790,7 +818,7 @@ Since unknown variables will default to 0V, setting a variable to 0V will be the
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `value` | yes | [value](#value) | The value that will determine the voltage to use. |
-| `name`| yes | string | The name of the variable to which the voltage should be assigned. |
+| `name` | yes | string | The name of the variable to which the voltage should be assigned. |
 
 ### Example
 
@@ -821,7 +849,7 @@ When changing the number of channels on an output port, the voltages that were p
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `index` | yes | unsigned number [1-8] | The output port on which the number of channels should be updated. |
-| `channels`| yes | unsigned number [1-16] | The number of channels that should be available on the output port. |
+| `channels` | yes | unsigned number [1-16] | The number of channels that should be available on the output port. |
 
 ### Example
 
@@ -850,7 +878,7 @@ The output ports can be addressed by their number label as it is visible on the 
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `index` | yes | unsigned number [1-8] | The output port on which the label should be updated. |
-| `label`| yes | string | The label to assign to the output port. |
+| `label` | yes | string | The label to assign to the output port. |
 
 ### Example
 
@@ -881,8 +909,8 @@ See [assert](TIMESEQ-UI-PANEL.md#asserts) for more details on how they are handl
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `expect` | yes | [if](#if) | The condition that must evaluate to *true*. If it evaluates to *false*, an assert will be triggered on TimeSeq. |
-| `name`| yes | string | The name of the assert that will be triggered on TimeSeq if the condition evaluates to *false*. |
-| `stop-on-fail`| no | boolean | When set to `true`, TimeSeq will pause the script execution if this assert is fired. Defaults to `true`. |
+| `name` | yes | string | The name of the assert that will be triggered on TimeSeq if the condition evaluates to *false*. |
+| `stop-on-fail` | no | boolean | When set to `true`, TimeSeq will pause the script execution if this assert is fired. Defaults to `true`. |
 
 ### Example
 
@@ -903,6 +931,124 @@ An example of a set-value within an action:
 }
 ```
 
+## move-sequence
+
+The *move-sequence* action allows the position of a [sequence](#sequence) to be moved, changing the active item within the sequence. This action can only be used with `shared` sequences since non-shared sequences have a different active position for each [sequence value](#sequence-value) that uses the sequence.
+
+When using the `direction` property, the position of the sequence can be moved relatively to the current position: `forward`, `backward` or `random`. The `wrap` property can be used to specify if wraparound behaviour should be used when reaching the start or end of the sequence.
+
+Absolute movements in the sequence can be done using the `position` property, which allows the active *value* to be set by index. Note that the `position` property uses zero-based indexing of the elements, so position `0` is the first value, position `1` is the second value, position `2` is the third value, etc. Using a negative `position` or a value that's bigger then the number of values in the sequence will cause the last value in the sequence to become the active value.
+
+One of `direction` or `position` must be specified for a *move-sequence* and they can't be used together within the same *move-sequence*.
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `id` | yes | string | The identifier of the shared [sequence](#sequence) that should be moved. |
+| `direction` | no | string | The direction in which to move the sequence. Can be either `forward`, `backward` or `random`. Either this property or `position` must be specified. |
+| `wrap` | no | boolean | Indicates if wraparound behaviour should be used when performing a `direction` move. Defaults to `true`. |
+| `position` | no | number | The zero-based index of the item to move the sequence to or a negative value to activate the last item. Either this property or `direction` must be specified. |
+
+### Example
+
+Moving by direction without wraparound behaviour:
+
+```json
+{
+    "timing": "start",
+    "move-sequence": {
+        "id": "my-sequence",
+        "direction": "backward",
+        "wrap": false
+    }
+}
+```
+
+Moving by absolute position:
+
+```json
+{
+    "timing": "start",
+    "move-sequence": {
+        "id": "my-sequence",
+        "position": 3
+    }
+}
+```
+
+Moving to the last item of the sequence:
+
+```json
+{
+    "timing": "start",
+    "move-sequence": {
+        "id": "my-sequence",
+        "position": -1
+    }
+}
+```
+
+## add-to-sequence
+
+The *add-to-sequence* action allows values to be added to the list of values of a [sequence](#sequence).
+
+The `value` property identifies which [value](#value) to add to the sequence. Any of the available value types (*constant voltage*, *input*, *output*, ...) can be used, either inline or by reference.
+
+The `position` property identifies where to add the `value` in to the sequence using a zero-based index: `0` inserts the `value` as first element of the sequence `values` list, `1` as second, `2` as third, etc. Any values that are in the sequence after that position will be moved one position towards the back. If no `position` is supplied, a negative `position` or a `position` that is bigger then the number of current values in the sequence, the new value will be added to the end of the list of `values`.
+
+By default, the new `value` will be added as-is to the sequence: each time the value is used, it's voltage will be re-evaluated (e.g. retrieve the voltage of an input port for an [input](#input) value or generate a new random value for a [rand](#rand) value). However, if the `as-constant-voltage` property is set to `true`, the current voltage of the `value` will be determined when it is added the the sequence, and that pre-determined voltage will be used each time when this value becomes active within the sequence instead of re-evaluating the voltage each time.
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `id` | yes | string | The identifier of the [sequence](#sequence) to which a *value* should be added. |
+| `value` | yes | [value](#value) | The value to add to the *sequence*. |
+| `position` | no | number | The zero-based index of the position at which the item should be added, or a negative number to add it to the end of the *sequence*. Defaults to `-1`. |
+| `as-constant-voltage` | no | boolean | Allows the current value to be inserted as a constant voltage, instead of having the voltage of the `value` be re-determined each time it is used. Defaults to `false`. |
+
+### Example
+
+An example of a set-label within an action:
+
+```json
+{
+    "timing": "start",
+    "set-label": {
+        "index": 5,
+        "label": "My Fifth Script Output"
+    }
+}
+```
+
+## remove-from-sequence
+
+Removes a value from a [sequence](#sequence).
+
+The value to remove from the *sequence* is identified by it's zero-based `position`. A value of `0` will remove the first value, `1` will remove the second, `2` will remove the third, etc. If the position is outside of the bounds of the list of values for the *sequence*, nothing will happen.
+
+If `position` is set to a negative value, the last value of the *sequence* will be removed. If the *sequence* is already empty, nothing will happen.
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `id` | yes | string | The identifier of the [sequence](#sequence) from which a *value* should be removed. |
+| `position` | no | number | The zero-based position index of the value that should be removed, or a negative number to remove the last value from the sequence. Defaults to `-1`. |
+
+### Example
+
+```json
+{
+    "timing": "start",
+    "remove-from-sequence": {
+        "id": "my-sequence",
+        "position": 0
+    }
+}
+```
+
 ## value
 
 Throughout the TimeSeq script, whenever a voltage is needed, a value is used to provide different ways to determine that voltage value:
@@ -912,6 +1058,7 @@ Throughout the TimeSeq script, whenever a voltage is needed, a value is used to 
 * Reading the current voltage from an [input](#input) port
 * Reading the current voltage from an [output](#output) port
 * Using a [rand](#rand)om voltage generator
+* Retrieving a [sequence value](#sequence-value) from a [sequence](#sequence)
 
 Since `voltage` values are usually expected to be between -10V and 10V, the constant `voltage` value will by default be limited to this range. In some scenarios (e.g. when specifying *segment* lengths in variable-length [duration](#duration)s), there may be a need to specify a constant value outside this range. The range check on a `voltage` value can be disabled by setting the `no-limit` property of a value to `true`.
 
@@ -919,11 +1066,13 @@ When the `note` property is used, it must be a 2 or 3 character string, where th
 
 If a `variable` property is used and no variable with a matching name was previously set using a [set-variable](#set-variable) *action, 0V will be used instead.
 
+When a `sequence` property is used, the retrieval of the value will also move the position within that sequence (see [sequence value](#sequence-value) for more details).
+
 Additional mathematical operations are possible on a value using the `calc` property. This allows simple [calc](#calc)ulations to be performed by either adding, subtracting, dividing or multiplying this value with another value. The `calc` property expects a list of [calc](#calc) objects. Even if only one calculation is to be performed, it should still be supplied as a list (with one element). The calculations will then be executed in the order that they appear in the list. While voltage values are usually expected to fall into the -10V to 10V range in VCV Rack, calculations will not enforce this limit, and the result of the calculation can fall outside of that range.
 
 Using the `quantize` property, a value can optionally be set to quantize to the nearest 1V/Oct note value. If enabled, quantization of the voltage value will be done **after** the *calc* operations have been applied to the voltage value. If more control is needed over the quantization , such as quantizing to a specific scale or a set of custom voltages, a [calc](#calc) with a `quantize` operation should be used instead.
 
-Exactly one of the `voltage`, `note`, `variable`, `input`, `output` or `rand` properties must be specified for a value.
+Exactly one of the `voltage`, `note`, `variable`, `input`, `output`, `rand` or `sequence` properties must be specified for a value.
 
 Note: values always resolve into a voltage, which is then used by the object that contains the value. The source of the value voltage will not be tied to the target of that value. E.g. if an action sets the voltage of an *output* port using a value that is based on the voltage of an *input* port, the voltage to use will be determined when the action is executed. If the voltage on the *input* port changes afterwards, the voltage of the *output* port will **not** be changes automatically to the updated voltage of the *input* port. The *set-value* action will have to be re-executed in order for the *output* port to update again.
 
@@ -932,12 +1081,13 @@ Note: values always resolve into a voltage, which is then used by the object tha
 | property | required | type | since | description |
 | --- | --- | --- | --- | --- |
 | `voltage` | no | float | | An exact constant voltage value between `-10` and `10`. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for voltage values. |
-| `no-limit`| no | boolean | *1.1.0* | Can only be used in combination with `voltage`. When set to `true`, the default check that enforces a voltage value between `-10` and `10` will be disabled. |
-| `note`| no | string | | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for note values |
-| `variable`| no | string | | The name of the variable to use. |
+| `no-limit` | no | boolean | *1.1.0* | Can only be used in combination with `voltage`. When set to `true`, the default check that enforces a voltage value between `-10` and `10` will be disabled. |
+| `note` | no | string | | A note that will be translated in the corresponding 1V/Oct voltage. See the description above for the format. See also [Shorthand Value Notation](#shorthand-value-notation) for a shortened version for note values |
+| `variable` | no | string | | The name of the variable to use. |
 | `input` | no | [input](#input) | | Reads the current voltage from one of the TimeSeq inputs. |
 | `output` | no | [output](#output) | | Reads the current voltage from one of the TimeSeq outputs. |
 | `rand` | no | [rand](#rand) | | Uses a random voltage value (within a specified voltage range). |
+| `sequence` | no | [sequence value](#sequence-value) | *1.2.0* | Uses the value from a sequence and (optionally) moves the position in the sequence. |
 | `calc` | no | [calc](#calc) list | | Allows mathematical operations to be applied to the voltage of this value, using the voltage of another value. |
 | `quantize` | no | boolean | | If set to `true`, the voltage of this value will be quantized to the nearest 1V/Oct note value **after** any optional calculations have been performed. If set to `false`, the voltage value will be used as-is after any optional calculations have been performed. Defaults to `false`. |
 
@@ -1041,7 +1191,7 @@ Note that TimeSeq will not validate how many channels are present on the input p
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `index` | yes | unsigned number | The index of the port from which to retrieve a voltage. Must be between `1` and `8`. See [Shorthand Input Notation](#shorthand-input-notation) for a shortened way to write inputs with only an `index` property. |
-| `channel`| no | unsigned number | The channel on the input port from which to retrieve the voltage, as a number between `1` and `16`. Defaults to `1` |
+| `channel` | no | unsigned number | The channel on the input port from which to retrieve the voltage, as a number between `1` and `16`. Defaults to `1` |
 
 ### Examples
 
@@ -1105,7 +1255,7 @@ When a script is loaded or reset, all output ports of TimeSeq will be set to mon
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `index` | yes | unsigned number | The index of the port from which to retrieve or on which to set a voltage. Must be between `1` and `8`. See [Shorthand Output Notation](#shorthand-output-notation) for a shortened way to write outputs with only an `index` property. |
-| `channel`| no | unsigned number | The channel on the output port from which to retrieve or on which to set the voltage, as a number between `1` and `16`. Defaults to `1` |
+| `channel` | no | unsigned number | The channel on the output port from which to retrieve or on which to set the voltage, as a number between `1` and `16`. Defaults to `1` |
 
 ### Examples
 
@@ -1165,7 +1315,7 @@ The generated random value will be between the `lower` and `upper` [value](#valu
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `lower` | yes | [value](#value) | The lowest voltage that can be generated. |
-| `upper`| yes | [value](#value) | The generated random value will be below this voltage. |
+| `upper` | yes | [value](#value) | The generated random value will be below this voltage. |
 
 ### Example
 
@@ -1175,6 +1325,41 @@ The generated random value will be between the `lower` and `upper` [value](#valu
         "lower": { "voltage": -5 },
         "upper": { "variable": "the-upper-bounds" }
     }
+}
+```
+
+## sequence value
+
+A sequence value retrieves the value at the current position of the [sequence](#sequence) with the specified `id` and optionally moves the position of that sequence.
+
+The default behaviour (if no additional properties are specified) is that each time that a value is retrieved from a sequence, the position moved ahead by one after the value is retrieved, with a wraparound if the position reached the end of the sequence. This means that the default behaviour allows continuous looping to be performed over the sequence values.
+
+Using the `move-before` and/or `move-after` properties it is possible to modify the behaviour and specify which movement actions should be done before the value is retrieved from the sequence, and which should be done afterwards. The possible movements are `forward` (to move one position forward in the sequence), `backward` (to move the position backward in the sequence), `random` (to move to a random position in the sequence) and `none` (to leave the position as-is).
+
+The optional `wrap` property specifies if the position should move to the start of the sequence when the end is reached using `forward` movement and to the back of the sequence when the start of the sequence is reached using `backward` movement (i.e if the position should wrap around), or if it should stay in place at the sequence boundaries.
+
+Note that the `shared` property of the `sequence` identifies if the position of that sequence is shared throughout the whole script, or separate for each individual sequence value (see [sequence](#sequence) for more details).
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `id` | yes | string | The id of the [sequence](#sequence) from the `component-pool`. |
+| `move-before` | no | string | How the sequence position should be moved before the value is retrieved from the sequence. Can be `forward`, `backward`, `random` or `none`. Defaults to `none` |
+| `move-after` | no | string | How the sequence position should be moved after the value has been retrieved from the sequence. Can be `forward`, `backward`, `random` or `none`. Defaults to `forward` |
+| `wrap` | no | boolean | Specifies if the position in the sequence should wrap around when the last (or first) element of the sequence has been reached. Defaults to `true` |
+
+### Example
+
+```json
+{
+  "set-value" {
+    "sequence": {
+      "id": "my-sequence-id",
+      "move-before": "random"
+    },
+    "output": { "index": 4, "channel": 2 }
+  }
 }
 ```
 
@@ -1206,10 +1391,10 @@ While multiple calcs can be added to the calculation list of a *value*, each cal
 
 | property | required | type | since | description |
 | --- | --- | --- | --- | --- |
-| `add` | no | [value](#value) |  | Adds a value to the current voltage. |
-| `sub` | no | [value](#value) |  | Subtracts a value from the current voltage. |
-| `mult` | no | [value](#value) |  | Multiplies the current voltage with a value. |
-| `div` | no | [value](#value) |  | Divides the current voltage by a value. |
+| `add` | no | [value](#value) | | Adds a value to the current voltage. |
+| `sub` | no | [value](#value) | | Subtracts a value from the current voltage. |
+| `mult` | no | [value](#value) | | Multiplies the current voltage with a value. |
+| `div` | no | [value](#value) | | Divides the current voltage by a value. |
 | `max` | no | [value](#value) | *1.1.0* | Compares the current voltage with the supplied value and uses the higher of the two. |
 | `min` | no | [value](#value) | *1.1.0* | Compares the current voltage with the supplied value and uses the lower of the two. |
 | `remain` | no | [value](#value) | *1.1.0* | Divides the current voltage by a value and uses the remainder after division. |
@@ -1332,5 +1517,69 @@ A tuning that uses 1V/Oct values that don't follow the usual semitone notes:
 {
     "id": "non-semitone-tuning",
     "notes": [ 0, 0.1579, 0.3158, 0.4211, 0.5789, 0.7368, 0.8947 ]
+}
+```
+
+## sequence
+
+A sequence contains a list of values and can be used to allow the same action (or set of actions) to be performed repeatedly with a different value on each iteration by using a [sequence value](#sequence-value). Some (simple) possible scenarios in which sequences can be used are chord progressions, note chains or a list of modulation CV values.
+
+The `values` property specifies the list of values in the sequence. Any type of value can be used for this: constant values, [input](#input) values, [output](#output) values, etc.
+
+Each time a *sequence value* retrieves a voltage from the sequence, the voltage of the *value* at the current position will be returned. The position of the sequence is updated by this *sequence value* usage (by default the position will automatically be moved one forward after the voltage is retrieved, but this behaviour can be modified using the `move-before` and `move-after` properties of the [sequence value](#sequence-value) element).
+
+The `shared` property of a sequence identifies if the position within the sequence is globally shared throughout the script (`shared=true`) or if each *sequence value* has it's own position within the sequence (`shared=false`). If the sequence is shared, any change of the position made by one element of the script will also apply for all other elements within the script that use that sequence (all other *sequence values* and any action that works on that sequence). If the sequence is not shared, the position can/will be different for each *value* that makes use of that sequence, each *value* moving independently through the items of the sequence.
+
+Besides retrieving a voltage from a sequence using a *sequence value*, there are also a number of actions that can be performed on a sequence:
+
+* [move-sequence](#move-sequence): moves the current position of the sequence, either in a direction or to a specific index (can only be used on `shared` sequences),
+* [add-to-sequence](#add-to-sequence): adds a [value](#value) to the list of `values` of a sequence,
+* [remove-from-sequence](#remove-from-sequence): removes an item from the list of `values` of a sequence,
+* `clear-sequence`: removes all items from the `values` of the sequence with the specified identifier.
+
+The currently active value in a sequence is tracked as a position index within that sequence. This active position index is not influenced by the *add-to-sequence*, *remove-from-sequence* or *clear-sequence* actions. If any of those actions cause another value to be at that position, that value will now be considered the active value instead of the one that was in that position before. If an action causes the position to go out of the range of values in the sequence, the last value of the sequence will be considered the active value for the sequence.
+
+Through the `move-before` and `move-after` properties of the [sequence value](#sequence-value), it is possible to retrieve the current value of a sequence multiple times without moving the position of the sequence. When this occurs, the `retrieve-voltage-once` property of the sequence will influence how the voltage to return is determined. If this property is set to `false`, the voltage of the currently active value is determined each and every time again (e.g. retrieve the current voltage of an [input](#input) port). If `retrieve-voltage-once` is set to `true`, the voltage of the value will only be determined the first time that value is used. Each subsequent time that the value is used, that same voltage will be used instead of re-evaluating the value. As soon as any move is performed (through a *sequence value* or using a [move-sequence](#move-sequence) action), this stored voltage is cleared and the next usage of the sequence will trigger a full value determination again.
+
+It is possible for a sequence to contain no `values`. If such a sequence is used by a *sequence value*, a value of `0` volts will be used.
+
+*Sequences were introduced in TimeSeq script version 1.2.0.*
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `id` | yes | string | The identifier of the sequence. |
+| `values` | yes | [value](#value) list | The list of values in this sequence. |
+| `shared` | no | boolean | `true` if the position of the sequence is shared throughout the script or `false` if the position is separate for each [sequence value](#sequence-value) that uses the sequence. Defaults to `true`. |
+| `retrieve-voltage-once` | no | boolean | If the value of a sequence is retrieved multiple times without a change in the sequence position, this property specifies if the voltage of the active value is retrieved only once (the first time) and then re-used after that, or if the voltage of the active value will be fully retrieved each time (e.g. read the voltage of an input port each time). Defaults to `true`. |
+
+### Examples
+
+A sequence that contains the notes of a C minor pentatonic (in the 4th octave):
+
+```json
+{
+    "id": "c-minor-pentatonic",
+    "values": [ "c4", "e-4", "f4", "g4", "b-4" ]
+}
+```
+
+A non-shared sequence that iterates over the 8 input ports:
+
+```json
+{
+    "id": "input-port-voltages",
+    "values": [
+        { "input": 1 },
+        { "input": 2 },
+        { "input": 3 },
+        { "input": 4 },
+        { "input": 5 },
+        { "input": 6 },
+        { "input": 7 },
+        { "input": 8 },
+    ],
+    "shared": false
 }
 ```

@@ -1004,7 +1004,7 @@ void SequenceProcessor::remove(int position) {
 		if (position < (int) m_values.size()) {
 			m_values.erase(m_values.begin() + position);
 		}
-	} else {
+	} else if (m_values.size() > 0) {
 		m_values.pop_back();
 	}
 }
