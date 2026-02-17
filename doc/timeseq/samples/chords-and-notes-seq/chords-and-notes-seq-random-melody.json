@@ -1,0 +1,222 @@
+{
+	"$schema": "file:///home/johan/development/vcv/Rack/plugins/not-things/doc/timeseq/schema/timeseq-script-1.2.0.schema.json",
+	"type": "not-things_timeseq_script",
+	"version": "1.2.0",
+	"timelines": [
+		{
+			"time-scale": {
+				"x-description": "Set the Beats per Minute and Beats per Bar that will apply to segments in this timeline",
+				"bpm": 120,
+				"bpb": 4
+			},
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": { "sequence": "chord-root-notes" }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"x-description": "The second lane that will contain the arpeggiated chord notes, referencing segment-block instances from the component-pool",
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{ "segment-block": "c-arp" },
+						{ "segment-block": "f-arp" },
+						{ "segment-block": "d-arp" },
+						{ "segment-block": "g-arp" }
+					]
+				},
+				{
+					"x-description": "The third lane that will play a random melody by retrieving notes from the melody-notes sequence at random positions",
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "beats": 1 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 4,
+											"value": {
+												"sequence": {
+												"id": "melody-notes",
+												"move-after": "random"
+											}
+										}
+									}
+								},
+								{
+									"timing": "gate",
+									"output": 5
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"component-pool": {
+        "actions": [
+            {
+                "id": "arp-gate-action",
+				"x-description": "The addition of the 'if' condition will cause the gate to only trigger if the random 'play-note' variable is above 2.5.",
+                "timing": "gate",
+				"if": { "ref": "should-play-note" },
+                "output": 3
+            },
+			{
+				"id": "determine-chance",
+				"timing": "start",
+				"set-variable": {
+					"name": "play-note",
+					"value": {
+						"rand": {
+							"lower": 0,
+							"upper": 10
+						}
+					}
+				}
+			}
+        ],
+		"ifs": [
+			{
+				"id": "should-play-note",
+				"gt": [
+					{ "variable": "play-note" },
+					{
+						"input": 1,
+						"calc": [
+							{ "div": 2 },
+							{ "add": 2.5 }
+						]
+					}
+				]
+			}
+		],
+		"sequences": [
+			{
+				"id": "chord-root-notes",
+				"values": [ "C3", "F3", "D3", "G3" ]
+			},
+			{
+				"id": "c-arp-notes",
+				"values": [ "C4", "E4", "G4", "C5" ]
+			},
+			{
+				"id": "f-arp-notes",
+				"values": [ "C4", "F4", "A4", "C5" ]
+			},
+			{
+				"id": "d-arp-notes",
+				"values": [ "D4", "F4", "A4", "D5" ]
+			},
+			{
+				"id": "g-arp-notes",
+				"values": [ "D4", "G4", "B4", "D5" ]
+			},
+			{
+				"id": "melody-notes",
+				"values": [ "C5", "D5", "E5", "G5", "A5" ]
+			}
+		],
+		"segment-blocks" : [
+			{
+				"id": "c-arp",
+				"x-description": "The segment-block plays the arpeggiated C chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{ "ref": "determine-chance" },
+							{
+								"x-description": "The addition of the 'if' condition will cause the note to only change if the random 'play-note' variable is above 2.5.",
+								"if": { "ref": "should-play-note" },
+								"set-value": { "output": 2, "value": { "sequence": "c-arp-notes" } }
+							},
+                            {
+                                "ref": "arp-gate-action"
+                            }
+						]
+					}
+				]
+			},
+			{
+				"id": "f-arp",
+				"x-description": "The segment-block plays the arpeggiated F chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{ "ref": "determine-chance" },
+							{
+								"x-description": "The addition of the 'if' condition will cause the note to only change if the random 'play-note' variable is above 2.5.",
+								"if": { "ref": "should-play-note" },
+								"set-value": { "output": 2, "value": { "sequence": "f-arp-notes" } }
+							},
+                            {
+                                "ref": "arp-gate-action"
+                            }
+						]
+					}
+				]
+			},
+			{
+				"id": "d-arp",
+				"x-description": "The segment-block plays the arpeggiated D chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{ "ref": "determine-chance" },
+							{
+								"x-description": "The addition of the 'if' condition will cause the note to only change if the random 'play-note' variable is above 2.5.",
+								"if": { "ref": "should-play-note" },
+								"set-value": { "output": 2, "value": { "sequence": "d-arp-notes" } }
+							},
+                            {
+                                "ref": "arp-gate-action"
+                            }
+						]
+					}
+				]
+			},
+			{
+				"id": "g-arp",
+				"x-description": "The segment-block plays the arpeggiated G chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{ "ref": "determine-chance" },
+							{
+								"x-description": "The addition of the 'if' condition will cause the note to only change if the random 'play-note' variable is above 2.5.",
+								"if": { "ref": "should-play-note" },
+								"set-value": { "output": 2, "value": { "sequence": "g-arp-notes" } }
+							},
+                            {
+                                "ref": "arp-gate-action"
+                            }
+						]
+					}
+				]
+			}
+		]
+	}
+}

@@ -989,7 +989,7 @@ bool SequenceProcessor::isRetrieveVoltageOnce() {
 
 void SequenceProcessor::add(shared_ptr<ValueProcessor> value, int position) {
 	if (position > -1) {
-		if (position >= (int)m_values.size()) {
+		if (position >= (int) m_values.size()) {
 			m_values.push_back(value);
 		} else {
 			m_values.insert(m_values.begin() + position, value);

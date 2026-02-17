@@ -52,7 +52,11 @@ void TimeSeqCore::reloadScript() {
 		m_sampleRate = m_sampleRateReader->getSampleRate();
 		m_reset = true;
 
-		m_status = Status::LOADING;
+		// Change the running state back to LOADING unless we're in a RUNNING state with
+		// a start delay (in which case we're in the loading phase of the patch, so don't reset the state)
+		if ((m_status != Status::RUNNING) || (m_startSampleDelay <= 0)) {
+			m_status = Status::LOADING;
+		}
 	}
 }
 
@@ -179,6 +183,6 @@ void TimeSeqCore::processReset() {
 	}
 
 	resetElapsedSamples();
-	
+
 	m_reset = false;
 }

@@ -1363,6 +1363,26 @@ Note that the `shared` property of the `sequence` identifies if the position of 
 }
 ```
 
+### Shorthand Sequence Notation
+
+A *sequence value* that only specifies the `id` property and not the other properties (i.e. no `move-before`, `move-after` or `wrap` properties) can also be specified with a shorthand notation: the sequence `id` string can be used as value instead of a full object. This means that following *sequence value*
+
+```json
+{
+    "value": { "sequence": { "id": "my-sequence-id" } }
+}
+```
+
+can also be written as follows:
+
+```json
+{
+    "value": { "sequence": "my-sequence-id" }
+}
+```
+
+This will cause no move to happen before the value is retrieved, and a `forward` move with wraparound behaviour will be performed after the value was retrieved from the sequence with id `my-sequence-id`.
+
 ## calc
 
 Allows calculations to be performed on [value](#value)s. A *value* can contain a list of calculations. First the voltage of the value itself will be determined. Subsequently, each calculation modifies the value (e.g. adds or subtracts another value from the current voltage).
