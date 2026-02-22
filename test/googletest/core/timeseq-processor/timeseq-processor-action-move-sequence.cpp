@@ -43,8 +43,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionShouldFailOnNonSharedSequen
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "non-shared-sequence" }, { "shared", false }, { "values", json::array() } }
 	});
 
@@ -95,8 +94,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithNoMoveOrPositionShouldM
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -206,8 +204,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithForwardMoveShouldMoveFo
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -317,8 +314,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithBackwardMoveShouldMoveB
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -428,8 +424,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithNoneMoveShouldNotMove) 
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -531,8 +526,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithRandMoveShouldMoveRando
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -634,8 +628,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithRandMoveOutOfBoundsShou
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -706,8 +699,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithPositionShouldMoveToPos
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -812,8 +804,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithPositionOutOfBoundsShou
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -918,8 +909,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithNoWrapShouldStopOnBound
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -1034,8 +1024,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithMixShouldMoveMixed) {
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
@@ -1139,8 +1128,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithEmptySequenceShouldWork
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "an-empty-sequence" }, { "values", json::array({}) } }
 	});
 

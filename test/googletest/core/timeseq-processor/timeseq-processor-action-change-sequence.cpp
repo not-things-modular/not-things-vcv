@@ -121,11 +121,11 @@ TEST(TimeSeqProcessorChangeSequence, ClearSequenceActionShouldClearSequence) {
 		}) } }
 	});
 
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "simple-shared-sequence" }, { "shared", true }, { "values", sequence1 } },
 		{ { "id", "simple-non-shared-sequence" }, { "shared", false }, { "values", sequence2 } }
 	});
+	json["component-pool"] = json::object();
 	json["component-pool"]["actions"] = json::array({
 		{ { "id", "set-non-shared-seq-value-1" }, { "set-value", { { "output", 5 }, { "value", { { "sequence", "simple-non-shared-sequence" } } } } } },
 		{ { "id", "set-non-shared-seq-value-2" }, { "set-value", { { "output", 6 }, { "value", { { "sequence", "simple-non-shared-sequence" } } } } } },
@@ -242,8 +242,7 @@ TEST(TimeSeqProcessorChangeSequence, RemoveAddAndClearActionsShouldWork) {
 			}) } }
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", sequence1 } },
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", sequence2 } }
 	});
@@ -351,8 +350,7 @@ TEST(TimeSeqProcessorChangeSequence, AddToSequenceAsConstantVoltageShouldRetriev
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", json::array({}) } },
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({}) } }
 	});
@@ -419,8 +417,7 @@ TEST(TimeSeqProcessorChangeSequence, AddToSequenceAsNonConstantVoltageShouldRetr
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", json::array({}) } },
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({}) } }
 	});
@@ -492,8 +489,7 @@ TEST(TimeSeqProcessorChangeSequence, OutOfBoundsPositionAfterRemoveFromSequenceS
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", json::array({ 1, 2, 3, 4, 5 }) } },
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({ 9, 8, 7, 6, 5 }) } }
 	});
@@ -567,8 +563,7 @@ TEST(TimeSeqProcessorChangeSequence, RemoveFromSequenceShouldDoNothingOnOutOfBou
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", sequence1 } },
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", sequence2 } }
 	});
@@ -618,8 +613,7 @@ TEST(TimeSeqProcessorChangeSequence, RemoveFromSequenceShouldHandleRemoveFromEnd
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-non-shared-sequence" }, { "shared", false }, { "values", json::array({}) } },
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({}) } }
 	});

@@ -90,8 +90,9 @@ ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDir
 JsonScriptParser::~JsonScriptParser() {}
 
 shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError>* validationErrors, vector<string> location) {
-	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "component-pool", "$schema" };
+	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "sequences", "component-pool", "$schema" };
 	shared_ptr<Script> script = make_shared<Script>();
+	vector<string> ids;
 
 	JsonScriptParseContext context;
 	context.validationErrors = validationErrors;
@@ -198,12 +199,42 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 		}
 	}
 
+	json::const_iterator sequences = scriptJson.find("sequences");
+	if (sequences != scriptJson.end()) {
+		verifyVersion(VERSION_1_1_0, &context, "'sequences'", location);
+		if (sequences->is_array()) {
+			location.push_back("sequences");
+
+			ids.clear();
+			int count = 0;
+			vector<json> sequenceElements = (*sequences);
+			for (const json& sequence : sequenceElements) {
+				location.push_back(to_string(count));
+				if (sequence.is_object()) {
+					script->sequences.push_back(parseSequence(sequence, &context, location));
+					if (find(ids.begin(), ids.end(), script->sequences.back().id) != ids.end()) {
+						ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->sequences.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+					} else if (script->sequences.back().id.size() > 0) {
+						ids.push_back(script->sequences.back().id);
+					}
+				} else {
+					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SequenceObject, "'sequences' elements must be objects.");
+				}
+				location.pop_back();
+				count++;
+			}
+
+			location.pop_back();
+		} else {
+			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SequencesArray, "'sequences' must be an array.");
+		}
+	}
+
 	json::const_iterator componentPool = scriptJson.find("component-pool");
 	if (componentPool != scriptJson.end()) {
 		if (componentPool->is_object()) {
-			static const vector<string> componentPoolProperties = { "segment-blocks", "segments", "inputs", "outputs", "calcs", "values", "actions", "ifs", "tunings", "sequences" };
+			static const vector<string> componentPoolProperties = { "segment-blocks", "segments", "inputs", "outputs", "calcs", "values", "actions", "ifs", "tunings" };
 			location.push_back("component-pool");
-			vector<string> ids;
 
 			verifyAllowedProperties(*componentPool, componentPoolProperties, false, context.validationErrors, location);
 
@@ -473,37 +504,6 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 					location.pop_back();
 				} else {
 					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TuningsArray, "'tunings' must be an array.");
-				}
-			}
-
-			json::const_iterator sequences = componentPool->find("sequences");
-			if (sequences != componentPool->end()) {
-				verifyVersion(VERSION_1_1_0, &context, "'sequences'", location);
-				if (sequences->is_array()) {
-					location.push_back("sequences");
-
-					ids.clear();
-					int count = 0;
-					vector<json> sequenceElements = (*sequences);
-					for (const json& sequence : sequenceElements) {
-						location.push_back(to_string(count));
-						if (sequence.is_object()) {
-							script->sequences.push_back(parseSequence(sequence, &context, location));
-							if (find(ids.begin(), ids.end(), script->sequences.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->sequences.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
-							} else if (script->sequences.back().id.size() > 0) {
-								ids.push_back(script->sequences.back().id);
-							}
-						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SequenceObject, "'sequences' elements must be objects.");
-						}
-						location.pop_back();
-						count++;
-					}
-
-					location.pop_back();
-				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SequencesArray, "'sequences' must be an array.");
 				}
 			}
 

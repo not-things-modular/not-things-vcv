@@ -55,8 +55,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToUnknownSequenceShouldFail)
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array();
+	json["sequences"] = json::array();
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
@@ -77,14 +76,13 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToInvalidSequenceShouldFail)
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "values", 5 } }
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Sequence_ValuesArray, "/component-pool/sequences/0");
+	expectError(validationErrors, ValidationErrorCode::Sequence_ValuesArray, "/sequences/0");
 }
 
 TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToSequenceWithoutIdShouldFail) {
@@ -101,14 +99,13 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToSequenceWithoutIdShouldFai
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "values", json::array({ 0, 1, 2, 3, 4, 5 }) } }
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/sequences/0");
+	expectError(validationErrors, ValidationErrorCode::Id_String, "/sequences/0");
 }
 
 TEST(TimeSeqProcessorSequence, ScriptWithShorthandSequenceRefShouldUseSequence) {
@@ -126,8 +123,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithShorthandSequenceRefShouldUseSequence) 
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "values", json::array({ 0, 1, 2, 3, 4, 5 }) } }
 	});
 
@@ -165,8 +161,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithFullSequenceRefShouldUseSequence) {
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "values", json::array({ 0, 1, 2, 3, 4, 5 }) } }
 	});
 
@@ -206,8 +201,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithRetrieveVoltageOnceUndefinedShouldOnl
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "values", json::array(
 			{
 				{ { "variable", "var-1" } },
@@ -264,8 +258,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithRetrieveVoltageOnceTrueShouldOnlyRetr
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "retrieve-voltage-once", true }, { "values", json::array(
 			{
 				{ { "variable", "var-1" } },
@@ -322,8 +315,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithRetrieveVoltageOnceFalseShouldRetriev
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "retrieve-voltage-once", false }, { "values", json::array(
 			{
 				{ { "variable", "var-1" } },
@@ -387,8 +379,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithSharedFalseShouldMoveIndependently) {
 			}) } } }) } }
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "shared", false }, { "values", json::array({ 0.f, 1.f, 2.f, 3.f, 4.f }) } }
 	});
 
@@ -445,8 +436,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithSharedFalseAndWrapFalseShouldMoveInde
 			}) } } }) } }
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "shared", false }, { "values", json::array({ 0.f, 1.f, 2.f, 3.f, 4.f }) } }
 	});
 
@@ -514,8 +504,7 @@ TEST(TimeSeqProcessorSequence, SharedSequenceWithMoveBeforeAndMoveAfterShouldCom
 			}) } } }) } }
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "a-sequence" }, { "values", json::array({ 0.f, 1.f, 2.f, 3.f, 4.f }) } }
 	});
 
@@ -577,8 +566,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithEmptySequenceShouldUseZeroValues) {
 			}) } } }) } },
 		}) } }
 	});
-	json["component-pool"] = json::object();
-	json["component-pool"]["sequences"] = json::array({
+	json["sequences"] = json::array({
 		{ { "id", "an-empty-sequence" }, { "values", json::array({}) } }
 	});
 

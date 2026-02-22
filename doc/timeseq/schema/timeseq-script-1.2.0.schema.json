@@ -41,6 +41,13 @@
 						"$ref": "#/definitions/input-trigger"
 					}
 				},
+				"sequences": {
+					"descriptions": "A list of sequences that can be used in this script.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/sequence"
+					}
+				},
 				"component-pool": {
 					"$ref": "#/definitions/component-pool"
 				}
@@ -48,7 +55,41 @@
 			"required": [ "type", "version" ],
 			"propertyNames": {
 				"anyOf": [
-					{ "enum": [ "$schema", "type", "version", "timelines", "global-actions", "input-triggers", "component-pool" ] },
+					{ "enum": [ "$schema", "type", "version", "timelines", "global-actions", "input-triggers", "sequences", "component-pool" ] },
+					{ "pattern": "^x-" }
+				]
+			}
+		},
+		"sequence": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"description": "The id of the sequence.",
+					"type": "string",
+					"minLength": 1
+				},
+				"values": {
+					"description": "The list of values in this sequence.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/value"
+					}
+				},
+				"retrieve-voltage-once": {
+					"description": "Whether the voltage of a value should be retrieved once or repeatedly when it is requested multiple times without the position in the sequence changing in between.",
+					"type": "boolean",
+					"default": "false"
+				},
+				"shared": {
+					"description": "Whether the active position of this sequence will be shared by a references that use it, or whether each reference will have its own distinct position (default=true).",
+					"type": "boolean",
+					"default": true
+				}
+			},
+			"required": [ "id", "values" ],
+			"propertyNames": {
+				"anyOf": [
+					{ "enum": [ "id", "values", "shared", "retrieve-voltage-once" ] },
 					{ "pattern": "^x-" }
 				]
 			}
@@ -134,24 +175,6 @@
 					"items": {
 						"allOf": [
 							{ "$ref": "#/definitions/tuning-full" },
-							{ "$ref": "#/definitions/referenceable" }
-						]
-					}
-				},
-				"sequences": {
-					"type": "array",
-					"items": {
-						"allOf": [
-							{ "$ref": "#/definitions/sequence-full" },
-							{
-								"properties": {
-									"shared": {
-										"description": "Whether the active position of this sequence will be shared by a references that use it, or whether each reference will have its own distinct position (default=true).",
-										"type": "boolean",
-										"default": true
-									}
-								}
-							},
 							{ "$ref": "#/definitions/referenceable" }
 						]
 					}
@@ -1274,30 +1297,6 @@
 			"propertyNames": {
 				"anyOf": [
 					{ "enum": [ "id", "position" ] },
-					{ "pattern": "^x-" }
-				]
-			}
-		},
-		"sequence-full": {
-			"type": "object",
-			"properties": {
-				"values": {
-					"description": "The list of values in this sequence.",
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/value"
-					}
-				},
-				"retrieve-voltage-once": {
-					"description": "Whether the voltage of a value should be retrieved once or repeatedly when it is requested multiple times without the position in the sequence changing in between.",
-					"type": "boolean",
-					"default": "false"
-				}
-			},
-			"required": [ "values" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "values", "shared", "retrieve-voltage-once" ] },
 					{ "pattern": "^x-" }
 				]
 			}
