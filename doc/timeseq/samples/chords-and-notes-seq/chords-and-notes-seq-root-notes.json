@@ -25,12 +25,11 @@
 			]
 		}
 	],
-	"component-pool": {
-		"sequences": [
-			{
-				"id": "chord-root-notes",
-				"values": [ "C3", "F3", "D3", "G3" ]
-			}
-		]
-	}
+	"sequences": [
+		{
+			"id": "chord-root-notes",
+			"values": [ "C3", "F3", "D3", "G3" ]
+		}
+	]
 }
+

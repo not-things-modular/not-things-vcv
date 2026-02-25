@@ -2,8 +2,7 @@
 
 *A Sample script for the not-things [TimeSeq](../../TIMESEQ.md) module.*
 
-With the introduction of [sequences](../TIMESEQ-SCRIPT-JSON.md#sequence) in script version v1.2.0 (TimeSeq v2.6.0), it has become easier to create scripts that perform repeated actions using sequences of values/notes (e.g. chord progressions, note sequences, CV value sequences). To demonstrate some of the features of *sequences*, this sample page will recreate the original [Chord Progression and Note Melody](./CHORDS-AND-NOTES.md) with sequences. We'll follow the same flow to construct a script that will generate the same output, but use *sequences* where applicable.
-me result using the new *sequences* feature, see []().
+With the introduction of [sequences](../TIMESEQ-SCRIPT-JSON.md#sequence) in script version v1.2.0 (TimeSeq v2.6.0), it has become easier to create scripts that perform repeated actions using a sequence of values/notes (e.g. chord progressions, note sequences, CV value sequences). To demonstrate some of the features of *sequences*, this sample page will recreate the original [Chord Progression and Note Melody](./CHORDS-AND-NOTES.md) with sequences. We'll follow the same flow to construct a script that will generate the same output, but use *sequences* where applicable.
 
 ## Table of Contents
 
@@ -16,18 +15,16 @@ me result using the new *sequences* feature, see []().
 
 ## A Basic Note Sequence
 
-The first thing we'll add to the script is a sequence that contains our notes. Seqeunces have to be created in the [component-pool](../TIMESEQ-SCRIPT-JSON.md#component-pool) of the script:
+The first thing we'll add to the script is a sequence that contains our notes. Seqeunces have to be created in the `sequences` property at the root of the [script](../TIMESEQ-SCRIPT-JSON.md#script):
 
 ```json
 {
-    "component-pool": {
-        "sequences": [
-            {
-                "id": "chord-root-notes",
-                "values": [ "C3", "F3", "D3", "G3" ]
-            }
-        ]
-    }
+    "sequences": [
+        {
+            "id": "chord-root-notes",
+            "values": [ "C3", "F3", "D3", "G3" ]
+        }
+    ]
 }
 ```
 
@@ -108,7 +105,7 @@ The note sequence *segment*s can now express its duration in `beats` and `bars`.
 For the arpeggiated notes, we'll create four sequences: one for each of the chords, containing the four arpeggiated notes of that chord:
 
 ```json
-"component-pool": {
+{
     "sequences": [
         ...
         {
@@ -372,18 +369,3 @@ This *lane* repeats one segment that updates the voltage on the 4th *output* of 
 ### Full Script and VCV Rack Patch
 
 The resulting script for this step can be found in [chords-and-notes-seq-random-melody.json](chords-and-notes-seq/chords-and-notes-seq-random-melody.json), with the [chords-and-notes-seq-random-melody.vcv](chords-and-notes-seq/chords-and-notes-seq-random-melody.vcv) sending the newly generated note sequence through an additional VCO, with the new gate signal driving another ADSR envelope generator.
-
-## Evolving melody by modifying a sequence
-
-In the previous step, we created a melody by moving at random through a note sequence. In this step, we're going to use sequences to create an evolving melody line. By using the [add-to-sequence](../TIMESEQ-SCRIPT-JSON.md#add-to-sequence), [remove-from-sequence](../TIMESEQ-SCRIPT-JSON.md#remove-from-sequence) actions to modify a sequence, we'll create a melody that changes over time. We'll still use the `melody-notes` sequence from the previous step, but we'll add a second `evolving-melody` sequence that we initially populate with the same six notes:
-
-```json
-"sequences": [
-    ...
-    {
-        "id": "evolving-melody",
-        "values": [ "C5", "D5", "E5", "G5", "A5", "C6" ]
-    }
-],
-```
-

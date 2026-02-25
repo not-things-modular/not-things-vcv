@@ -41,6 +41,28 @@
 			]
 		}
 	],
+	"sequences": [
+		{
+			"id": "chord-root-notes",
+			"values": [ "C3", "F3", "D3", "G3" ]
+		},
+		{
+			"id": "c-arp-notes",
+			"values": [ "C4", "E4", "G4", "C5" ]
+		},
+		{
+			"id": "f-arp-notes",
+			"values": [ "C4", "F4", "A4", "C5" ]
+		},
+		{
+			"id": "d-arp-notes",
+			"values": [ "D4", "F4", "A4", "D5" ]
+		},
+		{
+			"id": "g-arp-notes",
+			"values": [ "D4", "G4", "B4", "D5" ]
+		}
+	],
 	"component-pool": {
         "actions": [
             {
@@ -49,28 +71,6 @@
                 "output": 3
             }
         ],
-		"sequences": [
-			{
-				"id": "chord-root-notes",
-				"values": [ "C3", "F3", "D3", "G3" ]
-			},
-			{
-				"id": "c-arp-notes",
-				"values": [ "C4", "E4", "G4", "C5" ]
-			},
-			{
-				"id": "f-arp-notes",
-				"values": [ "C4", "F4", "A4", "C5" ]
-			},
-			{
-				"id": "d-arp-notes",
-				"values": [ "D4", "F4", "A4", "D5" ]
-			},
-			{
-				"id": "g-arp-notes",
-				"values": [ "D4", "G4", "B4", "D5" ]
-			}
-		],
 		"segment-blocks" : [
 			{
 				"id": "c-arp",

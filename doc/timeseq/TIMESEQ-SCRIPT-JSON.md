@@ -39,8 +39,8 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
           * `clear-sequence` - Clears all values from a sequence
   * [input-triggers](#input-trigger) - Fire internal triggers based on external trigger signals
   * global-[action](#action) - *Action*s to perform during script start
+  * [sequences](#sequence) - Sequences of values
   * [component-pool](#component-pool) - A pool of reusable JSON objects
-    * [sequences](#sequence) - Sequences of values
 
 ## Versions
 
@@ -71,19 +71,22 @@ The `global-actions` property allows specific *action*s to be executed when a sc
 
 If there is a need to generate internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers) based on external trigger sources, the `input-triggers` property allows input ports to be set up for receiving external trigger signals.
 
+The `sequences` property can contain sequences of values that can be iterated over by [sequence values](#sequence-value) and manipulated using sequence actions (such as [move-sequence](#move-sequence), [add-to-sequence](#add-to-sequence), etc.).
+
 In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [referencing](TIMESEQ-SCRIPT.md#referencing) section of the main TimeSeq script documentation file for more details.
 
 ### Properties
 
-| property | required | type | description |
-| --- | --- | --- | --- |
-| `type` | yes | string | Must be set to `not-things_timeseq_script` |
-| `version` | yes | string | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
-| `$schema` | no | uri string | Allows JSON schema validation to be performed by schema-aware JSON editors. See the [script version](TIMESEQ-SCRIPT-VERSION.md) page for the schema URIs that can be used. The value given to this property will not influence TimeSeq parsing or processing itself. |
-| `timelines` | no | [timeline](#timeline) list | A list of *timeline*s that will drive the sequencer. |
-| `global-actions` | no | [action](#action) list | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
-| `input-triggers` | no | [input-trigger](#input-trigger) list | A list of input trigger definitions, allowing gate/trigger signals on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
-| `component-pool` | no | [component-pool](#component-pool) | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script. |
+| property | required | type | since | description |
+| --- | --- | --- | --- | --- |
+| `type` | yes | string | | Must be set to `not-things_timeseq_script` |
+| `version` | yes | string | | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
+| `$schema` | no | uri string | | Allows JSON schema validation to be performed by schema-aware JSON editors. See the [script version](TIMESEQ-SCRIPT-VERSION.md) page for the schema URIs that can be used. The value given to this property will not influence TimeSeq parsing or processing itself. |
+| `timelines` | no | [timeline](#timeline) list | | A list of *timeline*s that will drive the sequencer. |
+| `global-actions` | no | [action](#action) list | | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
+| `input-triggers` | no | [input-trigger](#input-trigger) list | | A list of input trigger definitions, allowing gate/trigger signals on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
+| `sequences` | no | [sequence](#sequence) list |*1.2.0* | A list of *sequence*s that can be used in [sequence values](#sequence-value) |
+| `component-pool` | no | [component-pool](#component-pool) | | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script. |
 
 ### Example
 
@@ -267,7 +270,6 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
 | `actions` | no | [action](#action) list | | A list of reusable *action* objects. |
 | `ifs` | no | [if](#if) list | | A list of reusable *if* objects. |
 | `tunings` | no | [tuning](#tuning) list | *1.1.0* | A list of *tuning* objects that can be used in *quantize* *calc*s |
-| `sequences` | no | [sequence](#sequence) list | *1.2.0* | A list of *sequence*s that can be used in [sequence values](#sequence-value) |
 
 ### Example
 
@@ -284,12 +286,6 @@ See [referencing](TIMESEQ-SCRIPT.md#referencing) in the script overview page for
         "values": [
             { "id": "one-and-a-half", "voltage": 1.5 },
             { "id": "full", "voltage": 10 }
-        ],
-        "sequences": [
-            {
-                "id": "c-major-pentatonic",
-                "values": [ "c4", "d4", "e4", "g4", "a4" ]
-            }
         ]
     }
 }
@@ -1542,7 +1538,7 @@ A tuning that uses 1V/Oct values that don't follow the usual semitone notes:
 
 ## sequence
 
-A sequence contains a list of values and can be used to allow the same action (or set of actions) to be performed repeatedly with a different value on each iteration by using a [sequence value](#sequence-value). Some (simple) possible scenarios in which sequences can be used are chord progressions, note chains or a list of modulation CV values.
+A sequence contains a list of values and can be used to allow the same action (or set of actions) to be performed repeatedly with a different value on each iteration by using a [sequence value](#sequence-value). Some (simple) possible scenarios in which sequences can be used are chord progressions, note chains or a list of modulation CV values. Sequences are defined in the `sequences` property at the root of the script document.
 
 The `values` property specifies the list of values in the sequence. Any type of value can be used for this: constant values, [input](#input) values, [output](#output) values, etc.
 
