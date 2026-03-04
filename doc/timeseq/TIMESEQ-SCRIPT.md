@@ -137,11 +137,11 @@ This trigger mechanism can be used for multiple purposes:
 
 ## Sequences
 
-Since it is a sequencer, one of the intended purposes of TimeSeq is to execute scripts that sequence other modules in a VCV Rack patch. Often, this will require the same action or set of actions to be executed multiple times, but with a changing (and looping) value each time the action(s) are executed. To more easily facilitate this, [sequences](TIMESEQ-SCRIPT-JSON.md#sequence) were introduced. These allow a list of values (voltages or notes) to be defined that can then be iterated over by using them in a [sequence-value](TIMESEQ-SCRIPT-JSON.md#sequence-value).
+Since it is a sequencer, one of the intended purposes of TimeSeq is to execute scripts that sequence other modules in a VCV Rack patch. Often, this will require the same action or set of actions to be executed multiple times, but with a changing value each time the action(s) are executed. To more easily facilitate this, [sequences](TIMESEQ-SCRIPT-JSON.md#sequence) were introduced. These allow a list of values (voltages or notes) to be defined that can then be iterated over by using them in a [sequence-value](TIMESEQ-SCRIPT-JSON.md#sequence-value).
 
-By default, each time a value is retrieved from the sequence using the `sequence-value`, the position within the sequence is also moved forward. This can however be changed by using the `move-before` and/or `move-after` properties to overwrite the default movement behaviour.
+By default, each time a value is retrieved from the sequence using a `sequence-value`, the position within the sequence is also moved forward, wrapping around to the first element after reaching the end of the sequence. This can however be changed by using the `move-before`, `move-after` and/or `wrap` properties to overwrite the default movements behaviour of the `sequence-value`.
 
-While the values of the sequence can be defined in the JSON script itself, it's also possible to dynamically change them during the execution of the script. A number of *actions* are available for this:
+While the most common way of using sequences is to define the values of the sequence directly in the JSON script itself, it's also possible to dynamically change the values of a sequence during the execution of the script. A number of *actions* are available for this:
 
 * [add-to-sequence](TIMESEQ-SCRIPT-JSON.md#add-to-sequence): Adds a value to a sequence
 * [remove-from-sequence](TIMESEQ-SCRIPT-JSON.md#remove-from-sequence): Remove a value from a sequence

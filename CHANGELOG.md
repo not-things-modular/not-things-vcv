@@ -3,7 +3,7 @@
 ## 2.0.6 (TBD)
 
 * **TimeSeq**
-  *
+  * Added `sequences` with accompanying `sequence values`, and `move-sequence`, `add-to-sequence`, `remove-from-sequence` and `clear-sequence` actions
   * Fixed running state persistence on script loading if the sample rate changes as part of the patch load process (e.g. if VCV Rack is set to auto sample rate).
 
 * **Solim**

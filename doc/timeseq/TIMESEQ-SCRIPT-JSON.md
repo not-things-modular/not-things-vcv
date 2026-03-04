@@ -929,13 +929,13 @@ An example of a set-value within an action:
 
 ## move-sequence
 
-The *move-sequence* action allows the position of a [sequence](#sequence) to be moved, changing the active item within the sequence. This action can only be used with `shared` sequences since non-shared sequences have a different active position for each [sequence value](#sequence-value) that uses the sequence.
+The *move-sequence* action allows the position of a [sequence](#sequence) to be moved, changing the active item within that sequence. This action can only be used with `shared` sequences since non-shared sequences have a different active position for each [sequence value](#sequence-value) that uses the sequence.
 
 When using the `direction` property, the position of the sequence can be moved relatively to the current position: `forward`, `backward` or `random`. The `wrap` property can be used to specify if wraparound behaviour should be used when reaching the start or end of the sequence.
 
 Absolute movements in the sequence can be done using the `position` property, which allows the active *value* to be set by index. Note that the `position` property uses zero-based indexing of the elements, so position `0` is the first value, position `1` is the second value, position `2` is the third value, etc. Using a negative `position` or a value that's bigger then the number of values in the sequence will cause the last value in the sequence to become the active value.
 
-One of `direction` or `position` must be specified for a *move-sequence* and they can't be used together within the same *move-sequence*.
+Either `direction` or `position` must be specified for a *move-sequence* and they can't be used together within the same *move-sequence*.
 
 ### Properties
 
@@ -944,7 +944,7 @@ One of `direction` or `position` must be specified for a *move-sequence* and the
 | `id` | yes | string | The identifier of the shared [sequence](#sequence) that should be moved. |
 | `direction` | no | string | The direction in which to move the sequence. Can be either `forward`, `backward` or `random`. Either this property or `position` must be specified. |
 | `wrap` | no | boolean | Indicates if wraparound behaviour should be used when performing a `direction` move. Defaults to `true`. |
-| `position` | no | number | The zero-based index of the item to move the sequence to or a negative value to activate the last item. Either this property or `direction` must be specified. |
+| `position` | no | number | The zero-based index of the item to move the sequence to, or a negative value to move the position to the last item in the sequence. Either this property or `direction` must be specified. |
 
 ### Example
 
@@ -985,15 +985,17 @@ Moving to the last item of the sequence:
 }
 ```
 
+*Sequences were introduced in TimeSeq script version 1.2.0.*
+
 ## add-to-sequence
 
 The *add-to-sequence* action allows values to be added to the list of values of a [sequence](#sequence).
 
 The `value` property identifies which [value](#value) to add to the sequence. Any of the available value types (*constant voltage*, *input*, *output*, ...) can be used, either inline or by reference.
 
-The `position` property identifies where to add the `value` in to the sequence using a zero-based index: `0` inserts the `value` as first element of the sequence `values` list, `1` as second, `2` as third, etc. Any values that are in the sequence after that position will be moved one position towards the back. If no `position` is supplied, a negative `position` or a `position` that is bigger then the number of current values in the sequence, the new value will be added to the end of the list of `values`.
+The `position` property identifies where to add the `value` in to the sequence using a zero-based index: `0` inserts the `value` as first element of the sequence `values` list, `1` as second, `2` as third, etc. Any values that are in the sequence after that position will be moved one position towards the back. If no `position`, a negative `position` or a `position` that is bigger then the number of current values in the sequence is supplied, the new value will be added to the end of the list of `values`.
 
-By default, the new `value` will be added as-is to the sequence: each time the value is used, it's voltage will be re-evaluated (e.g. retrieve the voltage of an input port for an [input](#input) value or generate a new random value for a [rand](#rand) value). However, if the `as-constant-voltage` property is set to `true`, the current voltage of the `value` will be determined when it is added the the sequence, and that pre-determined voltage will be used each time when this value becomes active within the sequence instead of re-evaluating the voltage each time.
+By default, the new `value` will be added as-is to the sequence: each time the value is used, it's voltage will be re-evaluated (e.g. retrieve the voltage of an input port for an [input](#input) value or generate a new random value for a [rand](#rand) value). However, if the `as-constant-voltage` property is set to `true`, the current voltage of the `value` will be determined when it is added the the sequence, and that pre-determined voltage will be used each time when this value becomes active within the sequence instead of re-evaluating the voltage each time. This feature can be used either to save on processing power, or to capture the "current" voltage at the time the value is inserted into the sequence.
 
 ### Properties
 
@@ -1006,17 +1008,20 @@ By default, the new `value` will be added as-is to the sequence: each time the v
 
 ### Example
 
-An example of a set-label within an action:
+An example of a adding a value to the end of a sequence, capturing the voltage of the first input at the time the value is inserted and using that as a constant voltage from then on:
 
 ```json
 {
     "timing": "start",
-    "set-label": {
-        "index": 5,
-        "label": "My Fifth Script Output"
+    "add-to-sequence": {
+        "id": "sample-sequence",
+        "value": { "input": 1 },
+        "as-constant-voltage": true
     }
 }
 ```
+
+*Sequences were introduced in TimeSeq script version 1.2.0.*
 
 ## remove-from-sequence
 
@@ -1024,14 +1029,14 @@ Removes a value from a [sequence](#sequence).
 
 The value to remove from the *sequence* is identified by it's zero-based `position`. A value of `0` will remove the first value, `1` will remove the second, `2` will remove the third, etc. If the position is outside of the bounds of the list of values for the *sequence*, nothing will happen.
 
-If `position` is set to a negative value, the last value of the *sequence* will be removed. If the *sequence* is already empty, nothing will happen.
+If `position` is set to a negative value, the last value of the *sequence* will be removed. If a *sequence* is already empty and *remove-from-sequence* is called on it, nothing will happen.
 
 ### Properties
 
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `id` | yes | string | The identifier of the [sequence](#sequence) from which a *value* should be removed. |
-| `position` | no | number | The zero-based position index of the value that should be removed, or a negative number to remove the last value from the sequence. Defaults to `-1`. |
+| `position` | no | number | The zero-based position of the value that should be removed, or a negative number to remove the last value from the sequence. Defaults to `-1`. |
 
 ### Example
 
@@ -1044,6 +1049,8 @@ If `position` is set to a negative value, the last value of the *sequence* will 
     }
 }
 ```
+
+*Sequences were introduced in TimeSeq script version 1.2.0.*
 
 ## value
 
@@ -1542,20 +1549,20 @@ A sequence contains a list of values and can be used to allow the same action (o
 
 The `values` property specifies the list of values in the sequence. Any type of value can be used for this: constant values, [input](#input) values, [output](#output) values, etc.
 
-Each time a *sequence value* retrieves a voltage from the sequence, the voltage of the *value* at the current position will be returned. The position of the sequence is updated by this *sequence value* usage (by default the position will automatically be moved one forward after the voltage is retrieved, but this behaviour can be modified using the `move-before` and `move-after` properties of the [sequence value](#sequence-value) element).
+Each time a *sequence value* retrieves a voltage from the sequence, the voltage of the *value* at the current position of the sequence will be returned. The current position of the sequence is updated by this *sequence value* usage: by default the position will automatically be moved one forward after the voltage is retrieved, but this behaviour can be modified using the `move-before` and `move-after` properties of the [sequence value](#sequence-value) element.
 
-The `shared` property of a sequence identifies if the position within the sequence is globally shared throughout the script (`shared=true`) or if each *sequence value* has it's own position within the sequence (`shared=false`). If the sequence is shared, any change of the position made by one element of the script will also apply for all other elements within the script that use that sequence (all other *sequence values* and any action that works on that sequence). If the sequence is not shared, the position can/will be different for each *value* that makes use of that sequence, each *value* moving independently through the items of the sequence.
+The `shared` property of a sequence identifies if the position within the sequence is globally shared throughout the script (`shared=true`) or if each *sequence value* instance maintains it's own private position within the sequence (`shared=false`). If the sequence is shared, any change of the position made by one element of the script will also reflect in the position that is observed by all other elements within the script that use that sequence (i.e. all other *sequence values* and any action that works on that sequence). If the sequence is not shared, the position tracking will be different for each *value* that makes use of that sequence, each *value* moving through the items of the sequence independently from all other *value* instances.
 
 Besides retrieving a voltage from a sequence using a *sequence value*, there are also a number of actions that can be performed on a sequence:
 
 * [move-sequence](#move-sequence): moves the current position of the sequence, either in a direction or to a specific index (can only be used on `shared` sequences),
-* [add-to-sequence](#add-to-sequence): adds a [value](#value) to the list of `values` of a sequence,
-* [remove-from-sequence](#remove-from-sequence): removes an item from the list of `values` of a sequence,
+* [add-to-sequence](#add-to-sequence): adds a [value](#value) to the list of `values` items of a sequence,
+* [remove-from-sequence](#remove-from-sequence): remove an item from the list of `values` items of a sequence,
 * `clear-sequence`: removes all items from the `values` of the sequence with the specified identifier.
 
-The currently active value in a sequence is tracked as a position index within that sequence. This active position index is not influenced by the *add-to-sequence*, *remove-from-sequence* or *clear-sequence* actions. If any of those actions cause another value to be at that position, that value will now be considered the active value instead of the one that was in that position before. If an action causes the position to go out of the range of values in the sequence, the last value of the sequence will be considered the active value for the sequence.
+The currently active value in a sequence is tracked as a position index within that sequence. This active position index is not influenced by the *add-to-sequence*, *remove-from-sequence* or *clear-sequence* actions. If any of these actions cause another value to end up in that position, that value will now be considered the active value instead of the one that was in that position before. If an action causes the position to go out of the range of values in the sequence, the last value of the sequence will be considered the active value for the sequence.
 
-Through the `move-before` and `move-after` properties of the [sequence value](#sequence-value), it is possible to retrieve the current value of a sequence multiple times without moving the position of the sequence. When this occurs, the `retrieve-voltage-once` property of the sequence will influence how the voltage to return is determined. If this property is set to `false`, the voltage of the currently active value is determined each and every time again (e.g. retrieve the current voltage of an [input](#input) port). If `retrieve-voltage-once` is set to `true`, the voltage of the value will only be determined the first time that value is used. Each subsequent time that the value is used, that same voltage will be used instead of re-evaluating the value. As soon as any move is performed (through a *sequence value* or using a [move-sequence](#move-sequence) action), this stored voltage is cleared and the next usage of the sequence will trigger a full value determination again.
+By setting the `move-before` and `move-after` properties of the [sequence value](#sequence-value), it is possible to retrieve the current value of a sequence multiple times without moving actually moving the position of the sequence. When this occurs, the `retrieve-voltage-once` property of the sequence will influence how the voltage to return is determined. If this property is set to `false`, the voltage of the currently active value is determined each and every time again (e.g. retrieve the current voltage of an [input](#input) port). If `retrieve-voltage-once` is set to `true`, the voltage of the value will only be determined the first time that value is used. Each subsequent time that the value is used, that same voltage will be used instead of re-evaluating the value. As soon as any move is performed (through a *sequence value* or using a [move-sequence](#move-sequence) action), this stored voltage is cleared and the next usage of the sequence will trigger a full value determination again.
 
 It is possible for a sequence to contain no `values`. If such a sequence is used by a *sequence value*, a value of `0` volts will be used.
 
@@ -1567,7 +1574,7 @@ It is possible for a sequence to contain no `values`. If such a sequence is used
 | --- | --- | --- | --- |
 | `id` | yes | string | The identifier of the sequence. |
 | `values` | yes | [value](#value) list | The list of values in this sequence. |
-| `shared` | no | boolean | `true` if the position of the sequence is shared throughout the script or `false` if the position is separate for each [sequence value](#sequence-value) that uses the sequence. Defaults to `true`. |
+| `shared` | no | boolean | `true` if the position of the sequence is shared throughout the script or `false` if a separate position is tracked for each [sequence value](#sequence-value) that uses the sequence. Defaults to `true`. |
 | `retrieve-voltage-once` | no | boolean | If the value of a sequence is retrieved multiple times without a change in the sequence position, this property specifies if the voltage of the active value is retrieved only once (the first time) and then re-used after that, or if the voltage of the active value will be fully retrieved each time (e.g. read the voltage of an input port each time). Defaults to `true`. |
 
 ### Examples
