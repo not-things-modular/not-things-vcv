@@ -315,7 +315,7 @@ When checking that value against the randomly generated `play-note` variable (wh
 
 ### Full Script and VCV Rack Patch
 
-The resulting script for this step can be found in [chords-and-notes-seq-arp-chance-mod.json](chords-and-notes-seq/chords-and-notes-seq-arp-chance-mod.json), with the [chords-and-notes-seq-arp-chance-mod.vcv](chords-and-notes-seq/chords-and-notes-seq-arp-chance.vcv) patch using an LFO to generate the input voltage. A scope will also show the LFO output and the resulting gates coming from TimeSeq: as the LFO value is low, there is a higher chance of a note playing and when the LFO is high, there is a lower chance.
+The resulting script for this step can be found in [chords-and-notes-seq-arp-chance-mod.json](chords-and-notes-seq/chords-and-notes-seq-arp-chance-mod.json), with the [chords-and-notes-seq-arp-chance-mod.vcv](chords-and-notes-seq/chords-and-notes-seq-arp-chance-mod.vcv) patch using an LFO to generate the input voltage. A scope will also show the LFO output and the resulting gates coming from TimeSeq: as the LFO value is low, there is a higher chance of a note playing and when the LFO is high, there is a lower chance.
 
 ## Generating a Random Melody
 
