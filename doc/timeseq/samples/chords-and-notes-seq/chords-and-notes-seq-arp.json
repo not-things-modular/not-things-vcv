@@ -1,0 +1,130 @@
+{
+	"$schema": "file:///home/johan/development/vcv/Rack/plugins/not-things/doc/timeseq/schema/timeseq-script-1.2.0.schema.json",
+	"type": "not-things_timeseq_script",
+	"version": "1.2.0",
+	"timelines": [
+		{
+			"time-scale": {
+				"x-description": "Set the Beats per Minute and Beats per Bar that will apply to segments in this timeline",
+				"bpm": 120,
+				"bpb": 4
+			},
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "bars": 2, "beats": 0 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": { "sequence": "chord-root-notes" }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"x-description": "The second lane that will contain the arpeggiated chord notes, referencing segment-block instances from the component-pool",
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{ "segment-block": "c-arp" },
+						{ "segment-block": "f-arp" },
+						{ "segment-block": "d-arp" },
+						{ "segment-block": "g-arp" }
+					]
+				}
+			]
+		}
+	],
+	"sequences": [
+		{
+			"id": "chord-root-notes",
+			"values": [ "C3", "F3", "D3", "G3" ]
+		},
+		{
+			"id": "c-arp-notes",
+			"values": [ "C4", "E4", "G4", "C5" ]
+		},
+		{
+			"id": "f-arp-notes",
+			"values": [ "C4", "F4", "A4", "C5" ]
+		},
+		{
+			"id": "d-arp-notes",
+			"values": [ "D4", "F4", "A4", "D5" ]
+		},
+		{
+			"id": "g-arp-notes",
+			"values": [ "D4", "G4", "B4", "D5" ]
+		}
+	],
+	"component-pool": {
+		"segment-blocks" : [
+			{
+				"id": "c-arp",
+				"x-description": "The segment-block plays the arpeggiated C chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": { "sequence": "c-arp-notes" } }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "f-arp",
+				"x-description": "The segment-block plays the arpeggiated F chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": { "sequence": "f-arp-notes" } }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "d-arp",
+				"x-description": "The segment-block plays the arpeggiated D chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": { "sequence": "d-arp-notes" } }
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "g-arp",
+				"x-description": "The segment-block plays the arpeggiated G chord.",
+				"repeat": 16,
+				"segments": [
+					{
+						"duration": { "beats": 0.5 },
+						"actions": [
+							{
+								"set-value": { "output": 2, "value": { "sequence": "g-arp-notes" } }
+							}
+						]
+					}
+				]
+			}
+		]
+	}
+}

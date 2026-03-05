@@ -707,7 +707,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandNonValueUpper) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Rand_UpperObject, "/component-pool/values/0/rand");
+	expectError(validationErrors, ValidationErrorCode::Rand_UpperObject, "/component-pool/values/0/rand/upper");
 }
 
 TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandInvalidUpperValue) {
@@ -752,7 +752,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandNonValueLower) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Rand_LowerObject, "/component-pool/values/0/rand");
+	expectError(validationErrors, ValidationErrorCode::Rand_LowerObject, "/component-pool/values/0/rand/lower");
 }
 
 TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithRandInvalidLowerValue) {
@@ -1291,4 +1291,242 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldAllowUnknownPropertyWithXPrefixOnRa
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	expectNoErrors(validationErrors);
+}
+
+TEST(TimeSeqJsonScriptValue, ParsevalueShouldFailWithSequencePreVersion120) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", "sequence-id" } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/values/0");
+}
+
+TEST(TimeSeqJsonScriptValue, ParsevalueShouldFailOnSequenceWithNonStringAndNonObject) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", json::array() } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_StringOrObject, "/component-pool/values/0/sequence");
+}
+
+TEST(TimeSeqJsonScriptValue, ParsevalueShouldFailOnShorthandSequenceWithEmptyId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", "" } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_EmptyString, "/component-pool/values/0/sequence");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldParseShorthandSequenceWithDefaultProperties) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", "my-sequence" } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	ASSERT_EQ(script->values.size(), 1u);
+	EXPECT_TRUE(script->values[0].sequence);
+	EXPECT_EQ(script->values[0].sequence->id, "my-sequence");
+	EXPECT_EQ(script->values[0].sequence->moveBefore, ScriptSequenceMoveDirection::NONE);
+	EXPECT_EQ(script->values[0].sequence->moveAfter, ScriptSequenceMoveDirection::FORWARD);
+	EXPECT_TRUE(script->values[0].sequence->wrap);
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnSequenceWithNonStringId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", { { "id", 1 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_IdString, "/component-pool/values/0/sequence");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnSequenceWithEmptyId) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", { { "id", "" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_IdLength, "/component-pool/values/0/sequence");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldParseSequenceWithOnlyIdUsingDefaultProperties) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", { { "id", "my-sequence" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	ASSERT_EQ(script->values.size(), 1u);
+	EXPECT_TRUE(script->values[0].sequence);
+	EXPECT_EQ(script->values[0].sequence->id, "my-sequence");
+	EXPECT_EQ(script->values[0].sequence->moveBefore, ScriptSequenceMoveDirection::NONE);
+	EXPECT_EQ(script->values[0].sequence->moveAfter, ScriptSequenceMoveDirection::FORWARD);
+	EXPECT_TRUE(script->values[0].sequence->wrap);
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnSequenceWithInvalidMoveBefore) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", { { "id", "sequence-1" }, { "move-before", 1 } } } },
+			{ { "id", "value-2" }, { "sequence", { { "id", "sequence-1" }, { "move-before", "anywhere" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_MoveDirectionString, "/component-pool/values/0/sequence");
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_MoveDirectionEnum, "/component-pool/values/1/sequence");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnSequenceWithInvalidMoveAfter) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", { { "id", "sequence-1" }, { "move-after", 1 } } } },
+			{ { "id", "value-2" }, { "sequence", { { "id", "sequence-1" }, { "move-after", "anywhere" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_MoveDirectionString, "/component-pool/values/0/sequence");
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_MoveDirectionEnum, "/component-pool/values/1/sequence");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldParseSequenceWithCombinationsOfMoveDirections) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", { { "id", "sequence-1" }, { "move-before", "none" }, { "move-after", "backward" } } } },
+			{ { "id", "value-2" }, { "sequence", { { "id", "sequence-2" }, { "move-before", "backward" }, { "move-after", "forward" } } } },
+			{ { "id", "value-3" }, { "sequence", { { "id", "sequence-3" }, { "move-before", "random" }, { "move-after", "none" } } } },
+			{ { "id", "value-4" }, { "sequence", { { "id", "sequence-4" }, { "move-before", "forward" }, { "move-after", "random" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	ASSERT_EQ(script->values.size(), 4u);
+
+	EXPECT_TRUE(script->values[0].sequence);
+	EXPECT_EQ(script->values[0].sequence->id, "sequence-1");
+	EXPECT_EQ(script->values[0].sequence->moveBefore, ScriptSequenceMoveDirection::NONE);
+	EXPECT_EQ(script->values[0].sequence->moveAfter, ScriptSequenceMoveDirection::BACKWARD);
+	EXPECT_TRUE(script->values[0].sequence->wrap);
+
+	EXPECT_TRUE(script->values[1].sequence);
+	EXPECT_EQ(script->values[1].sequence->id, "sequence-2");
+	EXPECT_EQ(script->values[1].sequence->moveBefore, ScriptSequenceMoveDirection::BACKWARD);
+	EXPECT_EQ(script->values[1].sequence->moveAfter, ScriptSequenceMoveDirection::FORWARD);
+	EXPECT_TRUE(script->values[1].sequence->wrap);
+
+	EXPECT_TRUE(script->values[2].sequence);
+	EXPECT_EQ(script->values[2].sequence->id, "sequence-3");
+	EXPECT_EQ(script->values[2].sequence->moveBefore, ScriptSequenceMoveDirection::RANDOM);
+	EXPECT_EQ(script->values[2].sequence->moveAfter, ScriptSequenceMoveDirection::NONE);
+	EXPECT_TRUE(script->values[2].sequence->wrap);
+
+	EXPECT_TRUE(script->values[3].sequence);
+	EXPECT_EQ(script->values[3].sequence->id, "sequence-4");
+	EXPECT_EQ(script->values[3].sequence->moveBefore, ScriptSequenceMoveDirection::FORWARD);
+	EXPECT_EQ(script->values[3].sequence->moveAfter, ScriptSequenceMoveDirection::RANDOM);
+	EXPECT_TRUE(script->values[3].sequence->wrap);
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldParseSequenceWithWrap) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "sequence", { { "id", "sequence-1" }, { "wrap", true } } } },
+			{ { "id", "value-2" }, { "sequence", { { "id", "sequence-2" }, { "wrap", false } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	ASSERT_EQ(script->values.size(), 2u);
+
+	EXPECT_TRUE(script->values[0].sequence);
+	EXPECT_EQ(script->values[0].sequence->id, "sequence-1");
+	EXPECT_EQ(script->values[0].sequence->moveBefore, ScriptSequenceMoveDirection::NONE);
+	EXPECT_EQ(script->values[0].sequence->moveAfter, ScriptSequenceMoveDirection::FORWARD);
+	EXPECT_TRUE(script->values[0].sequence->wrap);
+
+	EXPECT_TRUE(script->values[1].sequence);
+	EXPECT_EQ(script->values[1].sequence->id, "sequence-2");
+	EXPECT_EQ(script->values[1].sequence->moveBefore, ScriptSequenceMoveDirection::NONE);
+	EXPECT_EQ(script->values[1].sequence->moveAfter, ScriptSequenceMoveDirection::FORWARD);
+	EXPECT_FALSE(script->values[1].sequence->wrap);
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailOnNonBooleanWrap) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-2" }, { "sequence", { { "id", "sequence-1" }, { "wrap", "true" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SequenceValue_WrapBoolean, "/component-pool/values/0/sequence");
 }

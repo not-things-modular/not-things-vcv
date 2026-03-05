@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdarg.h>
 #include <chrono>
+#include <algorithm>
 
 using namespace std;
 using namespace timeseq;
@@ -261,6 +262,22 @@ double RandValueProcessor::processValue() {
 	return m_randValueGenerator->generate(lower, upper);
 }
 
+SequenceValueProcessor::SequenceValueProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection moveBefore, SequencePositionProcessor::SequenceMoveDirection moveAfter, bool wrap, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_sequencePositionProcessor(sequencePositionProcessor), m_moveBefore(moveBefore), m_moveAfter(moveAfter), m_wrap(wrap) {}
+
+double SequenceValueProcessor::processValue() {
+	if (m_moveBefore != SequencePositionProcessor::SequenceMoveDirection::NONE) {
+		m_sequencePositionProcessor->move(m_moveBefore, m_wrap);
+	}
+
+	double value = m_sequencePositionProcessor->getCurrentValue();
+
+	if (m_moveAfter != SequencePositionProcessor::SequenceMoveDirection::NONE) {
+		m_sequencePositionProcessor->move(m_moveAfter, m_wrap);
+	}
+
+	return value;
+}
+
 IfProcessor::IfProcessor(ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
 
 bool IfProcessor::process(string* message) {
@@ -442,6 +459,40 @@ void ActionTriggerProcessor::processAction() {
 	m_triggerHandler->setTrigger(m_trigger);
 }
 
+ActionMoveSequenceDirectionProcessor::ActionMoveSequenceDirectionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_direction(direction), m_wrap(wrap) {}
+
+void ActionMoveSequenceDirectionProcessor::processAction() {
+	m_sequencePositionProcessor->move(m_direction, m_wrap);
+}
+
+ActionMoveSequencePositionProcessor::ActionMoveSequencePositionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
+
+void ActionMoveSequencePositionProcessor::processAction() {
+	m_sequencePositionProcessor->move(m_position);
+}
+
+ActionClearSequenceProcessor::ActionClearSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor) {}
+
+void ActionClearSequenceProcessor::processAction() {
+	m_sequencePositionProcessor->getSequenceProcessor()->clear();
+}
+
+ActionAddToSequenceSequenceProcessor::ActionAddToSequenceSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<ValueProcessor> value, int position, bool asConstantVoltage, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_value(value), m_position(position), m_asConstantVoltage(asConstantVoltage) {}
+
+void ActionAddToSequenceSequenceProcessor::processAction() {
+	if (!m_asConstantVoltage) {
+		m_sequencePositionProcessor->getSequenceProcessor()->add(m_value, m_position);
+	} else {
+		m_sequencePositionProcessor->getSequenceProcessor()->add(make_shared<StaticValueProcessor>((float) m_value->process(), vector<shared_ptr<CalcProcessor>>(), false), m_position);
+	}
+}
+
+ActionRemoveFromSequenceProcessor::ActionRemoveFromSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
+
+void ActionRemoveFromSequenceProcessor::processAction() {
+	m_sequencePositionProcessor->getSequenceProcessor()->remove(m_position);
+}
+
 ActionOngoingProcessor::ActionOngoingProcessor(shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
 
 void ActionOngoingProcessor::start(uint64_t glideLength) {
@@ -621,12 +672,12 @@ DurationConstantProcessor::DurationConstantProcessor(uint64_t duration, double d
 void DurationConstantProcessor::prepareForStart() {}
 
 
-DurationVariableFactorProcessor::DurationVariableFactorProcessor(std::shared_ptr<ValueProcessor> value, double samplesFactor) : m_value(value), m_samplesFactor(samplesFactor) {}
+DurationVariableFactorProcessor::DurationVariableFactorProcessor(shared_ptr<ValueProcessor> value, double samplesFactor) : m_value(value), m_samplesFactor(samplesFactor) {}
 
 void DurationVariableFactorProcessor::prepareForStart() {
 	double value = m_value->process();
 	double refactoredValue = (m_samplesFactor != 1.f) ? value * m_samplesFactor : value;
-	
+
 	if (refactoredValue >= 1.f) {
 		uint64_t duration = floor(refactoredValue);
 		setDuration(duration);
@@ -638,12 +689,12 @@ void DurationVariableFactorProcessor::prepareForStart() {
 }
 
 
-DurationVariableHzProcessor::DurationVariableHzProcessor(std::shared_ptr<ValueProcessor> value, double sampleRate) : m_value(value), m_sampleRate(sampleRate) {}
+DurationVariableHzProcessor::DurationVariableHzProcessor(shared_ptr<ValueProcessor> value, double sampleRate) : m_value(value), m_sampleRate(sampleRate) {}
 
 void DurationVariableHzProcessor::prepareForStart() {
 	double value = m_value->process();
 	double refactoredValue = m_sampleRate / value;
-	
+
 	if (refactoredValue >= 1.f) {
 		uint64_t duration = floor(refactoredValue);
 		setDuration(duration);
@@ -915,6 +966,119 @@ TriggerProcessor::TriggerProcessor(string id, int inputPort, int inputChannel, P
 void TriggerProcessor::process() {
 	if (m_trigger.process(m_portHandler->getInputPortVoltage(m_inputPort, m_inputChannel), 0.f, 1.f)) {
 		m_triggerHandler->setTrigger(m_id);
+	}
+}
+
+SequenceProcessor::SequenceProcessor(string id, vector<shared_ptr<ValueProcessor>> values, bool retrieveVoltageOnce) : m_id(id), m_values(values), m_retrieveVoltageOnce(retrieveVoltageOnce) {}
+
+void SequenceProcessor::clear() {
+	m_values.clear();
+}
+
+string SequenceProcessor::getId() {
+	return m_id;
+}
+
+vector<shared_ptr<ValueProcessor>> SequenceProcessor::getValues() {
+	return m_values;
+}
+
+bool SequenceProcessor::isRetrieveVoltageOnce() {
+	return m_retrieveVoltageOnce;
+}
+
+void SequenceProcessor::add(shared_ptr<ValueProcessor> value, int position) {
+	if (position > -1) {
+		if (position >= (int) m_values.size()) {
+			m_values.push_back(value);
+		} else {
+			m_values.insert(m_values.begin() + position, value);
+		}
+	} else {
+		m_values.push_back(value);
+	}
+}
+
+void SequenceProcessor::remove(int position) {
+	if (position > -1) {
+		if (position < (int) m_values.size()) {
+			m_values.erase(m_values.begin() + position);
+		}
+	} else if (m_values.size() > 0) {
+		m_values.pop_back();
+	}
+}
+
+SequencePositionProcessor::SequencePositionProcessor(shared_ptr<SequenceProcessor> sequenceProcessor, shared_ptr<RandValueGenerator> randValueGenerator) : m_position(0), m_sequenceProcessor(sequenceProcessor), m_randValueGenerator(randValueGenerator), m_hasStoredVoltage(false) {}
+
+SequenceProcessor* SequencePositionProcessor::getSequenceProcessor() {
+	return m_sequenceProcessor.get();
+}
+
+double SequencePositionProcessor::getCurrentValue() {
+	if (m_sequenceProcessor->isRetrieveVoltageOnce() && m_hasStoredVoltage) {
+		return m_storedVoltage;
+	} else {
+		int size = m_sequenceProcessor->getValues().size();
+		if (size == 0) {
+			m_storedVoltage = 0.;
+		} else if (m_position >= size - 1) {
+			m_storedVoltage = m_sequenceProcessor->getValues().back()->process();
+		} else {
+			m_storedVoltage = m_sequenceProcessor->getValues()[m_position]->process();
+		}
+
+		m_hasStoredVoltage = true;
+		return m_storedVoltage;
+	}
+}
+
+void SequencePositionProcessor::move(SequenceMoveDirection direction, bool wrap) {
+	m_hasStoredVoltage = false;
+
+	int size = m_sequenceProcessor->getValues().size();
+	if (size > 0) {
+		switch (direction) {
+			case FORWARD:
+				m_position++;
+				break;
+			case BACKWARD:
+				m_position--;
+				break;
+			case RANDOM:
+				// Generate a uniform random value between 0 and the number of values and remove the decimal part.
+				// This results in an equal chance for each index, but we'll have to remove the 'size' edge case.
+				m_position = min((int) floor(m_randValueGenerator->generate(0.f, size)), (int) size - 1);
+				break;
+			case NONE:
+				break;
+		}
+
+		if (m_position < 0) {
+			if (wrap) {
+				m_position = size - 1;
+			} else {
+				m_position = 0;
+			}
+		} else if (m_position > size - 1) {
+			if (wrap) {
+				m_position = 0;
+			} else {
+				m_position = size - 1;
+			}
+		}
+	} else {
+		m_position = 0;
+	}
+}
+
+void SequencePositionProcessor::move(int position) {
+	m_hasStoredVoltage = false;
+
+	if ((position >= (int) m_sequenceProcessor->getValues().size()) || (position < 0)) {
+		m_position = max((int) m_sequenceProcessor->getValues().size() - 1, 0);
+	} else {
+		m_position = position;
 	}
 }
 

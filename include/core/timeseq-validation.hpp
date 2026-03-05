@@ -48,6 +48,8 @@ enum ValidationErrorCode {
 	Script_ComponentPoolObject = 128,
 	Script_TuningsArray = 129, // Since 1.1.0
 	Script_TuningObject = 130, // Since 1.1.0
+	Script_SequencesArray = 131, // Since 1.2.0
+	Script_SequenceObject = 132, // Since 1.2.0
 
 	Timeline_TimeScaleObject = 200,
 	Timeline_LanesMissing = 201,
@@ -135,7 +137,7 @@ enum ValidationErrorCode {
 	Action_VariableLength = 916,
 	Action_IfObject = 917,
 	Action_NonGlideProperties = 918,
-	Action_MissingGlideValues = 919, 
+	Action_MissingGlideValues = 919,
 	Action_MissingGlideActions = 920,
 	Action_TooManyGlideActions = 921,
 	Action_GlidePropertiesOnNonGlideAction = 922,
@@ -145,6 +147,11 @@ enum ValidationErrorCode {
 	Action_GateHighRatioFloat = 926,
 	Action_GateHighRatioRange = 927,
 	Action_GateOutput = 928,
+	Action_MoveSequenceObject = 929, // Since 1.2.0
+	Action_ClearSequenceString = 930, // Since 1.2.0
+	Action_ClearSequenceLength = 931, // Since 1.2.0
+	Action_AddToSequenceObject = 932, // Since 1.2.0
+	Action_RemoveFromSequenceObject = 933, // Since 1.2.0
 
 	SetValue_OutputObject = 1000,
 	SetValue_ValueObject = 1001,
@@ -229,7 +236,47 @@ enum ValidationErrorCode {
 	Tuning_NotesArray = 2101, // Since 1.1.0
 	Tuning_NotesArraySize = 2102, // Since 1.1.0
 	Tuning_NoteFloatOrString = 2103, // Since 1.1.0
-	Tuning_NoteFormat = 2104 // Since 1.1.0
+	Tuning_NoteFormat = 2104, // Since 1.1.0
+
+	Sequence_RefOrInstance = 2200, // Since 1.2.0
+	Sequence_SharedBoolean = 2201, // Since 1.2.0
+	Sequence_RetrieveVoltageOnceBoolean = 2202, // Since 1.2.0
+	Sequence_ValuesArray = 2203, // Since 1.2.0
+	Sequence_ValueObject = 2204, // Since 1.2.0
+
+	SequenceValue_EmptyString = 2301, // Since 1.2.0
+	SequenceValue_IdString = 2302, // Since 1.2.0
+	SequenceValue_IdLength = 2303, // Since 1.2.0
+	SequenceValue_MoveDirectionString = 2304, // Since 1.2.0
+	SequenceValue_MoveDirectionEnum = 2305, // Since 1.2.0
+	SequenceValue_WrapBoolean = 2306, // Since 1.2.0
+	SequenceValue_StringOrObject = 2307, // Since 1.2.0
+	SequenceValue_SequenceNotFound = 2308, // Since 1.2.0
+
+	MoveSequence_IdString = 2400, // Since 1.2.0
+	MoveSequence_IdLength = 2401, // Since 1.2.0
+	MoveSequence_PositionNumber = 2402, // Since 1.2.0
+	MoveSequence_WrapBoolean = 2403, // Since 1.2.0
+	MoveSequence_MoveDirectionString = 2404, // Since 1.2.0
+	MoveSequence_MoveDirectionEnum = 2405, // Since 1.2.0
+	MoveSequence_NoWrapWithPosition = 2406, // Since 1.2.0
+	MoveSequence_SequenceNotFound = 2407, // Since 1.2.0
+	MoveSequence_EitherDirectionOrPosition = 2408, // Since 1.2.0
+	MoveSequence_NonSharedSequence = 2409, // Since 1.2.0
+
+	AddToSequence_IdString = 2500, // Since 1.2.0
+	AddToSequence_IdLength = 2501, // Since 1.2.0
+	AddToSequence_ValueObject = 2502, // Since 1.2.0
+	AddToSequence_PositionNumber = 2503, // Since 1.2.0
+	AddToSequence_AsConstantVoltageBoolean = 2504, // Since 1.2.0
+	AddToSequence_SequenceNotFound = 2505, // Since 1.2.0
+
+	RemoveFromSequence_IdString = 2600, // Since 1.2.0
+	RemoveFromSequence_IdLength = 2601, // Since 1.2.0
+	RemoveFromSequence_PositionNumber = 2602, // Since 1.2.0
+	RemoveFromSequence_SequenceNotFound = 2603, // Since 1.2.0
+
+	ClearSequence_SequenceNotFound = 2700, // Since 1.2.0
 };
 
 

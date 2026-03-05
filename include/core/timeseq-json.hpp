@@ -28,6 +28,9 @@ struct JsonScriptParser {
 	ScriptSetPolyphony parseSetPolyphony(const json& setPolyphonyJson, JsonScriptParseContext* context, std::vector<std::string> location);
 	ScriptSetLabel parseSetLabel(const json& setLabelJson, JsonScriptParseContext* context, std::vector<std::string> location);
 	ScriptAssert parseAssert(const json& assertJson, JsonScriptParseContext* context, std::vector<std::string> location);
+	ScriptMoveSequence parseMoveSequence(const json& moveSequenceJson, JsonScriptParseContext* context, std::vector<std::string> location);
+	ScriptAddToSequence parseAddToSequence(const json& addToSequenceJson, JsonScriptParseContext* context, std::vector<std::string> location);
+	ScriptRemoveFromSequence parseRemoveFromSequence(const json& removeFromJson, JsonScriptParseContext* context, std::vector<std::string> location);
 	ScriptValue parseValue(const json& valueJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
 	ScriptValue parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, std::vector<std::string> location);
 	ScriptOutput parseOutput(const json& outputJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
@@ -41,6 +44,9 @@ struct JsonScriptParser {
 	ScriptIf parseIf(const json& ifJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
 	std::pair<ScriptValue, ScriptValue> parseIfValues(std::string ifOperator, const json& valuesJson, JsonScriptParseContext* context, std::vector<std::string> location);
 	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> parseIfIfs(std::string ifOperator, const json& ifsJson, JsonScriptParseContext* context, std::vector<std::string> location);
+
+	ScriptSequenceValue parseSequenceValue(const json& sequenceJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
+	ScriptSequence parseSequence(const json& sequenceJson, JsonScriptParseContext* context, std::vector<std::string> location);
 
 	void populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location);
 };

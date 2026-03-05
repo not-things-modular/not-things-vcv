@@ -10,25 +10,37 @@ While each of the samples demonstrates separate pieces of functionality, the fac
 
 ## Table of Contents
 
-* [Building a Chord and Note Sequence](#building-a-chord-and-note-sequence)
+* [Building a Chord Progression and Note Melody](#building-a-chord-progression-and-note-melody)
+* [Building a Chord Progression and Note Melody using Sequences](#building-a-chord-progression-and-note-melody-using-sequences)
 * [Creating Clock Signals](#creating-clock-signals)
 * [Sample and Hold](#sample-and-hold)
 * [A Bernoulli Gate](#a-bernoulli-gate)
 * [Oscillator](#oscillator)
 
-## Building a Chord and Note Sequence
+## Building a Chord Progression and Note Melody
 
-The [note sequence](samples/NOTE-SEQ.md) scripts start with a simple note sequence and gradually builds this into a full chord sequence with eight and triplet notes and some chance control. This script demonstrates:
+The [chord progression and note melody](samples/CHORDS-AND-NOTES.md) scripts start with a simple sequence of notes and gradually builds this into a full chord progression with eight and triplet notes and some chance control. This script demonstrates:
 
-* Building a simple simple sequence
-* Using multiple lanes with sequences running in parallel
+* Building a simple simple chord progression
+* Using multiple lanes with lanes running in parallel
 * Using segment blocks
 * Using eight- and triplet timings
 * Using variables and random values
-* Starting and stopping lanes through triggers
 * Using input ports as CV sources
 * Using to component-pool to reduce script size using re-usable components
 * Using a tuning to quantize values to a scale
+
+## Building a Chord Progression and Note Melody using Sequences
+
+Starting from the TimeSeq JSON script version v1.2.0 (and TimeSeq v2.0.6), a dedicated *sequences* feature has been added. This feature allows part of the previous [Building a Chord Progression and Note Melody](#building-a-chord-progression-and-note-melody) sample to be performed in an easier and simpler way.
+
+The [chord progression and note melody using sequences](samples/CHORDS-AND-NOTES-USING-SEQUENCES.md) scripts recreate much of the "old" version of the sample scripts using this new *sequences* feature instead:
+
+* Building a simple chord progression using sequences
+* Using multiple lanes with lanes running in parallel
+* Using segment blocks
+* Using variables and random values
+* Using a sequence with random positioning to generate a random melody
 
 ## Creating Clock Signals
 
@@ -60,6 +72,6 @@ The sample will start with a simplified version of the Bernoulli Gate, and then 
 
 The [oscillator](samples/OSCILLATOR.md) sample will set up a script that causes TimeSeq to generate several types of waveforms (square, sawtooth, triangle and Sine-like). Just like the [bernoulli gate](#a-bernoulli-gate) sample, this sample is not intended to demonstrate how TimeSeq can replace an Oscillator, but instead is intended to show what can be done. In this case, it also provides an opportunity to show different aspects of the *glide* actions.
 
-The sample starts with creating versions of the waveforms that all produce a C3 note, but the last section of the sample page will update this using segments with a variable duration, causing it to become tunable using a 1V/Oct input signal. 
+The sample starts with creating versions of the waveforms that all produce a C3 note, but the last section of the sample page will update this using segments with a variable duration, causing it to become tunable using a 1V/Oct input signal.
 
 As a bonus, this sample also throws in a random voltage generator (i.e. noise) output.

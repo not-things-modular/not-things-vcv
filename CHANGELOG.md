@@ -2,12 +2,16 @@
 
 ## 2.0.6 (TBD)
 
+* **TimeSeq**
+  * Added `sequences` with accompanying `sequence values`, and `move-sequence`, `add-to-sequence`, `remove-from-sequence` and `clear-sequence` actions
+  * Fixed running state persistence on script loading if the sample rate changes as part of the patch load process (e.g. if VCV Rack is set to auto sample rate)
+
 * **Solim**
-  * Updated limit displays to show nearest quantized note (up or down) instead of always showing the note above (UI update only)
+  * Updated limit displays to show nearest quantized note (up or down) instead of always showing the note above (UI display update only)
 
 ## 2.0.5 (25-06-28)
 
-* **Global**: Setup GitHub Ppages for documentation
+* **Global**: Setup GitHub Pages for documentation
 * **TimeSeq**
   * Added `max`, `min`, `remain`, `trunc`, `frac`, `round`, `sign` and `vtof` operations in `calc`
   * Added quantization to scales through `tunings` that can be used in `quantize` operation in `calc`
