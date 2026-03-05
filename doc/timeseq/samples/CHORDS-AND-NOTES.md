@@ -5,7 +5,7 @@
 One of the basic functionalities of TimeSeq is to create repeating chord progressions and note sequences. On this page, we'll start with a simple set of notes and gradually transform this into a chord progression that can drive a bass voice, and an arpeggiated notes voice.
 
 
-> **NOTE:** Starting with script version v1.2.0 (TimeSeq v2.6.0), a [sequences](../TIMESEQ-SCRIPT-JSON.md#sequence) feature has been added to the TimeSeq script that simplifies the execution of repeated actions with a sequence of values/notes. This feature simplifies the creation of scripts with chord sequences. While this does make this pre-v1.2.0 sample a bit outdated, it still provides a usefull demonstration of other features of the TimeSeq script that can be used for different purposes, so this sample is kept as-is. For the updated approach to achieve the same result using the new *sequences* feature, see [Chord Progression and Note Melody using Sequences](./CHORDS-AND-NOTES-USING-SEQUENCES.md).
+> **NOTE:** Starting with script version v1.2.0 (TimeSeq v2.0.6), a [sequences](../TIMESEQ-SCRIPT-JSON.md#sequence) feature has been added to the TimeSeq script that simplifies the execution of repeated actions with a sequence of values/notes. This feature simplifies the creation of scripts with chord sequences. While this does make this pre-v1.2.0 sample a bit outdated, it still provides a usefull demonstration of other features of the TimeSeq script that can be used for different purposes, so this sample is kept as-is. For the updated approach to achieve the same result using the new *sequences* feature, see [Chord Progression and Note Melody using Sequences](./CHORDS-AND-NOTES-USING-SEQUENCES.md).
 
 ## Table of Contents
 
