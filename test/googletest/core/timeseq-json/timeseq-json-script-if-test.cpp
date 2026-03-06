@@ -435,14 +435,14 @@ TEST(TimeSeqJsonScriptIf, ParseAndWithTwoChildrenShouldSucceed) {
 	EXPECT_EQ(script->actions[0].condition->ifOperator, ScriptIf::IfOperator::AND);
 	EXPECT_FALSE(script->actions[0].condition->values);
 	EXPECT_TRUE(script->actions[0].condition->ifs);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.ifOperator, ScriptIf::IfOperator::EQ);
-	ASSERT_TRUE(script->actions[0].condition->ifs->first.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->first.ref, "value-ref-1");
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->second.ref, "value-ref-2");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.ifOperator, ScriptIf::IfOperator::NE);
-	ASSERT_TRUE(script->actions[0].condition->ifs->second.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->first.ref, "value-ref-3");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->second.ref, "value-ref-4");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).ifOperator, ScriptIf::IfOperator::EQ);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(0).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->second.ref, "value-ref-2");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(1).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->first.ref, "value-ref-3");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->second.ref, "value-ref-4");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseAndWithThreeChildShouldFail) {
@@ -502,14 +502,14 @@ TEST(TimeSeqJsonScriptIf, ParseOrWithTwoChildrenShouldSucceed) {
 	EXPECT_EQ(script->actions[0].condition->ifOperator, ScriptIf::IfOperator::OR);
 	EXPECT_FALSE(script->actions[0].condition->values);
 	EXPECT_TRUE(script->actions[0].condition->ifs);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.ifOperator, ScriptIf::IfOperator::EQ);
-	ASSERT_TRUE(script->actions[0].condition->ifs->first.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->first.ref, "value-ref-1");
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->second.ref, "value-ref-2");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.ifOperator, ScriptIf::IfOperator::NE);
-	ASSERT_TRUE(script->actions[0].condition->ifs->second.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->first.ref, "value-ref-3");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->second.ref, "value-ref-4");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).ifOperator, ScriptIf::IfOperator::EQ);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(0).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->second.ref, "value-ref-2");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(1).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->first.ref, "value-ref-3");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->second.ref, "value-ref-4");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseOrWithThreeChildShouldFail) {

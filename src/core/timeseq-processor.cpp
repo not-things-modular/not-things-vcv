@@ -278,7 +278,7 @@ double SequenceValueProcessor::processValue() {
 	return value;
 }
 
-IfProcessor::IfProcessor(ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
+IfProcessor::IfProcessor(ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, vector<shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
 
 bool IfProcessor::process(string* message) {
 	if (message == nullptr) {
@@ -307,9 +307,19 @@ bool IfProcessor::process(string* message) {
 			case ScriptIf::IfOperator::GTE:
 				return m_values.first->process() >= m_values.second->process();
 			case ScriptIf::IfOperator::AND:
-				return m_ifs.first->process(nullptr) && m_ifs.second->process(nullptr);
+				for (shared_ptr<IfProcessor> condition : m_ifs) {
+					if (!condition->process(nullptr)) {
+						return false;
+					}
+				}
+				return true;
 			case ScriptIf::IfOperator::OR:
-				return m_ifs.first->process(nullptr) || m_ifs.second->process(nullptr);
+				for (shared_ptr<IfProcessor> condition : m_ifs) {
+					if (condition->process(nullptr)) {
+						return true;
+					}
+				}
+				return false;
 		}
 
 		return false;
@@ -318,35 +328,49 @@ bool IfProcessor::process(string* message) {
 		ostringstream oss;
 		oss.precision(10);
 		if (m_scriptIf->ifOperator == ScriptIf::IfOperator::AND) {
-			string message1;
-			string message2;
-			bool if1 = m_ifs.first->process(&message1);
-			bool if2 = m_ifs.second->process(&message2);
+			bool result = true;
+			bool addAnd = false;
+			oss << "(";
+			for (shared_ptr<IfProcessor> condition : m_ifs) {
+				string message;
+				if (!condition->process(&message)) {
+					result = false;
+				}
+				
+				if (addAnd) {
+					oss << " and ";
+				} else {
+					addAnd = true;
+				}
+				oss << message;
+			}
 
-			oss << "(" << message1 << " and " << message2 << ")";
+			oss << ")";
 			*message = oss.str();
 
-			if (if1 && if2) {
-				// Normally, we shouldn't arrive here anymore since the assert action will first verify the expectation without requesting the detailed message
-				return true;
-			} else {
-				return false;
-			}
+			return result;
 		} else if (m_scriptIf->ifOperator == ScriptIf::IfOperator::OR) {
-			string message1;
-			string message2;
-			bool if1 = m_ifs.first->process(&message1);
-			bool if2 = m_ifs.second->process(&message2);
+			bool result = false;
+			bool addOr = false;
+			oss << "(";
+			for (shared_ptr<IfProcessor> condition : m_ifs) {
+				string message;
+				if (condition->process(&message)) {
+					result = true;
+				}
+				
+				if (addOr) {
+					oss << " or ";
+				} else {
+					addOr = true;
+				}
+				oss << message;
+			}
 
-			oss << "(" << message1 << " or " << message2 << ")";
+			oss << ")";
 			*message = oss.str();
 
-			if (if1 || if2) {
-				// Normally, we shouldn't arrive here anymore since the assert action will first verify the expectation without requesting the detailed message
-				return true;
-			} else {
-				return false;
-			}
+			return result;
 		} else {
 			double value1 = m_values.first->process();
 			double value2 = m_values.second->process();
