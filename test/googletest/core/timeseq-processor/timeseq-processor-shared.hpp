@@ -55,6 +55,8 @@ static std::string inputVariableName = "input-variable";
 static std::string outputVariableName = "output-variable";
 static std::string inputVariable1 = "input-variable-1";
 static std::string inputVariable2 = "input-variable-2";
+static std::string inputVariable3 = "input-variable-3";
+static std::string inputVariable4 = "input-variable-4";
 
 static std::string trigger1Name = "trigger-1";
 static std::string trigger2Name = "trigger-2";

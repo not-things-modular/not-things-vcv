@@ -1376,13 +1376,16 @@ unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, con
 	vector<json> ifElements = ifsJson.get<vector<json>>();
 	if (ifElements.size() > 1) {
 		int count = 0;
-		ifs.reset(new vector<ScriptIf>(ifElements.size()));
+		ifs.reset(new vector<ScriptIf>());
 		for (const json& ifElement : ifElements) {
 			location.push_back(to_string(count));
 			ScriptIf scriptIf = parseIf(ifElement, true, context, location);
 			ifs->push_back(std::move(parseIf(ifElement, true, context, location)));
 			location.pop_back();
 			count++;
+		}
+		if (count > 2) {
+			verifyVersion(VERSION_1_2_0, context, (ifOperator + " ifs with more then two conditions").c_str(), location);
 		}
 	} else {
 		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_TwoValues, "At least two if items are expected in the '", ifOperator.c_str(), "' array");
