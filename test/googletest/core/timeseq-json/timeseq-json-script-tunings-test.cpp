@@ -7,7 +7,7 @@ TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTuningsVersion100) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
-	EXPECT_EQ(script->calcs.size(), 0u);
+	EXPECT_EQ(script->tunings.size(), 0u);
 }
 
 TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTuningsVersion110) {
@@ -17,7 +17,7 @@ TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTuningsVersion110) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
-	EXPECT_EQ(script->calcs.size(), 0u);
+	EXPECT_EQ(script->tunings.size(), 0u);
 }
 
 TEST(TimeSeqJsonScriptTuning, ParseShouldFailWithTuningsPre110Version) {

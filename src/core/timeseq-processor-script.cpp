@@ -13,6 +13,21 @@ inline uint64_t uint64_max(uint64_t a, uint64_t b) {
 	return a > b ? a : b;
 }
 
+inline SequencePositionProcessor::SequenceMoveDirection convertScriptSequenceMoveDirection(ScriptSequenceMoveDirection scriptDirection) {
+	switch (scriptDirection) {
+		case FORWARD:
+			return SequencePositionProcessor::SequenceMoveDirection::FORWARD;
+		case BACKWARD:
+			return SequencePositionProcessor::SequenceMoveDirection::BACKWARD;
+		case RANDOM:
+			return SequencePositionProcessor::SequenceMoveDirection::RANDOM;
+		case NONE:
+			return SequencePositionProcessor::SequenceMoveDirection::NONE;
+	}
+	// Not really needed, but otherwise the compiler gives a warning
+	return SequencePositionProcessor::SequenceMoveDirection::NONE;
+}
+
 ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) {
 	m_portHandler = portHandler;
 	m_variableHandler = variableHandler;
@@ -34,6 +49,12 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	}
 
 	int count = 0;
+	for (vector<ScriptSequence>::iterator it = script->sequences.begin(); it != script->sequences.end(); it++) {
+		vector<string> seqLocation = { "component-pool",  "sequences", to_string(count) };
+		parseSequence(&context, &(*it), seqLocation);
+	}
+
+	count = 0;
 	location.push_back("timelines");
 	vector<shared_ptr<TimelineProcessor>> timelineProcessors;
 	for (vector<ScriptTimeline>::iterator it = script->timelines.begin(); it != script->timelines.end(); it++) {
@@ -447,6 +468,22 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(Processor
 		location.push_back("trigger");
 		actionProcessor = parseTriggerAction(context, scriptAction, ifProcessor, location);
 		location.pop_back();
+	} else if (scriptAction->moveSequence) {
+		location.push_back("move-sequence");
+		actionProcessor = parseMoveSequenceAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else if (scriptAction->clearSequence.length() > 0) {
+		location.push_back("clear-sequence");
+		actionProcessor = parseClearSequenceAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else if (scriptAction->addToSequence) {
+		location.push_back("add-to-sequence");
+		actionProcessor = parseAddToSequenceAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
+	} else if (scriptAction->removeFromSequence) {
+		location.push_back("remove-from-sequence");
+		actionProcessor = parseRemoveFromSequenceAction(context, scriptAction, ifProcessor, location);
+		location.pop_back();
 	} else {
 		return actionProcessor;
 	}
@@ -565,6 +602,76 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorS
 	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler, ifProcessor));
 }
 
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+	ScriptMoveSequence* moveSequence = &(*scriptAction->moveSequence);
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, moveSequence->id);
+
+	if (!sequenceProcessor) {
+		if (hasNonSharedSequence(context, moveSequence->id)) {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_NonSharedSequence, "The sequence with id '", moveSequence->id.c_str(), "' is not a 'shared' sequence. Only shared sequences can be moved.");
+		} else {
+			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", moveSequence->id.c_str(), "' could not be found.");
+		}
+
+		return nullptr;
+	}
+
+	if (moveSequence->direction) {
+		return make_shared<ActionMoveSequenceDirectionProcessor>(sequenceProcessor, convertScriptSequenceMoveDirection(*moveSequence->direction), moveSequence->wrap, ifProcessor);
+	} else {
+		return make_shared<ActionMoveSequencePositionProcessor>(sequenceProcessor, *moveSequence->position, ifProcessor);
+	}
+}
+
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, scriptAction->clearSequence);
+	if (!sequenceProcessor) {
+		sequenceProcessor = resolveNonSharedSequence(context, scriptAction->clearSequence);
+	}
+
+	if (sequenceProcessor) {
+		return make_shared<ActionClearSequenceProcessor>(sequenceProcessor, ifProcessor);
+	} else {
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::ClearSequence_SequenceNotFound, "The sequence with id '", scriptAction->clearSequence.c_str(), "' could not be found.");
+		return nullptr;
+	}
+}
+
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+	ScriptAddToSequence* addToSequence = &(*scriptAction->addToSequence);
+
+	location.push_back("value");
+	shared_ptr<ValueProcessor> value = parseValue(context, &addToSequence->value, location, vector<string>());
+	location.pop_back();
+
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, addToSequence->id);
+	if (!sequenceProcessor) {
+		sequenceProcessor = resolveNonSharedSequence(context, addToSequence->id);
+	}
+
+	if (sequenceProcessor) {
+		return make_shared<ActionAddToSequenceSequenceProcessor>(sequenceProcessor, value, addToSequence->position, addToSequence->asConstantVoltage, ifProcessor);
+	} else {
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_SequenceNotFound, "The sequence with id '", addToSequence->id.c_str(), "' could not be found.");
+		return nullptr;
+	}
+}
+
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+	ScriptRemoveFromSequence* removeFromSequence = &(*scriptAction->removeFromSequence);
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, removeFromSequence->id);
+	if (!sequenceProcessor) {
+		sequenceProcessor = resolveNonSharedSequence(context, removeFromSequence->id);
+	}
+
+	if (sequenceProcessor) {
+		return make_shared<ActionRemoveFromSequenceProcessor>(sequenceProcessor, removeFromSequence->position, ifProcessor);
+	} else {
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::RemoveFromSequence_SequenceNotFound, "The sequence with id '", removeFromSequence->id.c_str(), "' could not be found.");
+		return nullptr;
+	}
+}
+
 shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<string> location, vector<string> valueStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptValue->ref.length() == 0) {
@@ -589,6 +696,8 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 			return parseOutputValue(context, scriptValue, calcProcessors, location);
 		} else if (scriptValue->rand) {
 			return parseRandValue(context, scriptValue, calcProcessors, location, valueStack);
+		} else if (scriptValue->sequence) {
+			return parseSequenceValue(context, scriptValue, calcProcessors, location, valueStack);
 		}
 
 	} else {
@@ -667,6 +776,28 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 	location.pop_back();
 
 	return shared_ptr<ValueProcessor>(new RandValueProcessor(lowerValueProcessor, upperValueProcessor, m_randomValueGenerator, calcProcessors, scriptValue->quantize));
+}
+
+std::shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location, std::vector<std::string> valueStack) {
+	location.push_back("sequence");
+
+	shared_ptr<ValueProcessor> processor = nullptr;
+
+	ScriptSequenceValue *sequence = &(*scriptValue->sequence);
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, sequence->id);
+	if (!sequenceProcessor) {
+		sequenceProcessor = resolveNonSharedSequence(context, sequence->id);
+	}
+
+	if (sequenceProcessor) {
+		return make_shared<SequenceValueProcessor>(sequenceProcessor, convertScriptSequenceMoveDirection(sequence->moveBefore), convertScriptSequenceMoveDirection(sequence->moveAfter), sequence->wrap, calcProcessors, scriptValue->quantize);
+	} else {
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_SequenceNotFound, "The sequence with id '", sequence->id.c_str(), "' could not be found.");
+	}
+
+	location.pop_back();
+
+	return processor;
 }
 
 shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {
@@ -798,7 +929,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string> location, vector<string> ifStack) {
 	if (scriptIf->ref.length() == 0) {
 		pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
-		pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs;
+		vector<shared_ptr<IfProcessor>> ifs;
 		bool parseValues = true;
 		bool parseIfs = false;
 
@@ -842,12 +973,13 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseConte
 			location.pop_back();
 		}
 		if (parseIfs) {
-			location.push_back("0");
-			ifs.first = parseIf(context, &scriptIf->ifs.get()->first, location, ifStack);
-			location.pop_back();
-			location.push_back("1");
-			ifs.second = parseIf(context, &scriptIf->ifs.get()->second, location, ifStack);
-			location.pop_back();
+			int count = 0;
+			for (ScriptIf& scriptIf : *scriptIf->ifs.get()) {
+				location.push_back(to_string(count));
+				ifs.push_back(parseIf(context, &scriptIf, location, ifStack));
+				location.pop_back();
+				count++;
+			}
 		}
 
 		location.pop_back();
@@ -874,6 +1006,20 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseConte
 	}
 
 	return shared_ptr<IfProcessor>();
+}
+
+void ProcessorScriptParser::parseSequence(ProcessorScriptParseContext* context, ScriptSequence* scriptSequence, vector<string> location) {
+	vector<shared_ptr<ValueProcessor>> values;
+	for (vector<ScriptValue>::iterator it = scriptSequence->values.begin(); it != scriptSequence->values.end(); it++) {
+		values.push_back(parseValue(context, &(*it), location, vector<string>()));
+	}
+	shared_ptr<SequenceProcessor> sequenceProcessor = make_shared<SequenceProcessor>(scriptSequence->id, values, scriptSequence->retrieveVoltageOnce);
+
+	if (scriptSequence->shared) {
+		context->sharedSequences.push_back(make_shared<SequencePositionProcessor>(sequenceProcessor, m_randomValueGenerator));
+	} else {
+		context->nonSharedSequences.push_back(sequenceProcessor);
+	}
 }
 
 pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, vector<string> location) {
@@ -933,7 +1079,36 @@ ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseCon
 
 		return nullptr;
 	}
+}
 
+shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequence(ProcessorScriptParseContext* context, string id) {
+	for (vector<shared_ptr<SequencePositionProcessor>>::iterator it = context->sharedSequences.begin(); it != context->sharedSequences.end(); it++) {
+		if (id == it->get()->getSequenceProcessor()->getId()) {
+			return *it;
+		}
+	}
+
+	return nullptr;
+}
+
+bool ProcessorScriptParser::hasNonSharedSequence(ProcessorScriptParseContext* context, string id) {
+	for (vector<shared_ptr<SequenceProcessor>>::iterator it = context->nonSharedSequences.begin(); it != context->nonSharedSequences.end(); it++) {
+		if (id == it->get()->getId()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSequence(ProcessorScriptParseContext* context, string id) {
+	for (vector<shared_ptr<SequenceProcessor>>::iterator it = context->nonSharedSequences.begin(); it != context->nonSharedSequences.end(); it++) {
+		if (id == it->get()->getId()) {
+			return make_shared<SequencePositionProcessor>(*it, m_randomValueGenerator);
+		}
+	}
+
+	return nullptr;
 }
 
 ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener, shared_ptr<RandValueGenerator>(new RandValueGenerator())) {}

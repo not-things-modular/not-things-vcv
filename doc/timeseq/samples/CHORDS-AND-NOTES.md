@@ -1,8 +1,11 @@
-# TimeSeq NOTE SEQUENCE sample script
+# TimeSeq CHORD PROGRESSION AND NOTE MELODY sample script
 
 *A Sample script for the not-things [TimeSeq](../../TIMESEQ.md) module.*
 
-One of the basic functionalities of TimeSeq is to create repeating chord and note sequences. On this page, we'll start with a simple note sequence and gradually transform this into a sequence that can drive a bass voice, and an arpeggiated notes voice.
+One of the basic functionalities of TimeSeq is to create repeating chord progressions and note sequences. On this page, we'll start with a simple set of notes and gradually transform this into a chord progression that can drive a bass voice, and an arpeggiated notes voice.
+
+
+> **NOTE:** Starting with script version v1.2.0 (TimeSeq v2.0.6), a [sequences](../TIMESEQ-SCRIPT-JSON.md#sequence) feature has been added to the TimeSeq script that simplifies the execution of repeated actions with a sequence of values/notes. This feature simplifies the creation of scripts with chord sequences. While this does make this pre-v1.2.0 sample a bit outdated, it still provides a usefull demonstration of other features of the TimeSeq script that can be used for different purposes, so this sample is kept as-is. For the updated approach to achieve the same result using the new *sequences* feature, see [Chord Progression and Note Melody using Sequences](./CHORDS-AND-NOTES-USING-SEQUENCES.md).
 
 ## Table of Contents
 
@@ -60,7 +63,7 @@ The other three *segment*s will look identical, except that their `value`s will 
 
 ### Full Script and VCV Rack Patch
 
-The full script can be found in [note-seq-root-notes.json](note-seq/note-seq-root-notes.json), and the [note-seq-root-notes.vcv](note-seq/note-seq-root-notes.vcv) patch will show it in action by playing the note sequence through a VCO after showing the current note on the Hot Tuna tuner module.
+The full script can be found in [chords-and-notes-root-notes.json](chords-and-notes/chords-and-notes-root-notes.json), and the [chords-and-notes-root-notes.vcv](chords-and-notes/chords-and-notes-root-notes.vcv) patch will show it in action by playing the note sequence through a VCO after showing the current note on the Hot Tuna tuner module.
 
 ## Adding Arpeggiated Chords
 
@@ -155,7 +158,7 @@ Similar *segment-block*s will be defined for the F, G an D chords, and these seg
 
 ### Full Script and VCV Rack Patch
 
-The full script can be found in [note-seq-arp.json](note-seq/note-seq-arp.json), and the [note-seq-arp.vcv](note-seq/note-seq-arp.vcv) patch contains a second VCO to play the arpeggiated chord notes.
+The full script can be found in [chords-and-notes-arp.json](chords-and-notes/chords-and-notes-arp.json), and the [chords-and-notes-arp.vcv](chords-and-notes/chords-and-notes-arp.vcv) patch contains a second VCO to play the arpeggiated chord notes.
 
 ## Adding Gates for Envelopes
 
@@ -195,7 +198,7 @@ This gate can now be used by [reference](../TIMESEQ-SCRIPT.md#referencing) on ea
 
 ### Full Script and VCV Rack Patch
 
-A script version with gate actions added to all the arpeggiated chord notes can be found int [note-seq-arp-gate.json](note-seq/note-seq-arp-gate.json), and the [note-seq-arp-gate.vcv](note-seq/note-seq-arp-gate.vcv) patch uses this gate for applying a volume envelope on those notes.
+A script version with gate actions added to all the arpeggiated chord notes can be found int [chords-and-notes-arp-gate.json](chords-and-notes/chords-and-notes-arp-gate.json), and the [chords-and-notes-arp-gate.vcv](chords-and-notes/chords-and-notes-arp-gate.vcv) patch uses this gate for applying a volume envelope on those notes.
 
 ## Using Triplets
 
@@ -263,7 +266,7 @@ The last `0.668` *duration* makes the whole *segment* run in sync with the other
 
 ### Full Script and VCV Rack Patch
 
-The updated script can be found in [note-seq-arp-triplets.json](note-seq/note-seq-arp-triplets.json), with the [note-seq-arp-triplets.vcv](note-seq/note-seq-arp-triplets.vcv) patch playing it.
+The updated script can be found in [chords-and-notes-arp-triplets.json](chords-and-notes/chords-and-notes-arp-triplets.json), with the [chords-and-notes-arp-triplets.vcv](chords-and-notes/chords-and-notes-arp-triplets.vcv) patch playing it.
 
 ## Restructuring the Script
 
@@ -403,7 +406,7 @@ By using less newlines in the JSON, this can also be written a bit more compact,
 
 ### Full Script and VCV Rack Patch
 
-The full updated script can be found [here](note-seq/note-seq-arp-rework.json), and the [note-seq-arp-rework.vcv](note-seq/note-seq-arp-rework.vcv) patch has it loaded into TimeSeq.
+The full updated script can be found [here](chords-and-notes/chords-and-notes-arp-rework.json), and the [chords-and-notes-arp-rework.vcv](chords-and-notes/chords-and-notes-arp-rework.vcv) patch has it loaded into TimeSeq.
 
 ## Adding in Some Chance
 
@@ -477,7 +480,7 @@ Note that the first *action* of the `arp` *segment-block* is the one that sets t
 
 ### Full Script and VCV Rack Patch
 
-The full updated script for this step can be found in [note-seq-arp-chance.json](note-seq/note-seq-arp-chance.json), and the [note-seq-arp-chance.vcv](note-seq/note-seq-arp-chance.vcv) is the same patch as before, but now with the new version of the script loaded.
+The full updated script for this step can be found in [chords-and-notes-arp-chance.json](chords-and-notes/chords-and-notes-arp-chance.json), and the [chords-and-notes-arp-chance.vcv](chords-and-notes/chords-and-notes-arp-chance.vcv) is the same patch as before, but now with the new version of the script loaded.
 
 ## Modulating the Chance
 
@@ -511,7 +514,7 @@ When checking that value against the randomly generated `play-note` variable (wh
 
 ### Full Script and VCV Rack Patch
 
-The resulting script for this step can be found in [note-seq-arp-chance-mod.json](note-seq/note-seq-arp-chance-mod.json), with the [note-seq-arp-chance-mod.vcv](note-seq/note-seq-arp-chance.vcv) patch using an LFO to generate the input voltage. A scope will also show the LFO output and the resulting gates coming from TimeSeq: as the LFO value is low, there is a higher chance of a note playing and when the LFO is high, there is a lower chance.
+The resulting script for this step can be found in [chords-and-notes-arp-chance-mod.json](chords-and-notes/chords-and-notes-arp-chance-mod.json), with the [chords-and-notes-arp-chance-mod.vcv](chords-and-notes/chords-and-notes-arp-chance.vcv) patch using an LFO to generate the input voltage. A scope will also show the LFO output and the resulting gates coming from TimeSeq: as the LFO value is low, there is a higher chance of a note playing and when the LFO is high, there is a lower chance.
 
 ## Generating a Quantized Random Melody
 
@@ -564,4 +567,4 @@ This *lane* repeats one segment that updates the voltage on the 4th *output* of 
 
 ### Full Script and VCV Rack Patch
 
-The resulting script for this step can be found in [note-seq-quantize-random.json](note-seq/note-seq-quantize-random.json), with the [note-seq-quantize-random.vcv](note-seq/note-seq-quantize-random.vcv) sending the newly generated note sequence through an additional VCO, with the new gate signal driving another ADSR envelope generator.
+The resulting script for this step can be found in [chords-and-notes-quantize-random.json](chords-and-notes/chords-and-notes-quantize-random.json), with the [chords-and-notes-quantize-random.vcv](chords-and-notes/chords-and-notes-quantize-random.vcv) sending the newly generated note sequence through an additional VCO, with the new gate signal driving another ADSR envelope generator.

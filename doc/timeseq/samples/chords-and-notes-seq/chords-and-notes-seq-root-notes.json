@@ -1,0 +1,35 @@
+{
+	"$schema": "file:///home/johan/development/vcv/Rack/plugins/not-things/doc/timeseq/schema/timeseq-script-1.2.0.schema.json",
+	"type": "not-things_timeseq_script",
+	"version": "1.2.0",
+	"timelines": [
+		{
+			"lanes": [
+				{
+					"auto-start": true,
+					"loop": true,
+					"segments": [
+						{
+							"duration": { "millis": 2000 },
+							"actions": [
+								{
+									"set-value": {
+										"output": 1,
+										"value": { "sequence": "chord-root-notes" }
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"sequences": [
+		{
+			"id": "chord-root-notes",
+			"values": [ "C3", "F3", "D3", "G3" ]
+		}
+	]
+}
+

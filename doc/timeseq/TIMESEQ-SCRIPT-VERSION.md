@@ -4,16 +4,30 @@
 
 ## Table of Contents
 
-* [1.0.0](#version-100)
+* [1.2.0](#version-120)
 * [1.1.0](#version-110)
+* [1.0.0](#version-100)
 
-## Version 1.0.0
+## Version 1.2.0
 
-**Supported from**: TimeSeq v2.0.2, **Release date**: 2025-06-06
+**Supported from**: TimeSeq v2.0.6, **Release date**: TBD
 
 ### Changes
 
-* Initial version of the TimeSeq script
+* Added [sequences](TIMESEQ-SCRIPT-JSON.md#sequence)
+* Added [sequence](TIMESEQ-SCRIPT-JSON.md#sequence-value) `values` to allow usage of `sequences`.
+* Added [move-sequence](TIMESEQ-SCRIPT-JSON.md#move-sequence), [add-to-sequence](TIMESEQ-SCRIPT-JSON.md#add-to-sequence), [remove-from-sequence](TIMESEQ-SCRIPT-JSON.md#remove-from-sequence) and `clear-sequence` actions to manipulate `sequences`.
+* Instead of limiting the `and` and `or` [logical if operators](TIMESEQ-SCRIPT-JSON.md#logical-operators) to exactly two child conditionals, allow any number of child conditionals as long as there are at least two.
+
+### JSON Schema
+
+Add following property at the root of the JSON Script to allow JSON Schema validation:
+
+```json
+{
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.2.0.schema.json"
+}
+```
 
 ## Version 1.1.0
 
@@ -35,3 +49,11 @@ Add following property at the root of the JSON Script to allow JSON Schema valid
     "$schema": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json"
 }
 ```
+
+## Version 1.0.0
+
+**Supported from**: TimeSeq v2.0.2, **Release date**: 2025-06-06
+
+### Changes
+
+* Initial version of the TimeSeq script

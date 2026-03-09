@@ -32,6 +32,7 @@ struct ScriptSegment;
 struct ScriptSegmentBlock;
 struct ScriptCalc;
 struct ScriptTuning;
+struct ScriptSequence;
 struct Script;
 struct ValueProcessor;
 struct PortHandler;
@@ -97,6 +98,55 @@ struct CalcVtoFProcessor : CalcProcessor {
 	double calc(double value) override;
 };
 
+struct RandValueGenerator {
+	RandValueGenerator();
+	virtual ~RandValueGenerator();
+
+	virtual float generate(float lower, float upper);
+
+	nt_private:
+		std::minstd_rand m_generator;
+};
+
+struct SequenceProcessor {
+	SequenceProcessor(std::string id, std::vector<std::shared_ptr<ValueProcessor>> values, bool retrieveVoltageOnce);
+
+	std::string getId();
+	std::vector<std::shared_ptr<ValueProcessor>> getValues();
+	bool isRetrieveVoltageOnce();
+
+	void clear();
+	void add(std::shared_ptr<ValueProcessor> value, int position);
+	void remove(int position);
+
+	nt_private:
+		std::string m_id;
+		std::vector<std::shared_ptr<ValueProcessor>> m_values;
+		bool m_retrieveVoltageOnce;
+};
+
+struct SequencePositionProcessor {
+	enum SequenceMoveDirection { FORWARD, BACKWARD, RANDOM, NONE };
+
+	SequencePositionProcessor(std::shared_ptr<SequenceProcessor> sequenceProcessor, std::shared_ptr<RandValueGenerator> randValueGenerator);
+
+	SequenceProcessor* getSequenceProcessor();
+	double getCurrentValue();
+
+	void move(SequenceMoveDirection direction, bool wrap);
+	void move(int position);
+
+	nt_private:
+		int m_position;
+		std::shared_ptr<SequenceProcessor> m_sequenceProcessor;
+		std::shared_ptr<RandValueGenerator> m_randValueGenerator;
+
+		// If the sequence has 'retrieve-voltage-once' set to true, we need to store the voltage
+		// and remember it until a move is done.
+		bool m_hasStoredVoltage;
+		double m_storedVoltage;
+};
+
 struct ValueProcessor {
 	ValueProcessor(std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
 
@@ -151,16 +201,6 @@ struct OutputValueProcessor : ValueProcessor {
 		PortHandler* m_portHandler;
 };
 
-struct RandValueGenerator {
-	RandValueGenerator();
-	virtual ~RandValueGenerator();
-
-	virtual float generate(float lower, float upper);
-
-	nt_private:
-		std::minstd_rand m_generator;
-};
-
 struct RandValueProcessor : ValueProcessor {
 	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::shared_ptr<RandValueGenerator> randValueGenerator, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
 
@@ -173,15 +213,27 @@ struct RandValueProcessor : ValueProcessor {
 		std::shared_ptr<RandValueGenerator> m_randValueGenerator;
 };
 
+struct SequenceValueProcessor : ValueProcessor {
+	SequenceValueProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection moveBefore, SequencePositionProcessor::SequenceMoveDirection moveAfter, bool wrap, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
+
+	double processValue() override;
+
+	nt_private:
+		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
+		SequencePositionProcessor::SequenceMoveDirection m_moveBefore;
+		SequencePositionProcessor::SequenceMoveDirection m_moveAfter;
+		bool m_wrap;
+};
+
 struct IfProcessor {
-	IfProcessor(ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> ifs);
+	IfProcessor(ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::vector<std::shared_ptr<IfProcessor>> ifs);
 
 	bool process(std::string* message);
 
 	nt_private:
 		ScriptIf* m_scriptIf;
 		std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> m_values;
-		std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> m_ifs;
+		std::vector<std::shared_ptr<IfProcessor>> m_ifs;
 };
 
 struct ActionProcessor {
@@ -259,6 +311,58 @@ struct ActionTriggerProcessor : ActionProcessor {
 	nt_private:
 		std::string m_trigger;
 		TriggerHandler* m_triggerHandler;
+};
+
+struct ActionMoveSequenceDirectionProcessor : ActionProcessor {
+	ActionMoveSequenceDirectionProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, std::shared_ptr<IfProcessor> ifProcessor);
+
+	void processAction() override;
+
+	nt_private:
+		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
+		SequencePositionProcessor::SequenceMoveDirection m_direction;
+		bool m_wrap;
+};
+
+struct ActionMoveSequencePositionProcessor : ActionProcessor {
+	ActionMoveSequencePositionProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, std::shared_ptr<IfProcessor> ifProcessor);
+
+	void processAction() override;
+
+	nt_private:
+		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
+		int m_position;
+};
+
+struct ActionClearSequenceProcessor : ActionProcessor {
+	ActionClearSequenceProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, std::shared_ptr<IfProcessor> ifProcessor);
+
+	void processAction() override;
+
+	nt_private:
+		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
+};
+
+struct ActionAddToSequenceSequenceProcessor : ActionProcessor {
+	ActionAddToSequenceSequenceProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, std::shared_ptr<ValueProcessor> value, int position, bool asConstantVoltage, std::shared_ptr<IfProcessor> ifProcessor);
+
+	void processAction() override;
+
+	nt_private:
+		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
+		std::shared_ptr<ValueProcessor> m_value;
+		int m_position;
+		bool m_asConstantVoltage;
+};
+
+struct ActionRemoveFromSequenceProcessor : ActionProcessor {
+	ActionRemoveFromSequenceProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, std::shared_ptr<IfProcessor> ifProcessor);
+
+	void processAction() override;
+
+	nt_private:
+		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
+		int m_position;
 };
 
 struct ActionOngoingProcessor {
@@ -493,6 +597,9 @@ struct Processor {
 struct ProcessorScriptParseContext {
 	Script* script;
 	std::vector<ValidationError> *validationErrors;
+
+	std::vector<std::shared_ptr<SequencePositionProcessor>> sharedSequences;
+	std::vector<std::shared_ptr<SequenceProcessor>> nonSharedSequences;
 };
 
 struct ProcessorScriptParser {
@@ -516,19 +623,30 @@ struct ProcessorScriptParser {
 	std::shared_ptr<ActionProcessor> parseSetLabelAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ActionProcessor> parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseMoveSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseClearSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseAddToSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
+	std::shared_ptr<ActionProcessor> parseRemoveFromSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::string> location, std::vector<std::string> valueStack);
 	std::shared_ptr<ValueProcessor> parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location);
 	std::shared_ptr<ValueProcessor> parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location, std::vector<std::string> valueStack);
+	std::shared_ptr<ValueProcessor> parseSequenceValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location, std::vector<std::string> valueStack);
 	std::shared_ptr<CalcProcessor> parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, std::vector<std::string> location, std::vector<std::string> valueStack);
 	std::shared_ptr<IfProcessor> parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, std::vector<std::string> location, std::vector<std::string> ifStack);
+
+	void parseSequence(ProcessorScriptParseContext* context, ScriptSequence* scriptSequence, std::vector<std::string> location);
 
 	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string> location);
 	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string> location);
 
 	ScriptAction* resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string>& currentLocation, std::vector<std::string>& resolvedLocation);
+
+	std::shared_ptr<SequencePositionProcessor> resolveSharedSequence(ProcessorScriptParseContext* context, std::string id);
+	bool hasNonSharedSequence(ProcessorScriptParseContext* context, std::string id);
+	std::shared_ptr<SequencePositionProcessor> resolveNonSharedSequence(ProcessorScriptParseContext* context, std::string id);
 
 	nt_private:
 		PortHandler* m_portHandler;

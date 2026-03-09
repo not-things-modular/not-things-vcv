@@ -14,6 +14,7 @@
   * [Gate Actions](#gate-actions)
 * [Quantizing](#quantizing)
 * [Triggers](#triggers)
+* [Sequences](#sequences)
 * [Referencing](#referencing)
   * [Example](#example)
   * [Circular References](#circular-references)
@@ -33,7 +34,7 @@ The schema can be associated with a script file by adding following property at 
 
 ```js
 {
-    "$schema": "https://not-things.com/schemas/timeseq-script-1.1.0.schema.json"
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.2.0.schema.json"
     ...
 }
 ```
@@ -69,6 +70,7 @@ A script can also contain following items at the root level:
 
 * A list of *global-actions*, which are executed when the script is loaded or resets (e.g. to initialize output polyphony)
 * [input-trigger](TIMESEQ-SCRIPT-JSON.md#input-trigger)s that define which input ports (and channels) should produce an internal *trigger* when transitioning from low to high voltage (see [triggers](#triggers))
+* [sequences](TIMESEQ-SCRIPT-JSON.md#sequence) that can be iterated over using [sequence values](TIMESEQ-SCRIPT-JSON.md#sequence-value) in repeating actions.
 * A [component-pool](TIMESEQ-SCRIPT-JSON.md#component-pool) that contains reusable definitions of objects that can be referenced throughout the script. This avoids having to declare identical objects in multiple places in a script and can help with structuring more complex scripts through the use of meaningful IDs (see [referencing](#referencing))
 
 ## Actions
@@ -132,6 +134,19 @@ This trigger mechanism can be used for multiple purposes:
 * Different sequences within the same script can be chained by placing them in different *lane*s/*timeline*s and letting them interact with each other through triggers.
 * More complex logical setups can be created by combining conditional actions and triggers, resulting in more application-like functionality.
 * ...
+
+## Sequences
+
+Since it is a sequencer, one of the intended purposes of TimeSeq is to execute scripts that sequence other modules in a VCV Rack patch. Often, this will require the same action or set of actions to be executed multiple times, but with a changing value each time the action(s) are executed. To more easily facilitate this, [sequences](TIMESEQ-SCRIPT-JSON.md#sequence) were introduced. These allow a list of values (voltages or notes) to be defined that can then be iterated over by using them in a [sequence-value](TIMESEQ-SCRIPT-JSON.md#sequence-value).
+
+By default, each time a value is retrieved from the sequence using a `sequence-value`, the position within the sequence is also moved forward, wrapping around to the first element after reaching the end of the sequence. This can however be changed by using the `move-before`, `move-after` and/or `wrap` properties to overwrite the default movements behaviour of the `sequence-value`.
+
+While the most common way of using sequences is to define the values of the sequence directly in the JSON script itself, it's also possible to dynamically change the values of a sequence during the execution of the script. A number of *actions* are available for this:
+
+* [add-to-sequence](TIMESEQ-SCRIPT-JSON.md#add-to-sequence): Adds a value to a sequence
+* [remove-from-sequence](TIMESEQ-SCRIPT-JSON.md#remove-from-sequence): Remove a value from a sequence
+* `clear-sequence`: Removes all values from a sequence
+* [move-sequence](TIMESEQ-SCRIPT-JSON.md#move-sequence): move the current position in a sequence
 
 ## Referencing
 

@@ -188,13 +188,13 @@ TEST(TimeSeqJsonScriptCalc, ParseValueCalcShouldFailOnNonObjectOperator) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	ASSERT_EQ(validationErrors.size(), 7u);
-	expectError(validationErrors, ValidationErrorCode::Calc_AddObject, "/component-pool/calcs/0");
-	expectError(validationErrors, ValidationErrorCode::Calc_SubObject, "/component-pool/calcs/1");
-	expectError(validationErrors, ValidationErrorCode::Calc_DivObject, "/component-pool/calcs/2");
-	expectError(validationErrors, ValidationErrorCode::Calc_MultObject, "/component-pool/calcs/3");
-	expectError(validationErrors, ValidationErrorCode::Calc_MaxObject, "/component-pool/calcs/4");
-	expectError(validationErrors, ValidationErrorCode::Calc_MinObject, "/component-pool/calcs/5");
-	expectError(validationErrors, ValidationErrorCode::Calc_RemainObject, "/component-pool/calcs/6");
+	expectError(validationErrors, ValidationErrorCode::Calc_AddObject, "/component-pool/calcs/0/add");
+	expectError(validationErrors, ValidationErrorCode::Calc_SubObject, "/component-pool/calcs/1/sub");
+	expectError(validationErrors, ValidationErrorCode::Calc_DivObject, "/component-pool/calcs/2/div");
+	expectError(validationErrors, ValidationErrorCode::Calc_MultObject, "/component-pool/calcs/3/mult");
+	expectError(validationErrors, ValidationErrorCode::Calc_MaxObject, "/component-pool/calcs/4/max");
+	expectError(validationErrors, ValidationErrorCode::Calc_MinObject, "/component-pool/calcs/5/min");
+	expectError(validationErrors, ValidationErrorCode::Calc_RemainObject, "/component-pool/calcs/6/remain");
 }
 
 TEST(TimeSeqJsonScriptCalc, ParseValueCalcShouldFailOnInvalidCalcValue) {
