@@ -929,7 +929,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string> location, vector<string> ifStack) {
 	if (scriptIf->ref.length() == 0) {
 		pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
-		pair<shared_ptr<IfProcessor>, shared_ptr<IfProcessor>> ifs;
+		vector<shared_ptr<IfProcessor>> ifs;
 		bool parseValues = true;
 		bool parseIfs = false;
 
@@ -973,12 +973,13 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseConte
 			location.pop_back();
 		}
 		if (parseIfs) {
-			location.push_back("0");
-			ifs.first = parseIf(context, &scriptIf->ifs.get()->first, location, ifStack);
-			location.pop_back();
-			location.push_back("1");
-			ifs.second = parseIf(context, &scriptIf->ifs.get()->second, location, ifStack);
-			location.pop_back();
+			int count = 0;
+			for (ScriptIf& scriptIf : *scriptIf->ifs.get()) {
+				location.push_back(to_string(count));
+				ifs.push_back(parseIf(context, &scriptIf, location, ifStack));
+				location.pop_back();
+				count++;
+			}
 		}
 
 		location.pop_back();

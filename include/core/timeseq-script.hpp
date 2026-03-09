@@ -168,7 +168,7 @@ struct ScriptIf : ScriptRefObject {
 	std::unique_ptr<std::pair<ScriptValue, ScriptValue>> values;
 	std::unique_ptr<float> tolerance;
 
-	std::unique_ptr<std::pair<ScriptIf, ScriptIf>> ifs;
+	std::unique_ptr<std::vector<ScriptIf>> ifs;
 };
 
 struct ScriptAssert {

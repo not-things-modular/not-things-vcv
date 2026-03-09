@@ -435,20 +435,20 @@ TEST(TimeSeqJsonScriptIf, ParseAndWithTwoChildrenShouldSucceed) {
 	EXPECT_EQ(script->actions[0].condition->ifOperator, ScriptIf::IfOperator::AND);
 	EXPECT_FALSE(script->actions[0].condition->values);
 	EXPECT_TRUE(script->actions[0].condition->ifs);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.ifOperator, ScriptIf::IfOperator::EQ);
-	ASSERT_TRUE(script->actions[0].condition->ifs->first.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->first.ref, "value-ref-1");
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->second.ref, "value-ref-2");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.ifOperator, ScriptIf::IfOperator::NE);
-	ASSERT_TRUE(script->actions[0].condition->ifs->second.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->first.ref, "value-ref-3");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->second.ref, "value-ref-4");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).ifOperator, ScriptIf::IfOperator::EQ);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(0).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->second.ref, "value-ref-2");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(1).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->first.ref, "value-ref-3");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->second.ref, "value-ref-4");
 }
 
-TEST(TimeSeqJsonScriptIf, ParseAndWithThreeChildShouldFail) {
+TEST(TimeSeqJsonScriptIf, ParseAndWithThreeChildShouldFailForOlderVersion) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "if", { { "and", json::array({
@@ -461,7 +461,44 @@ TEST(TimeSeqJsonScriptIf, ParseAndWithThreeChildShouldFail) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/and");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0/if/and");
+}
+
+TEST(TimeSeqJsonScriptIf, ParseAndWithThreeChildShouldSucceedForVersion120) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "if", { { "and", json::array({
+				{ { "eq", doubleValueArray } },
+				{ { "ne", doubleValueArray2 } },
+				{ { "ne", doubleValueArray } }
+			}) } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 0u);
+
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_TRUE(script->actions[0].condition);
+	EXPECT_EQ(script->actions[0].condition->ifOperator, ScriptIf::IfOperator::AND);
+	EXPECT_FALSE(script->actions[0].condition->values);
+	EXPECT_TRUE(script->actions[0].condition->ifs);
+	EXPECT_EQ(script->actions[0].condition->ifs->size(), 3U);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).ifOperator, ScriptIf::IfOperator::EQ);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(0).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->second.ref, "value-ref-2");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(1).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->first.ref, "value-ref-3");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->second.ref, "value-ref-4");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(2).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(2).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(2).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(2).values->second.ref, "value-ref-2");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseOrWithSingleChildShouldFail) {
@@ -502,20 +539,20 @@ TEST(TimeSeqJsonScriptIf, ParseOrWithTwoChildrenShouldSucceed) {
 	EXPECT_EQ(script->actions[0].condition->ifOperator, ScriptIf::IfOperator::OR);
 	EXPECT_FALSE(script->actions[0].condition->values);
 	EXPECT_TRUE(script->actions[0].condition->ifs);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.ifOperator, ScriptIf::IfOperator::EQ);
-	ASSERT_TRUE(script->actions[0].condition->ifs->first.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->first.ref, "value-ref-1");
-	EXPECT_EQ(script->actions[0].condition->ifs->first.values->second.ref, "value-ref-2");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.ifOperator, ScriptIf::IfOperator::NE);
-	ASSERT_TRUE(script->actions[0].condition->ifs->second.values);
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->first.ref, "value-ref-3");
-	EXPECT_EQ(script->actions[0].condition->ifs->second.values->second.ref, "value-ref-4");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).ifOperator, ScriptIf::IfOperator::EQ);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(0).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->second.ref, "value-ref-2");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(1).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->first.ref, "value-ref-3");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->second.ref, "value-ref-4");
 }
 
-TEST(TimeSeqJsonScriptIf, ParseOrWithThreeChildShouldFail) {
+TEST(TimeSeqJsonScriptIf, ParseOrWithThreeChildShouldFailForOlderVersion) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "if", { { "or", json::array({
@@ -528,7 +565,44 @@ TEST(TimeSeqJsonScriptIf, ParseOrWithThreeChildShouldFail) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::If_TwoValues, "/component-pool/actions/0/if/or");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0/if/or");
+}
+
+TEST(TimeSeqJsonScriptIf, ParseOrWithThreeChildShouldSucceedForVersion120) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "if", { { "or", json::array({
+				{ { "eq", doubleValueArray } },
+				{ { "ne", doubleValueArray2 } },
+				{ { "ne", doubleValueArray } }
+			}) } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 0u);
+
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_TRUE(script->actions[0].condition);
+	EXPECT_EQ(script->actions[0].condition->ifOperator, ScriptIf::IfOperator::OR);
+	EXPECT_FALSE(script->actions[0].condition->values);
+	EXPECT_TRUE(script->actions[0].condition->ifs);
+	EXPECT_EQ(script->actions[0].condition->ifs->size(), 3U);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).ifOperator, ScriptIf::IfOperator::EQ);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(0).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(0).values->second.ref, "value-ref-2");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(1).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->first.ref, "value-ref-3");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(1).values->second.ref, "value-ref-4");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(2).ifOperator, ScriptIf::IfOperator::NE);
+	ASSERT_TRUE(script->actions[0].condition->ifs->at(2).values);
+	EXPECT_EQ(script->actions[0].condition->ifs->at(2).values->first.ref, "value-ref-1");
+	EXPECT_EQ(script->actions[0].condition->ifs->at(2).values->second.ref, "value-ref-2");
 }
 
 TEST(TimeSeqJsonScriptIf, ParseWithoutToleranceShouldSucceed) {

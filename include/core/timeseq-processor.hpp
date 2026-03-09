@@ -226,14 +226,14 @@ struct SequenceValueProcessor : ValueProcessor {
 };
 
 struct IfProcessor {
-	IfProcessor(ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> ifs);
+	IfProcessor(ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::vector<std::shared_ptr<IfProcessor>> ifs);
 
 	bool process(std::string* message);
 
 	nt_private:
 		ScriptIf* m_scriptIf;
 		std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> m_values;
-		std::pair<std::shared_ptr<IfProcessor>, std::shared_ptr<IfProcessor>> m_ifs;
+		std::vector<std::shared_ptr<IfProcessor>> m_ifs;
 };
 
 struct ActionProcessor {

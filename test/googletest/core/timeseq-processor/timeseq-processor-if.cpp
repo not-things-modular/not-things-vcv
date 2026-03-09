@@ -714,3 +714,152 @@ TEST(TimeSeqProcessorIf, ActionWithOrShouldCheckIfResult) {
 		script.second->process();
 	}
 }
+
+TEST(TimeSeqProcessorIf, ActionWithAndShouldAllowMoreThenTwoConditions) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
+					{ "if", { { "and", json::array({
+						{ { "eq", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id-1" } }
+						}) } },
+						{ { "eq", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id-2" } }
+						}) } },
+						{ { "eq", json::array({
+							{ { "voltage", 2.f } },
+							{ { "ref", "variable-value-id-3" } }
+						}) } },
+						{ { "eq", json::array({
+							{ { "voltage", 3.f } },
+							{ { "ref", "variable-value-id-4" } }
+						}) } }
+					}) } } }
+				}
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["values"] = json::array({
+		{ { "id", "variable-value-id-1" }, { "variable", "input-variable-1" } },
+		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } },
+		{ { "id", "variable-value-id-3" }, { "variable", "input-variable-3" } },
+		{ { "id", "variable-value-id-4" }, { "variable", "input-variable-4" } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 0u) << json.dump();
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+		float values1[] = { 0.f, 0.f, 1.f, 1.f, 0.f, 0.f, 1.f, 1.f };
+		float values2[] = { 0.f, 1.f, 0.f, 1.f, 0.f, 1.f, 1.f, 1.f };
+		float values3[] = { 0.f, 0.f, 0.f, 2.f, 0.f, 0.f, 2.f, 2.f };
+		float values4[] = { 0.f, 3.f, 0.f, 0.f, 0.f, 3.f, 0.f, 3.f };
+		for (int i = 0; i < 8; i++) {
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
+			if ((i == 2) || (i == 3) || (i == 6) || (i == 7))
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
+			if ((i == 3) || (i == 6) || (i == 7))
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable3)).Times(1).WillOnce(testing::Return(values3[i]));
+			if ((i == 3) || (i == 6) || (i == 7))
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable4)).Times(1).WillOnce(testing::Return(values4[i]));
+			if (i == 7)
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
+		}
+	}
+
+	for (int i = 0; i < 8; i++) {
+		script.second->process();
+	}
+}
+
+TEST(TimeSeqProcessorIf, ActionWithOrShouldAllowMoreThenTwoConditions) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	MockVariableHandler mockVariableHandler;
+	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{
+					{ "set-variable", { { "name", "output-variable" }, { "value", { { "voltage", 3.45f } } } } },
+					{ "if", { { "or", json::array({
+						{ { "eq", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id-1" } }
+						}) } },
+						{ { "eq", json::array({
+							{ { "voltage", 1.f } },
+							{ { "ref", "variable-value-id-2" } }
+						}) } },
+						{ { "eq", json::array({
+							{ { "voltage", 2.f } },
+							{ { "ref", "variable-value-id-3" } }
+						}) } },
+						{ { "eq", json::array({
+							{ { "voltage", 3.f } },
+							{ { "ref", "variable-value-id-4" } }
+						}) } }
+					}) } } }
+				}
+			}) } } }) } },
+		}) } }
+	});
+	json["component-pool"] = json::object();
+	json["component-pool"]["values"] = json::array({
+		{ { "id", "variable-value-id-1" }, { "variable", "input-variable-1" } },
+		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } },
+		{ { "id", "variable-value-id-3" }, { "variable", "input-variable-3" } },
+		{ { "id", "variable-value-id-4" }, { "variable", "input-variable-4" } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	EXPECT_EQ(validationErrors.size(), 0u) << json.dump();
+	EXPECT_NO_ERRORS(validationErrors);
+
+	vector<string> emptyTriggers = {};
+	{
+		testing::InSequence inSequence;
+		float values1[] = { 0.f, 0.f, 1.f, 1.f, 0.f, 0.f, 0.f, 1.f };
+		float values2[] = { 0.f, 1.f, 0.f, 1.f, 0.f, 0.f, 0.f, 1.f };
+		float values3[] = { 0.f, 0.f, 0.f, 2.f, 0.f, 0.f, 2.f, 2.f };
+		float values4[] = { 0.f, 3.f, 0.f, 3.f, 0.f, 3.f, 0.f, 3.f };
+		for (int i = 0; i < 8; i++) {
+			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
+			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
+			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
+			if ((i == 0) || (i == 1) || (i == 4) || (i == 5) || (i == 6))
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
+			if ((i == 0) || (i == 4) || (i == 5) || (i == 6))
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable3)).Times(1).WillOnce(testing::Return(values3[i]));
+			if ((i == 0) || (i == 4) || (i == 5))
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable4)).Times(1).WillOnce(testing::Return(values4[i]));
+			if ((i != 0) && (i != 4)) {
+				EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.45f)).Times(1);
+			}
+		}
+	}
+
+	for (int i = 0; i < 8; i++) {
+		script.second->process();
+	}
+}

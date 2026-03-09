@@ -1370,23 +1370,27 @@ pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(string ifOperator
 	return valuePair;
 }
 
-unique_ptr<pair<ScriptIf, ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, const json& ifsJson, JsonScriptParseContext* context, vector<string> location) {
-	unique_ptr<pair<ScriptIf, ScriptIf>> ifPair;
+unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, const json& ifsJson, JsonScriptParseContext* context, vector<string> location) {
+	unique_ptr<vector<ScriptIf>> ifs;
 
 	vector<json> ifElements = ifsJson.get<vector<json>>();
-	if (ifElements.size() == 2) {
-		ifPair.reset(new pair<ScriptIf, ScriptIf>());
-		location.push_back("0");
-		ifPair->first = parseIf(ifElements[0], true, context, location);
-		location.pop_back();
-		location.push_back("1");
-		ifPair->second = parseIf(ifElements[1], true, context, location);
-		location.pop_back();
+	if (ifElements.size() > 1) {
+		int count = 0;
+		ifs.reset(new vector<ScriptIf>());
+		for (const json& ifElement : ifElements) {
+			location.push_back(to_string(count));
+			ifs->push_back(parseIf(ifElement, true, context, location));
+			location.pop_back();
+			count++;
+		}
+		if (count > 2) {
+			verifyVersion(VERSION_1_2_0, context, (ifOperator + " ifs with more then two conditions").c_str(), location);
+		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two if items are expected in the '", ifOperator.c_str(), "' array");
+		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_TwoValues, "At least two if items are expected in the '", ifOperator.c_str(), "' array");
 	}
 
-	return ifPair;
+	return ifs;
 }
 
 ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, JsonScriptParseContext* context, vector<string> location) {

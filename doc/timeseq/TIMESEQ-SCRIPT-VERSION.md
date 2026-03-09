@@ -16,7 +16,8 @@
 
 * Added [sequences](TIMESEQ-SCRIPT-JSON.md#sequence)
 * Added [sequence](TIMESEQ-SCRIPT-JSON.md#sequence-value) `values` to allow usage of `sequences`.
-* Added [move-sequence](TIMESEQ-SCRIPT-JSON.md#move-sequence), [add-to-sequence](TIMESEQ-SCRIPT-JSON.md#add-to-sequence), [remove-from-sequence](TIMESEQ-SCRIPT-JSON.md#remove-from-sequence) and `clear-sequence` actions to manipulate `sequences`
+* Added [move-sequence](TIMESEQ-SCRIPT-JSON.md#move-sequence), [add-to-sequence](TIMESEQ-SCRIPT-JSON.md#add-to-sequence), [remove-from-sequence](TIMESEQ-SCRIPT-JSON.md#remove-from-sequence) and `clear-sequence` actions to manipulate `sequences`.
+* Instead of limiting the `and` and `or` [logical if operators](TIMESEQ-SCRIPT-JSON.md#logical-operators) to exactly two child conditionals, allow any number of child conditionals as long as there are at least two.
 
 ### JSON Schema
 
