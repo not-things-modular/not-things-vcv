@@ -448,7 +448,7 @@ TEST(TimeSeqJsonScriptIf, ParseAndWithTwoChildrenShouldSucceed) {
 TEST(TimeSeqJsonScriptIf, ParseAndWithThreeChildShouldFailForOlderVersion) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "if", { { "and", json::array({
@@ -552,7 +552,7 @@ TEST(TimeSeqJsonScriptIf, ParseOrWithTwoChildrenShouldSucceed) {
 TEST(TimeSeqJsonScriptIf, ParseOrWithThreeChildShouldFailForOlderVersion) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "if", { { "or", json::array({

@@ -441,7 +441,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithAndShouldCheckIfResult) {
 	MockVariableHandler mockVariableHandler;
 	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
@@ -455,6 +455,10 @@ TEST(TimeSeqProcessorIfAssert, ActionWithAndShouldCheckIfResult) {
 							{ { "eq", json::array({
 								{ { "voltage", 1.f } },
 								{ { "ref", "variable-value-id-2" } }
+							}) } },
+							{ { "eq", json::array({
+								{ { "voltage", 2.f } },
+								{ { "ref", "variable-value-id-3" } }
 							}) } }
 						}) } } }
 					} }
@@ -465,7 +469,8 @@ TEST(TimeSeqProcessorIfAssert, ActionWithAndShouldCheckIfResult) {
 	json["component-pool"] = json::object();
 	json["component-pool"]["values"] = json::array({
 		{ { "id", "variable-value-id-1" }, { "variable", "input-variable-1" } },
-		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } }
+		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } },
+		{ { "id", "variable-value-id-3" }, { "variable", "input-variable-3" } }
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
@@ -475,27 +480,33 @@ TEST(TimeSeqProcessorIfAssert, ActionWithAndShouldCheckIfResult) {
 	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
-		float values1[] = { 0.f, 0.f, 1.f, 1.f };
-		float values2[] = { 0.f, 1.f, 0.f, 1.f };
-		for (int i = 0; i < 4; i++) {
+		float values1[] = { 0.f, 0.f, 1.f, 1.f, 1.f };
+		float values2[] = { 0.f, 1.f, 0.f, 1.f, 1.f };
+		float values3[] = { 0.f, 0.f, 0.f, 2.f, 0.f };
+		for (int i = 0; i < 5; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
 			if (1.f == values1[i]) {
 				// The second value is only retrieved in the initial expectation check if the first one matched.
 				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
+				// The third value is only retrieved in the initial expectation check if the first and second one matched
+				if (1.f == values2[i]) {
+					EXPECT_CALL(mockVariableHandler, getVariable(inputVariable3)).Times(1).WillOnce(testing::Return(values3[i]));
+				}
 			}
 			if (i != 3) {
 				string name = "the-assert";
-				string message = std::string("(") + formatAssert(1.f, values1[i], "eq") + " and " + formatAssert(1.f, values2[i], "eq") + ")";
+				string message = std::string("(") + formatAssert(1.f, values1[i], "eq") + " and " + formatAssert(1.f, values2[i], "eq") + " and " + formatAssert(2.f, values3[i], "eq") + ")";
 				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i])); // The second getVariable call is to construct the assertion message
 				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i])); // The second getVariable call is to construct the assertion message
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable3)).Times(1).WillOnce(testing::Return(values3[i])); // The second getVariable call is to construct the assertion message
 				EXPECT_CALL(mockAssertListener, assertFailed(name, message, false)).Times(1);
 			}
 		}
 	}
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		script.second->process();
 	}
 }
@@ -508,7 +519,7 @@ TEST(TimeSeqProcessorIfAssert, ActionWithOrShouldCheckIfResult) {
 	MockVariableHandler mockVariableHandler;
 	ProcessorLoader processorLoader(nullptr, &mockVariableHandler, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, &mockAssertListener);
 	vector<ValidationError> validationErrors;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
@@ -522,6 +533,10 @@ TEST(TimeSeqProcessorIfAssert, ActionWithOrShouldCheckIfResult) {
 							{ { "eq", json::array({
 								{ { "voltage", 1.f } },
 								{ { "ref", "variable-value-id-2" } }
+							}) } },
+							{ { "eq", json::array({
+								{ { "voltage", 2.f } },
+								{ { "ref", "variable-value-id-3" } }
 							}) } }
 						}) } } }
 					} }
@@ -532,7 +547,8 @@ TEST(TimeSeqProcessorIfAssert, ActionWithOrShouldCheckIfResult) {
 	json["component-pool"] = json::object();
 	json["component-pool"]["values"] = json::array({
 		{ { "id", "variable-value-id-1" }, { "variable", "input-variable-1" } },
-		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } }
+		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } },
+		{ { "id", "variable-value-id-3" }, { "variable", "input-variable-3" } }
 	});
 
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
@@ -542,27 +558,33 @@ TEST(TimeSeqProcessorIfAssert, ActionWithOrShouldCheckIfResult) {
 	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
-		float values1[] = { 0.f, 0.f, 1.f, 1.f };
-		float values2[] = { 0.f, 1.f, 0.f, 1.f };
-		for (int i = 0; i < 4; i++) {
+		float values1[] = { 0.f, 0.f, 1.f, 1.f, 0.f };
+		float values2[] = { 0.f, 1.f, 0.f, 1.f, 0.f };
+		float values3[] = { 0.f, 2.f, 2.f, 0.f, 2.f };
+		for (int i = 0; i < 5; i++) {
 			EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 			EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 			EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i]));
 			if (1.f != values1[i]) {
 				// The second variable is only retrieved in the original assertion check if the first one didn't match
 				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i]));
+				if (1.f != values2[i]) {
+					// The third variable is only retrieved in the original assertion check if the first and second one didn't match
+					EXPECT_CALL(mockVariableHandler, getVariable(inputVariable3)).Times(1).WillOnce(testing::Return(values3[i]));
+				}
 			}
 			if (i == 0) {
 				string name = "the-assert";
-				string message = "((1 eq 0) or (1 eq 0))";
+				string message = "((1 eq 0) or (1 eq 0) or (2 eq 0))";
 				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable1)).Times(1).WillOnce(testing::Return(values1[i])); // The second getVariable call is to construct the assertion message
 				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable2)).Times(1).WillOnce(testing::Return(values2[i])); // The second getVariable call is to construct the assertion message
+				EXPECT_CALL(mockVariableHandler, getVariable(inputVariable3)).Times(1).WillOnce(testing::Return(values3[i])); // The second getVariable call is to construct the assertion message
 				EXPECT_CALL(mockAssertListener, assertFailed(name, message, false)).Times(1);
 			}
 		}
 	}
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		script.second->process();
 	}
 }

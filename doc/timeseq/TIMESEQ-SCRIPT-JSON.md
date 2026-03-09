@@ -696,18 +696,19 @@ Some examples of *if* usage with comparison operators within an action:
 
 ### Logical operators
 
-A logical operator allows two child *if*s to be combined. Following logical operators can be used:
+A logical operator allows child *if*s to be combined. Following logical operators can be used:
 
-* `and`: returns *true* if the two child *if*s both evaluate to *true*,
+* `and`: returns *true* if the child *if*s all evaluate to *true*,
 * `or`: returns *true* if at least one of the child *if*s evaluates to *true*
 
-The value of the logical operator property must be set to an array of exactly two child *if* objects. More complex conditional can be constructed by nesting multiple levels of logical *if* operators.
+<!-- Starting from TimeSeq script version 1.2.0, the `and` and `or` operators can contain any number of child *if*s.  -->
+The value of the logical operator property must be set to an array of child *if* objects. In earlier TimeSeq script versions (1.1.0 and before), this array had to contain exactly two child *if* objects. Starting from script version 1.2.0, there must be at least two child *if* objects, but there is no upper limit to the number of *if*s in the array.
 
 #### Properties
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `and` | no | [if](#if) array with 2 *if*s | Checks that the two provided *if*s both evaluate to *true* |
+| `and` | no | [if](#if) array with 2 *if*s | Checks that the provided *if*s evaluate to *true* |
 | `or` | no | [if](#if) array with 2 *if*s | Checks that at least one of the provided *if*s evaluates to *true* |
 
 #### Examples
@@ -756,6 +757,36 @@ An `and` logical operator with a child `or` logical operator as first child cond
                             { "variable": "my-input-variable-1" }
                         ]
                     }
+                ]
+            },
+            {
+                "gt": [
+                    { "voltage": 3.45 },
+                    { "input": { "index": 6 } }
+                ]
+            }
+        ]
+    },
+    "set-variable": { "my-output-variable": 9.9 }
+}
+```
+
+An `and` logical operator with more than two child conditionals (supported since script version 1.2.0)
+
+```json
+{
+    "if": {
+        "and": [
+            {
+                "eq": [
+                    { "voltage": 2.1 },
+                    { "variable": "my-input-variable-1" }
+                ]
+            },
+            {
+                "eq": [
+                    { "voltage": 4.2 },
+                    { "variable": "my-input-variable-1" }
                 ]
             },
             {

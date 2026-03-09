@@ -882,11 +882,11 @@
 					"$ref": "#/definitions/if-child-values"
 				},
 				"and": {
-					"description": "Checks that two if conditionals are both true.",
+					"description": "Checks that child if conditionals are all true.",
 					"$ref": "#/definitions/if-child-ifs"
 				},
 				"or": {
-					"description": "Checks that at least one of the two if conditionals is true.",
+					"description": "Checks that at least one of the child if conditionals is true.",
 					"$ref": "#/definitions/if-child-ifs"
 				},
 				"tolerance": {
@@ -982,8 +982,7 @@
 			"items": {
 				"$ref": "#/definitions/if"
 			},
-			"minItems": 2,
-			"maxItems": 2
+			"minItems": 2
 		},
 		"input-trigger": {
 			"description": "Monitor an input port for incoming trigger or gate signals and fire an internal trigger when one is detected.",
@@ -1393,6 +1392,7 @@
 			"date": "2025-08-31",
 			"changes": [
 				"Added sequences, sequence values and move-sequence, clear-sequence, add-to-sequence and remove-from-sequence actions.",
+				"Instead of limiting 'and' and 'or' ifs to exactly two child conditionals, don't put an upper limit on the number of child conditionals, as long as there are at least two.",
 				"Corrected the oneOf exclusion pattern of multiple start/end action properties in 'action-full'."
 			]
 		}
