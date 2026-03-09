@@ -1379,8 +1379,7 @@ unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, con
 		ifs.reset(new vector<ScriptIf>());
 		for (const json& ifElement : ifElements) {
 			location.push_back(to_string(count));
-			ScriptIf scriptIf = parseIf(ifElement, true, context, location);
-			ifs->push_back(std::move(parseIf(ifElement, true, context, location)));
+			ifs->push_back(parseIf(ifElement, true, context, location));
 			location.pop_back();
 			count++;
 		}

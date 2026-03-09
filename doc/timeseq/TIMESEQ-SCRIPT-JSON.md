@@ -701,7 +701,6 @@ A logical operator allows child *if*s to be combined. Following logical operator
 * `and`: returns *true* if the child *if*s all evaluate to *true*,
 * `or`: returns *true* if at least one of the child *if*s evaluates to *true*
 
-<!-- Starting from TimeSeq script version 1.2.0, the `and` and `or` operators can contain any number of child *if*s.  -->
 The value of the logical operator property must be set to an array of child *if* objects. In earlier TimeSeq script versions (1.1.0 and before), this array had to contain exactly two child *if* objects. Starting from script version 1.2.0, there must be at least two child *if* objects, but there is no upper limit to the number of *if*s in the array.
 
 #### Properties
