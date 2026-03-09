@@ -708,8 +708,8 @@ The value of the logical operator property must be set to an array of child *if*
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `and` | no | [if](#if) array with 2 *if*s | Checks that the provided *if*s evaluate to *true* |
-| `or` | no | [if](#if) array with 2 *if*s | Checks that at least one of the provided *if*s evaluates to *true* |
+| `and` | no | [if](#if) array with at least 2 *if*s | Checks that the provided *if*s evaluate to *true* |
+| `or` | no | [if](#if) array with at least 2 *if*s | Checks that at least one of the provided *if*s evaluates to *true* |
 
 #### Examples
 
