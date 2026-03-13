@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2.0.6 (TBD)
+## 2.0.6 (2026-03-13)
 
 * **TimeSeq**
   * Added `sequences` with accompanying `sequence values`, and `move-sequence`, `add-to-sequence`, `remove-from-sequence` and `clear-sequence` actions
@@ -9,7 +9,7 @@
 * **Solim**
   * Updated limit displays to show nearest quantized note (up or down) instead of always showing the note above (UI display update only)
 
-## 2.0.5 (25-06-28)
+## 2.0.5 (2025-06-28)
 
 * **Global**: Setup GitHub Pages for documentation
 * **TimeSeq**
