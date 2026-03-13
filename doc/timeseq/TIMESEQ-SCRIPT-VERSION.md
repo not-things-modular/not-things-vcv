@@ -10,7 +10,7 @@
 
 ## Version 1.2.0
 
-**Supported from**: TimeSeq v2.0.6, **Release date**: TBD
+**Supported from**: TimeSeq v2.0.6, **Release date**: 2026-03-13
 
 ### Changes
 
