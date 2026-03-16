@@ -28,7 +28,7 @@
 					}
 				},
 				"global-actions": {
-					"descriptions": "A list of actions that will be executed when the script is loaded.",
+					"description": "A list of actions that will be executed when the script is loaded.",
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/action"
@@ -42,7 +42,7 @@
 					}
 				},
 				"sequences": {
-					"descriptions": "A list of sequences that can be used in this script.",
+					"description": "A list of sequences that can be used in this script.",
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/sequence"
@@ -419,10 +419,10 @@
 				"required": [ "bars" ]
 			},
 			"then": {
-				"properties": { "beats": { "minimum": 0 } }
+				"properties": { "beats": { "type": "number", "minimum": 0 } }
 			},
 			"else": {
-				"properties": { "beats": { "exclusiveMinimum": 0 } }
+				"properties": { "beats": { "type": "number", "exclusiveMinimum": 0 } }
 			},
 			"propertyNames": {
 				"anyOf": [
@@ -504,7 +504,7 @@
 				"required": [ "no-limit" ]
 			},
 			"else": {
-				"properties": { "voltage": { "minimum": -10, "maximum": 10 } }
+				"properties": { "voltage": { "type": "number", "minimum": -10, "maximum": 10 } }
 			},
 			"minProperties": 1,
 			"oneOf": [
@@ -1062,7 +1062,6 @@
 							}
 						]
 					},
-					"additionalItems": false,
 					"minItems": 1
 				}
 			},
@@ -1378,23 +1377,5 @@
 			},
 			"required": [ "id" ]
 		}
-	},
-	"changelog": [
-		{
-			"version": "1.1.0",
-			"date": "2025-06-27",
-			"changes": [
-				"Initial version of the TimeSeq Script 1.1.0 JSON Schema definition."
-			]
-		},
-		{
-			"version": "1.2.0",
-			"date": "2025-08-31",
-			"changes": [
-				"Added sequences, sequence values and move-sequence, clear-sequence, add-to-sequence and remove-from-sequence actions.",
-				"Instead of limiting 'and' and 'or' ifs to exactly two child conditionals, don't put an upper limit on the number of child conditionals, as long as there are at least two.",
-				"Corrected the oneOf exclusion pattern of multiple start/end action properties in 'action-full'."
-			]
-		}
-	]
+	}
 }
