@@ -271,7 +271,7 @@
 						}
 					},
 					"required": [ "duration" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -289,7 +289,7 @@
 						}
 					},
 					"required": [ "segment-block" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				}
 			]
@@ -431,7 +431,7 @@
 					"else": {
 						"properties": { "voltage": { "type": "number", "minimum": -10, "maximum": 10 } }
 					},
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -444,7 +444,7 @@
 
 					},
 					"required": [ "note" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -459,7 +459,7 @@
 
 					},
 					"required": [ "variable" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -472,7 +472,7 @@
 
 					},
 					"required": [ "input" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -485,7 +485,7 @@
 
 					},
 					"required": [ "output" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -498,7 +498,7 @@
 
 					},
 					"required": [ "rand" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				}
 			]
@@ -533,7 +533,7 @@
 						"if": { "$ref": "#/definitions/if" }
 					},
 					"required": [ "set-value" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -543,7 +543,7 @@
 						"if": { "$ref": "#/definitions/if" }
 					},
 					"required": [ "set-polyphony" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -553,7 +553,7 @@
 						"if": { "$ref": "#/definitions/if" }
 					},
 					"required": [ "set-label" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -563,7 +563,7 @@
 						"if": { "$ref": "#/definitions/if" }
 					},
 					"required": [ "set-variable" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -573,7 +573,7 @@
 						"if": { "$ref": "#/definitions/if" }
 					},
 					"required": [ "assert" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -587,7 +587,7 @@
 						"if": { "$ref": "#/definitions/if" }
 					},
 					"required": [ "trigger" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -621,7 +621,7 @@
 								}
 							},
 							"required": [ "timing", "start-value", "end-value", "output" ],
-							"patternProperties": { "^x-": true },
+							"patternProperties": { "^x-|^id$": true },
 							"additionalProperties": false
 						},
 						{
@@ -655,7 +655,7 @@
 								}
 							},
 							"required": [ "timing", "start-value", "end-value", "variable" ],
-							"patternProperties": { "^x-": true },
+							"patternProperties": { "^x-|^id$": true },
 							"additionalProperties": false
 						}
 					]
@@ -679,7 +679,7 @@
 						}
 					},
 					"required": [ "timing", "output" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				}
 			]
@@ -720,7 +720,7 @@
 				}
 			},
 			"required": [ "index" ],
-			"patternProperties": { "^x-": true },
+			"patternProperties": { "^x-|^id$": true },
 			"additionalProperties": false
 		},
 		"output": {
@@ -753,7 +753,7 @@
 				}
 			},
 			"required": [ "index" ],
-			"patternProperties": { "^x-": true },
+			"patternProperties": { "^x-|^id$": true },
 			"additionalProperties": false
 		},
 		"rand": {
@@ -789,7 +789,7 @@
 						}
 					},
 					"required": [ "add" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -800,7 +800,7 @@
 						}
 					},
 					"required": [ "sub" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -811,7 +811,7 @@
 						}
 					},
 					"required": [ "mult" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -822,7 +822,7 @@
 						}
 					},
 					"required": [ "div" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -833,7 +833,7 @@
 						}
 					},
 					"required": [ "max" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -844,7 +844,7 @@
 						}
 					},
 					"required": [ "min" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -855,7 +855,7 @@
 						}
 					},
 					"required": [ "remain" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -866,7 +866,7 @@
 						}
 					},
 					"required": [ "trunc" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -877,7 +877,7 @@
 						}
 					},
 					"required": [ "frac" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -888,7 +888,7 @@
 						}
 					},
 					"required": [ "round" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -899,7 +899,7 @@
 						}
 					},
 					"required": [ "quantize" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -910,7 +910,7 @@
 						}
 					},
 					"required": [ "sign" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -921,7 +921,7 @@
 						}
 					},
 					"required": [ "vtof" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				}
 			]
@@ -953,7 +953,7 @@
 						"tolerance": { "$ref": "#/definitions/if-full-tolerance/tolerance" }
 					},
 					"required": [ "eq" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -965,7 +965,7 @@
 						"tolerance": { "$ref": "#/definitions/if-full-tolerance/tolerance" }
 					},
 					"required": [ "ne" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -976,7 +976,7 @@
 						}
 					},
 					"required": [ "lt" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -987,7 +987,7 @@
 						}
 					},
 					"required": [ "lte" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -998,7 +998,7 @@
 						}
 					},
 					"required": [ "gt" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -1009,7 +1009,7 @@
 						}
 					},
 					"required": [ "gte" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -1020,7 +1020,7 @@
 						}
 					},
 					"required": [ "and" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				},
 				{
@@ -1031,7 +1031,7 @@
 						}
 					},
 					"required": [ "or" ],
-					"patternProperties": { "^x-": true },
+					"patternProperties": { "^x-|^id$": true },
 					"additionalProperties": false
 				}
 			]
@@ -1088,7 +1088,7 @@
 				}
 			},
 			"required": [ "segments" ],
-			"patternProperties": { "^x-": true },
+			"patternProperties": { "^x-|^id$": true },
 			"additionalProperties": false
 		},
 		"tuning": {
@@ -1126,7 +1126,7 @@
 				}
 			},
 			"required": [ "notes" ],
-			"patternProperties": { "^x-": true },
+			"patternProperties": { "^x-|^id$": true },
 			"additionalProperties": false
 		},
 		"set-value": {

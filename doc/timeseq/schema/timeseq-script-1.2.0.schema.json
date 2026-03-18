@@ -2,6 +2,7 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$id": "https://not-things.com/schemas/timeseq-script-1.2.0.schema.json",
 	"title": "TimeSeq Script 1.2.0",
+	"description": "JSON Schema (version 1.2.0) for the scripts that are used by the not-things TimeSeq VCV Rack module.",
 	"$ref": "#/definitions/script",
 	"definitions": {
 		"script": {
@@ -53,12 +54,8 @@
 				}
 			},
 			"required": [ "type", "version" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "$schema", "type", "version", "timelines", "global-actions", "input-triggers", "sequences", "component-pool" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"sequence": {
 			"type": "object",
@@ -87,12 +84,8 @@
 				}
 			},
 			"required": [ "id", "values" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "values", "shared", "retrieve-voltage-once" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"component-pool": {
 			"description": "A pool of reusable objects that can be referenced from elsewhere in the script.",
@@ -200,46 +193,43 @@
 				}
 			},
 			"required": [ "lanes" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "time-scale", "loop-lock", "lanes" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"time-scale": {
 			"description": "Identifies how timing calculations should be performed in a timeline",
 			"type": "object",
-			"properties": {
-				"sample-rate": {
-					"description": "If a segment in the timeline of this time-scale has a duration expressed in samples, these samples will be relative to this sample-rate instead of the active sample rate of VCV Rack.",
-					"type": "integer",
-					"minimum": 1
+			"oneOf": [
+				{
+					"properties": {
+						"sample-rate": {
+							"description": "If a segment in the timeline of this time-scale has a duration expressed in samples, these samples will be relative to this sample-rate instead of the active sample rate of VCV Rack.",
+							"type": "integer",
+							"minimum": 1
+						}
+					},
+					"required": [ "sample-rate" ],
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
 				},
-				"bpm": {
-					"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Minute.",
-					"type": "integer",
-					"minimum": 1
-				},
-				"bpb": {
-					"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Minute.",
-					"type": "integer",
-					"minimum": 1
+				{
+					"properties": {
+						"bpm": {
+							"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Minute.",
+							"type": "integer",
+							"minimum": 1
+						},
+						"bpb": {
+							"description": "If a segment in the timeline of this time-scale has a duration expressed in beats, this value will specify the number of Beats Per Bar.",
+							"type": "integer",
+							"minimum": 1
+						}
+					},
+					"required": [ "bpm" ],
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
 				}
-			},
-			"anyOf": [
-				{ "required": [ "sample-rate" ] },
-				{ "required": [ "bpm" ] }
-			],
-			"dependencies": {
-				"bpb": { "required": [ "bpm" ] }
-			},
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "sample-rate", "bpm", "bpb" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			]
 		},
 		"lane": {
 			"description": "The sequencing core of the not-things TimeSeq script, allowing segments to be scheduled in order.",
@@ -288,12 +278,8 @@
 				}
 			},
 			"required": [ "segments" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "segments", "auto-start", "loop", "repeat", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"segment": {
 			"oneOf": [
@@ -303,133 +289,135 @@
 		},
 		"segment-full": {
 			"type": "object",
-			"properties": {
-				"duration": {
-					"$ref": "#/definitions/duration"
-				},
-				"actions": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/action"
-					}
-				},
-				"segment-block": {
-					"description": "The id of a segment-block that will be inserted in the place of this segment. Can not be combined with duration and disable-ui.",
-					"type": "string",
-					"minLength": 1
-				},
-				"disable-ui": {
-					"description": "Specifies if the S LED on the UI should light up when this segment starts.",
-					"type": "boolean",
-					"default": false
-				}
-			},
 			"oneOf": [
-				{ "required": [ "duration" ] },
-				{ "required": [ "segment-block" ] }
-			],
-			"allOf": [
 				{
-					"not": {
-						"properties": {
-							"duration": { "type": "object" },
-							"segment-block": { "type": "string" }
+					"properties": {
+						"duration": {
+							"$ref": "#/definitions/duration"
 						},
-						"required": [ "duration", "segment-block" ]
-					}
+						"actions": {
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/action"
+							}
+						},
+						"disable-ui": {
+							"description": "Specifies if the S LED on the UI should light up when this segment starts.",
+							"type": "boolean",
+							"default": false
+						}
+					},
+					"required": [ "duration" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
 				{
-					"not": {
-						"properties": {
-							"disable-ui": { "type": "boolean" },
-							"segment-block": { "type": "string" }
+					"properties": {
+						"segment-block": {
+							"description": "The id of a segment-block that will be inserted in the place of this segment. Can not be combined with duration and disable-ui.",
+							"type": "string",
+							"minLength": 1
 						},
-						"required": [ "disable-ui", "segment-block" ]
-					}
+						"actions": {
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/action"
+							}
+						}
+					},
+					"required": [ "segment-block" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				}
-			],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "duration", "actions", "segment-block", "disable-ui" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			]
 		},
 		"duration": {
 			"description": "Specifies how long a segment should last.",
 			"type": "object",
-			"properties": {
-				"samples": {
-					"description": "Specifies the segment duration in number of samples.",
-					"oneOf": [
-						{
+			"oneOf": [
+				{
+					"properties": {
+						"samples": {
+							"description": "Specifies the segment duration in number of samples.",
+							"oneOf": [
+								{
+									"type": "integer",
+									"minimum": 1
+								},
+								{ "$ref": "#/definitions/value-full" }
+							]
+						}
+					},
+					"required": [ "samples" ],
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"millis": {
+							"description": "Specifies the segment duration in number of milliseconds.",
+							"oneOf": [
+								{
+									"type": "number",
+									"exclusiveMinimum": 0
+								},
+								{ "$ref": "#/definitions/value-full" }
+							]
+						}
+					},
+					"required": [ "millis" ],
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"beats": {
+							"description": "Specifies the segment duration in number of beats. The timeline time-scale must have 'bmp' set to specify how long one beat lasts.",
+							"oneOf": [
+								{
+									"type": "number"
+								},
+								{ "$ref": "#/definitions/value-full" }
+							]
+						},
+						"bars": {
+							"description": "Specifies the segment duration in number of beats. Can only be used in combination with 'beats'. The timeline time-scale must have 'bpb' set to specify how many beats go in a bar.",
 							"type": "integer",
 							"minimum": 1
-						},
-						{ "$ref": "#/definitions/value-full" }
-					]
+						}
+					},
+					"required": [ "beats" ],
+					"if": {
+						"properties": { "bars": { "type": "integer" } },
+						"required": [ "bars" ]
+					},
+					"then": {
+						"properties": { "beats": { "type": "number", "minimum": 0 } }
+					},
+					"else": {
+						"properties": { "beats": { "type": "number", "exclusiveMinimum": 0 } }
+					},
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
 				},
-				"millis": {
-					"description": "Specifies the segment duration in number of milliseconds.",
-					"oneOf": [
-						{
-							"type": "number",
-							"exclusiveMinimum": 0
-						},
-						{ "$ref": "#/definitions/value-full" }
-					]
-				},
-				"beats": {
-					"description": "Specifies the segment duration in number of beats. The timeline time-scale must have 'bmp' set to specify how long one beat lasts.",
-					"oneOf": [
-						{
-							"type": "number"
-						},
-						{ "$ref": "#/definitions/value-full" }
-					]
-				},
-				"bars": {
-					"description": "Specifies the segment duration in number of beats. Can only be used in combination with 'beats'. The timeline time-scale must have 'bpb' set to specify how many beats go in a bar.",
-					"type": "integer",
-					"minimum": 1
-				},
-				"hz": {
-					"description": "Specifies the segment duration in Hertz.",
-					"oneOf": [
-						{
-							"type": "number",
-							"exclusiveMinimum": 0
-						},
-						{ "$ref": "#/definitions/value-full" }
-					]
+				{
+					"properties": {
+						"hz": {
+							"description": "Specifies the segment duration in Hertz.",
+							"oneOf": [
+								{
+									"type": "number",
+									"exclusiveMinimum": 0
+								},
+								{ "$ref": "#/definitions/value-full" }
+							]
+						}
+					},
+					"required": [ "hz" ],
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
 				}
-			},
-			"minProperties": 1,
-			"oneOf": [
-				{ "required": [ "samples" ], "not": { "required": [ "millis", "beats", "bars", "hz" ] } },
-				{ "required": [ "millis" ], "not": { "required": [ "samples", "beats", "bars", "hz" ] } },
-				{ "required": [ "beats" ], "not": { "required": [ "millis", "samples", "hz" ] } },
-				{ "required": [ "hz" ], "not": { "required": [ "millis", "samples", "beats", "bars" ] } }
-			],
-			"dependencies": {
-				"bars": { "required": [ "beats" ] }
-			},
-			"if": {
-				"properties": { "bars": { "type": "integer" } },
-				"required": [ "bars" ]
-			},
-			"then": {
-				"properties": { "beats": { "type": "number", "minimum": 0 } }
-			},
-			"else": {
-				"properties": { "beats": { "type": "number", "exclusiveMinimum": 0 } }
-			},
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "samples", "millis", "beats", "bars", "hz" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			]
 		},
 		"value": {
 			"description": "A value that evaluates to a voltage.",
@@ -457,70 +445,125 @@
 		},
 		"value-full": {
 			"type": "object",
-			"properties": {
-				"voltage": {
-					"description": "A fixed voltage. Unless 'no-limit' is set to 'true', the value must be within the -10 to 10 voltage range.",
-					"type": "number"
+			"oneOf": [
+				{
+					"properties": {
+						"voltage": {
+							"description": "A fixed voltage. Unless 'no-limit' is set to 'true', the value must be within the -10 to 10 voltage range.",
+							"type": "number"
+						},
+						"no-limit": {
+							"description": "Can only be used in combination with 'voltage'. If set to 'true', disables the -10 to 10 limitation of the voltage value.",
+							"type": "boolean",
+							"default": false
+						},
+						"calc": { "$ref": "#/definitions/value-full-shared-properties/calc" },
+						"quantize": { "$ref": "#/definitions/value-full-shared-properties/quantize" }
+					},
+					"required": [ "voltage" ],
+					"if": {
+						"properties": { "no-limit": { "const": true } },
+						"required": [ "no-limit" ]
+					},
+					"else": {
+						"properties": { "voltage": { "type": "number", "minimum": -10, "maximum": 10 } }
+					},
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
-				"no-limit": {
-					"description": "Can only be used in combination with 'voltage'. If set to 'true', disables the -10 to 10 limitation of the voltage value.",
-					"type": "boolean",
-					"default": false
+				{
+					"properties": {
+						"note": {
+							"$ref": "#/definitions/value-note"
+						},
+						"calc": { "$ref": "#/definitions/value-full-shared-properties/calc" },
+						"quantize": { "$ref": "#/definitions/value-full-shared-properties/quantize" }
+
+					},
+					"required": [ "note" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
-				"note": {
-					"$ref": "#/definitions/value-note"
+				{
+					"properties": {
+						"variable": {
+							"description": "Use a previously set variable as voltage value source.",
+							"type": "string",
+							"minLength": 1
+						},
+						"calc": { "$ref": "#/definitions/value-full-shared-properties/calc" },
+						"quantize": { "$ref": "#/definitions/value-full-shared-properties/quantize" }
+
+					},
+					"required": [ "variable" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
-				"variable": {
-					"description": "Use a previously set variable as voltage value source.",
-					"type": "string",
-					"minLength": 1
+				{
+					"properties": {
+						"input": {
+							"$ref": "#/definitions/input"
+						},
+						"calc": { "$ref": "#/definitions/value-full-shared-properties/calc" },
+						"quantize": { "$ref": "#/definitions/value-full-shared-properties/quantize" }
+
+					},
+					"required": [ "input" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
-				"input": {
-					"$ref": "#/definitions/input"
+				{
+					"properties": {
+						"output": {
+							"$ref": "#/definitions/output"
+						},
+						"calc": { "$ref": "#/definitions/value-full-shared-properties/calc" },
+						"quantize": { "$ref": "#/definitions/value-full-shared-properties/quantize" }
+
+					},
+					"required": [ "output" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
-				"output": {
-					"$ref": "#/definitions/output"
+				{
+					"properties": {
+						"rand": {
+							"$ref": "#/definitions/rand"
+						},
+						"calc": { "$ref": "#/definitions/value-full-shared-properties/calc" },
+						"quantize": { "$ref": "#/definitions/value-full-shared-properties/quantize" }
+
+					},
+					"required": [ "rand" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
-				"rand": {
-					"$ref": "#/definitions/rand"
-				},
-				"calc": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/calc"
-					}
-				},
-				"sequence": {
-					"$ref": "#/definitions/sequence-value"
-				},
-				"quantize": {
-					"description": "Allows the value to be quantized to the nearest note value.",
-					"type": "boolean",
-					"default": false
+				{
+					"properties": {
+						"sequence": {
+							"$ref": "#/definitions/sequence-value"
+						},
+						"calc": { "$ref": "#/definitions/value-full-shared-properties/calc" },
+						"quantize": { "$ref": "#/definitions/value-full-shared-properties/quantize" }
+
+					},
+					"required": [ "sequence" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				}
+			]
+		},
+		"value-full-shared-properties": {
+			"calc": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/calc"
 				}
 			},
-			"if": {
-				"properties": { "no-limit": { "const": true } },
-				"required": [ "no-limit" ]
-			},
-			"else": {
-				"properties": { "voltage": { "type": "number", "minimum": -10, "maximum": 10 } }
-			},
-			"minProperties": 1,
-			"oneOf": [
-				{ "required": [ "voltage" ], "not": { "required": [ "note", "variable", "input", "output", "rand", "sequence" ] } },
-				{ "required": [ "note" ], "not": { "required": [ "voltage", "variable", "input", "output", "rand", "sequence" ] } },
-				{ "required": [ "variable" ], "not": { "required": [ "voltage", "note", "input", "output", "rand", "sequence" ] } },
-				{ "required": [ "input" ], "not": { "required": [ "voltage", "note", "variable", "output", "rand", "sequence" ] } },
-				{ "required": [ "output" ], "not": { "required": [ "voltage", "note", "variable", "input", "rand", "sequence" ] } },
-				{ "required": [ "rand" ], "not": { "required": [ "voltage", "note", "variable", "input", "output", "sequence" ] } },
-				{ "required": [ "sequence" ], "not": { "required": [ "voltage", "note", "variable", "input", "output", "rand" ] } }
-			],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "voltage", "no-limit", "note", "variable", "input", "output", "rand", "calc", "sequence", "quantize" ] },
-					{ "pattern": "^x-" }
-				]
+			"quantize": {
+				"description": "Allows the value to be quantized to the nearest note value.",
+				"type": "boolean",
+				"default": false
 			}
 		},
 		"action": {
@@ -535,111 +578,180 @@
 			"oneOf": [
 				{
 					"properties": {
-						"timing": {
-							"enum": [ "start", "end" ],
-							"default": "start"
-						},
-						"set-value": {
-							"$ref": "#/definitions/set-value"
-						},
-						"set-polyphony": {
-							"$ref": "#/definitions/set-polyphony"
-						},
-						"set-label": {
-							"$ref": "#/definitions/set-label"
-						},
-						"set-variable": {
-							"$ref": "#/definitions/set-variable"
-						},
-						"assert": {
-							"$ref": "#/definitions/assert"
-						},
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"set-value": { "$ref": "#/definitions/set-value" },
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "set-value" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"set-polyphony": { "$ref": "#/definitions/set-polyphony" },
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "set-polyphony" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"set-label": { "$ref": "#/definitions/set-label" },
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "set-label" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"set-variable": { "$ref": "#/definitions/set-variable" },
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "set-variable" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"assert": { "$ref": "#/definitions/assert" },
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "assert" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
 						"trigger": {
 							"description": "Fires an internal trigger with the specified id.",
 							"type": "string",
 							"minLength": 1
 						},
-						"move-sequence": {
-							"$ref": "#/definitions/move-sequence"
-						},
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "trigger" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"move-sequence": { "$ref": "#/definitions/move-sequence" },
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "move-sequence" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
 						"clear-sequence": {
 							"type": "string",
 							"minLength": 1
 						},
-						"add-to-sequence": {
-							"$ref": "#/definitions/add-to-sequence"
-						},
-						"remove-from-sequence": {
-							"$ref": "#/definitions/remove-from-sequence"
-						},
-						"if": {
-							"$ref": "#/definitions/if"
-						}
+						"if": { "$ref": "#/definitions/if" }
 					},
-					"minProperties": 1,
-					"oneOf": [
-						{ "required": [ "set-value" ], "not": { "required": [ "set-polyphony", "set-label", "set-variable", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "set-polyphony" ], "not": { "required": [ "set-value", "set-label", "set-variable", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "set-label" ], "not": { "required": [ "set-value", "set-polyphony", "set-variable", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "set-variable" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "assert" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "trigger" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "assert", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "move-sequence" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "assert", "trigger", "clear-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "clear-sequence" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "assert", "trigger", "move-sequence", "add-to-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "add-to-sequence" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "assert", "trigger", "move-sequence", "clear-sequence", "remove-from-sequence" ] } },
-						{ "required": [ "remove-from-sequence" ], "not": { "required": [ "set-value", "set-polyphony", "set-label", "set-variable", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence" ] } }
-					],
-					"propertyNames": {
-						"anyOf": [
-							{ "enum": [ "id", "timing", "set-value", "set-polyphony", "set-label", "set-variable", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence", "if" ] },
-							{ "pattern": "^x-" }
-						]
-					}
+					"required": [ "clear-sequence" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
 				{
 					"properties": {
-						"timing": {
-							"const": "glide"
-						},
-						"start-value": {
-							"$ref": "#/definitions/value"
-						},
-						"end-value": {
-							"$ref": "#/definitions/value"
-						},
-						"ease-factor": {
-							"type": "number",
-							"minimum": -5,
-							"maximum": 5,
-							"default": 0
-						},
-						"ease-algorithm": {
-							"enum": [ "sig", "pow" ],
-							"default": "sig"
-						},
-						"output": {
-							"$ref": "#/definitions/output"
-						},
-						"variable": {
-							"description": "Name of the variable that should be set to the current glide value.",
-							"type": "string",
-							"minLength": 1
-						},
-						"if": {
-							"$ref": "#/definitions/if"
-						}
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"add-to-sequence": { "$ref": "#/definitions/add-to-sequence" },
+						"if": { "$ref": "#/definitions/if" }
 					},
-					"required": [ "timing", "start-value", "end-value" ],
+					"required": [ "add-to-sequence" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": { "$ref": "#/definitions/action-full-timing-start-end-property/timing" },
+						"remove-from-sequence": { "$ref": "#/definitions/remove-from-sequence" },
+						"if": { "$ref": "#/definitions/if" }
+					},
+					"required": [ "remove-from-sequence" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
 					"oneOf": [
-						{ "required": [ "output" ], "not": { "required": [ "variable" ] } },
-						{ "required": [ "variable" ], "not": { "required": [ "output" ] } }
-					],
-					"propertyNames": {
-						"anyOf": [
-							{ "enum": [ "id", "timing", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if" ] },
-							{ "pattern": "^x-" }
-						]
-					}
+						{
+							"properties": {
+								"timing": {
+									"const": "glide"
+								},
+								"start-value": {
+									"$ref": "#/definitions/value"
+								},
+								"end-value": {
+									"$ref": "#/definitions/value"
+								},
+								"ease-factor": {
+									"type": "number",
+									"minimum": -5,
+									"maximum": 5,
+									"default": 0
+								},
+								"ease-algorithm": {
+									"enum": [ "sig", "pow" ],
+									"default": "sig"
+								},
+								"output": {
+									"$ref": "#/definitions/output"
+								},
+								"if": {
+									"$ref": "#/definitions/if"
+								}
+							},
+							"required": [ "timing", "start-value", "end-value", "output" ],
+							"patternProperties": { "^x-|^id$": true },
+							"additionalProperties": false
+						},
+						{
+							"properties": {
+								"timing": {
+									"const": "glide"
+								},
+								"start-value": {
+									"$ref": "#/definitions/value"
+								},
+								"end-value": {
+									"$ref": "#/definitions/value"
+								},
+								"ease-factor": {
+									"type": "number",
+									"minimum": -5,
+									"maximum": 5,
+									"default": 0
+								},
+								"ease-algorithm": {
+									"enum": [ "sig", "pow" ],
+									"default": "sig"
+								},
+								"variable": {
+									"description": "Name of the variable that should be set to the current glide value.",
+									"type": "string",
+									"minLength": 1
+								},
+								"if": {
+									"$ref": "#/definitions/if"
+								}
+							},
+							"required": [ "timing", "start-value", "end-value", "variable" ],
+							"patternProperties": { "^x-|^id$": true },
+							"additionalProperties": false
+						}
+					]
 				},
 				{
 					"properties": {
@@ -660,14 +772,16 @@
 						}
 					},
 					"required": [ "timing", "output" ],
-					"propertyNames": {
-						"anyOf": [
-							{ "enum": [ "id", "timing", "output", "gate-high-ratio", "if" ] },
-							{ "pattern": "^x-" }
-						]
-					}
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				}
 			]
+		},
+		"action-full-timing-start-end-property": {
+			"timing": {
+				"enum": [ "start", "end" ],
+				"default": "start"
+			}
 		},
 		"input": {
 			"oneOf": [
@@ -699,12 +813,8 @@
 				}
 			},
 			"required": [ "index" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "index", "channel" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-|^id$": true },
+			"additionalProperties": false
 		},
 		"output": {
 			"oneOf": [
@@ -736,12 +846,8 @@
 				}
 			},
 			"required": [ "index" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "index", "channel" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-|^id$": true },
+			"additionalProperties": false
 		},
 		"rand": {
 			"description": "Generate a random value in a specified lower and upper range",
@@ -755,12 +861,8 @@
 				}
 			},
 			"required": [ "lower", "upper" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "lower", "upper" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"calc": {
 			"oneOf": [
@@ -771,81 +873,151 @@
 		"calc-full": {
 			"description": "Performs a calculation operation on a value voltage.",
 			"type": "object",
-			"properties": {
-				"add": {
-					"description": "Adds a value to the current voltage result.",
-					"$ref": "#/definitions/value"
-				},
-				"sub": {
-					"description": "Subtracts a value from the current voltage result.",
-					"$ref": "#/definitions/value"
-				},
-				"mult": {
-					"description": "Multiplies a value with the current voltage result.",
-					"$ref": "#/definitions/value"
-				},
-				"div": {
-					"description": "Divides the current voltage result by a value.",
-					"$ref": "#/definitions/value"
-				},
-				"max": {
-					"description": "Takes the maximum of the current voltage and another value.",
-					"$ref": "#/definitions/value"
-				},
-				"min": {
-					"description": "Takes the minimum of the current voltage and another value.",
-					"$ref": "#/definitions/value"
-				},
-				"remain": {
-					"description": "Divides the current voltage by a value and uses the remainder of the division.",
-					"$ref": "#/definitions/value"
-				},
-				"trunc": {
-					"description": "Takes the whole part of the current voltage, discarding the decimal data (i.e. truncate)",
-					"const": true
-				},
-				"frac": {
-					"description": "Takes the decimal part of the current voltage, discarding the whole part (i.e. fractional)",
-					"const": true
-				},
-				"round": {
-					"description": "Rounds the current voltage either up, down or to the nearest whole value.",
-					"enum": [ "up", "down", "near" ]
-				},
-				"quantize": {
-					"description": "Quantizes the current voltage to a tuning.",
-					"$ref": "#/definitions/tuning"
-				},
-				"sign": {
-					"description": "Changes the sign of the current voltage to positive or negative (if needed).",
-					"enum": [ "pos", "neg" ]
-				},
-				"vtof": {
-					"description": "Interprets the current voltage as a 1V/Oct value and converts it into a frequency value.",
-					"const": true
-				}
-			},
 			"oneOf": [
-				{ "required": [ "add" ], "not": { "required": [ "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "sub" ], "not": { "required": [ "add", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "mult" ], "not": { "required": [ "add", "sub", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "div" ], "not": { "required": [ "add", "sub", "mult", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "max" ], "not": { "required": [ "add", "sub", "mult", "div", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "min" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "remain" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "trunc", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "trunc" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "frac", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "frac" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "round", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "round" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "quantize", "sign", "vtof" ] } },
-				{ "required": [ "quantize" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "sign", "vtof" ] } },
-				{ "required": [ "sign" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "vtof" ] } },
-				{ "required": [ "vtof" ], "not": { "required": [ "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign" ] } }
-			],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "add", "sub", "mult", "div", "max", "min", "remain", "trunc", "frac", "round", "quantize", "sign", "vtof" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+				{
+					"properties": {
+						"add": {
+							"description": "Adds a value to the current voltage result.",
+							"$ref": "#/definitions/value"
+						}
+					},
+					"required": [ "add" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"sub": {
+							"description": "Subtracts a value from the current voltage result.",
+							"$ref": "#/definitions/value"
+						}
+					},
+					"required": [ "sub" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"mult": {
+							"description": "Multiplies a value with the current voltage result.",
+							"$ref": "#/definitions/value"
+						}
+					},
+					"required": [ "mult" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"div": {
+							"description": "Divides the current voltage result by a value.",
+							"$ref": "#/definitions/value"
+						}
+					},
+					"required": [ "div" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"max": {
+							"description": "Takes the maximum of the current voltage and another value.",
+							"$ref": "#/definitions/value"
+						}
+					},
+					"required": [ "max" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"min": {
+							"description": "Takes the minimum of the current voltage and another value.",
+							"$ref": "#/definitions/value"
+						}
+					},
+					"required": [ "min" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"remain": {
+							"description": "Divides the current voltage by a value and uses the remainder of the division.",
+							"$ref": "#/definitions/value"
+						}
+					},
+					"required": [ "remain" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"trunc": {
+							"description": "Takes the whole part of the current voltage, discarding the decimal data (i.e. truncate)",
+							"const": true
+						}
+					},
+					"required": [ "trunc" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"frac": {
+							"description": "Takes the decimal part of the current voltage, discarding the whole part (i.e. fractional)",
+							"const": true
+						}
+					},
+					"required": [ "frac" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"round": {
+							"description": "Rounds the current voltage either up, down or to the nearest whole value.",
+							"enum": [ "up", "down", "near" ]
+						}
+					},
+					"required": [ "round" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"quantize": {
+							"description": "Quantizes the current voltage to a tuning.",
+							"$ref": "#/definitions/tuning"
+						}
+					},
+					"required": [ "quantize" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"sign": {
+							"description": "Changes the sign of the current voltage to positive or negative (if needed).",
+							"enum": [ "pos", "neg" ]
+						}
+					},
+					"required": [ "sign" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"vtof": {
+							"description": "Interprets the current voltage as a 1V/Oct value and converts it into a frequency value.",
+							"const": true
+						}
+					},
+					"required": [ "vtof" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				}
+			]
 		},
 		"if": {
 			"oneOf": [
@@ -853,121 +1025,109 @@
 				{ "$ref": "#/definitions/reference" }
 			]
 		},
+		"if-full-tolerance": {
+			"tolerance": {
+				"description": "Specifies how much two values may differ while still being considered equal. For usage in combination with 'eq' or 'ne'.",
+				"type": "number",
+				"minimum": 0,
+				"default": 0
+			}
+		},
 		"if-full": {
 			"description": "A conditional that allows values to be compared.",
 			"type": "object",
-			"properties": {
-				"eq": {
-					"description": "Checks that two values are equal.",
-					"$ref": "#/definitions/if-child-values"
-				},
-				"ne": {
-					"description": "Checks that two values are not equal.",
-					"$ref": "#/definitions/if-child-values"
-				},
-				"lt": {
-					"description": "Checks that the first value is less than the second.",
-					"$ref": "#/definitions/if-child-values"
-				},
-				"lte": {
-					"description": "Checks that the first value is less than or equal to the second.",
-					"$ref": "#/definitions/if-child-values"
-				},
-				"gt": {
-					"description": "Checks that the first value is greater than the second.",
-					"$ref": "#/definitions/if-child-values"
-				},
-				"gte": {
-					"description": "Checks that the first value is greater than or equal to the second.",
-					"$ref": "#/definitions/if-child-values"
-				},
-				"and": {
-					"description": "Checks that child if conditionals are all true.",
-					"$ref": "#/definitions/if-child-ifs"
-				},
-				"or": {
-					"description": "Checks that at least one of the child if conditionals is true.",
-					"$ref": "#/definitions/if-child-ifs"
-				},
-				"tolerance": {
-					"description": "Specifies how much two values may differ while still being considered equal. For usage in combination with 'eq' or 'ne'.",
-					"type": "number",
-					"minimum": 0,
-					"default": 0
-				}
-			},
 			"oneOf": [
-				{ "required": [ "eq" ], "not": { "required": [ "ne", "lt", "lte", "gt", "gte", "and", "or" ] } },
-				{ "required": [ "ne" ], "not": { "required": [ "eq", "lt", "lte", "gt", "gte", "and", "or" ] } },
-				{ "required": [ "lt" ], "not": { "required": [ "eq", "ne", "lte", "gt", "gte", "and", "or" ] } },
-				{ "required": [ "lte" ], "not": { "required": [ "eq", "ne", "lt", "gt", "gte", "and", "or" ] } },
-				{ "required": [ "gt" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gte", "and", "or" ] } },
-				{ "required": [ "gte" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "and", "or" ] } },
-				{ "required": [ "and" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "gte", "or" ] } },
-				{ "required": [ "or" ], "not": { "required": [ "eq", "ne", "lt", "lte", "gt", "gte", "and" ] } }
-			],
-			"allOf": [
 				{
-					"not": {
-						"properties": {
-							"tolerance": { "type": "number" },
-							"lt": { "type": "array" }
+					"properties": {
+						"eq": {
+							"description": "Checks that two values are equal.",
+							"$ref": "#/definitions/if-child-values"
 						},
-						"required": [ "tolerance", "lt" ]
-					}
+						"tolerance": { "$ref": "#/definitions/if-full-tolerance/tolerance" }
+					},
+					"required": [ "eq" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
 				{
-					"not": {
-						"properties": {
-							"tolerance": { "type": "number" },
-							"lte": { "type": "array" }
+					"properties": {
+						"ne": {
+							"description": "Checks that two values are not equal.",
+							"$ref": "#/definitions/if-child-values"
 						},
-						"required": [ "tolerance", "lte" ]
-					}
+						"tolerance": { "$ref": "#/definitions/if-full-tolerance/tolerance" }
+					},
+					"required": [ "ne" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
 				{
-					"not": {
-						"properties": {
-							"tolerance": { "type": "number" },
-							"gt": { "type": "array" }
-						},
-						"required": [ "tolerance", "gt" ]
-					}
+					"properties": {
+						"lt": {
+							"description": "Checks that the first value is less than the second.",
+							"$ref": "#/definitions/if-child-values"
+						}
+					},
+					"required": [ "lt" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
 				{
-					"not": {
-						"properties": {
-							"tolerance": { "type": "number" },
-							"gte": { "type": "array" }
-						},
-						"required": [ "tolerance", "gte" ]
-					}
+					"properties": {
+						"lte": {
+							"description": "Checks that the first value is less than or equal to the second.",
+							"$ref": "#/definitions/if-child-values"
+						}
+					},
+					"required": [ "lte" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
 				{
-					"not": {
-						"properties": {
-							"tolerance": { "type": "number" },
-							"and": { "type": "array" }
-						},
-						"required": [ "tolerance", "and" ]
-					}
+					"properties": {
+						"gt": {
+							"description": "Checks that the first value is greater than the second.",
+							"$ref": "#/definitions/if-child-values"
+						}
+					},
+					"required": [ "gt" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				},
 				{
-					"not": {
-						"properties": {
-							"tolerance": { "type": "number" },
-							"or": { "type": "array" }
-						},
-						"required": [ "tolerance", "or" ]
-					}
+					"properties": {
+						"gte": {
+							"description": "Checks that the first value is greater than or equal to the second.",
+							"$ref": "#/definitions/if-child-values"
+						}
+					},
+					"required": [ "gte" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"and": {
+							"description": "Checks that child if conditionals are all true.",
+							"$ref": "#/definitions/if-child-ifs"
+						}
+					},
+					"required": [ "and" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"or": {
+							"description": "Checks that at least one of the child if conditionals is true.",
+							"$ref": "#/definitions/if-child-ifs"
+						}
+					},
+					"required": [ "or" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
 				}
-			],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "eq", "ne", "lt", "lte", "gt", "gte", "and", "or", "tolerance" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			]
 		},
 		"if-child-values": {
 			"type": "array",
@@ -999,12 +1159,8 @@
 				}
 			},
 			"required": [ "id", "input" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "input" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"segment-block": {
 			"description": "A group of segments that can be inserted into a sequence.",
@@ -1024,12 +1180,8 @@
 				}
 			},
 			"required": [ "segments" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "segments", "repeat" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-|^id$": true },
+			"additionalProperties": false
 		},
 		"tuning": {
 			"oneOf": [
@@ -1066,12 +1218,8 @@
 				}
 			},
 			"required": [ "notes" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "notes" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-|^id$": true },
+			"additionalProperties": false
 		},
 		"set-value": {
 			"description": "Update the voltage on one of the output ports",
@@ -1087,12 +1235,8 @@
 				}
 			},
 			"required": [ "output", "value" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "output", "value" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"set-polyphony": {
 			"description": "Set the number of channels on an output port.",
@@ -1112,12 +1256,8 @@
 				}
 			},
 			"required": [ "index", "channels" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "index", "channels" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"set-label": {
 			"description": "Set the label of a TimeSeq output port.",
@@ -1136,12 +1276,8 @@
 				}
 			},
 			"required": [ "index", "label" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "index", "label" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"set-variable": {
 			"description": "Set a variable to a value voltage.",
@@ -1157,12 +1293,8 @@
 				}
 			},
 			"required": [ "name", "value" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "name", "value" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"assert": {
 			"description": "Perform an assertion, validation that the specified expectation is met.",
@@ -1184,12 +1316,8 @@
 				}
 			},
 			"required": [ "expect", "name" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "expect", "name", "stop-on-fail" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"move-sequence": {
 			"description": "Move the currently active position in a sequence.",
@@ -1214,12 +1342,8 @@
 						}
 					},
 					"required": [ "id" ],
-					"propertyNames": {
-						"anyOf": [
-							{ "enum": [ "id", "direction", "wrap" ] },
-							{ "pattern": "^x-" }
-						]
-					}
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
 				},
 				{
 					"type": "object",
@@ -1235,12 +1359,8 @@
 						}
 					},
 					"required": [ "id", "position" ],
-					"propertyNames": {
-						"anyOf": [
-							{ "enum": [ "id", "position" ] },
-							{ "pattern": "^x-" }
-						]
-					}
+					"patternProperties": { "^x-": true },
+					"additionalProperties": false
 				}
 			]
 		},
@@ -1269,12 +1389,8 @@
 				}
 			},
 			"required": [ "id", "value" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "value", "position", "as-constant-voltage" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"remove-from-sequence": {
 			"description": "Removes a value from sequence.",
@@ -1292,12 +1408,8 @@
 				}
 			},
 			"required": [ "id" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "position" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"sequence-value": {
 			"description": "A value from a sequence",
@@ -1337,12 +1449,8 @@
 				}
 			},
 			"required": [ "id" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "id", "move-before", "move-after", "wrap" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"sequence-move-direction": {
 			"enum": [ "forward", "backward", "random", "none" ]
@@ -1358,12 +1466,8 @@
 				}
 			},
 			"required": [ "ref" ],
-			"propertyNames": {
-				"anyOf": [
-					{ "enum": [ "ref" ] },
-					{ "pattern": "^x-" }
-				]
-			}
+			"patternProperties": { "^x-": true },
+			"additionalProperties": false
 		},
 		"referenceable": {
 			"description": "An object in the component-pool that can be referenced by id from elsewhere.",
