@@ -20,15 +20,16 @@ This would validate the JSON script against version `1.2.0` of the TimeSeq JSON 
 
 ## Validating the schema
 
-The TimeSeq JSON schema itself must pass strict JSON schema validation. This can be verified using `ajv`:
+The TimeSeq JSON schema itself must pass strict JSON schema validation. This can be done using the included `validate.js`. To validate all `timeseq-script-<version>.schema.json` files in the current folder, run:
 
 ```shell
-ajv compile -s <timeseq-json-schema.file> -c ajv-formats
+npm install
+npm run validate
 ```
 
-This requires the `ajv-cli` and `ajv-formats` npm packages to be installed, which can be done using:
+To validate a specific schema file, run:
 
 ```shell
-npm install -g ajv-cli
-npm install -g ajv-formats
+npm install
+npm run validate -- <schema_filename>
 ```
