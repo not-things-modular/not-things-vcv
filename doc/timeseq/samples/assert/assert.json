@@ -21,7 +21,7 @@
 												"upper": 10
 											},
 											"calc": [
-												{ "quantize": "c-min-pentatonic" }
+												{ "quantize": { "ref": "c-min-pentatonic" } }
 											]
 										}
 									}
@@ -36,7 +36,7 @@
 												"upper": 10
 											},
 											"calc": [
-												{ "quantize": "a-min-pentatonic" }
+												{ "quantize": { "ref": "a-min-pentatonic" } }
 											]
 										}
 									}
@@ -51,7 +51,7 @@
 												"upper": 10
 											},
 											"calc": [
-												{ "quantize": "f-maj" }
+												{ "quantize": { "ref": "f-maj" } }
 											]
 										}
 									}
