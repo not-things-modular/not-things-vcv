@@ -1,0 +1,15 @@
+{
+	"name": "timeseq-script-schema-validator",
+	"version": "1.0.0",
+	"private": "true",
+	"type": "module",
+	 "scripts": {
+		"validate": "node validate.js"
+	 },
+	 "devDependencies": {
+		"ajv": "^8.17.1",
+		"ajv-formats": "^2.1.1",
+		"@prantlf/jsonlint": "^16.0.0",
+		"@hyperupcall/ajv-formats-draft2019": "^1.7.2"
+	 }
+}
