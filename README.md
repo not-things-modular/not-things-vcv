@@ -6,6 +6,7 @@ A collection of modules for [VCV Rack](https://vcvrack.com/) (a virtual Eurorack
 
 * [SOLIM](./doc/SOLIM.md): A set of modules with a core idea of limiting note values to an octave range and sorting them
 * [TIMESEQ](./doc/TIMESEQ.md): A scripted timeline processor. Run simple sequences, more complex behavior, or a mix of both via a JSON script
+* [RAMELIG and RATRILIG](./doc/RALIG.md): A pair of modules for generating controlled random melody lines (Ramelig) and controlled random trigger lines (Ratrilig)
 * [PI-PO](./doc/PIPO.md): A set of modules for splitting and merging polyphonic and monophonic signals
 * [P-SD](./doc/PSD.md): A module for determining the similarities and differences between two polyphonic signals
 
