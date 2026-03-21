@@ -8,12 +8,12 @@ const int rameligDistributionActionDisplayOrder[] = {
 	RameligActions::UP_TWO,
 	RameligActions::REMAIN,
 	RameligActions::RANDOM_JUMP,
-	RameligActions::RANDOM_MOVE
+	RameligActions::RANDOM_SHIFT
 };
 
 NVGcolor rameligDistributionActionFillColors[] = {
 	nvgRGBA(0x45, 0xDB, 0xCC, 0xFF), // RANDOM_JUMP = orange
-	nvgRGBA(0xCC, 0xC0, 0x45, 0xFF), // RANDOM_MOVE = yellow
+	nvgRGBA(0xCC, 0xC0, 0x45, 0xFF), // RANDOM_SHIFT = yellow
 	nvgRGBA(0xBB, 0x45, 0x45, 0xAA), // UP_TWO = dark red
 	nvgRGBA(0xBB, 0x45, 0x45, 0xFF), // UP_ONE = red
 	nvgRGBA(0x45, 0x45, 0xBB, 0xFF), // DOWN_ONE = blue

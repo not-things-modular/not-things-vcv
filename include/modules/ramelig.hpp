@@ -16,8 +16,8 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 
 		PARAM_CHANCE_RANDOM_JUMP,
 		PARAM_TRIG_RANDOM_JUMP,
-		PARAM_CHANCE_RANDOM_MOVE,
-		PARAM_TRIG_RANDOM_MOVE,
+		PARAM_CHANCE_RANDOM_SHIFT,
+		PARAM_TRIG_RANDOM_SHIFT,
 
 		PARAM_CHANCE_MOVE_UP,
 		PARAM_CHANCE_REMAIN,
@@ -39,7 +39,7 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 		IN_UPPER_LIMIT,
 
 		IN_CHANCE_RANDOM_JUMP,
-		IN_CHANCE_RANDOM_MOVE,
+		IN_CHANCE_RANDOM_SHIFT,
 
 		IN_CHANCE_MOVE_UP,
 		IN_CHANCE_REMAIN,
@@ -102,20 +102,20 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 		rack::dsp::BooleanTrigger m_buttonTrigger;
 		rack::dsp::PulseGenerator m_triggerPulse;
 
-		rack::dsp::BooleanTrigger m_buttonMove;
-		rack::dsp::TSchmittTrigger<float> m_triggerMove[16];
-		bool m_forceMove[16];
-		rack::dsp::PulseGenerator m_movePulse[16];
 		rack::dsp::BooleanTrigger m_buttonJump;
 		rack::dsp::TSchmittTrigger<float> m_triggerJump[16];
 		bool m_forceJump[16];
 		rack::dsp::PulseGenerator m_jumpPulse[16];
+		rack::dsp::BooleanTrigger m_buttonShift;
+		rack::dsp::TSchmittTrigger<float> m_triggerShift[16];
+		bool m_forceShift[16];
+		rack::dsp::PulseGenerator m_shiftPulse[16];
 
 		dsp::ClockDivider m_triggerLightDivider;
 
 		std::array<float, 16> m_values;
 		std::array<bool, 16> m_jumped;
-		std::array<bool, 16> m_moved;
+		std::array<bool, 16> m_shifted;
 
 		void readDistributionData(int channel, RameligDistributionData& rameligDistributionData);
 

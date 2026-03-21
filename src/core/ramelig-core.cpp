@@ -55,7 +55,7 @@ bool RameligDistributionData::operator==(const RameligDistributionData& other) c
 
 bool RameligDistributionData::operator!=(const RameligDistributionData& other) const {
 	return randomJumpChance != other.randomJumpChance ||
-		randomMoveChance != other.randomMoveChance ||
+		randomShiftChance != other.randomShiftChance ||
 		moveUpChance != other.moveUpChance ||
 		remainChance != other.remainChance ||
 		moveDownChance != other.moveDownChance ||
@@ -85,7 +85,7 @@ void RameligCore::guideLast(int channel, float value) {
 	m_state[channel].isDirty = true;
 }
 
-float RameligCore::process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, bool forceRemain, float lowerLimit, float upperLimit) {
+float RameligCore::process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceRemain, float lowerLimit, float upperLimit) {
 	std::pair<int, int> quantized;
 
 	// Update the distribution if needed
@@ -108,20 +108,20 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 
 	// Perform the next action
 	RameligActions action;
-	if (forceMove) {
-		action = RameligActions::RANDOM_MOVE;
-	} else if (forceJump) {
+	if (forceJump) {
 		action = RameligActions::RANDOM_JUMP;
+	} else if (forceShift) {
+		action = RameligActions::RANDOM_SHIFT;
 	} else if (forceRemain) {
 		action = RameligActions::REMAIN;
 	} else {
 		action = determineAction(channel);
 	}
-	if ((action == RANDOM_JUMP) || (action == RANDOM_MOVE)) {
+	if ((action == RANDOM_JUMP) || (action == RANDOM_SHIFT)) {
 		float randomValue = m_chanceGenerator->generateJumpChance(lowerLimit, upperLimit);
 		quantized = quantize(channel, randomValue, lowerLimit, upperLimit);
 		result = QUANTIZED_TO_VOLTAGE(quantized, m_notes, m_scale);
-		if (action == RANDOM_MOVE) {
+		if (action == RANDOM_SHIFT) {
 			m_state[channel].currentOctave = quantized.first;
 			m_state[channel].currentScaleIndex = quantized.second;
 			m_state[channel].lastResult = result;
@@ -177,9 +177,9 @@ void RameligCore::calculateDistribution(int channel) {
 
 void RameligCore::calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution) {
 	distribution[RameligActions::RANDOM_JUMP] = data.randomJumpChance;
-	distribution[RameligActions::RANDOM_MOVE] = distribution[RameligActions::RANDOM_JUMP] + data.randomMoveChance;
-	distribution[RameligActions::UP_TWO] = distribution[RameligActions::RANDOM_MOVE] + data.moveUpChance * data.moveTwoFactor;
-	distribution[RameligActions::UP_ONE] = distribution[RameligActions::RANDOM_MOVE] + data.moveUpChance;
+	distribution[RameligActions::RANDOM_SHIFT] = distribution[RameligActions::RANDOM_JUMP] + data.randomShiftChance;
+	distribution[RameligActions::UP_TWO] = distribution[RameligActions::RANDOM_SHIFT] + data.moveUpChance * data.moveTwoFactor;
+	distribution[RameligActions::UP_ONE] = distribution[RameligActions::RANDOM_SHIFT] + data.moveUpChance;
 	distribution[RameligActions::DOWN_ONE] = distribution[RameligActions::UP_ONE] + data.moveDownChance * (1 - data.moveTwoFactor);
 	distribution[RameligActions::DOWN_TWO] = distribution[RameligActions::UP_ONE] + data.moveDownChance;
 	distribution[RameligActions::REMAIN] = distribution[RameligActions::DOWN_TWO] + data.remainChance;

@@ -8,7 +8,7 @@
 
 enum RameligActions {
 	RANDOM_JUMP = 0,
-	RANDOM_MOVE = 1,
+	RANDOM_SHIFT = 1,
 	UP_TWO = 2,
 	UP_ONE = 3,
 	DOWN_ONE = 4,
@@ -18,7 +18,7 @@ enum RameligActions {
 
 struct RameligDistributionData {
 	float randomJumpChance;
-	float randomMoveChance;
+	float randomShiftChance;
 
 	float moveUpChance;
 	float remainChance;
@@ -61,7 +61,7 @@ struct RameligCore {
 
 	void setScale(std::vector<int>& scale);
 	void guideLast(int channel, float value);
-	float process(int channel, RameligDistributionData& data, bool forceMove, bool forceJump, bool forceRemain, float lowerLimit, float upperLimit);
+	float process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceRemain, float lowerLimit, float upperLimit);
 
 	void calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution);
 
