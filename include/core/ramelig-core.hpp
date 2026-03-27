@@ -13,7 +13,7 @@ enum RameligActions {
 	UP_ONE = 3,
 	DOWN_ONE = 4,
 	DOWN_TWO = 5,
-	REMAIN = 6
+	STAY = 6
 };
 
 struct RameligDistributionData {
@@ -21,11 +21,11 @@ struct RameligDistributionData {
 	float randomShiftChance;
 
 	float moveUpChance;
-	float remainChance;
+	float stayChance;
 	float moveDownChance;
 
 	float moveTwoFactor;
-	float remainRepeatFactor;
+	float stayRepeatFactor;
 
 	bool operator==(const RameligDistributionData& other) const;
 	bool operator!=(const RameligDistributionData& other) const;
@@ -36,7 +36,7 @@ struct RameligCoreState {
 
 	int currentOctave = 0.f;
 	int currentScaleIndex = 0.f;
-	bool lastWasRemain = false;
+	bool lastWasStay = false;
 
 	float lastResult = 0;
 	bool isDirty = true;
@@ -61,7 +61,7 @@ struct RameligCore {
 
 	void setScale(std::vector<int>& scale);
 	void guideLast(int channel, float value);
-	float process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceRemain, float lowerLimit, float upperLimit);
+	float process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit);
 
 	void calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution);
 

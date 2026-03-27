@@ -19,7 +19,7 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 	configInput(IN_CHANCE_RANDOM_JUMP, "Random jump CV");
 	configInput(IN_CHANCE_RANDOM_SHIFT, "Random shift CV");
 	configInput(IN_CHANCE_MOVE_UP, "Move up chance CV");
-	configInput(IN_CHANCE_REMAIN, "Remain chance CV");
+	configInput(IN_CHANCE_STAY, "Stay chance CV");
 	configInput(IN_CHANCE_MOVE_DOWN, "Move down chance CV");
 	configInput(IN_SCALE, "Scale CV");
 
@@ -35,10 +35,10 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 	configButton(PARAM_TRIG_RANDOM_SHIFT, "Random shift trigger");
 
 	configParam(PARAM_CHANCE_MOVE_UP, 0.f, 10.f, 9.f, "Move up chance");
-	configParam(PARAM_CHANCE_REMAIN, 0.f, 10.f, 2.f, "Remain chance");
+	configParam(PARAM_CHANCE_STAY, 0.f, 10.f, 2.f, "Stay chance");
 	configParam(PARAM_CHANCE_MOVE_DOWN, 0.f, 10.f, 9.f, "Move down chance");
 	configParam(PARAM_FACTOR_MOVE_TWO, 0.f, 10.f, 3.f, "Move by one or two steps factor");
-	configParam(PARAM_FACTOR_REMAIN_REPEAT, 0.f, 10.f, 7.f, "Remain repeat factor");
+	configParam(PARAM_FACTOR_STAY_REPEAT, 0.f, 10.f, 7.f, "Stay repeat factor");
 
 	configButton(PARAM_TRIGGER, "Trigger");
 
@@ -298,10 +298,10 @@ void RameligModule::readDistributionData(int channel, RameligDistributionData& r
 	rameligDistributionData.randomJumpChance = getParamValue(PARAM_CHANCE_RANDOM_JUMP, channel, 0.f, 10.f, IN_CHANCE_RANDOM_JUMP, 1.f) / 10.f;
 	rameligDistributionData.randomShiftChance = getParamValue(PARAM_CHANCE_RANDOM_SHIFT, channel, 0.f, 10.f, IN_CHANCE_RANDOM_SHIFT, 1.f) / 10.f;
 	rameligDistributionData.moveUpChance = getParamValue(PARAM_CHANCE_MOVE_UP, channel, 0.f, 10.f, IN_CHANCE_MOVE_UP, 1.f) / 10.f;
-	rameligDistributionData.remainChance = getParamValue(PARAM_CHANCE_REMAIN, channel, 0.f, 10.f, IN_CHANCE_REMAIN, 1.f) / 10.f;
+	rameligDistributionData.stayChance = getParamValue(PARAM_CHANCE_STAY, channel, 0.f, 10.f, IN_CHANCE_STAY, 1.f) / 10.f;
 	rameligDistributionData.moveDownChance = getParamValue(PARAM_CHANCE_MOVE_DOWN, channel, 0.f, 10.f, IN_CHANCE_MOVE_DOWN, 1.f) / 10.f;
 	rameligDistributionData.moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
-	rameligDistributionData.remainRepeatFactor = params[PARAM_FACTOR_REMAIN_REPEAT].getValue() / 10.f;
+	rameligDistributionData.stayRepeatFactor = params[PARAM_FACTOR_STAY_REPEAT].getValue() / 10.f;
 }
 
 int RameligModule::determineActiveScale() {
@@ -392,10 +392,10 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addParam(createParamCentered<VCVButton>(Vec(72.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_SHIFT));
 
 	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_UP));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 47.f), module, RameligModule::PARAM_CHANCE_REMAIN));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 47.f), module, RameligModule::PARAM_CHANCE_STAY));
 	addParam(createParamCentered<Rogan1PWhite>(Vec(97.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_DOWN));
 	addParam(createParamCentered<Trimpot>(Vec(117.5f, 127.5f), module, RameligModule::PARAM_FACTOR_MOVE_TWO));
-	addParam(createParamCentered<Trimpot>(Vec(177.5f, 127.f), module, RameligModule::PARAM_FACTOR_REMAIN_REPEAT));
+	addParam(createParamCentered<Trimpot>(Vec(177.5f, 127.f), module, RameligModule::PARAM_FACTOR_STAY_REPEAT));
 
 	addParam(createParamCentered<Trimpot>(Vec(32.5f, 137.f), module, RameligModule::PARAM_SCALE));
 
@@ -409,7 +409,7 @@ RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_JUMP));
 	addInput(createInputCentered<NTPort>(Vec(72.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_SHIFT));
 	addInput(createInputCentered<NTPort>(Vec(137.5f, 87.f), module, RameligModule::IN_CHANCE_MOVE_UP));
-	addInput(createInputCentered<NTPort>(Vec(177.5f, 87.f), module, RameligModule::IN_CHANCE_REMAIN));
+	addInput(createInputCentered<NTPort>(Vec(177.5f, 87.f), module, RameligModule::IN_CHANCE_STAY));
 	addInput(createInputCentered<NTPort>(Vec(97.5f, 87.f), module, RameligModule::IN_CHANCE_MOVE_DOWN));
 
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 172.f), module, RameligModule::IN_SCALE));

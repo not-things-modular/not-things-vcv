@@ -6,7 +6,7 @@ const int rameligDistributionActionDisplayOrder[] = {
 	RameligActions::DOWN_ONE,
 	RameligActions::UP_ONE,
 	RameligActions::UP_TWO,
-	RameligActions::REMAIN,
+	RameligActions::STAY,
 	RameligActions::RANDOM_JUMP,
 	RameligActions::RANDOM_SHIFT
 };
@@ -18,7 +18,7 @@ NVGcolor rameligDistributionActionFillColors[] = {
 	nvgRGBA(0xBB, 0x45, 0x45, 0xFF), // UP_ONE = red
 	nvgRGBA(0x45, 0x45, 0xBB, 0xFF), // DOWN_ONE = blue
 	nvgRGBA(0x45, 0x45, 0xBB, 0xAA), // DOWN_TWO = dark blue
-	nvgRGBA(0x45, 0x99, 0x45, 0xFF)  // REMAIN = green
+	nvgRGBA(0x45, 0x99, 0x45, 0xFF)  // STAY = green
 };
 
 RameligDistribution::RameligDistribution() {
@@ -34,7 +34,7 @@ void RameligDistribution::drawLayer(const DrawArgs& args, int layer) {
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
-	float factor = (box.getWidth() - 4) / m_distribution[RameligActions::REMAIN];
+	float factor = (box.getWidth() - 4) / m_distribution[RameligActions::STAY];
 	float y = 2.f;
 	float height = (box.getHeight() - 6) / 2;
 

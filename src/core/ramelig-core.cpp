@@ -57,10 +57,10 @@ bool RameligDistributionData::operator!=(const RameligDistributionData& other) c
 	return randomJumpChance != other.randomJumpChance ||
 		randomShiftChance != other.randomShiftChance ||
 		moveUpChance != other.moveUpChance ||
-		remainChance != other.remainChance ||
+		stayChance != other.stayChance ||
 		moveDownChance != other.moveDownChance ||
 		moveTwoFactor != other.moveTwoFactor ||
-		remainRepeatFactor != other.remainRepeatFactor;
+		stayRepeatFactor != other.stayRepeatFactor;
 }
 
 
@@ -85,7 +85,7 @@ void RameligCore::guideLast(int channel, float value) {
 	m_state[channel].isDirty = true;
 }
 
-float RameligCore::process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceRemain, float lowerLimit, float upperLimit) {
+float RameligCore::process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit) {
 	std::pair<int, int> quantized;
 
 	// Update the distribution if needed
@@ -112,8 +112,8 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 		action = RameligActions::RANDOM_JUMP;
 	} else if (forceShift) {
 		action = RameligActions::RANDOM_SHIFT;
-	} else if (forceRemain) {
-		action = RameligActions::REMAIN;
+	} else if (forceStay) {
+		action = RameligActions::STAY;
 	} else {
 		action = determineAction(channel);
 	}
@@ -126,7 +126,7 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 			m_state[channel].currentScaleIndex = quantized.second;
 			m_state[channel].lastResult = result;
 		}
-	} else if (action != REMAIN) {
+	} else if (action != STAY) {
 		// Determine which movement we have to do
 		int movement;
 		if (action == UP_TWO) {
@@ -158,8 +158,8 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 		m_state[channel].lastResult = result;
 	}
 
-	// Remember if we had a remain action in this cycle
-	m_state[channel].lastWasRemain = (action == REMAIN);
+	// Remember if we had a stay action in this cycle
+	m_state[channel].lastWasStay = (action == STAY);
 	// Processing is done, so clear the dirty flag
 	m_state[channel].isDirty = false;
 
@@ -182,7 +182,7 @@ void RameligCore::calculateDistribution(RameligDistributionData& data, std::arra
 	distribution[RameligActions::UP_ONE] = distribution[RameligActions::RANDOM_SHIFT] + data.moveUpChance;
 	distribution[RameligActions::DOWN_ONE] = distribution[RameligActions::UP_ONE] + data.moveDownChance * (1 - data.moveTwoFactor);
 	distribution[RameligActions::DOWN_TWO] = distribution[RameligActions::UP_ONE] + data.moveDownChance;
-	distribution[RameligActions::REMAIN] = distribution[RameligActions::DOWN_TWO] + data.remainChance;
+	distribution[RameligActions::STAY] = distribution[RameligActions::DOWN_TWO] + data.stayChance;
 }
 
 void RameligCore::calculateQuantization() {
@@ -208,9 +208,9 @@ void RameligCore::calculateQuantization() {
 }
 
 RameligActions RameligCore::determineAction(int channel) {
-	float upperLimit = m_state[channel].actionDistribution[REMAIN];
-	if (m_state[channel].lastWasRemain) {
-		upperLimit -= m_state[channel].distributionData.remainChance * (1 - m_state[channel].distributionData.remainRepeatFactor);
+	float upperLimit = m_state[channel].actionDistribution[STAY];
+	if (m_state[channel].lastWasStay) {
+		upperLimit -= m_state[channel].distributionData.stayChance * (1 - m_state[channel].distributionData.stayRepeatFactor);
 	}
 	float chance = m_chanceGenerator->generateActionChance(0.f, upperLimit);
 
