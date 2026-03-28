@@ -163,7 +163,7 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 	// Processing is done, so clear the dirty flag
 	m_state[channel].isDirty = false;
 
-	// Notify the listener of the peformed action
+	// Notify the listener of the performed action
 	if (m_actionListener != nullptr) {
 		m_actionListener->rameligActionPerformed(channel, action);
 	}
@@ -285,7 +285,7 @@ std::pair<int, int> RameligCore::move(int channel, std::pair<int, int>& current,
 			index -= m_scale.size();
 		}
 	}
-	if (index < 0) {
+	while ((index < 0) && (m_scale.size() > 0)) {
 		oct--;
 		index = m_scale.size() + index;
 	}
