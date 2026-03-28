@@ -36,7 +36,6 @@ void SolimOutputModule::dataFromJson(json_t *rootJ) {
 }
 
 void SolimOutputModule::draw(const widget::Widget::DrawArgs& args) {
-	int counter = 0;
 	int outputCount = 0;
 	bool hasSolimModule = false;
 	bool hasSolimRandom = false;
@@ -57,7 +56,6 @@ void SolimOutputModule::draw(const widget::Widget::DrawArgs& args) {
 		}
 
 		expanderModule = &expanderModule->module->getLeftExpander();
-		counter++;
 	}
 
 	if (!hasSolimModule) {

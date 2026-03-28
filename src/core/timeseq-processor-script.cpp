@@ -707,8 +707,9 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 				if (scriptValue->ref.compare(it->id) == 0) {
 					vector<string> refLocation = { "component-pool",  "values", to_string(count) };
 					valueStack.push_back(string("v-") + scriptValue->ref);
-					return parseValue(context, &(*it), refLocation, valueStack);
+					shared_ptr<ValueProcessor> value = parseValue(context, &(*it), refLocation, valueStack);
 					valueStack.pop_back();
+					return value;
 				}
 				count++;
 			}
@@ -910,8 +911,9 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 				if (scriptCalc->ref.compare(it->id) == 0) {
 					vector<string> refLocation = { "component-pool",  "calcs", to_string(count) };
 					valueStack.push_back(string("c-") + scriptCalc->ref);
-					return parseCalc(context, &(*it), refLocation, valueStack);
+					shared_ptr<CalcProcessor> calc = parseCalc(context, &(*it), refLocation, valueStack);
 					valueStack.pop_back();
+					return calc;
 				}
 				count++;
 			}
@@ -992,8 +994,9 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseConte
 				if (scriptIf->ref.compare(it->id) == 0) {
 					vector<string> refLocation = { "component-pool",  "ifs", to_string(count) };
 					ifStack.push_back(scriptIf->ref);
-					return parseIf(context, &(*it), refLocation, ifStack);
+					shared_ptr<IfProcessor> ifProcessor = parseIf(context, &(*it), refLocation, ifStack);
 					ifStack.pop_back();
+					return ifProcessor;
 				}
 				count++;
 			}

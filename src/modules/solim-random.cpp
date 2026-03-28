@@ -27,13 +27,13 @@ void SolimRandomModule::process(const ProcessArgs& args) {
 	lights[LIGHT_TRIG_MOVE].setBrightnessSmooth(
 		processTriggers(ParamId::PARAM_TRIG_MOVE, InputId::INPUT_TRIG_MOVE, TriggerId::TRIG_MOVE, m_moveCounters),
 		args.sampleTime);
-	lights[PARAM_TRIG_ONE].setBrightnessSmooth(
+	lights[LIGHT_TRIG_ONE].setBrightnessSmooth(
 		processTriggers(ParamId::PARAM_TRIG_ONE, InputId::INPUT_TRIG_ONE, TriggerId::TRIG_ONE, m_oneCounters),
 		args.sampleTime);
-	lights[PARAM_TRIG_ALL].setBrightnessSmooth(
+	lights[LIGHT_TRIG_ALL].setBrightnessSmooth(
 		processTriggers(ParamId::PARAM_TRIG_ALL, InputId::INPUT_TRIG_ALL, TriggerId::TRIG_ALL, m_allCounters),
 		args.sampleTime);
-	lights[PARAM_TRIG_RESET].setBrightnessSmooth(
+	lights[LIGHT_TRIG_RESET].setBrightnessSmooth(
 		processTriggers(ParamId::PARAM_TRIG_RESET, InputId::INPUT_TRIG_RESET, TriggerId::TRIG_RESET, m_resetCounters),
 		args.sampleTime);
 }

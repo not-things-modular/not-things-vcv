@@ -410,9 +410,9 @@ struct ActionGlideProcessor : ActionOngoingProcessor {
 		double m_durationInverse;
 
 		// A power-based easing calculation
-		double calculatePowEase(float ease, uint64_t glidePosition);
+		double calculatePowEase(float ease);
 		// A sigmoid-based easing calculation
-		double calculateSigEase(float ease, uint64_t glidePosition);
+		double calculateSigEase(float ease);
 };
 
 struct ActionGateProcessor : ActionOngoingProcessor {

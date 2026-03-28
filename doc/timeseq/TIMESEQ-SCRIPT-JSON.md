@@ -80,7 +80,7 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 | property | required | type | since | description |
 | --- | --- | --- | --- | --- |
 | `type` | yes | string | | Must be set to `not-things_timeseq_script` |
-| `version` | yes | string | | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0` and `1.1.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
+| `version` | yes | string | | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0`, `1.1.0` and `1.2.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
 | `$schema` | no | uri string | | Allows JSON schema validation to be performed by schema-aware JSON editors. See the [script version](TIMESEQ-SCRIPT-VERSION.md) page for the schema URIs that can be used. The value given to this property will not influence TimeSeq parsing or processing itself. |
 | `timelines` | no | [timeline](#timeline) list | | A list of *timeline*s that will drive the sequencer. |
 | `global-actions` | no | [action](#action) list | | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |

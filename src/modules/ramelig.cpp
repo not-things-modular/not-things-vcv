@@ -317,8 +317,8 @@ int RameligModule::determineActiveScale() {
 			scale = std::floor((integral + 10) * 12 / 10);
 		} else {
 			float dummy;
-			float integral = std::modf(inputs[IN_SCALE].getVoltage(), &dummy);
-			scale = voltageToChromaticIndex(integral);
+			float fract = std::modf(inputs[IN_SCALE].getVoltage(), &dummy);
+			scale = voltageToChromaticIndex(fract);
 		}
 	}
 	return (scale + (int) params[PARAM_SCALE].getValue()) % 12;

@@ -125,7 +125,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 		}
 		else {
 			string versionValue = (*version);
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0 and 1.1.0 are currently supported.");
+			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0 and 1.2.0 are currently supported.");
 		}
 	}
 

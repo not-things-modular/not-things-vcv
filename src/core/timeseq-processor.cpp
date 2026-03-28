@@ -81,7 +81,7 @@ double CalcTruncProcessor::calc(double value) {
 }
 
 double CalcFracProcessor::calc(double value) {
-	float x;
+	double x;
 	return modf(value, &x);
 }
 
@@ -566,9 +566,9 @@ void ActionGlideProcessor::process(uint64_t glidePosition) {
 		float ease = m_durationInverse * (glidePosition - 1);
 		if (m_easeFactor != 0.f) {
 			if (m_easePow) {
-				ease = calculatePowEase(ease, (glidePosition - 1));
+				ease = calculatePowEase(ease);
 			} else {
-				ease = calculateSigEase(ease, (glidePosition - 1));
+				ease = calculateSigEase(ease);
 			}
 		}
 
@@ -591,7 +591,7 @@ void ActionGlideProcessor::end() {
 	}
 }
 
-double ActionGlideProcessor::calculatePowEase(float ease, uint64_t glidePosition) {
+double ActionGlideProcessor::calculatePowEase(float ease) {
 	if (m_easeFactor > 0.f) {
 		return pow(ease, 1.f + m_easeFactor * 2.f);
 	} else {
@@ -599,7 +599,7 @@ double ActionGlideProcessor::calculatePowEase(float ease, uint64_t glidePosition
 	}
 }
 
-double ActionGlideProcessor::calculateSigEase(float ease, uint64_t glidePosition) {
+double ActionGlideProcessor::calculateSigEase(float ease) {
 	if (m_easeFactor > 0.f) {
 		return ease / (1.0f + m_easeFactor * (1.0f - ease));
 	} else {
