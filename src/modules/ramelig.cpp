@@ -207,14 +207,14 @@ void RameligModule::process(const ProcessArgs& args) {
 			if ((pulseTriggered) || (inputs[IN_GATE].getVoltage(channel) >= 1.f)) {
 				outputs[OUT_TRIGGER].setVoltage(10.f, channel);
 				if (expander != nullptr) {
-					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setVoltage(m_jumped[channel] ? 10.f : 0.f);
-					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_SHIFT].setVoltage(m_shifted[channel] ? 10.f : 0.f);
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setVoltage(m_jumped[channel] ? 10.f : 0.f, channel);
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_SHIFT].setVoltage(m_shifted[channel] ? 10.f : 0.f, channel);
 				}
 			} else {
 				outputs[OUT_TRIGGER].setVoltage(0.f, channel);
 				if (expander != nullptr) {
-					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setVoltage(0.f);
-					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_SHIFT].setVoltage(0.f);
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setVoltage(0.f, channel);
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_SHIFT].setVoltage(0.f, channel);
 				}
 				m_jumped[channel] = false;
 				m_shifted[channel] = false;
