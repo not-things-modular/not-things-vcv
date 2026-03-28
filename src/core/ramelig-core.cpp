@@ -233,6 +233,7 @@ std::pair<int, int> RameligCore::quantize(int channel, float value, float lowerL
 		oct = std::floor(value); // The amount we'll have to subtract from the end result, since we'll make the decimal part positive to easier compare with the quantization notes list
 		fract = value - oct; // Results in the fractal part moved between 0 and 1
 	} else {
+		// For a positive value, we can just use modf to separate into octave and fractal part (for a negative value, it would result in negative oct and fract)
 		fract = std::modf(value, &oct);
 	}
 
@@ -286,7 +287,7 @@ std::pair<int, int> RameligCore::move(int channel, std::pair<int, int>& current,
 	}
 	if (index < 0) {
 		oct--;
-		index = m_scale.size() - 1;
+		index = m_scale.size() + index;
 	}
 
 	return std::make_pair(oct, index);

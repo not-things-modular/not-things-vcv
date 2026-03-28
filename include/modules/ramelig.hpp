@@ -86,7 +86,6 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 
 	private:
 		RameligCore m_rameligCore;
-		RameligDistributionData m_rameligDistributionData[16];
 		int m_channelCount;
 
 		RameligDistribution* m_rameligDistribution;
@@ -105,11 +104,9 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 		rack::dsp::BooleanTrigger m_buttonJump;
 		rack::dsp::TSchmittTrigger<float> m_triggerJump[16];
 		bool m_forceJump[16];
-		rack::dsp::PulseGenerator m_jumpPulse[16];
 		rack::dsp::BooleanTrigger m_buttonShift;
 		rack::dsp::TSchmittTrigger<float> m_triggerShift[16];
 		bool m_forceShift[16];
-		rack::dsp::PulseGenerator m_shiftPulse[16];
 
 		dsp::ClockDivider m_triggerLightDivider;
 

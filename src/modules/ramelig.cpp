@@ -91,7 +91,7 @@ void RameligModule::dataFromJson(json_t* rootJ) {
 	json_t* ntRameligScaleMode = json_object_get(rootJ, "ntRameligScaleMode");
 	if (json_is_integer(ntRameligScaleMode)) {
 		json_int_t scaleMode = json_integer_value(ntRameligScaleMode);
-		if ((scaleMode > 0) && (scaleMode < ScaleMode::NUM_SCALE_MODES)) {
+		if ((scaleMode >= 0) && (scaleMode < ScaleMode::NUM_SCALE_MODES)) {
 			setScaleMode(static_cast<ScaleMode>(scaleMode));
 		} else {
 			setScaleMode(ScaleMode::SCALE_MODE_DECIMAL);
@@ -120,6 +120,7 @@ void RameligModule::dataFromJson(json_t* rootJ) {
 }
 
 void RameligModule::process(const ProcessArgs& args) {
+	RameligDistributionData rameligDistributionData;
 	RameligExpanderModule* expander = getRameligExpander();
 	bool guiding[16] = { false };
 
@@ -170,13 +171,13 @@ void RameligModule::process(const ProcessArgs& args) {
 		// Determine if there is a force shift or jump for this channel
 		if (expander != nullptr) {
 			int inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_TRIG_SHIFT].isPolyphonic() ? channel : 0;
-			m_forceShift[channel] = m_triggerShift->process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_SHIFT].getVoltage(inputChannel)) || m_forceShift[channel];
+			m_forceShift[channel] = m_triggerShift[channel].process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_SHIFT].getVoltage(inputChannel)) || m_forceShift[channel];
 			inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_TRIG_JUMP].isPolyphonic() ? channel : 0;
-			m_forceJump[channel] = m_triggerJump->process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_JUMP].getVoltage(inputChannel)) || m_forceJump[channel];
+			m_forceJump[channel] = m_triggerJump[channel].process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_JUMP].getVoltage(inputChannel)) || m_forceJump[channel];
 		} else {
 			// No expander, so reset the trigger detectors
-			m_triggerShift->process(0.f);
-			m_triggerJump->process(0.f);
+			m_triggerShift[channel].process(0.f);
+			m_triggerJump[channel].process(0.f);
 		}
 		m_forceShift[channel] = m_buttonShift.process(params[PARAM_TRIG_RANDOM_SHIFT].getValue()) || m_forceShift[channel]; // Check the param first on the main module so that the BooleanTrigger.process detects the state change asap, even if there was already a force shift
 		m_forceJump[channel] = m_buttonJump.process(params[PARAM_TRIG_RANDOM_JUMP].getValue()) || m_forceJump[channel]; // Check the param first on the main module so that the BooleanTrigger.process detects the state change asap, even if there was already a force jump
@@ -186,9 +187,9 @@ void RameligModule::process(const ProcessArgs& args) {
 			float upperLimit = getParamValue(PARAM_UPPER_LIMIT, channel, -10.f, 10.f, IN_UPPER_LIMIT, 1.f);
 			float lowerLimit = getParamValue(PARAM_LOWER_LIMIT, channel, -10.f, 10.f, IN_LOWER_LIMIT, 1.f);
 
-			readDistributionData(channel, m_rameligDistributionData[channel]);
+			readDistributionData(channel, rameligDistributionData);
 
-			m_values[channel] = m_rameligCore.process(channel, m_rameligDistributionData[channel], m_forceShift[channel], m_forceJump[channel], guiding[channel], lowerLimit, upperLimit);
+			m_values[channel] = m_rameligCore.process(channel, rameligDistributionData, m_forceJump[channel], m_forceShift[channel], guiding[channel], lowerLimit, upperLimit);
 			outputs[OUT_CV].setVoltage(m_values[channel], channel);
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
 			oneTriggered = true;
@@ -308,12 +309,12 @@ int RameligModule::determineActiveScale() {
 	int scale = 0;
 	if (inputs[IN_SCALE].isConnected()) {
 		if (m_scaleMode == ScaleMode::SCALE_MODE_DECIMAL) {
-			float in = std::min(std::max(inputs[IN_SCALE].getVoltage(), -9.99f), 9.99f);
-			scale = std::floor((in + 10) * 12 / 10);
+			float integral = std::min(std::max(inputs[IN_SCALE].getVoltage(), -9.99f), 9.99f);
+			scale = std::floor((integral + 10) * 12 / 10);
 		} else {
-			float n;
-			float in = std::modf(inputs[IN_SCALE].getVoltage(), &n);
-			scale = voltageToChromaticIndex(in);
+			float dummy;
+			float integral = std::modf(inputs[IN_SCALE].getVoltage(), &dummy);
+			scale = voltageToChromaticIndex(integral);
 		}
 	}
 	return (scale + (int) params[PARAM_SCALE].getValue()) % 12;

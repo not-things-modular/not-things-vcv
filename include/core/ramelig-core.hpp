@@ -34,8 +34,8 @@ struct RameligDistributionData {
 struct RameligCoreState {
 	RameligDistributionData distributionData;
 
-	int currentOctave = 0.f;
-	int currentScaleIndex = 0.f;
+	int currentOctave = 0;
+	int currentScaleIndex = 0;
 	bool lastWasStay = false;
 
 	float lastResult = 0;
