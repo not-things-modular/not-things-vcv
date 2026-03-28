@@ -95,7 +95,7 @@ To keep the generated melody lines within a certain pitch range, the **RANGE LIM
 
 When a random *Jump* or *Shift* action is performed, the generated random note will be within the lower and upper range specified. If a *Move Down* action was to be performed, but that action would cause the note to go below the lower limit, a *Move Up* action will be performed instead. In the reverse case, if a *Move Up* action would take the note above the upper limit, Ramelig will perform a *Move Down* action instead.
 
-Any changes made (both on the range dials and on the input CV) in between triggers will not be applied to the processing or the output signal of Ramelig until the next trigger causes an action to be performed. This means that changing the **LOWER** or **UPPER** limit will not cause the current voltage (i.e. pitch) on the output port to be limited to the new range immediately. If changes are made to the range in between triggers that causes the last-played note (i.e. the 'remembered' note) to fall outside of the range, a new input trigger will cause Ramelig to first limit this note back into the range before continuing its operation.
+Any changes made (both on the range dials and on the input CV) in between triggers will not be applied to the processing or the output signal of Ramelig until the next trigger causes an action to be performed. This means that changing the **LOWER** or **UPPER** limit will not cause the current voltage (i.e. pitch) on the output port to be limited to the new range immediately. If changes are made to the range in between triggers that cause the last-played note (i.e. the 'remembered' note) to fall outside of the range, a new input trigger will cause Ramelig to first limit this note back into the range before continuing its operation.
 
 ### Output section
 
@@ -152,6 +152,6 @@ The *Rand Trigs* section of the Ramelig expander module adds additional input an
 
 The **JUMP** and **SHIFT** output ports of the RM-X expander module will send out a short trigger/gate signal each time the corresponding action is performed by Ramelig. This enables patching reactions to specific melodic events, such as triggering accents or modulation whenever a *Jump* or *Shift* occurs.
 
-> **Note 1**: the **JUMP** and **SHIFT** output ports will send out a gate signal any time that action is actually being performed, either because it was the action chosen through the likelihood determination algorithm, or because it was forced to be triggered using the **JUMP** or **SHIFT** buttons or receiving an CV input signal.
+> **Note 1**: the **JUMP** and **SHIFT** output ports will send out a gate signal any time that action is actually being performed, either because it was the action chosen through the likelihood determination algorithm, or because it was forced to be triggered using the **JUMP** or **SHIFT** buttons or receiving a CV input signal.
 
 > **Note 2**: The output ports will not send out a gate signal immediately when a high gate signal is detected on the RM-X **JUMP** or **SHIFT** input ports or the buttons are clicked. It is only when that action is actually performed by the main Ramelig module upon a new trigger on its main **TRIG** input port that the corresponding output port of RM-X will send out a new gate signal.
