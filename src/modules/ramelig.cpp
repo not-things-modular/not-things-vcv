@@ -178,8 +178,8 @@ void RameligModule::process(const ProcessArgs& args) {
 			m_triggerShift->process(0.f);
 			m_triggerJump->process(0.f);
 		}
-		m_forceShift[channel] = m_buttonShift.process(params[PARAM_TRIG_RANDOM_SHIFT].getValue()) || m_forceShift[channel]; // Check the param first on the so that the BooleanTrigger.process detects the state change asap, even if there was already a force shift
-		m_forceJump[channel] = m_buttonJump.process(params[PARAM_TRIG_RANDOM_JUMP].getValue()) || m_forceJump[channel]; // Check the param first on the so that the BooleanTrigger.process detects the state change asap, even if there was already a force jump
+		m_forceShift[channel] = m_buttonShift.process(params[PARAM_TRIG_RANDOM_SHIFT].getValue()) || m_forceShift[channel]; // Check the param first on the main module so that the BooleanTrigger.process detects the state change asap, even if there was already a force shift
+		m_forceJump[channel] = m_buttonJump.process(params[PARAM_TRIG_RANDOM_JUMP].getValue()) || m_forceJump[channel]; // Check the param first on the main module so that the BooleanTrigger.process detects the state change asap, even if there was already a force jump
 
 		// Do the actual processing if needed
 		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel), 0.f, 1.f)) || (triggerPushed)) {
