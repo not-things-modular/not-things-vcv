@@ -13,11 +13,11 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
 	configInput(IN_GATE, "Clock");
-	configInput(IN_RESET, "Clock");
+	configInput(IN_RESET, "Reset");
 	configInput(IN_DENSITY, "Density CV");
-	configInput(IN_CLUSTER_DENSITY, "Cluster gate density CV");
-	configInput(IN_PHRASE_DENSITY, "Phrase gate density factor CV");
-	configInput(IN_CYCLE_DENSITY, "Cycle gate density factor CV");
+	configInput(IN_CLUSTER_DENSITY, "Cluster gate density modifier CV");
+	configInput(IN_PHRASE_DENSITY, "Phrase gate density modifier CV");
+	configInput(IN_CYCLE_DENSITY, "Cycle gate density modifier CV");
 
 	configOutput(OUT_GATE, "Gate");
 
@@ -36,14 +36,14 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 	configParam(PARAM_CYCLE_CHANCE, 0.f, 100.f, 0.f, "Cycle skip chance");
 
 	configParam(PARAM_DENSITY, 0.f, 100.f, 55.f, "Gate density");
-	configParam(PARAM_CLUSTER_DENSITY_FACTOR, 0.f, 100.f, 15.f, "Gates in cluster density factor");
-	configParam(PARAM_PHRASE_DENSITY_FACTOR, 0.f, 100.f, 10.f, "Gates in phrase density factor");
-	configParam(PARAM_CYCLE_DENSITY_FACTOR, 0.f, 100.f, 10.f, "Gates in cycle density factor");
+	configParam(PARAM_CLUSTER_DENSITY_MODIFIER, 0.f, 100.f, 15.f, "Gates in cluster density modifier");
+	configParam(PARAM_PHRASE_DENSITY_MODIFIER, 0.f, 100.f, 10.f, "Gates in phrase density modifier");
+	configParam(PARAM_CYCLE_DENSITY_MODIFIER, 0.f, 100.f, 10.f, "Gates in cycle density modifier");
 
 	configParam(PARAM_CLUSTER_BIAS_AMOUNT, 0.f, 1.f, .2f, "Cluster bias");
-	configParam(PARAM_CLUSTER_BIAS_DIRECTION, 0.f, 1.f, 0.f, "Cluster bias direction");
+	configParam(PARAM_CLUSTER_BIAS_POSITION, 0.f, 1.f, 0.f, "Cluster bias position");
 	configParam(PARAM_PHRASE_BIAS_AMOUNT, 0.f, 1.f, .15f, "Phrase bias");
-	configParam(PARAM_PHRASE_BIAS_DIRECTION, 0.f, 1.f, 0.f, "Phrase bias direction");
+	configParam(PARAM_PHRASE_BIAS_POSITION, 0.f, 1.f, 0.f, "Phrase bias position");
 
 	configButton(PARAM_TRIGGER, "Trigger");
 	configButton(PARAM_RESET, "Reset");
@@ -64,24 +64,24 @@ void RatriligModule::process(const ProcessArgs& args) {
 	bool oneTriggered = false;
 
 	for (int channel = 0; channel < m_channelCount; channel++) {
-		if ((m_inputReset[channel].process(inputs[IN_RESET].getVoltage(channel), 0.f, 1.f)) || (resetPushed)) {
+		if ((m_inputReset[channel].process(inputs[IN_RESET].getVoltage(channel))) || (resetPushed)) {
 			m_ratriligCore.reset(channel);
 		}
-		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel), 0.f, 1.f)) || (triggerPushed)) {
+		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel))) || (triggerPushed)) {
 			data.density = getValue(PARAM_DENSITY, IN_DENSITY, channel) / 100.f;
 			data.clusterSize = params[PARAM_CLUSTER_SIZE].getValue();
 			data.clusterSkipChance = getValue(PARAM_CLUSTER_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CLUSTER, channel) / 100.f;
-			data.clusterDensityFactor = getValue(PARAM_CLUSTER_DENSITY_FACTOR, IN_CLUSTER_DENSITY, channel) / 100.f;
+			data.clusterDensityModifier = getValue(PARAM_CLUSTER_DENSITY_MODIFIER, IN_CLUSTER_DENSITY, channel) / 100.f;
 			data.phraseSize = params[PARAM_PHRASE_SIZE].getValue();
 			data.phraseSkipChance = getValue(PARAM_PHRASE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_PHRASE, channel) / 100.f;
-			data.phraseDensityFactor = getValue(PARAM_PHRASE_DENSITY_FACTOR, IN_PHRASE_DENSITY, channel) / 100.f;
+			data.phraseDensityModifier = getValue(PARAM_PHRASE_DENSITY_MODIFIER, IN_PHRASE_DENSITY, channel) / 100.f;
 			data.cycleSize = params[PARAM_CYCLE_SIZE].getValue();
 			data.cycleSkipChance = getValue(PARAM_CYCLE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CYCLE, channel) / 100.f;
-			data.cycleDensityFactor = getValue(PARAM_CYCLE_DENSITY_FACTOR, IN_CYCLE_DENSITY, channel) / 100.f;
+			data.cycleDensityModifier = getValue(PARAM_CYCLE_DENSITY_MODIFIER, IN_CYCLE_DENSITY, channel) / 100.f;
 			data.clusterBiasAmount = params[PARAM_CLUSTER_BIAS_AMOUNT].getValue();
-			data.clusterBiasDirection = params[PARAM_CLUSTER_BIAS_DIRECTION].getValue();
+			data.clusterBiasPosition = params[PARAM_CLUSTER_BIAS_POSITION].getValue();
 			data.phraseBiasAmount = params[PARAM_PHRASE_BIAS_AMOUNT].getValue();
-			data.phraseBiasDirection = params[PARAM_PHRASE_BIAS_DIRECTION].getValue();
+			data.phraseBiasPosition = params[PARAM_PHRASE_BIAS_POSITION].getValue();
 			m_ratriligCore.process(channel, data);
 
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
@@ -131,19 +131,19 @@ void RatriligModule::draw(const widget::Widget::DrawArgs& args) {
 		m_ratriligProgress->setCycleCount(cycleSize);
 	}
 	if (m_ratriligClusterBias != nullptr) {
-		m_ratriligClusterBias->setBias(params[PARAM_CLUSTER_BIAS_DIRECTION].getValue(), phraseSize);
+		m_ratriligClusterBias->setBias(params[PARAM_CLUSTER_BIAS_POSITION].getValue(), phraseSize);
 	}
 	if (m_ratriligPhraseBias != nullptr) {
-		m_ratriligPhraseBias->setBias(params[PARAM_PHRASE_BIAS_DIRECTION].getValue(), cycleSize);
+		m_ratriligPhraseBias->setBias(params[PARAM_PHRASE_BIAS_POSITION].getValue(), cycleSize);
 	}
 	if (m_ratriligClusterProbability != nullptr) {
-		m_ratriligClusterProbability->setDensityFactor(getValue(PARAM_CLUSTER_DENSITY_FACTOR, IN_CLUSTER_DENSITY, 0) / 100.f);
+		m_ratriligClusterProbability->setDensityModifier(getValue(PARAM_CLUSTER_DENSITY_MODIFIER, IN_CLUSTER_DENSITY, 0) / 100.f);
 	}
 	if (m_ratriligPhraseProbability != nullptr) {
-		m_ratriligPhraseProbability->setDensityFactor(getValue(PARAM_PHRASE_DENSITY_FACTOR, IN_PHRASE_DENSITY, 0) / 100.f);
+		m_ratriligPhraseProbability->setDensityModifier(getValue(PARAM_PHRASE_DENSITY_MODIFIER, IN_PHRASE_DENSITY, 0) / 100.f);
 	}
 	if (m_ratriligCycleProbability != nullptr) {
-		m_ratriligCycleProbability->setDensityFactor(getValue(PARAM_CYCLE_DENSITY_FACTOR, IN_CYCLE_DENSITY, 0) / 100.f);
+		m_ratriligCycleProbability->setDensityModifier(getValue(PARAM_CYCLE_DENSITY_MODIFIER, IN_CYCLE_DENSITY, 0) / 100.f);
 	}
 }
 
@@ -182,7 +182,7 @@ void RatriligModule::valueChanged(int channel, int cycle, int phrase, int cluste
 	}
 	if ((channel == 0) && (m_ratriligGlobalProbability != nullptr)) {
 		m_ratriligGlobalProbability->setDensity(target);
-		m_ratriligGlobalProbability->setDensityFactor(value);
+		m_ratriligGlobalProbability->setDensityModifier(value);
 		m_ratriligGlobalProbability->setEnabled(enabled);
 	}
 }
@@ -320,23 +320,23 @@ RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_c
 
 	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 55.f), module, RatriligModule::PARAM_CLUSTER_SIZE));
 	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 97.5f), module, RatriligModule::PARAM_CLUSTER_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 140.f), module, RatriligModule::PARAM_CLUSTER_DENSITY_FACTOR));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 140.f), module, RatriligModule::PARAM_CLUSTER_DENSITY_MODIFIER));
 	addInput(createInputCentered<NTPort>(Vec(102.5f, 180.f), module, RatriligModule::IN_CLUSTER_DENSITY));
 
 	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 55.f), module, RatriligModule::PARAM_PHRASE_SIZE));
 	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 97.5f), module, RatriligModule::PARAM_PHRASE_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 140.f), module, RatriligModule::PARAM_PHRASE_DENSITY_FACTOR));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 140.f), module, RatriligModule::PARAM_PHRASE_DENSITY_MODIFIER));
 	addInput(createInputCentered<NTPort>(Vec(142.5f, 180.f), module, RatriligModule::IN_PHRASE_DENSITY));
 
 	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 55.f), module, RatriligModule::PARAM_CYCLE_SIZE));
 	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 97.5f), module, RatriligModule::PARAM_CYCLE_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 140.f), module, RatriligModule::PARAM_CYCLE_DENSITY_FACTOR));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 140.f), module, RatriligModule::PARAM_CYCLE_DENSITY_MODIFIER));
 	addInput(createInputCentered<NTPort>(Vec(182.5f, 180.f), module, RatriligModule::IN_CYCLE_DENSITY));
 
 	addParam(createParamCentered<Trimpot>(Vec(95.5f, 267.f), module, RatriligModule::PARAM_CLUSTER_BIAS_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(122.5f, 267.f), module, RatriligModule::PARAM_CLUSTER_BIAS_DIRECTION));
+	addParam(createParamCentered<Trimpot>(Vec(122.5f, 267.f), module, RatriligModule::PARAM_CLUSTER_BIAS_POSITION));
 	addParam(createParamCentered<Trimpot>(Vec(157.5f, 267.f), module, RatriligModule::PARAM_PHRASE_BIAS_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(184.5f, 267.f), module, RatriligModule::PARAM_PHRASE_BIAS_DIRECTION));
+	addParam(createParamCentered<Trimpot>(Vec(184.5f, 267.f), module, RatriligModule::PARAM_PHRASE_BIAS_POSITION));
 
 	addOutput(createOutputCentered<NTPort>(Vec(177.f, 332.5f), module, RatriligModule::OUT_GATE));
 

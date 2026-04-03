@@ -9,14 +9,14 @@ struct RatriligProbability : widget::Widget {
 	void setBidirectional(bool bidirectional);
 	void setEnabled(bool enabled);
 	void setDensity(float probability);
-	void setDensityFactor(float factor);
+	void setDensityModifier(float modifier);
 	void setBias(float bias);
 
 	private:
 		bool m_bidirectional = false;
 		bool m_enabled = false;
 		float m_density = 0.f;
-		float m_factor = 0.f;
+		float m_modifier = 0.f;
 		float m_bias = 0.f;
 
 		int m_x = 0.f;

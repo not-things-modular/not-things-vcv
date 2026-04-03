@@ -11,20 +11,20 @@ struct RatriligData {
 
 	int clusterSize;
 	float clusterSkipChance;
-	float clusterDensityFactor;
+	float clusterDensityModifier;
 
 	int phraseSize;
 	float phraseSkipChance;
-	float phraseDensityFactor;
+	float phraseDensityModifier;
 
 	int cycleSize;
 	float cycleSkipChance;
-	float cycleDensityFactor;
+	float cycleDensityModifier;
 
 	float clusterBiasAmount;
-	float clusterBiasDirection;
+	float clusterBiasPosition;
 	float phraseBiasAmount;
-	float phraseBiasDirection;
+	float phraseBiasPosition;
 };
 
 struct RatriligCoreState {
@@ -37,9 +37,9 @@ struct RatriligCoreState {
 	bool cycleEnabled = true;
 
 	float density = 0.f;
-	float clusterDensityFactor = 0.f;
-	float phraseDensityFactor = 0.f;
-	float cycleDensityFactor = 0.f;
+	float clusterDensityModifier = 0.f;
+	float phraseDensityModifier = 0.f;
+	float cycleDensityModifier = 0.f;
 
 	float clusterBiasAmount;
 	float phraseBiasAmount;

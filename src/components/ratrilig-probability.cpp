@@ -85,8 +85,8 @@ void RatriligProbability::setDensity(float density) {
 	calculateTargets();
 }
 
-void RatriligProbability::setDensityFactor(float factor) {
-	m_factor = factor;
+void RatriligProbability::setDensityModifier(float modifier) {
+	m_modifier = modifier;
 	calculateTargets();
 }
 
@@ -106,7 +106,7 @@ void RatriligProbability::calculatePositions() {
 
 void RatriligProbability::calculateTargets() {
 	if (m_bidirectional) {
-		float range = powScale(m_factor, 0.6f) * 157.5f;
+		float range = powScale(m_modifier, 0.6f) * 157.5f;
 		m_outerFrom = nvgDegToRad(std::max(270.f - range + m_bias, 270.f - 157.5f));
 		m_outerTo = nvgDegToRad(std::min(270.f + range + m_bias, 270.f + 157.5f));
 
@@ -114,7 +114,7 @@ void RatriligProbability::calculateTargets() {
 		m_centerFrom = nvgDegToRad(std::max(std::min(270.f + m_bias, 270.f + 157.5f), 270.f - 157.5f));
 		m_centerTarget = nvgDegToRad(std::max(std::min(range + m_bias + 270.f, 270.f + 157.5f), 270.f - 157.5f) - 112.f);
 	} else {
-		float range = m_factor * 315.f;
+		float range = m_modifier * 315.f;
 		m_outerFrom = nvgDegToRad(270.f - 157.5f);
 		m_outerTo = nvgDegToRad(std::min(270.f - 157.5f + range, 270 + 157.5f));
 

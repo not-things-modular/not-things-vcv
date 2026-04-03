@@ -50,9 +50,9 @@ void RatriligCore::process(int channel, RatriligData& data) {
 				cycleStarted = true;
 				m_state[channel].cycleEnabled = m_chanceGenerator->generateChance() >= data.cycleSkipChance;
 				if (m_state[channel].cycleEnabled) {
-					m_state[channel].cycleDensityFactor = data.cycleDensityFactor * ((m_chanceGenerator->generateChance() - .5f) * 2);
+					m_state[channel].cycleDensityModifier = data.cycleDensityModifier * ((m_chanceGenerator->generateChance() - .5f) * 2);
 				} else {
-					m_state[channel].cycleDensityFactor = 0.f;
+					m_state[channel].cycleDensityModifier = 0.f;
 				}
 			}
 
@@ -60,7 +60,7 @@ void RatriligCore::process(int channel, RatriligData& data) {
 			m_state[channel].phraseIndex = 0;
 			phraseStarted = true;
 
-			if ((data.phraseBiasAmount > 0.f) && (isBiased(m_state[channel].cycleIndex, data.cycleSize, data.phraseBiasDirection))) {
+			if ((data.phraseBiasAmount > 0.f) && (isBiased(m_state[channel].cycleIndex, data.cycleSize, data.phraseBiasPosition))) {
 				// A biased phrase is always enabled
 				m_state[channel].phraseEnabled = true;
 				m_state[channel].phraseBiasAmount = data.phraseBiasAmount;
@@ -70,9 +70,9 @@ void RatriligCore::process(int channel, RatriligData& data) {
 			}
 			// If the phrase is enabled, determine its density
 			if (m_state[channel].phraseEnabled) {
-				m_state[channel].phraseDensityFactor = data.phraseDensityFactor * ((m_chanceGenerator->generateChance() - .5f) * 2);
+				m_state[channel].phraseDensityModifier = data.phraseDensityModifier * ((m_chanceGenerator->generateChance() - .5f) * 2);
 			} else {
-				m_state[channel].phraseDensityFactor = 0.f;
+				m_state[channel].phraseDensityModifier = 0.f;
 			}
 		}
 
@@ -80,7 +80,7 @@ void RatriligCore::process(int channel, RatriligData& data) {
 		m_state[channel].clusterIndex = 0;
 		clusterStarted = true;
 
-		if ((data.clusterBiasAmount > 0.f) && (isBiased(m_state[channel].phraseIndex, data.phraseSize, data.clusterBiasDirection))) {
+		if ((data.clusterBiasAmount > 0.f) && (isBiased(m_state[channel].phraseIndex, data.phraseSize, data.clusterBiasPosition))) {
 			// A biased cluster is always enabled
 			m_state[channel].clusterEnabled = true;
 			m_state[channel].clusterBiasAmount = data.clusterBiasAmount;
@@ -90,14 +90,14 @@ void RatriligCore::process(int channel, RatriligData& data) {
 		}
 		// If the cluster is enabled, determine its density
 		if (m_state[channel].clusterEnabled) {
-			m_state[channel].clusterDensityFactor = data.clusterDensityFactor * ((m_chanceGenerator->generateChance() - .5f) * 2);
+			m_state[channel].clusterDensityModifier = data.clusterDensityModifier * ((m_chanceGenerator->generateChance() - .5f) * 2);
 		} else {
-			m_state[channel].clusterDensityFactor = 0.f;
+			m_state[channel].clusterDensityModifier = 0.f;
 		}
 	}
 
 	float bias = std::max(m_state[channel].clusterBiasAmount, m_state[channel].phraseBiasAmount) + (std::min(m_state[channel].clusterBiasAmount, m_state[channel].phraseBiasAmount) / 2);
-	m_state[channel].density = data.density + m_state[channel].clusterDensityFactor + m_state[channel].phraseDensityFactor + m_state[channel].cycleDensityFactor + bias;
+	m_state[channel].density = data.density + m_state[channel].clusterDensityModifier + m_state[channel].phraseDensityModifier + m_state[channel].cycleDensityModifier + bias;
 
 	m_state[channel].high = false;
 	float chance = 0.f;
@@ -118,9 +118,9 @@ void RatriligCore::process(int channel, RatriligData& data) {
 			m_listener->cycleStarted(channel);
 		}
 
-		m_listener->clusterStateChanged(channel, m_state[channel].clusterEnabled, m_state[channel].clusterDensityFactor, m_state[channel].clusterBiasAmount);
-		m_listener->phraseStateChanged(channel, m_state[channel].phraseEnabled, m_state[channel].phraseDensityFactor, m_state[channel].phraseBiasAmount);
-		m_listener->cycleStateChanged(channel, m_state[channel].cycleEnabled, m_state[channel].cycleDensityFactor);
+		m_listener->clusterStateChanged(channel, m_state[channel].clusterEnabled, m_state[channel].clusterDensityModifier, m_state[channel].clusterBiasAmount);
+		m_listener->phraseStateChanged(channel, m_state[channel].phraseEnabled, m_state[channel].phraseDensityModifier, m_state[channel].phraseBiasAmount);
+		m_listener->cycleStateChanged(channel, m_state[channel].cycleEnabled, m_state[channel].cycleDensityModifier);
 	}
 }
 
@@ -137,9 +137,9 @@ void RatriligCore::reset(int channel) {
 
 	if (m_listener != nullptr) {
 		m_listener->valueChanged(channel, 0.f, 0.f, 0.f, std::min(m_state[channel].density, 1.f), 0.f, m_state[channel].high);
-		m_listener->clusterStateChanged(channel, m_state[channel].clusterEnabled, m_state[channel].clusterDensityFactor, m_state[channel].clusterBiasAmount);
-		m_listener->phraseStateChanged(channel, m_state[channel].phraseEnabled, m_state[channel].phraseDensityFactor, m_state[channel].phraseBiasAmount);
-		m_listener->cycleStateChanged(channel, m_state[channel].cycleEnabled, m_state[channel].cycleDensityFactor);
+		m_listener->clusterStateChanged(channel, m_state[channel].clusterEnabled, m_state[channel].clusterDensityModifier, m_state[channel].clusterBiasAmount);
+		m_listener->phraseStateChanged(channel, m_state[channel].phraseEnabled, m_state[channel].phraseDensityModifier, m_state[channel].phraseBiasAmount);
+		m_listener->cycleStateChanged(channel, m_state[channel].cycleEnabled, m_state[channel].cycleDensityModifier);
 	}
 }
 
