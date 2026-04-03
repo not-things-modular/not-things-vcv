@@ -40,9 +40,9 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 	configParam(PARAM_PHRASE_DENSITY_MODIFIER, 0.f, 100.f, 10.f, "Gates in phrase density modifier");
 	configParam(PARAM_CYCLE_DENSITY_MODIFIER, 0.f, 100.f, 10.f, "Gates in cycle density modifier");
 
-	configParam(PARAM_CLUSTER_BIAS_AMOUNT, 0.f, 1.f, .2f, "Cluster bias");
+	configParam(PARAM_CLUSTER_BIAS_AMOUNT, 0.f, 100.f, 20.f, "Cluster bias");
 	configParam(PARAM_CLUSTER_BIAS_POSITION, 0.f, 1.f, 0.f, "Cluster bias position");
-	configParam(PARAM_PHRASE_BIAS_AMOUNT, 0.f, 1.f, .15f, "Phrase bias");
+	configParam(PARAM_PHRASE_BIAS_AMOUNT, 0.f, 100.f, 15.f, "Phrase bias");
 	configParam(PARAM_PHRASE_BIAS_POSITION, 0.f, 1.f, 0.f, "Phrase bias position");
 
 	configButton(PARAM_TRIGGER, "Trigger");
@@ -78,9 +78,9 @@ void RatriligModule::process(const ProcessArgs& args) {
 			data.cycleSize = params[PARAM_CYCLE_SIZE].getValue();
 			data.cycleSkipChance = getValue(PARAM_CYCLE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CYCLE, channel) / 100.f;
 			data.cycleDensityModifier = getValue(PARAM_CYCLE_DENSITY_MODIFIER, IN_CYCLE_DENSITY, channel) / 100.f;
-			data.clusterBiasAmount = params[PARAM_CLUSTER_BIAS_AMOUNT].getValue();
+			data.clusterBiasAmount = params[PARAM_CLUSTER_BIAS_AMOUNT].getValue() / 100.f;
 			data.clusterBiasPosition = params[PARAM_CLUSTER_BIAS_POSITION].getValue();
-			data.phraseBiasAmount = params[PARAM_PHRASE_BIAS_AMOUNT].getValue();
+			data.phraseBiasAmount = params[PARAM_PHRASE_BIAS_AMOUNT].getValue() / 100.f;
 			data.phraseBiasPosition = params[PARAM_PHRASE_BIAS_POSITION].getValue();
 			m_ratriligCore.process(channel, data);
 
