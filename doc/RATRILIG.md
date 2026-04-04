@@ -123,9 +123,9 @@ There are several visualizations on Ratrilig that give a view of the internal st
 
 At the bottom of the grouping parameters section, a circular visualizer gives a view of the state of each of the corresponding hierarchical layers: one for each of the cluster, phrase and cycle. There are three concentric circles that provide the relevant status information. These are:
 
-* The innermost circle: indicates if the cluster/phrase/cycle is being skipped (an empty circle) or not (a filled-in circle)
-* The middle circle: the probability modifier value that is currently active for this cluster/phrase/cycle (as determined when it started)
-* The outer circle: the range that the probability modifier value can fall into, as determined by the **PROB +/-** controls
+* Innermost circle: indicates the skip status of cluster/phrase/cycle: an empty circle means it is skipped
+* Middle circle: Shows the probability modifier value currently active for this cluster/phrase/cycle (as determined when it started)
+* Outer circle: Shows the range current possible probability modifier value, as determined by the **PROB +/-** controls
 
 The outer circle is directly linked to the probability modifier controls: updating the value on the dial or through the CV input will immediately be reflected on the visualization. The middle and inner circle show the values that are currently active in the Ratrilig algorithm. They will only update when new values are generated, i.e. when a new cluster/phrase/cycle starts, and the *skip* and *probability modifier* values for that item are determined again.
 

@@ -6,7 +6,7 @@ Below are links to and descriptions of some simple patches containing Ratrilig a
 
 ## Basic Ratrilig into Ramelig
 
-![Ramelig into Ratrilig basic patch](./ralig/ramelig-ratrilig-basic.png)
+![Ratrilig into Ramelig basic patch](./ralig/ramelig-ratrilig-basic.png)
 
 The [Basic Ratrilig into Ramelig](./ralig/ramelig-ratrilig-basic.vcv) patch contains a very basic setup:
 
@@ -18,7 +18,7 @@ The [Basic Ratrilig into Ramelig](./ralig/ramelig-ratrilig-basic.vcv) patch cont
 
 ## Ratrilig into Ramelig with chords
 
-![Ramelig into Ratrilig with chords patch](./ralig/ramelig-ratrilig-with-chords.png)
+![Ratrilig into Ramelig with chords patch](./ralig/ramelig-ratrilig-with-chords.png)
 
 The [Ratrilig into Ramelig with chords](./ralig/ramelig-ratrilig-with-chords.vcv) patch builds upon the basic patch by:
 
@@ -26,18 +26,18 @@ The [Ratrilig into Ramelig with chords](./ralig/ramelig-ratrilig-with-chords.vcv
 * The chord progression is played on a second VCO, which is set one octave lower
 * The chord progression is also sent into the Ramelig scale CV (which is set to Chromatic 1V/Oct mode in the right-click menu). The stored scales in Ramelig are set up to only play the notes of the active chord
 * On Ratrilig, the gates per cluster have been reduced to 4 and all Skip chance values have been reduced (and disabled for the cycle)
-* On Ratrilig, the lower and upper range limit has been increased by one octave (i.e. 1V)
+* On Ramelig, the lower and upper range limit has been increased by one octave (i.e. 1V)
 * Since two voices need to be mixed together (the chord root notes and the melody line), the VCV VCA is replaced with the VCV Mixer module
 
 ## Simple RM-X expander usage
 
-![Ramelig into Ratrilig with RM-X expander patch](./ralig/ramelig-ratrilig-with-rmx.png)
+![Ratrilig into Ramelig with RM-X expander patch](./ralig/ramelig-ratrilig-with-rmx.png)
 
 The [Ratrilig into Ramelig with RM-X expander](./ralig/ramelig-ratrilig-with-rmx.vcv) patch continues from the *Ratrilig into Ramelig with chords* patch, and adds a simple usage of the Ramelig expander (RM-X):
 
 * The RM-X module is added to the right of Ramelig
 * The **JUMP** trigger output is connected to a new VCV ADSR module
-* The ADSR Envelope output drives a VCV VCA, which is connected to the Triangle output of the melody CVO
+* The ADSR Envelope output drives a VCV VCA, which is connected to the Triangle output of the melody VCO
 * The resulting notes are sent into a VCV Delay module
 * The **WET** output of the delay module is mixed in with the rest of the patch audio.
 
