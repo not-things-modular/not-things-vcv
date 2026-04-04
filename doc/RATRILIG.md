@@ -33,7 +33,9 @@ In addition to the density modifiers, Ratrilig also allows the elements at each 
 
 A *bias* system adds rhythmic anchoring to the system by making certain positions in the hierarchy more active. For example, by letting the first cluster in a phrase always have a higher chance of being active, a sense of a downbeat can be created. Bias can be applied on two levels: a cluster at a specific location in each phrase can be given a positive bias, and a phrase at a specific location in each cycle can be given a positive bias.
 
-Because Ratrilig still uses probability rather than fixed patterns, it will still continuously generate different rhythms. However, the combination of a hierarchical structure with multi-level density modifiers, probabilistic skipping, and positional bias provide some structured control over the randomness.
+Because Ratrilig still uses probability rather than fixed patterns, it will continuously generate different rhythms. However, the combination of a hierarchical structure with multi-level density modifiers, probabilistic skipping, and positional bias provide some structured control over the randomness.
+
+For example, with a cluster size of 4, phrase size of 2, and cycle size of 3, each cycle contains 24 input triggers (4 \* 2 \* 3). Each group of 4 consecutive triggers forms a cluster with its own density modifier, every 2 clusters form a phrase, and 3 phrases complete one cycle. Some clusters or phrases may be skipped entirely, and biasing could make a specific cluster in each phrase more likely to produce output triggers — creating a sense of rhythmic anchoring at regular intervals.
 
 ## Main module
 
@@ -44,7 +46,7 @@ The controls on Ratrilig are grouped in several sections:
 * An *Input* section for the input clock trigger/gate and a reset action
 * A *Global probability* section that specifies the overall gate density
 * A *Grouping parameters* section that allows the cluster, phrase and cycle size, skip chance and probability modifier range to be specified
-* A *Bias* that provides controls for the position and value of the cluster and phrase biases
+* A *Bias* section that provides controls for the position and value of the cluster and phrase biases
 * An *Output* section that produces the output signal of the module
 * A *Visualization* section that shows the generated trigger pattern and gives visual feedback of the module operation
 
@@ -78,13 +80,13 @@ At the start of each cluster, phrase or cycle, Ratrilig will determine new proba
 
 #### Skip
 
-The **SKIP** dials control how likely it is that a cluster, phrase or cycle will be skipped. If any of the active elements in the hierarchy (i.e. the active cluster, phrase and cycle) are skipped, all incoming triggers will be dropped, even if the other active hierarchical elements are not skipped.
+The **SKIP%** dials control how likely it is that a cluster, phrase or cycle will be skipped. If any of the active elements in the hierarchy (i.e. the active cluster, phrase and cycle) are skipped, all incoming triggers will be dropped, even if the other active hierarchical elements are not skipped.
 
 #### Prob +/-
 
-The **PROB +/-** dials specify the *probability modifier range* of each of the hierarchical elements. At the start of each cluster, phrase and cycle, a random probability modifier will be generated with a range defined by the value on the **PROB +/-** dial: it can go as much below zero as above zero. E.g. if the dial is set to 15, then the *probability modifier* will be between -15 and +15. This *probability modifier* will be applied on top of the global probability value (see the [Global probability section](#global-probability-section)) as long as that hierarchical element is active (i.e. a negative *probability modifier* will lower the overall probability, a positive will increase it). The probability modifiers of all three active the hierarchical layer elements will be applied at the same time. E.g. if the *global probability* is set to 55%, the determined *cluster* probability modifier is -7.5%, the *phrase* probability modifier is 5.5% and the *cycle* probability modifier is 10%, the resulting probability used by Ratrilig for an incoming trigger will be (55 - 7.5 + 5.5 + 10 =) 63%.
+The **PROB +/-** dials specify the *probability modifier range* of each of the hierarchical elements. At the start of each cluster, phrase and cycle, a random probability modifier will be generated with a symmetric range around zero, defined by the **PROB +/-** dial. For example, if the dial is set to 15, then the *probability modifier* will be between -15 and +15. This *probability modifier* will be applied on top of the global probability value (see the [Global probability section](#global-probability-section)) as long as that hierarchical element is active (i.e. a negative *probability modifier* will lower the overall probability, a positive will increase it). The probability modifiers of all three active the hierarchical layer elements will be applied at the same time. E.g. if the *global probability* is set to 55%, the determined *cluster* probability modifier is -7.5%, the *phrase* probability modifier is 5.5% and the *cycle* probability modifier is 10%, the resulting probability used by Ratrilig for an incoming trigger will be (55 - 7.5 + 5.5 + 10 =) 63%.
 
-Underneath each of the **PROB +/-** dials, a CV input exists that can be used to modulate the *probability modifier range* values. These CV inputs work the same as the *Density CV* described in the [Global probability](#global-probability-section) (i.e. in the -5V to 5V range).
+Underneath each of the **PROB +/-** dials, a CV input exists that can be used to modulate the *probability modifier range* values. The scaling of these CV inputs works the same as the *Density CV* described in the [Global probability](#global-probability-section) (i.e. in the -5V to 5V range).
 
 ### Bias section
 
@@ -101,7 +103,7 @@ The **BIAS POS** dial specifies which cluster in the phrase, or which phrase in 
 * 0.50 - 0.74999 is the third cluster
 * 0.75 - 1.00000 is the fourth cluster
 
-If both cluster and phrase bias are active at the same time, applying both on top of each other could result in an overscaling of the probability (e.g. quickly reaching 100%). To avoid this, Ratrilig will check the two bias values, apply the highest of the two in full, but only apply half of the smaller bias value.
+If both cluster and phrase bias are active at the same time, applying both on top of each other could result in an over-scaling of the probability (e.g. quickly reaching 100%). To avoid this, Ratrilig will check the two bias values, apply the highest of the two in full, but only apply half of the smaller bias value.
 
 The bias controls overwrite the **SKIP%** chance of the [Grouping parameters](#grouping-parameters-section) section: if a cluster or phrase is biased, it will always play and not become skipped.
 
@@ -188,4 +190,4 @@ The **START TRIG** output ports will send out an output trigger when a new clust
 
 ### Skip CV input
 
-The **SKIP%** input ports allow an input CV signal to be used to modulate the skip chance of clusters, phrases and cycles. The voltage on these input ports will be combined with the values of the corresponding **SKIP** dials of the main module in the same way as the *Density CV* described in the [Global probability](#global-probability-section) (i.e. in the -5V to 5V range).
+The **SKIP%** input ports allow an input CV signal to be used to modulate the skip chance of clusters, phrases and cycles. The voltage on these input ports will be combined with the values of the corresponding **SKIP%** dials of the main module in the same way as the *Density CV* described in the [Global probability](#global-probability-section) (i.e. in the -5V to 5V range).
