@@ -11,7 +11,13 @@ Ramelig and Ratrilig are a set of modules that are designed to "improvise" melod
 
 While both modules can be used separately, Ratrilig can be used to drive Ramelig by patching its trigger output into Ramelig’s trigger input. This results in melodic sequences where both rhythm (trigger timing) and pitch movement are probabilistically controlled.
 
-More information about each of the modules and their expanders can be found at:
+## Detailed module documentation
+
+More information about each of the modules and their expanders can be found in their respective documentation pages at:
 
 * [Ramelig](./RAMELIG.md)
 * [Ratrilig](./RATRILIG.md)
+
+## Sample patches
+
+Some simple patches with description for Ramelig and Ratrilig can be found [on the sample page](./RALIG-SAMPLES.md)
