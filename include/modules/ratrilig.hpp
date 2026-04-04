@@ -7,7 +7,6 @@
 
 
 struct RatriligData;
-struct RatriligState;
 struct RatriligProgress;
 struct RatriligBias;
 struct RatriligProbability;
@@ -99,11 +98,11 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		rack::dsp::TSchmittTrigger<float> m_inputReset[16];
 		rack::dsp::BooleanTrigger m_buttonReset;
 
-		int m_channelCount;
+		int m_channelCount = 1;
 
-		std::array<bool, 16> m_clusterStarted;
-		std::array<bool, 16> m_phraseStarted;
-		std::array<bool, 16> m_cycleStarted;
+		std::array<bool, 16> m_clusterStarted = {};
+		std::array<bool, 16> m_phraseStarted = {};
+		std::array<bool, 16> m_cycleStarted = {};
 
 		void updatePolyphony(bool forceUpdateOutputs);
 

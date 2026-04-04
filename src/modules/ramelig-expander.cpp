@@ -27,8 +27,8 @@ RameligExpanderWidget::RameligExpanderWidget(RameligExpanderModule* module): NTM
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 291.f), module, RameligExpanderModule::IN_TRIG_SHIFT));
 	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 248.f), module, RameligExpanderModule::OUT_TRIG_JUMP));
 	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 332.5f), module, RameligExpanderModule::OUT_TRIG_SHIFT));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 235.5f), module, RameligExpanderModule::OUT_TRIG_JUMP));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 320.f), module, RameligExpanderModule::OUT_TRIG_SHIFT));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 235.5f), module, RameligExpanderModule::LIGHT_TRIG_JUMP));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 320.f), module, RameligExpanderModule::LIGHT_TRIG_SHIFT));
 }
 
 

@@ -9,9 +9,9 @@ extern Model* modelRatrilig;
 RatriligExpanderModule::RatriligExpanderModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-	configInput(IN_SKIP_CLUSTER, "Cluster skip change CV");
-	configInput(IN_SKIP_PHRASE, "Phrase skip change CV");
-	configInput(IN_SKIP_CYCLE, "Cycle skip change CV");
+	configInput(IN_SKIP_CLUSTER, "Cluster skip chance CV");
+	configInput(IN_SKIP_PHRASE, "Phrase skip chance CV");
+	configInput(IN_SKIP_CYCLE, "Cycle skip chance CV");
 
 	configOutput(OUT_TRIG_CLUSTER, "Cluster started trigger");
 	configOutput(OUT_TRIG_PHRASE, "Phrase started trigger");
@@ -33,9 +33,9 @@ RatriligExpanderWidget::RatriligExpanderWidget(RatriligExpanderModule* module): 
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 277.5f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 322.5f), module, RatriligExpanderModule::IN_SKIP_CYCLE));
 
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 56.f), module, RatriligExpanderModule::IN_SKIP_CLUSTER));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 101.f), module, RatriligExpanderModule::IN_SKIP_PHRASE));
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 146.f), module, RatriligExpanderModule::IN_SKIP_CYCLE));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 56.f), module, RatriligExpanderModule::LIGHT_TRIG_CLUSTER));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 101.f), module, RatriligExpanderModule::LIGHT_TRIG_PHRASE));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(35.f, 146.f), module, RatriligExpanderModule::LIGHT_TRIG_CYCLE));
 }
 
 

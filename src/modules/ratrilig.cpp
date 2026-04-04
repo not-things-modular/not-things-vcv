@@ -90,33 +90,34 @@ void RatriligModule::process(const ProcessArgs& args) {
 
 		// Update the trigger output based on either the input trigger, or the trigger button pulse and update the expander outputs
 		if ((outputs[OUT_GATE].isConnected()) || (expander != nullptr)) {
-			if ((m_buttonTrigger.isHigh()) || (m_ratriligCore.isHigh(channel) && inputs[IN_GATE].getVoltage(channel) >= 1.f)) {
+			if ((m_ratriligCore.isHigh(channel)) && ((inputs[IN_GATE].getVoltage(channel) >= 1.f) || m_buttonTrigger.isHigh())) {
 				outputs[OUT_GATE].setVoltage(10.f, channel);
-
-				if (expander != nullptr) {
-					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CLUSTER].setVoltage(m_clusterStarted[channel] ? 10.f : 0.f);
-					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_PHRASE].setVoltage(m_phraseStarted[channel] ? 10.f : 0.f);
-					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CYCLE].setVoltage(m_cycleStarted[channel] ? 10.f : 0.f);
-				}
 			} else {
 				outputs[OUT_GATE].setVoltage(0.f, channel);
+			}
+		}
 
-				// The input is not high, so reset the expander outputs and started flags back to false if needed
-				if (expander != nullptr) {
-					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CLUSTER].setVoltage(0.f);
-					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_PHRASE].setVoltage(0.f);
-					expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CYCLE].setVoltage(0.f);
-				}
+		// Set the cluster/phrase/cycle started triggers on the expander if needed
+		if (expander != nullptr) {
+			if ((inputs[IN_GATE].getVoltage(channel) >= 1.f) || m_buttonTrigger.isHigh()) {
+				expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CLUSTER].setVoltage(m_clusterStarted[channel] ? 10.f : 0.f, channel);
+				expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_PHRASE].setVoltage(m_phraseStarted[channel] ? 10.f : 0.f, channel);
+				expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CYCLE].setVoltage(m_cycleStarted[channel] ? 10.f : 0.f, channel);
+			} else {
+				expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CLUSTER].setVoltage(0.f, channel);
+				expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_PHRASE].setVoltage(0.f, channel);
+				expander->outputs[RatriligExpanderModule::OutputId::OUT_TRIG_CYCLE].setVoltage(0.f, channel);
+
 				m_clusterStarted[channel] = false;
 				m_phraseStarted[channel] = false;
 				m_cycleStarted[channel] = false;
 			}
 		}
+	}
 
-		// If none of the channels triggered in this cycle, reduce the LED lights that indicated that one of the actions was triggered (if needed)
-		if ((!oneTriggered) && (m_triggerLightDivider.process())) {
-			reduceLightWithThreshold(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
-		}
+	// If none of the channels triggered in this cycle, reduce the LED lights that indicated that one of the actions was triggered (if needed)
+	if ((!oneTriggered) && (m_triggerLightDivider.process())) {
+		reduceLightWithThreshold(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
 	}
 }
 

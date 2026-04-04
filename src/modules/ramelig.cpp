@@ -193,7 +193,7 @@ void RameligModule::process(const ProcessArgs& args) {
 
 			readDistributionData(channel, rameligDistributionData);
 
-			m_values[channel] = m_rameligCore.process(channel, rameligDistributionData, m_forceJump[channel], m_forceShift[channel], guiding[channel], lowerLimit, upperLimit);
+			m_values[channel] = m_rameligCore.process(channel, rameligDistributionData, m_forceJump[channel], m_forceShift[channel], guiding[channel], std::min(lowerLimit, upperLimit), std::max(lowerLimit, upperLimit));
 			outputs[OUT_CV].setVoltage(m_values[channel], channel);
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
 			oneTriggered = true;

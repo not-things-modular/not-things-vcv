@@ -92,27 +92,27 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 
 		ScaleMode m_scaleMode;
 
-		rack::dsp::TSchmittTrigger<float> m_scaleButtonTriggers[12];
-		std::array<bool, 12> m_scales[12];
+		rack::dsp::TSchmittTrigger<float> m_scaleButtonTriggers[12] = {};
+		std::array<bool, 12> m_scales[12] = {};
 		int m_activeScaleIndex;
-		std::vector<int> m_activeScaleIndices;
+		std::vector<int> m_activeScaleIndices = {};
 
-		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16];
+		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16] = {};
 		rack::dsp::BooleanTrigger m_buttonTrigger;
 		rack::dsp::PulseGenerator m_triggerPulse;
 
 		rack::dsp::BooleanTrigger m_buttonJump;
-		rack::dsp::TSchmittTrigger<float> m_triggerJump[16];
-		bool m_forceJump[16];
+		rack::dsp::TSchmittTrigger<float> m_triggerJump[16] = {};
+		bool m_forceJump[16] = {};
 		rack::dsp::BooleanTrigger m_buttonShift;
-		rack::dsp::TSchmittTrigger<float> m_triggerShift[16];
-		bool m_forceShift[16];
+		rack::dsp::TSchmittTrigger<float> m_triggerShift[16] = {};
+		bool m_forceShift[16] = {};
 
 		dsp::ClockDivider m_triggerLightDivider;
 
-		std::array<float, 16> m_values;
-		std::array<bool, 16> m_jumped;
-		std::array<bool, 16> m_shifted;
+		std::array<float, 16> m_values = {};
+		std::array<bool, 16> m_jumped = {};
+		std::array<bool, 16> m_shifted = {};
 
 		void readDistributionData(int channel, RameligDistributionData& rameligDistributionData);
 

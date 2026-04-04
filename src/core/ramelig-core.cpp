@@ -12,6 +12,8 @@ struct RameligUniformChanceGenerator : RameligChanceGenerator {
 		m_actionLower = -1.f;
 		m_actionUpper = 1.f;
 		m_actionDistribution = std::uniform_real_distribution<float>(m_actionLower, m_actionUpper);
+
+		m_generator.seed(std::random_device{}());
 	}
 
 	~RameligUniformChanceGenerator() {}
@@ -128,7 +130,7 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 		}
 	} else if (action != STAY) {
 		// Determine which movement we have to do
-		int movement;
+		int movement = 1;
 		if (action == UP_TWO) {
 			movement = 2;
 		} else if (action == UP_ONE) {

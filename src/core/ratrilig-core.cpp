@@ -1,8 +1,9 @@
 #include "core/ratrilig-core.hpp"
+#include <chrono>
 
 
-bool isBiased(int index, int size, float biasDirection) {
-	int biasIndex = biasDirection == 1.f ? size - 1 : size * biasDirection;
+bool static isBiased(int index, int size, float biasDirection) {
+	int biasIndex = biasDirection >= 1.f ? size - 1 : size * biasDirection;
 
 	return biasIndex == index;
 }
@@ -11,6 +12,7 @@ bool isBiased(int index, int size, float biasDirection) {
 struct RatriligUniformChanceGenerator : RatriligChanceGenerator {
 	RatriligUniformChanceGenerator() {
 		m_distribution = std::uniform_real_distribution<float>(0.f, 1.f);
+		m_generator.seed(std::random_device{}());
 	}
 
 	~RatriligUniformChanceGenerator() {}

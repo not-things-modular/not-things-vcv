@@ -41,10 +41,10 @@ struct RatriligCoreState {
 	float phraseDensityModifier = 0.f;
 	float cycleDensityModifier = 0.f;
 
-	float clusterBiasAmount;
-	float phraseBiasAmount;
+	float clusterBiasAmount = 0.f;
+	float phraseBiasAmount = 0.f;
 
-	bool high;
+	bool high = false;
 };
 
 struct RatriligChanceGenerator {
