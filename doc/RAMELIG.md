@@ -142,7 +142,7 @@ RM-X is an expander module for Ramelig. It expands the functionality of the main
 
 ### Force guide
 
-The *Force guide* inputs allow the note generation of Ramelig to be temporarily overwritten, instead guiding the melody using an external source. This allows scenarios where the random melody generation of Ramelig is combined with other melody sources. This can be used to “anchor” or temporarily override the generated melody, for example to introduce a fixed motif or to follow an external sequence.
+The *Force guide* inputs allow the note generation of Ramelig to be temporarily overwritten, instead guiding the melody using an external source. This allows scenarios where the random melody generation of Ramelig is combined with other melody sources. This can be used to “anchor” or temporarily override the generated melody, for example to introduce a fixed motif or to follow an external sequence. Or a sequencer can occasionally force Ramelig to hit specific notes at key moments (like returning to the root note at the start of a phrase) while letting it improvise freely the rest of the time.
 
 Any time a trigger is received on the **TRIG** input of the main Ramelig module, if there is a high gate signal (>= 1V) on the *Force Guide* **GATE** input port, instead of generating a new note using the normal action likelihood determination, Ramelig will use the voltage that is supplied on the *Force Guide* **CV** input port as 1V/Oct pitch CV. This input pitch is then constrained by the active *Range Limit* and quantized to the active *Scale* of the Ramelig module. The resulting note will then be used on the **CV** output port and will become the "previous" note from which Ramelig will continue processing the next time an input trigger is received.
 

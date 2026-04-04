@@ -2,13 +2,9 @@
 
 
 bool isBiased(int index, int size, float biasDirection) {
-	if ((index == 0) && (biasDirection == 0.f)) {
-		return true;
-	} else if (((float) index / size > biasDirection) && ((float) (index + 1) / size <= biasDirection)) {
-		return true;
-	} else {
-		return false;
-	}
+	int biasIndex = biasDirection == 1.f ? size - 1 : size * biasDirection;
+
+	return biasIndex == index;
 }
 
 
