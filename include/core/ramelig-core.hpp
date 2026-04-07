@@ -52,7 +52,7 @@ struct RameligChanceGenerator {
 
 struct RameligActionListener {
 	virtual ~RameligActionListener() {};
-	virtual void rameligActionPerformed(int channel, RameligActions action) = 0;
+	virtual void rameligActionPerformed(int coreId, RameligActions action) = 0;
 };
 
 struct RameligScale {
@@ -75,8 +75,8 @@ struct RameligScale {
 };
 
 struct RameligCore {
-	RameligCore(std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener);
-	RameligCore(std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator);
+	RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener);
+	RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator);
 
 	void guideLast(float value);
 	float process(RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit);
@@ -84,6 +84,8 @@ struct RameligCore {
 	void calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution);
 
 	private:
+		int m_id;
+
 		std::shared_ptr<RameligChanceGenerator> m_chanceGenerator;
 		std::shared_ptr<RameligScale> m_scale;
 

@@ -59,7 +59,7 @@ RameligModule::RameligModule() {
 	m_rameligScale->setScale(m_activeScaleIndices);
 
 	for (int i = 0; i < 16; i++) {
-		m_rameligCore[i] = std::unique_ptr<RameligCore>(new RameligCore(m_rameligScale, this));
+		m_rameligCore[i] = std::unique_ptr<RameligCore>(new RameligCore(i, m_rameligScale, this));
 	}
 
 	m_channelCount = 1;
@@ -147,7 +147,7 @@ void RameligModule::process(const ProcessArgs& args) {
 	}
 	if (scaleChanged) {
 		updateScale();
-		m_rameligCore.setScale(m_activeScaleIndices);
+		m_rameligScale->setScale(m_activeScaleIndices);
 	}
 
 	// Detect if the expander is guiding the melody
@@ -157,7 +157,7 @@ void RameligModule::process(const ProcessArgs& args) {
 			guiding[i] = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_GATE].getVoltage(inputChannel) >= 1.f;
 			if (guiding[i]) {
 				inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_CV].isPolyphonic() ? i : 0;
-				m_rameligCore.guideLast(i, expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_CV].getVoltage(inputChannel));
+				m_rameligCore[i]->guideLast(expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_CV].getVoltage(inputChannel));
 			}
 		}
 	}
@@ -197,7 +197,7 @@ void RameligModule::process(const ProcessArgs& args) {
 
 			readDistributionData(channel, rameligDistributionData);
 
-			m_values[channel] = m_rameligCore.process(channel, rameligDistributionData, m_forceJump[channel], m_forceShift[channel], guiding[channel], std::min(lowerLimit, upperLimit), std::max(lowerLimit, upperLimit));
+			m_values[channel] = m_rameligCore[channel]->process(rameligDistributionData, m_forceJump[channel], m_forceShift[channel], guiding[channel], std::min(lowerLimit, upperLimit), std::max(lowerLimit, upperLimit));
 			outputs[OUT_CV].setVoltage(m_values[channel], channel);
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
 			oneTriggered = true;
@@ -243,7 +243,7 @@ void RameligModule::draw(const widget::Widget::DrawArgs& args) {
 		std::array<float, 7> distribution;
 
 		readDistributionData(0, distributionData);
-		m_rameligCore.calculateDistribution(distributionData, distribution);
+		m_rameligCore[0]->calculateDistribution(distributionData, distribution);
 		m_rameligDistribution->setDistribution(distribution);
 	}
 }

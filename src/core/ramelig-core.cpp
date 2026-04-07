@@ -173,35 +173,35 @@ float RameligScale::quantizedToVoltage(std::pair<int, int>& quantized) {
 	return (float) quantized.first + m_notes[m_scale[quantized.second]];
 }
 
-RameligCore::RameligCore(std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener) : RameligCore(rameligScale, actionListener, std::make_shared<RameligUniformChanceGenerator>()) {}
-RameligCore::RameligCore(std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator) : m_scale(rameligScale), m_chanceGenerator(chanceGenerator), m_actionListener(actionListener) {
+RameligCore::RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener) : RameligCore(id, rameligScale, actionListener, std::make_shared<RameligUniformChanceGenerator>()) {}
+RameligCore::RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator) : m_id(id), m_chanceGenerator(chanceGenerator), m_scale(rameligScale), m_actionListener(actionListener) {
 }
 
-void RameligCore::guideLast(int channel, float value) {
-	m_state[channel].lastResult = value;
-	m_state[channel].isDirty = true;
+void RameligCore::guideLast(float value) {
+	m_state.lastResult = value;
+	m_state.isDirty = true;
 }
 
-float RameligCore::process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit) {
+float RameligCore::process(RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit) {
 	std::pair<int, int> quantized;
 
 	// Update the distribution if needed
-	if (m_state[channel].distributionData != data) {
-		m_state[channel].distributionData = data;
-		m_state[channel].isDirty = true;
-		calculateDistribution(channel);
+	if (m_state.distributionData != data) {
+		m_state.distributionData = data;
+		m_state.isDirty = true;
+		calculateDistribution();
 	}
 
 	// If the state is dirty, quantize the lastResult to the current scale
-	if (m_state[channel].isDirty) {
-		quantized = m_scale->quantize(m_state[channel].lastResult, lowerLimit, upperLimit);
-		m_state[channel].currentOctave = quantized.first;
-		m_state[channel].currentScaleIndex = quantized.second;
-		m_state[channel].lastResult = m_scale->quantizedToVoltage(quantized);
+	if (m_state.isDirty) {
+		quantized = m_scale->quantize(m_state.lastResult, lowerLimit, upperLimit);
+		m_state.currentOctave = quantized.first;
+		m_state.currentScaleIndex = quantized.second;
+		m_state.lastResult = m_scale->quantizedToVoltage(quantized);
 	}
 
 	// Start from the previous result
-	float result = m_state[channel].lastResult;
+	float result = m_state.lastResult;
 
 	// Perform the next action
 	RameligActions action;
@@ -212,16 +212,16 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 	} else if (forceStay) {
 		action = RameligActions::STAY;
 	} else {
-		action = determineAction(channel);
+		action = determineAction();
 	}
 	if ((action == RANDOM_JUMP) || (action == RANDOM_SHIFT)) {
 		float randomValue = m_chanceGenerator->generateJumpChance(lowerLimit, upperLimit);
 		quantized = m_scale->quantize(randomValue, lowerLimit, upperLimit);
 		result = m_scale->quantizedToVoltage(quantized);
 		if (action == RANDOM_SHIFT) {
-			m_state[channel].currentOctave = quantized.first;
-			m_state[channel].currentScaleIndex = quantized.second;
-			m_state[channel].lastResult = result;
+			m_state.currentOctave = quantized.first;
+			m_state.currentScaleIndex = quantized.second;
+			m_state.lastResult = result;
 		}
 	} else if (action != STAY) {
 		// Determine which movement we have to do
@@ -237,39 +237,39 @@ float RameligCore::process(int channel, RameligDistributionData& data, bool forc
 		}
 
 		// Perform the movement
-		quantized.first = m_state[channel].currentOctave;
-		quantized.second = m_state[channel].currentScaleIndex;
+		quantized.first = m_state.currentOctave;
+		quantized.second = m_state.currentScaleIndex;
 		quantized = m_scale->move(quantized, movement);
 		result = m_scale->quantizedToVoltage(quantized);
 
 		// If the movement pushed us outside of the limits, move in the other direction
 		if (((movement > 0) && (result > upperLimit)) || ((movement < 0) && (result < lowerLimit))) {
-			quantized.first = m_state[channel].currentOctave;
-			quantized.second = m_state[channel].currentScaleIndex;
+			quantized.first = m_state.currentOctave;
+			quantized.second = m_state.currentScaleIndex;
 			quantized = m_scale->move(quantized, -movement);
 			result = m_scale->quantizedToVoltage(quantized);
 		}
 
-		m_state[channel].currentOctave = quantized.first;
-		m_state[channel].currentScaleIndex = quantized.second;
-		m_state[channel].lastResult = result;
+		m_state.currentOctave = quantized.first;
+		m_state.currentScaleIndex = quantized.second;
+		m_state.lastResult = result;
 	}
 
 	// Remember if we had a stay action in this cycle
-	m_state[channel].lastWasStay = (action == STAY);
+	m_state.lastWasStay = (action == STAY);
 	// Processing is done, so clear the dirty flag
-	m_state[channel].isDirty = false;
+	m_state.isDirty = false;
 
 	// Notify the listener of the performed action
 	if (m_actionListener != nullptr) {
-		m_actionListener->rameligActionPerformed(channel, action);
+		m_actionListener->rameligActionPerformed(m_id, action);
 	}
 
 	return result;
 }
 
-void RameligCore::calculateDistribution(int channel) {
-	calculateDistribution(m_state[channel].distributionData, m_state[channel].actionDistribution);
+void RameligCore::calculateDistribution() {
+	calculateDistribution(m_state.distributionData, m_state.actionDistribution);
 }
 
 void RameligCore::calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution) {
@@ -282,16 +282,16 @@ void RameligCore::calculateDistribution(RameligDistributionData& data, std::arra
 	distribution[RameligActions::STAY] = distribution[RameligActions::DOWN_TWO] + data.stayChance;
 }
 
-RameligActions RameligCore::determineAction(int channel) {
-	float upperLimit = m_state[channel].actionDistribution[STAY];
-	if (m_state[channel].lastWasStay) {
-		upperLimit -= m_state[channel].distributionData.stayChance * (1 - m_state[channel].distributionData.stayRepeatFactor);
+RameligActions RameligCore::determineAction() {
+	float upperLimit = m_state.actionDistribution[STAY];
+	if (m_state.lastWasStay) {
+		upperLimit -= m_state.distributionData.stayChance * (1 - m_state.distributionData.stayRepeatFactor);
 	}
 	float chance = m_chanceGenerator->generateActionChance(0.f, upperLimit);
 
 	RameligActions result = RameligActions::RANDOM_JUMP;
 	for (unsigned int i = 0; i < 7; i++) {
-		if (m_state[channel].actionDistribution[i] >= chance) {
+		if (m_state.actionDistribution[i] >= chance) {
 			result = static_cast<RameligActions>(i);
 			break;
 		}
