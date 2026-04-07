@@ -10,7 +10,7 @@
 extern Model* modelRamelig;
 extern Model* modelRameligExpander;
 
-RameligModule::RameligModule() : m_rameligCore(this) {
+RameligModule::RameligModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
 	configInput(IN_GATE, "Clock");
@@ -56,7 +56,11 @@ RameligModule::RameligModule() : m_rameligCore(this) {
 	m_scaleMode = ScaleMode::SCALE_MODE_DECIMAL;
 	m_activeScaleIndex = 0;
 	updateScale();
-	m_rameligCore.setScale(m_activeScaleIndices);
+	m_rameligScale->setScale(m_activeScaleIndices);
+
+	for (int i = 0; i < 16; i++) {
+		m_rameligCore[i] = std::unique_ptr<RameligCore>(new RameligCore(m_rameligScale, this));
+	}
 
 	m_channelCount = 1;
 	m_triggerLightDivider.setDivision(128);

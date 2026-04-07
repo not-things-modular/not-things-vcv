@@ -55,30 +55,43 @@ struct RameligActionListener {
 	virtual void rameligActionPerformed(int channel, RameligActions action) = 0;
 };
 
-struct RameligCore {
-	RameligCore(RameligActionListener *actionListener);
-	RameligCore(RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator);
+struct RameligScale {
+	RameligScale();
 
 	void setScale(std::vector<int>& scale);
-	void guideLast(int channel, float value);
-	float process(int channel, RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit);
+
+	std::pair<int, int> quantize(float value, float lowerLimit, float upperLimit);
+	std::pair<int, int> move(std::pair<int, int>& current, int movement);
+
+	float quantizedToVoltage(std::pair<int, int>& quantized);
+
+	private:
+		std::array<float, 12> m_notes;
+		std::vector<int> m_scale;
+
+		std::vector<float> m_quantizationValues;
+
+		void calculateQuantization();
+};
+
+struct RameligCore {
+	RameligCore(std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener);
+	RameligCore(std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator);
+
+	void guideLast(float value);
+	float process(RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit);
 
 	void calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution);
 
 	private:
 		std::shared_ptr<RameligChanceGenerator> m_chanceGenerator;
-		RameligCoreState m_state[16];
-		std::array<float, 12> m_notes;
+		std::shared_ptr<RameligScale> m_scale;
 
-		std::vector<int> m_scale;
-		std::vector<float> m_quantizationValues;
+		RameligCoreState m_state;
 
 		RameligActionListener *m_actionListener;
 
-		void calculateDistribution(int channel);
-		void calculateQuantization();
+		void calculateDistribution();
 
-		RameligActions determineAction(int channel);
-		std::pair<int, int> quantize(int channel, float value, float lowerLimit, float upperLimit);
-		std::pair<int, int> move(int channel, std::pair<int, int>& current, int movement);
+		RameligActions determineAction();
 };
