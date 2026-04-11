@@ -85,7 +85,8 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 	void setRameligDistribution(RameligDistribution* rameligDistribution);
 
 	private:
-		RameligCore m_rameligCore;
+		std::shared_ptr<RameligScale> m_rameligScale;
+		std::unique_ptr<RameligCore> m_rameligCore[16];
 		int m_channelCount;
 
 		RameligDistribution* m_rameligDistribution;
