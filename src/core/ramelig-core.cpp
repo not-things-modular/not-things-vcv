@@ -72,7 +72,7 @@ RameligScale::RameligScale() {
 	calculateQuantization();
 }
 
-void RameligScale::setScale(std::vector<int>& scale) {
+void RameligScale::setScale(const std::vector<int>& scale) {
 	if (scale != m_scale) {
 		m_scale = scale;
 		calculateQuantization();
@@ -87,7 +87,7 @@ void RameligScale::calculateQuantization() {
 
 	if (m_scale.size() > 1) {
 		// The first item is the lower limit, so it is the average of the first note in this scale and the last note of the previous one
-		m_quantizationValues.push_back((m_notes[m_scale.back()] - 1.f + m_notes.front()) / 2);
+		m_quantizationValues.push_back((m_notes[m_scale.back()] - 1.f + m_notes[m_scale.front()]) / 2);
 		// Now loop through all items in the scale and the average of that item combined with the next one
 		for (unsigned int i = 0; i < m_scale.size() - 1; i++) {
 			m_quantizationValues.push_back((m_notes[m_scale[i]] + m_notes[m_scale[i + 1]]) / 2.f);
@@ -140,7 +140,6 @@ std::pair<int, int> RameligScale::quantize(float value, float lowerLimit, float 
 			index = 0;
 		}
 	}
-
 	while (oct + m_notes[m_scale[index]] > upperLimit) {
 		index--;
 		if (index < 0) {
@@ -169,7 +168,7 @@ std::pair<int, int> RameligScale::move(std::pair<int, int>& current, int movemen
 	return std::make_pair(oct, index);
 }
 
-float RameligScale::quantizedToVoltage(std::pair<int, int>& quantized) {
+float RameligScale::quantizedToVoltage(const std::pair<int, int>& quantized) {
 	return (float) quantized.first + m_notes[m_scale[quantized.second]];
 }
 

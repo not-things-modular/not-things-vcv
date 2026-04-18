@@ -58,12 +58,12 @@ struct RameligActionListener {
 struct RameligScale {
 	RameligScale();
 
-	void setScale(std::vector<int>& scale);
+	void setScale(const std::vector<int>& scale);
 
 	std::pair<int, int> quantize(float value, float lowerLimit, float upperLimit);
 	std::pair<int, int> move(std::pair<int, int>& current, int movement);
 
-	float quantizedToVoltage(std::pair<int, int>& quantized);
+	float quantizedToVoltage(const std::pair<int, int>& quantized);
 
 	private:
 		std::array<float, 12> m_notes;
