@@ -128,34 +128,36 @@ TEST(RameligCoreScale, quantizeShouldQuantizeToTheNearest) {
     scale1.setScale({ 2, 6, 10 });
     scale2.setScale({ 3, 7, 11 });
 
-    // Skew all notes we check with upwards with just-under-1V, so that we're sure quantization should
-    // always happen downward (instead of being unsure due to the float rounding errors)
-    EXPECT_EQ(scale1.quantize(-0.0000001f, -2.f, 2.f), std::make_pair(-1, 2));
-    EXPECT_EQ(scale2.quantize(-0.0000001f, -2.f, 2.f), std::make_pair(-1, 2));
-    EXPECT_EQ(scale1.quantize(NOTE_C + 0.999999f, -2.f, 2.f), std::make_pair(0, 2));
-    EXPECT_EQ(scale2.quantize(NOTE_C + 0.999999f, -2.f, 2.f), std::make_pair(0, 2));
-    EXPECT_EQ(scale1.quantize(NOTE_C_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale2.quantize(NOTE_C_S + 0.999999f, -2.f, 2.f), std::make_pair(0, 2));
-    EXPECT_EQ(scale1.quantize(NOTE_D + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale2.quantize(NOTE_D + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale1.quantize(NOTE_D_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale2.quantize(NOTE_D_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale1.quantize(NOTE_E + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale2.quantize(NOTE_E + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale1.quantize(NOTE_F + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale2.quantize(NOTE_F + 0.999999f, -2.f, 2.f), std::make_pair(1, 0));
-    EXPECT_EQ(scale1.quantize(NOTE_F_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale2.quantize(NOTE_F_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale1.quantize(NOTE_G + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale2.quantize(NOTE_G + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale1.quantize(NOTE_G_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale2.quantize(NOTE_G_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale1.quantize(NOTE_A + 0.999999f, -2.f, 2.f), std::make_pair(1, 2));
-    EXPECT_EQ(scale2.quantize(NOTE_A + 0.999999f, -2.f, 2.f), std::make_pair(1, 1));
-    EXPECT_EQ(scale1.quantize(NOTE_A_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 2));
-    EXPECT_EQ(scale2.quantize(NOTE_A_S + 0.999999f, -2.f, 2.f), std::make_pair(1, 2));
-    EXPECT_EQ(scale1.quantize(NOTE_B + 0.999999f, -2.f, 2.f), std::make_pair(1, 2));
-    EXPECT_EQ(scale2.quantize(NOTE_B + 0.999999f, -2.f, 2.f), std::make_pair(1, 2));
+    for (int i = -5; i <= 5; i++) {
+        // Skew all notes we check with upwards with just-under-1V, so that we're sure quantization should
+        // always happen downward (instead of being unsure due to the float rounding errors)
+        EXPECT_EQ(scale1.quantize(-0.00001f + i, -10.f, 10.f), std::make_pair(-1 + i, 2));
+        EXPECT_EQ(scale2.quantize(-0.00001f + i, -10.f, 10.f), std::make_pair(-1 + i, 2));
+        EXPECT_EQ(scale1.quantize(NOTE_C + 0.999999f + i, -10.f, 10.f), std::make_pair(0 + i, 2));
+        EXPECT_EQ(scale2.quantize(NOTE_C + 0.999999f + i, -10.f, 10.f), std::make_pair(0 + i, 2));
+        EXPECT_EQ(scale1.quantize(NOTE_C_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale2.quantize(NOTE_C_S + 0.999999f + i, -10.f, 10.f), std::make_pair(0 + i, 2));
+        EXPECT_EQ(scale1.quantize(NOTE_D + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale2.quantize(NOTE_D + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale1.quantize(NOTE_D_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale2.quantize(NOTE_D_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale1.quantize(NOTE_E + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale2.quantize(NOTE_E + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale1.quantize(NOTE_F + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale2.quantize(NOTE_F + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 0));
+        EXPECT_EQ(scale1.quantize(NOTE_F_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale2.quantize(NOTE_F_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale1.quantize(NOTE_G + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale2.quantize(NOTE_G + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale1.quantize(NOTE_G_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale2.quantize(NOTE_G_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale1.quantize(NOTE_A + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 2));
+        EXPECT_EQ(scale2.quantize(NOTE_A + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 1));
+        EXPECT_EQ(scale1.quantize(NOTE_A_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 2));
+        EXPECT_EQ(scale2.quantize(NOTE_A_S + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 2));
+        EXPECT_EQ(scale1.quantize(NOTE_B + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 2));
+        EXPECT_EQ(scale2.quantize(NOTE_B + 0.999999f + i, -10.f, 10.f), std::make_pair(1 + i, 2));
+    }
 }
 
 TEST(RameligCoreScale, quantizeShouldQuantizeDownwardIfCloser) {
