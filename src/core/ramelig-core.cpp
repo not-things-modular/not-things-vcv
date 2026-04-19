@@ -151,14 +151,12 @@ std::pair<int, int> RameligScale::quantize(float value, float lowerLimit, float 
 	return std::make_pair(oct, index);
 }
 
-std::pair<int, int> RameligScale::move(std::pair<int, int>& current, int movement) {
+std::pair<int, int> RameligScale::move(const std::pair<int, int>& current, int movement) {
 	int oct = current.first;
 	int index = current.second + movement;
-	if (index >= (int) m_scale.size()) {
+	while (index >= (int) m_scale.size()) {
 		oct++;
-		while (index >= (int) m_scale.size()) {
-			index -= m_scale.size();
-		}
+		index -= m_scale.size();
 	}
 	while ((index < 0) && (m_scale.size() > 0)) {
 		oct--;

@@ -61,7 +61,7 @@ struct RameligScale {
 	void setScale(const std::vector<int>& scale);
 
 	std::pair<int, int> quantize(float value, float lowerLimit, float upperLimit);
-	std::pair<int, int> move(std::pair<int, int>& current, int movement);
+	std::pair<int, int> move(const std::pair<int, int>& current, int movement);
 
 	float quantizedToVoltage(const std::pair<int, int>& quantized);
 

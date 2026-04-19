@@ -173,3 +173,109 @@ TEST(RameligCoreScale, quantizeShouldQuantizeUpwardIfCloser) {
     scale.setScale({ 0, 2 });
     EXPECT_EQ(scale.quantize(0.9f, -2.f, 2.f), std::make_pair(1, 0));
 }
+
+TEST(RameligCoreScale, moveShouldMoveUpOneWithinScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 0), 1), std::make_pair(i, 1));
+        EXPECT_EQ(scale.move(std::make_pair(i, 1), 1), std::make_pair(i, 2));
+        EXPECT_EQ(scale.move(std::make_pair(i, 2), 1), std::make_pair(i, 3));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveUpTwoWithinScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 0), 2), std::make_pair(i, 2));
+        EXPECT_EQ(scale.move(std::make_pair(i, 1), 2), std::make_pair(i, 3));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveDownOneWithinScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 1), -1), std::make_pair(i, 0));
+        EXPECT_EQ(scale.move(std::make_pair(i, 2), -1), std::make_pair(i, 1));
+        EXPECT_EQ(scale.move(std::make_pair(i, 3), -1), std::make_pair(i, 2));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveDownTwoWithinScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 2), -2), std::make_pair(i, 0));
+        EXPECT_EQ(scale.move(std::make_pair(i, 3), -2), std::make_pair(i, 1));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveUpOneOverScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 3), 1), std::make_pair(i + 1, 0));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveUpTwoOverScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 3), 2), std::make_pair(i + 1, 1));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveUpTwoOverScales) {
+    RameligScale scale;
+
+    scale.setScale({ 0 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 0), 2), std::make_pair(i + 2, 0)) << std::to_string(i);
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveDownOneOverScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 0), -1), std::make_pair(i - 1, 3));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveDownTwoOverScale) {
+    RameligScale scale;
+
+    scale.setScale({ 0, 2, 4, 6 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 0), -2), std::make_pair(i - 1, 2));
+    }
+}
+
+TEST(RameligCoreScale, moveShouldMoveDownTwoOverScales) {
+    RameligScale scale;
+
+    scale.setScale({ 0 });
+
+    for (int i = -5; i <= 5; i++) {
+        EXPECT_EQ(scale.move(std::make_pair(i, 0), -2), std::make_pair(i - 2, 0)) << std::to_string(i);
+    }
+}

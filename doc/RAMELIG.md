@@ -127,9 +127,10 @@ If Ramelig receives a polyphonic input signal on the *Trig* input port, the modu
 
 * A polyphonic output signal will be generated on the output ports, with the channel count matching that of the input signal
 * Each input channel will be processed independently by Ramelig
-* The CV input ports expect either a monophonic or a polyphonic signal:
+* All the CV input ports (except the SCALE input CV) expect either a monophonic or a polyphonic signal:
   * If the CV input signal is monophonic, its voltage will be used for all channels
   * If the CV input signal is polyphonic, each channel uses the corresponding CV channel. If fewer CV channels are present than trigger channels, missing channels default to 0V.
+* The scale will not become polyphonic: there will be one active scale that applies to all channels. If the scale input CV is a polyphonic signal, the first channel of that input signal will be used to determine the active scale.
 * The visualization section of Ramelig will display the status and processing of the first polyphonic channel.
 
 In essence, when running in polyphonic mode, Ramelig behaves like multiple independent instances running in parallel, one for each channel.
