@@ -75,6 +75,9 @@ RameligScale::RameligScale() {
 void RameligScale::setScale(const std::vector<int>& scale) {
 	if (scale != m_scale) {
 		m_scale = scale;
+		if (m_scale.size() == 0) {
+			m_scale = { 0 };
+		}
 		calculateQuantization();
 	}
 }

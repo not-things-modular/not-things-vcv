@@ -61,6 +61,30 @@ TEST(RameligCoreScale, quantizeShouldQuantizeToNotesInZeroToOneVoltRange) {
     }
 }
 
+TEST(RameligCoreScale, quantizeWithDefaultScaleShouldQuantizeToC) {
+    RameligScale scale;
+
+    for (float j = -10.f; j <= 10.f; j += 0.1f) {
+        std::pair<int, int> quantizedIndex = scale.quantize(j, 0.f, 0.999999f);
+        float quantizedVoltage = scale.quantizedToVoltage(quantizedIndex);
+        EXPECT_EQ(quantizedIndex, std::make_pair(0, 0));
+        EXPECT_NEAR(quantizedVoltage, 0.f, 0.0001f);
+    }
+}
+
+TEST(RameligCoreScale, quantizeWithEmptyScaleShouldQuantizeToC) {
+    RameligScale scale;
+
+    scale.setScale({});
+
+    for (float j = -10.f; j <= 10.f; j += 0.1f) {
+        std::pair<int, int> quantizedIndex = scale.quantize(j, 0.f, 0.999999f);
+        float quantizedVoltage = scale.quantizedToVoltage(quantizedIndex);
+        EXPECT_EQ(quantizedIndex, std::make_pair(0, 0));
+        EXPECT_NEAR(quantizedVoltage, 0.f, 0.0001f);
+    }
+}
+
 TEST(RameligCoreScale, quantizeShouldQuantizeToNotesInMinusOneToZeroRange) {
     RameligScale scale;
 
@@ -84,7 +108,7 @@ TEST(RameligCoreScale, quantizeShouldQuantizeToNotesInABroaderRange) {
 
         // All values below the lower limit should:
         // - Quantize to the same note as when quantizing in the 0-1V range (but the octave will be different)
-        // - Quantize to the verify first scale note that fits within the limit range, i.e. quantize the same as the lower limit value would.
+        // - Quantize to the very first scale note that fits within the limit range, i.e. quantize the same as the lower limit value would.
         for (float j = -10.f; j < -4.5f; j += 0.1f) {
             std::pair<int, int> quantizedReference = scale.quantize(j, 0.f, 0.999999f);
             std::pair<int, int> quantizedWide = scale.quantize(j, -4.5f, 4.5f);
@@ -110,7 +134,7 @@ TEST(RameligCoreScale, quantizeShouldQuantizeToNotesInABroaderRange) {
 
         // All values above the upper limit should:
         // - Quantize to the same note as when quantizing in the 0-1V range (but the octave will be different)
-        // - Quantize to the verify last scale note that fits within the limit range, i.e. quantize the same as the upper limit value would.
+        // - Quantize to the very last scale note that fits within the limit range, i.e. quantize the same as the upper limit value would.
         for (float j = 4.5f; j < 10.f; j += 0.1f) {
             std::pair<int, int> quantizedReference = scale.quantize(j, 0.f, 0.999999f);
             std::pair<int, int> quantizedWide = scale.quantize(j, -4.5f, 4.5f);
