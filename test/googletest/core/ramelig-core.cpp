@@ -1,17 +1,23 @@
 #include <gmock/gmock.h>
 #include "core/ramelig-core.hpp"
 
+RameligDistributionData populateDistributionData(float randomJumpChance, float randomShiftChance, float moveUpChance, float stayChance, float moveDownChance, float moveTwoFactor) {
+    RameligDistributionData data;
+
+    data.randomJumpChance = randomJumpChance;
+    data.randomShiftChance = randomShiftChance;
+    data.moveUpChance = moveUpChance;
+    data.stayChance = stayChance;
+    data.moveDownChance = moveDownChance;
+    data.moveTwoFactor = moveTwoFactor;
+    data.stayRepeatFactor = 1.23f;
+
+    return data;
+}
+
 TEST(RameligCore, calculateDistributionShouldConstructBalancedDistributon) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.f,
-        moveUpChance: 2.f,
-        stayChance: 1.f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 0.5f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, 0.5f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -26,15 +32,7 @@ TEST(RameligCore, calculateDistributionShouldConstructBalancedDistributon) {
 
 TEST(RameligCore, calculateDistributionShouldSetJumpDistribution) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.234f,
-        randomShiftChance: 1.f,
-        moveUpChance: 2.f,
-        stayChance: 1.f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 0.5f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.234f, 1.f, 2.f, 1.f, 2.f, 0.5f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -49,15 +47,7 @@ TEST(RameligCore, calculateDistributionShouldSetJumpDistribution) {
 
 TEST(RameligCore, calculateDistributionShouldSetShiftDistribution) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.234f,
-        moveUpChance: 2.f,
-        stayChance: 1.f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 0.5f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.234f, 2.f, 1.f, 2.f, 0.5f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -72,15 +62,7 @@ TEST(RameligCore, calculateDistributionShouldSetShiftDistribution) {
 
 TEST(RameligCore, calculateDistributionShouldSetUpDistribution) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.f,
-        moveUpChance: 3.f,
-        stayChance: 1.f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 0.5f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 3.f, 1.f, 2.f, 0.5f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -95,15 +77,7 @@ TEST(RameligCore, calculateDistributionShouldSetUpDistribution) {
 
 TEST(RameligCore, calculateDistributionShouldSetDownDistribution) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.f,
-        moveUpChance: 2.f,
-        stayChance: 1.f,
-        moveDownChance: 3.f,
-        moveTwoFactor: 0.5f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 3.f, 0.5f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -118,15 +92,7 @@ TEST(RameligCore, calculateDistributionShouldSetDownDistribution) {
 
 TEST(RameligCore, calculateDistributionShouldSetStayDistribution) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.f,
-        moveUpChance: 2.f,
-        stayChance: 1.234f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 0.5f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.234f, 2.f, 0.5f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -141,15 +107,7 @@ TEST(RameligCore, calculateDistributionShouldSetStayDistribution) {
 
 TEST(RameligCore, calculateDistributionWithZeroMoveTwoFactorShouldMoveOne) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.f,
-        moveUpChance: 2.f,
-        stayChance: 1.f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 0.f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, 0.f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -164,15 +122,7 @@ TEST(RameligCore, calculateDistributionWithZeroMoveTwoFactorShouldMoveOne) {
 
 TEST(RameligCore, calculateDistributionWithOneMoveTwoFactorShouldMoveTwo) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.f,
-        moveUpChance: 2.f,
-        stayChance: 1.f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 1.f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, 1.f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -187,15 +137,7 @@ TEST(RameligCore, calculateDistributionWithOneMoveTwoFactorShouldMoveTwo) {
 
 TEST(RameligCore, calculateDistributionWithPartialMoveTwoFactorShouldMoveOneAndTwo) {
     std::array<float, 7> distribution;
-    RameligDistributionData data = {
-        randomJumpChance: 1.f,
-        randomShiftChance: 1.f,
-        moveUpChance: 2.f,
-        stayChance: 1.f,
-        moveDownChance: 2.f,
-        moveTwoFactor: 0.75f,
-        stayRepeatFactor: 1.f,
-    };
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, 0.75f);
 
     RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
 
@@ -206,4 +148,34 @@ TEST(RameligCore, calculateDistributionWithPartialMoveTwoFactorShouldMoveOneAndT
     EXPECT_NEAR(distribution[RameligActions::DOWN_ONE], 4.5f, 0.00001f);
     EXPECT_NEAR(distribution[RameligActions::DOWN_TWO], 6.f, 0.00001f);
     EXPECT_NEAR(distribution[RameligActions::STAY], 7.f, 0.00001f);
+}
+
+TEST(RameligCore, calculateDistributionWithPartialMoveTwoFactorShouldMoveOneAndTwoProportionally) {
+    std::array<float, 7> distribution;
+    RameligDistributionData data = populateDistributionData(1.f, 1.f, 4.5f, 1.f, 3.5f, 0.75f);
+
+    RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
+
+    EXPECT_NEAR(distribution[RameligActions::RANDOM_JUMP], 1.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::RANDOM_SHIFT], 2.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::UP_TWO], 5.375f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::UP_ONE], 6.5f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::DOWN_ONE], 7.375f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::DOWN_TWO], 10.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::STAY], 11.f, 0.00001f);
+}
+
+TEST(RameligCore, calculateDistributionWithAllZerosShouldWork) {
+    std::array<float, 7> distribution;
+    RameligDistributionData data = populateDistributionData(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
+
+    RameligCore(0, nullptr, nullptr).calculateDistribution(data, distribution);
+
+    EXPECT_NEAR(distribution[RameligActions::RANDOM_JUMP], 0.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::RANDOM_SHIFT], 0.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::UP_TWO], 0.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::UP_ONE], 0.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::DOWN_ONE], 0.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::DOWN_TWO], 0.f, 0.00001f);
+    EXPECT_NEAR(distribution[RameligActions::STAY], 0.f, 0.00001f);
 }
