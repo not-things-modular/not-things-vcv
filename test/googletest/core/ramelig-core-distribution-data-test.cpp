@@ -4,17 +4,15 @@
 RameligDistributionData getDistributionData() {
 	RameligDistributionData rdd;
 
-	rdd = {
-		randomJumpChance: 6.9,
-		randomShiftChance: 4.20,
+	rdd.randomJumpChance = 6.9;
+	rdd.randomShiftChance = 4.20;
 
-		moveUpChance: 3.14,
-		stayChance: 9.6,
-		moveDownChance: 10.2,
+	rdd.moveUpChance = 3.14;
+	rdd.stayChance = 9.6;
+	rdd.moveDownChance = 10.2;
 
-		moveTwoFactor: 1.23,
-		stayRepeatFactor: 3.21
-	};
+	rdd.moveTwoFactor = 1.23;
+	rdd.stayRepeatFactor = 3.21;
 
 	return rdd;
 }

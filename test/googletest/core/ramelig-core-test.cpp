@@ -648,7 +648,7 @@ TEST(RameligCore, processAfterRandomShiftShouldStayInNewLocation) {
 	EXPECT_EQ(result1, result2);
 }
 
-TEST(RameligCore, guideShouldInfluenceNextProcess) {
+TEST(RameligCore, guideShouldInfluenceNextProcessForStay) {
 	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	std::shared_ptr<MockRameligChanceGenerator> mockRameligChanceGenerator = std::make_shared<MockRameligChanceGenerator>();
@@ -668,6 +668,106 @@ TEST(RameligCore, guideShouldInfluenceNextProcess) {
 
 	float result = rameligCore.process(data, false, false, true, -5.f, 5.f);
 	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(2.25f, -10.f, 10.f)), 0.0001f);
+}
+
+TEST(RameligCore, guideShouldInfluenceNextProcessForMovement) {
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	std::shared_ptr<MockRameligChanceGenerator> mockRameligChanceGenerator = std::make_shared<MockRameligChanceGenerator>();
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0, 2, 4, 5, 7, 9, 11 }); // A C major scale
+
+	EXPECT_CALL(*mockRameligChanceGenerator, generateActionChance)
+		.Times(4)
+		.WillOnce(testing::Return(2.5))
+		.WillOnce(testing::Return(3.5))
+		.WillOnce(testing::Return(4.5))
+		.WillOnce(testing::Return(5.5));
+	EXPECT_CALL(*mockRameligChanceGenerator, generateJumpChance)
+		.Times(0);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::UP_TWO))
+		.Times(1);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::UP_ONE))
+		.Times(1);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::DOWN_ONE))
+		.Times(1);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::DOWN_TWO))
+		.Times(1);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, mockRameligChanceGenerator);
+
+	rameligCore.guideLast(2.f);
+	float result = rameligCore.process(data, false, false, false, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(2, 2)), 0.0001f);
+
+	rameligCore.guideLast(3.f);
+	result = rameligCore.process(data, false, false, false, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(3, 1)), 0.0001f);
+
+	rameligCore.guideLast(-2.f);
+	result = rameligCore.process(data, false, false, false, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(-3, 6)), 0.0001f);
+
+	rameligCore.guideLast(-3.f);
+	result = rameligCore.process(data, false, false, false, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(-4, 5)), 0.0001f);
+}
+
+TEST(RameligCore, guideShouldNotInfluenceProcessWithShiftAction) {
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	std::shared_ptr<MockRameligChanceGenerator> mockRameligChanceGenerator = std::make_shared<MockRameligChanceGenerator>();
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0, 2, 4, 5, 7, 9, 11 }); // A C major scale
+
+	EXPECT_CALL(*mockRameligChanceGenerator, generateActionChance)
+		.Times(0);
+	EXPECT_CALL(*mockRameligChanceGenerator, generateJumpChance)
+		.Times(1)
+		.WillOnce(testing::Return(4.25f));
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::RANDOM_SHIFT))
+		.Times(1);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::STAY))
+		.Times(1);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, mockRameligChanceGenerator);
+
+	rameligCore.guideLast(2.f);
+	float result = rameligCore.process(data, false, true, false, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(4.25f, -5.f, 5.f)), 0.0001f);
+
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(4.25f, -5.f, 5.f)), 0.0001f);
+}
+
+TEST(RameligCore, guideShouldNotInfluenceJumpActionInProcessButDoInfluenceReturnValueAfterJump) {
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	std::shared_ptr<MockRameligChanceGenerator> mockRameligChanceGenerator = std::make_shared<MockRameligChanceGenerator>();
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0, 2, 4, 5, 7, 9, 11 }); // A C major scale
+
+	EXPECT_CALL(*mockRameligChanceGenerator, generateActionChance)
+		.Times(0);
+	EXPECT_CALL(*mockRameligChanceGenerator, generateJumpChance)
+		.Times(1)
+		.WillOnce(testing::Return(4.25f));
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::RANDOM_JUMP))
+		.Times(1);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::STAY))
+		.Times(1);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, mockRameligChanceGenerator);
+
+	rameligCore.guideLast(2.f);
+	float result = rameligCore.process(data, true, false, false, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(4.25f, -5.f, 5.f)), 0.0001f);
+
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(2.f, -5.f, 5.f)), 0.0001f);
 }
 
 TEST(RameligCore, processShouldRequantizeAfterDistributionChange) {

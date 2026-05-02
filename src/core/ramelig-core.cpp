@@ -248,6 +248,15 @@ float RameligCore::process(RameligDistributionData& data, bool forceJump, bool f
 			quantized.second = m_state.currentScaleIndex;
 			quantized = m_scale->move(quantized, -movement);
 			result = m_scale->quantizedToVoltage(quantized);
+			if (action == UP_TWO) {
+				action = DOWN_TWO;
+			} else if (action == UP_ONE) {
+				action = DOWN_ONE;
+			} else if (action == DOWN_ONE) {
+				action = UP_ONE;
+			} else if (action == DOWN_TWO) {
+				action = UP_TWO;
+			}
 		}
 
 		m_state.currentOctave = quantized.first;
