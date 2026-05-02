@@ -800,3 +800,26 @@ TEST(RameligCore, processShouldRequantizeAfterDistributionChange) {
 	float result3 = rameligCore.process(data, false, false, true, -5.f, 5.f);
 	EXPECT_NEAR(result3, rameligScale->quantizedToVoltage(rameligScale->quantize(result2, -10.f, 10.f)), 0.0001f);
 }
+
+TEST(RameligCore, processShouldWorkWithZeroDistribution) {
+	RameligDistributionData data = populateDistributionData(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	std::shared_ptr<MockRameligChanceGenerator> mockRameligChanceGenerator = std::make_shared<MockRameligChanceGenerator>();
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0 });
+
+	EXPECT_CALL(*mockRameligChanceGenerator, generateActionChance(0.f, 0.f))
+		.Times(1)
+		.WillOnce(testing::Return(0.f));
+	EXPECT_CALL(*mockRameligChanceGenerator, generateJumpChance)
+		.Times(1)
+		.WillOnce(testing::Return(3.f));
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::RANDOM_JUMP))
+		.Times(1);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, mockRameligChanceGenerator);
+	rameligCore.guideLast(2.f);
+	float result = rameligCore.process(data, false, false, false, -5.f, 5.f);
+	EXPECT_EQ(result, 3.f);
+}

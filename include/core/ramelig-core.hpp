@@ -93,7 +93,5 @@ struct RameligCore {
 
 		RameligActionListener *m_actionListener;
 
-		void calculateDistribution();
-
 		RameligActions determineAction();
 };
