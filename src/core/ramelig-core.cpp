@@ -189,7 +189,7 @@ float RameligCore::process(RameligDistributionData& data, bool forceJump, bool f
 	if (m_state.distributionData != data) {
 		m_state.distributionData = data;
 		m_state.isDirty = true;
-		calculateDistribution();
+		calculateDistribution(m_state.distributionData, m_state.actionDistribution);
 	}
 
 	// If the state is dirty, quantize the lastResult to the current scale
@@ -248,6 +248,15 @@ float RameligCore::process(RameligDistributionData& data, bool forceJump, bool f
 			quantized.second = m_state.currentScaleIndex;
 			quantized = m_scale->move(quantized, -movement);
 			result = m_scale->quantizedToVoltage(quantized);
+			if (action == UP_TWO) {
+				action = DOWN_TWO;
+			} else if (action == UP_ONE) {
+				action = DOWN_ONE;
+			} else if (action == DOWN_ONE) {
+				action = UP_ONE;
+			} else if (action == DOWN_TWO) {
+				action = UP_TWO;
+			}
 		}
 
 		m_state.currentOctave = quantized.first;
@@ -266,10 +275,6 @@ float RameligCore::process(RameligDistributionData& data, bool forceJump, bool f
 	}
 
 	return result;
-}
-
-void RameligCore::calculateDistribution() {
-	calculateDistribution(m_state.distributionData, m_state.actionDistribution);
 }
 
 void RameligCore::calculateDistribution(RameligDistributionData& data, std::array<float, 7>& distribution) {
