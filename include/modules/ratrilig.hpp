@@ -89,7 +89,7 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		RatriligProbability* m_ratriligCycleProbability = nullptr;
 		RatriligProbability* m_ratriligGlobalProbability = nullptr;
 
-		RatriligCore m_ratriligCore;
+		std::unique_ptr<RatriligCore> m_ratriligCore[16];
 
 		rack::dsp::TSchmittTrigger<float> m_inputTrigger[16];
 		rack::dsp::BooleanTrigger m_buttonTrigger;

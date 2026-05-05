@@ -9,7 +9,7 @@
 extern Model* modelRatriligExpander;
 
 
-RatriligModule::RatriligModule() : m_ratriligCore(this) {
+RatriligModule::RatriligModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
 	configInput(IN_GATE, "Clock");
@@ -49,6 +49,10 @@ RatriligModule::RatriligModule() : m_ratriligCore(this) {
 	configButton(PARAM_RESET, "Reset");
 
 	m_triggerLightDivider.setDivision(128);
+
+	for (int i = 0; i < 16; i++) {
+		m_ratriligCore[i] = std::unique_ptr<RatriligCore>(new RatriligCore(i, this));
+	}
 }
 
 void RatriligModule::process(const ProcessArgs& args) {
@@ -65,7 +69,7 @@ void RatriligModule::process(const ProcessArgs& args) {
 
 	for (int channel = 0; channel < m_channelCount; channel++) {
 		if ((m_inputReset[channel].process(inputs[IN_RESET].getVoltage(channel))) || (resetPushed)) {
-			m_ratriligCore.reset(channel);
+			m_ratriligCore[channel].reset();
 		}
 		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel))) || (triggerPushed)) {
 			data.density = getValue(PARAM_DENSITY, IN_DENSITY, channel) / 100.f;
@@ -82,7 +86,7 @@ void RatriligModule::process(const ProcessArgs& args) {
 			data.clusterBiasPosition = params[PARAM_CLUSTER_BIAS_POSITION].getValue();
 			data.phraseBiasAmount = params[PARAM_PHRASE_BIAS_AMOUNT].getValue() / 100.f;
 			data.phraseBiasPosition = params[PARAM_PHRASE_BIAS_POSITION].getValue();
-			m_ratriligCore.process(channel, data);
+			m_ratriligCore[channel]->process(data);
 
 			lights[LIGHT_TRIGGER].setBrightness(1.f);
 			oneTriggered = true;
@@ -90,7 +94,7 @@ void RatriligModule::process(const ProcessArgs& args) {
 
 		// Update the trigger output based on either the input trigger, or the trigger button pulse and update the expander outputs
 		if ((outputs[OUT_GATE].isConnected()) || (expander != nullptr)) {
-			if ((m_ratriligCore.isHigh(channel)) && ((inputs[IN_GATE].getVoltage(channel) >= 1.f) || m_buttonTrigger.isHigh())) {
+			if ((m_ratriligCore[channel]->isHigh()) && ((inputs[IN_GATE].getVoltage(channel) >= 1.f) || m_buttonTrigger.isHigh())) {
 				outputs[OUT_GATE].setVoltage(10.f, channel);
 			} else {
 				outputs[OUT_GATE].setVoltage(0.f, channel);

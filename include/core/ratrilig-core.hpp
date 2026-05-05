@@ -55,26 +55,28 @@ struct RatriligChanceGenerator {
 struct RatriligCoreListener {
 	virtual ~RatriligCoreListener() {};
 
-	virtual void clusterStateChanged(int channel, bool enabled, float density, float bias) = 0;
-	virtual void phraseStateChanged(int channel, bool enabled, float density, float bias) = 0;
-	virtual void cycleStateChanged(int channel, bool enabled, float density) = 0;
+	virtual void clusterStateChanged(int coreId, bool enabled, float density, float bias) = 0;
+	virtual void phraseStateChanged(int coreId, bool enabled, float density, float bias) = 0;
+	virtual void cycleStateChanged(int coreId, bool enabled, float density) = 0;
 
-	virtual void valueChanged(int channel, int cycle, int phrase, int cluster, float target, float value, bool enabled) = 0;
-	virtual void clusterStarted(int channel) = 0;
-	virtual void phraseStarted(int channel) = 0;
-	virtual void cycleStarted(int channel) = 0;
+	virtual void valueChanged(int coreId, int cycle, int phrase, int cluster, float target, float value, bool enabled) = 0;
+	virtual void clusterStarted(int coreId) = 0;
+	virtual void phraseStarted(int coreId) = 0;
+	virtual void cycleStarted(int coreId) = 0;
 };
 
 struct RatriligCore {
-	RatriligCore(RatriligCoreListener* listener);
-	RatriligCore(RatriligCoreListener* listener, std::shared_ptr<RatriligChanceGenerator> chanceGenerator);
+	RatriligCore(int id, RatriligCoreListener* listener);
+	RatriligCore(int id, RatriligCoreListener* listener, std::shared_ptr<RatriligChanceGenerator> chanceGenerator);
 
-	void process(int channel, RatriligData& data);
-	void reset(int channel);
-	bool isHigh(int channel);
+	void process(RatriligData& data);
+	void reset();
+	bool isHigh();
 
 	private:
+		int m_id;
+
 		RatriligCoreListener* m_listener;
 		std::shared_ptr<RatriligChanceGenerator> m_chanceGenerator;
-		RatriligCoreState m_state[16];
+		RatriligCoreState m_state;
 };
