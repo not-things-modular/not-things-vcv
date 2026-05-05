@@ -56,6 +56,7 @@ RameligModule::RameligModule() {
 	m_scaleMode = ScaleMode::SCALE_MODE_DECIMAL;
 	m_activeScaleIndex = 0;
 	updateScale();
+	m_rameligScale = std::make_shared<RameligScale>();
 	m_rameligScale->setScale(m_activeScaleIndices);
 
 	for (int i = 0; i < 16; i++) {
