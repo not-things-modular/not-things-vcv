@@ -49,7 +49,12 @@ struct RatriligCoreState {
 
 struct RatriligChanceGenerator {
 	virtual ~RatriligChanceGenerator() {};
-	virtual float generateChance() = 0;
+	// Range of [0, 1] (skip to don't skip)
+	virtual float generateSkipChance() = 0;
+	// Range of [-1, 1] (negative to positive modifer)
+	virtual float generateDensityModifier() = 0;
+	// Range of [0, 1] (don't trigger to trigger)
+	virtual float generateTrigger() = 0;
 };
 
 struct RatriligCoreListener {

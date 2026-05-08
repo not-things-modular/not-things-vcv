@@ -17,9 +17,16 @@ struct RatriligUniformChanceGenerator : RatriligChanceGenerator {
 
 	~RatriligUniformChanceGenerator() {}
 
-	float generateChance() override {
-		float chance = m_distribution(m_generator);
-		return chance;
+	float generateSkipChance() override {
+		return m_distribution(m_generator);
+	}
+
+	float generateDensityModifier() override {
+		return (m_distribution(m_generator) - 0.5f) * 2;
+	}
+
+	float generateTrigger() override {
+		return m_distribution(m_generator);
 	}
 
 	private:
@@ -46,9 +53,9 @@ void RatriligCore::process(RatriligData& data) {
 			if (++m_state.cycleIndex >= data.cycleSize) {
 				m_state.cycleIndex = 0;
 				cycleStarted = true;
-				m_state.cycleEnabled = m_chanceGenerator->generateChance() >= data.cycleSkipChance;
+				m_state.cycleEnabled = m_chanceGenerator->generateSkipChance() >= data.cycleSkipChance;
 				if (m_state.cycleEnabled) {
-					m_state.cycleDensityModifier = data.cycleDensityModifier * ((m_chanceGenerator->generateChance() - .5f) * 2);
+					m_state.cycleDensityModifier = data.cycleDensityModifier * m_chanceGenerator->generateDensityModifier();
 				} else {
 					m_state.cycleDensityModifier = 0.f;
 				}
@@ -63,12 +70,12 @@ void RatriligCore::process(RatriligData& data) {
 				m_state.phraseEnabled = true;
 				m_state.phraseBiasAmount = data.phraseBiasAmount;
 			} else {
-				m_state.phraseEnabled = m_chanceGenerator->generateChance() >= data.phraseSkipChance;
+				m_state.phraseEnabled = m_chanceGenerator->generateSkipChance() >= data.phraseSkipChance;
 				m_state.phraseBiasAmount = 0.f;
 			}
 			// If the phrase is enabled, determine its density
 			if (m_state.phraseEnabled) {
-				m_state.phraseDensityModifier = data.phraseDensityModifier * ((m_chanceGenerator->generateChance() - .5f) * 2);
+				m_state.phraseDensityModifier = data.phraseDensityModifier * m_chanceGenerator->generateDensityModifier();
 			} else {
 				m_state.phraseDensityModifier = 0.f;
 			}
@@ -83,12 +90,12 @@ void RatriligCore::process(RatriligData& data) {
 			m_state.clusterEnabled = true;
 			m_state.clusterBiasAmount = data.clusterBiasAmount;
 		} else {
-			m_state.clusterEnabled = m_chanceGenerator->generateChance() >= data.clusterSkipChance;
+			m_state.clusterEnabled = m_chanceGenerator->generateSkipChance() >= data.clusterSkipChance;
 			m_state.clusterBiasAmount = 0.f;
 		}
 		// If the cluster is enabled, determine its density
 		if (m_state.clusterEnabled) {
-			m_state.clusterDensityModifier = data.clusterDensityModifier * ((m_chanceGenerator->generateChance() - .5f) * 2);
+			m_state.clusterDensityModifier = data.clusterDensityModifier * m_chanceGenerator->generateDensityModifier();
 		} else {
 			m_state.clusterDensityModifier = 0.f;
 		}
@@ -100,7 +107,7 @@ void RatriligCore::process(RatriligData& data) {
 	m_state.high = false;
 	float chance = 0.f;
 	if ((m_state.cycleEnabled) && (m_state.phraseEnabled) && (m_state.clusterEnabled)) {
-		chance = m_chanceGenerator->generateChance();
+		chance = m_chanceGenerator->generateTrigger();
 		m_state.high = chance < m_state.density;
 	}
 
