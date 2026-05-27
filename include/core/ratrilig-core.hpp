@@ -6,45 +6,58 @@
 #include <memory>
 
 
+#define RATRILIG_INDEX_WRAP_ON_ADVANCE 1024
+
+struct RatriligLayerData {
+	int size;
+	float skipChance;
+	float densityModifier;
+};
+
+struct RatriligBiasedLayerData : RatriligLayerData {
+	float biasAmount;
+	float biasPosition;
+};
+
 struct RatriligData {
 	float density;
 
-	int clusterSize;
-	float clusterSkipChance;
-	float clusterDensityModifier;
+	RatriligBiasedLayerData clusterData;
+	RatriligBiasedLayerData phraseData;
+	RatriligLayerData cycleData;
+};
 
-	int phraseSize;
-	float phraseSkipChance;
-	float phraseDensityModifier;
+struct RatriligCoreLayerState {
+	int index = RATRILIG_INDEX_WRAP_ON_ADVANCE;
+	bool enabled = true;
+	float densityModifier = 0.f;
 
-	int cycleSize;
-	float cycleSkipChance;
-	float cycleDensityModifier;
+	bool operator==(const RatriligCoreLayerState& other) const;
+};
 
-	float clusterBiasAmount;
-	float clusterBiasPosition;
-	float phraseBiasAmount;
-	float phraseBiasPosition;
+struct RatriligCoreBiasedLayerState : RatriligCoreLayerState {
+	float biasAmount = 0.f;
+
+	bool operator==(const RatriligCoreBiasedLayerState& other) const;
 };
 
 struct RatriligCoreState {
-	int clusterIndex = 1024;
-	int phraseIndex = 1024;
-	int cycleIndex = 1024;
-
-	bool clusterEnabled = true;
-	bool phraseEnabled = true;
-	bool cycleEnabled = true;
-
-	float density = 0.f;
-	float clusterDensityModifier = 0.f;
-	float phraseDensityModifier = 0.f;
-	float cycleDensityModifier = 0.f;
-
-	float clusterBiasAmount = 0.f;
-	float phraseBiasAmount = 0.f;
+	RatriligCoreBiasedLayerState clusterState;
+	RatriligCoreBiasedLayerState phraseState;
+	RatriligCoreLayerState cycleState;
 
 	bool high = false;
+
+	bool operator==(const RatriligCoreState& other) const;
+};
+
+struct RatriligProcessorProgress {
+	bool clusterStarted = false;
+	bool phraseStarted = false;
+	bool cycleStarted = false;
+
+	float density = 0.f;
+	float chance = 0.f;
 };
 
 struct RatriligChanceGenerator {
@@ -70,9 +83,35 @@ struct RatriligCoreListener {
 	virtual void cycleStarted(int coreId) = 0;
 };
 
+struct RatriligCoreProcessor {
+	RatriligCoreProcessor(std::shared_ptr<RatriligChanceGenerator> chanceGenerator);
+	virtual ~RatriligCoreProcessor();
+
+	virtual void setState(std::shared_ptr<RatriligCoreState> state);
+
+	virtual void advanceCluster(RatriligData& data, RatriligProcessorProgress& progress);
+	virtual void advancePhrase(RatriligData& data, RatriligProcessorProgress& progress);
+	virtual void advanceCycle(RatriligData& data, RatriligProcessorProgress& progress);
+
+	virtual void determineClusterDensity(RatriligData& data, RatriligProcessorProgress& progress);
+	virtual void determinePhraseDensity(RatriligData& data, RatriligProcessorProgress& progress);
+	virtual void determineCycleDensity(RatriligData& data, RatriligProcessorProgress& progress);
+
+	virtual void determineDensity(RatriligData& data, RatriligProcessorProgress& progress);
+	virtual void determineHigh(RatriligProcessorProgress& progress);
+
+	private:
+		std::shared_ptr<RatriligChanceGenerator> m_chanceGenerator;
+		std::shared_ptr<RatriligCoreState> m_state;
+
+		void determineBiasedLayerDensity(RatriligBiasedLayerData& data, RatriligCoreBiasedLayerState& state, int parentLayerIndex, int parentLayerSize);
+		void determineLayerDensity(RatriligLayerData& data, RatriligCoreLayerState& state);
+		bool advanceLayer(RatriligCoreLayerState& state, RatriligLayerData& data);
+};
+
 struct RatriligCore {
 	RatriligCore(int id, RatriligCoreListener* listener);
-	RatriligCore(int id, RatriligCoreListener* listener, std::shared_ptr<RatriligChanceGenerator> chanceGenerator);
+	RatriligCore(int id, RatriligCoreListener* listener, std::shared_ptr<RatriligCoreProcessor> processor);
 
 	void process(RatriligData& data);
 	void reset();
@@ -82,6 +121,6 @@ struct RatriligCore {
 		int m_id;
 
 		RatriligCoreListener* m_listener;
-		std::shared_ptr<RatriligChanceGenerator> m_chanceGenerator;
-		RatriligCoreState m_state;
+		std::shared_ptr<RatriligCoreProcessor> m_processor;
+		std::shared_ptr<RatriligCoreState> m_state;
 };

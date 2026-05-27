@@ -76,7 +76,8 @@ struct RameligScale {
 
 struct RameligCore {
 	RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener);
-	RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator);
+	RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, RameligChanceGenerator* chanceGenerator);
+	~RameligCore();
 
 	void guideLast(float value);
 	float process(RameligDistributionData& data, bool forceJump, bool forceShift, bool forceStay, float lowerLimit, float upperLimit);
@@ -86,12 +87,13 @@ struct RameligCore {
 	private:
 		int m_id;
 
-		std::shared_ptr<RameligChanceGenerator> m_chanceGenerator;
+		bool m_destroyChanceGenerator = false;
+		RameligChanceGenerator* m_chanceGenerator;
 		std::shared_ptr<RameligScale> m_scale;
 
 		RameligCoreState m_state;
 
-		RameligActionListener *m_actionListener;
+		RameligActionListener* m_actionListener;
 
 		RameligActions determineAction();
 };

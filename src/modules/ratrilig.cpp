@@ -69,23 +69,23 @@ void RatriligModule::process(const ProcessArgs& args) {
 
 	for (int channel = 0; channel < m_channelCount; channel++) {
 		if ((m_inputReset[channel].process(inputs[IN_RESET].getVoltage(channel))) || (resetPushed)) {
-			m_ratriligCore[channel].reset();
+			m_ratriligCore[channel]->reset();
 		}
 		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel))) || (triggerPushed)) {
 			data.density = getValue(PARAM_DENSITY, IN_DENSITY, channel) / 100.f;
-			data.clusterSize = params[PARAM_CLUSTER_SIZE].getValue();
-			data.clusterSkipChance = getValue(PARAM_CLUSTER_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CLUSTER, channel) / 100.f;
-			data.clusterDensityModifier = getValue(PARAM_CLUSTER_DENSITY_MODIFIER, IN_CLUSTER_DENSITY, channel) / 100.f;
-			data.phraseSize = params[PARAM_PHRASE_SIZE].getValue();
-			data.phraseSkipChance = getValue(PARAM_PHRASE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_PHRASE, channel) / 100.f;
-			data.phraseDensityModifier = getValue(PARAM_PHRASE_DENSITY_MODIFIER, IN_PHRASE_DENSITY, channel) / 100.f;
-			data.cycleSize = params[PARAM_CYCLE_SIZE].getValue();
-			data.cycleSkipChance = getValue(PARAM_CYCLE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CYCLE, channel) / 100.f;
-			data.cycleDensityModifier = getValue(PARAM_CYCLE_DENSITY_MODIFIER, IN_CYCLE_DENSITY, channel) / 100.f;
-			data.clusterBiasAmount = params[PARAM_CLUSTER_BIAS_AMOUNT].getValue() / 100.f;
-			data.clusterBiasPosition = params[PARAM_CLUSTER_BIAS_POSITION].getValue();
-			data.phraseBiasAmount = params[PARAM_PHRASE_BIAS_AMOUNT].getValue() / 100.f;
-			data.phraseBiasPosition = params[PARAM_PHRASE_BIAS_POSITION].getValue();
+			data.clusterData.size = params[PARAM_CLUSTER_SIZE].getValue();
+			data.clusterData.skipChance = getValue(PARAM_CLUSTER_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CLUSTER, channel) / 100.f;
+			data.clusterData.densityModifier = getValue(PARAM_CLUSTER_DENSITY_MODIFIER, IN_CLUSTER_DENSITY, channel) / 100.f;
+			data.phraseData.size = params[PARAM_PHRASE_SIZE].getValue();
+			data.phraseData.skipChance = getValue(PARAM_PHRASE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_PHRASE, channel) / 100.f;
+			data.phraseData.densityModifier = getValue(PARAM_PHRASE_DENSITY_MODIFIER, IN_PHRASE_DENSITY, channel) / 100.f;
+			data.cycleData.size = params[PARAM_CYCLE_SIZE].getValue();
+			data.cycleData.skipChance = getValue(PARAM_CYCLE_CHANCE, expander, RatriligExpanderModule::InputId::IN_SKIP_CYCLE, channel) / 100.f;
+			data.cycleData.densityModifier = getValue(PARAM_CYCLE_DENSITY_MODIFIER, IN_CYCLE_DENSITY, channel) / 100.f;
+			data.clusterData.biasAmount = params[PARAM_CLUSTER_BIAS_AMOUNT].getValue() / 100.f;
+			data.clusterData.biasPosition = params[PARAM_CLUSTER_BIAS_POSITION].getValue();
+			data.phraseData.biasAmount = params[PARAM_PHRASE_BIAS_AMOUNT].getValue() / 100.f;
+			data.phraseData.biasPosition = params[PARAM_PHRASE_BIAS_POSITION].getValue();
 			m_ratriligCore[channel]->process(data);
 
 			lights[LIGHT_TRIGGER].setBrightness(1.f);

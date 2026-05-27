@@ -173,8 +173,17 @@ float RameligScale::quantizedToVoltage(const std::pair<int, int>& quantized) {
 	return (float) quantized.first + m_notes[m_scale[quantized.second]];
 }
 
-RameligCore::RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener) : RameligCore(id, rameligScale, actionListener, std::make_shared<RameligUniformChanceGenerator>()) {}
-RameligCore::RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, std::shared_ptr<RameligChanceGenerator> chanceGenerator) : m_id(id), m_chanceGenerator(chanceGenerator), m_scale(rameligScale), m_actionListener(actionListener) {
+RameligCore::RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener) : RameligCore(id, rameligScale, actionListener, new RameligUniformChanceGenerator()) {
+	m_destroyChanceGenerator = true; // We constructed a chance generator ourselves, so it needs to be destroyed together with this core.
+}
+
+RameligCore::RameligCore(int id, std::shared_ptr<RameligScale> rameligScale, RameligActionListener *actionListener, RameligChanceGenerator* chanceGenerator) : m_id(id), m_chanceGenerator(chanceGenerator), m_scale(rameligScale), m_actionListener(actionListener) {}
+
+RameligCore::~RameligCore() {
+	if (m_destroyChanceGenerator) {
+		// If we own the chance generator, destroy it now.
+		delete m_chanceGenerator;
+	}
 }
 
 void RameligCore::guideLast(float value) {

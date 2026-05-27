@@ -1,7 +1,6 @@
 #include "core/ratrilig-core.hpp"
 #include <chrono>
 
-
 bool static isBiased(int index, int size, float biasDirection) {
 	int biasIndex = biasDirection >= 1.f ? size - 1 : size * biasDirection;
 
@@ -34,120 +33,197 @@ struct RatriligUniformChanceGenerator : RatriligChanceGenerator {
 		std::uniform_real_distribution<float> m_distribution;
 };
 
+bool RatriligCoreLayerState::operator==(const RatriligCoreLayerState& other) const {
+	return index == other.index &&
+		enabled == other.enabled &&
+		densityModifier == other.densityModifier;
+}
+
+bool RatriligCoreBiasedLayerState::operator==(const RatriligCoreBiasedLayerState& other) const {
+	return index == other.index &&
+		enabled == other.enabled &&
+		densityModifier == other.densityModifier &&
+		biasAmount == other.biasAmount;
+}
+
+bool RatriligCoreState::operator==(const RatriligCoreState& other) const {
+	return clusterState == other.clusterState &&
+		phraseState == other.phraseState &&
+		cycleState == other.cycleState &&
+		high == other.high;
+}
+
+RatriligCoreProcessor::RatriligCoreProcessor(std::shared_ptr<RatriligChanceGenerator> chanceGenerator) : m_chanceGenerator(chanceGenerator) {}
+RatriligCoreProcessor::~RatriligCoreProcessor() {}
+
+void RatriligCoreProcessor::setState(std::shared_ptr<RatriligCoreState> state) {
+	m_state = state;
+}
+
+void RatriligCoreProcessor::advanceCluster(RatriligData& data, RatriligProcessorProgress& progress) {
+	progress.clusterStarted = advanceLayer(m_state->clusterState, data.clusterData);
+}
+
+void RatriligCoreProcessor::determineClusterDensity(RatriligData& data, RatriligProcessorProgress& progress) {
+	// Update the density when a new cluster started
+	if (progress.clusterStarted) {
+		m_state->clusterState.enabled = false;
+		determineBiasedLayerDensity(data.clusterData, m_state->clusterState, m_state->phraseState.index, data.phraseData.size);
+	}
+}
+
+void RatriligCoreProcessor::advancePhrase(RatriligData& data, RatriligProcessorProgress& progress) {
+	// The phrase is advanced when a new cluster started
+	if (progress.clusterStarted) {
+		progress.phraseStarted = advanceLayer(m_state->phraseState, data.phraseData);
+	} else {
+		progress.phraseStarted = false;
+	}
+}
+
+void RatriligCoreProcessor::determinePhraseDensity(RatriligData& data, RatriligProcessorProgress& progress) {
+	// Update the density when a new phrase started
+	if (progress.phraseStarted) {
+		m_state->phraseState.enabled = false;
+		determineBiasedLayerDensity(data.phraseData, m_state->phraseState, m_state->cycleState.index, data.cycleData.size);
+	}
+}
+
+void RatriligCoreProcessor::advanceCycle(RatriligData& data, RatriligProcessorProgress& progress) {
+	// A cycle advances when a new phrase starts
+	if (progress.phraseStarted) {
+		progress.cycleStarted = advanceLayer(m_state->cycleState, data.cycleData);
+	} else {
+		progress.cycleStarted = false;
+	}
+}
+
+void RatriligCoreProcessor::determineCycleDensity(RatriligData& data, RatriligProcessorProgress& progress) {
+	// Update the density when a new cycle started
+	if (progress.cycleStarted) {
+		m_state->cycleState.enabled = false;
+		determineLayerDensity(data.cycleData, m_state->cycleState);
+	}
+}
+
+void RatriligCoreProcessor::determineDensity(RatriligData& data, RatriligProcessorProgress& progress) {
+	float bias = std::max(m_state->clusterState.biasAmount, m_state->phraseState.biasAmount) + (std::min(m_state->clusterState.biasAmount, m_state->phraseState.biasAmount) / 2);
+	progress.density = data.density + m_state->clusterState.densityModifier + m_state->phraseState.densityModifier + m_state->cycleState.densityModifier + bias;
+}
+
+void RatriligCoreProcessor::determineHigh(RatriligProcessorProgress& progress) {
+	m_state->high = false;
+	progress.chance = 0.f;
+
+	if ((m_state->cycleState.enabled) && (m_state->phraseState.enabled) && (m_state->clusterState.enabled)) {
+		progress.chance = m_chanceGenerator->generateTrigger();
+		m_state->high = progress.chance <= progress.density;
+	}
+}
+
+void RatriligCoreProcessor::determineBiasedLayerDensity(RatriligBiasedLayerData& data, RatriligCoreBiasedLayerState& state, int parentLayerIndex, int parentLayerSize) {
+	// Check for bias, and determine if the layer should be enabled.
+	if ((data.biasAmount > 0.f) && (isBiased(parentLayerIndex, parentLayerSize, data.biasPosition))) {
+		// A biased layer is always enabled.
+		state.enabled = true;
+		state.biasAmount = data.biasAmount;
+	} else {
+		// The layer is not biased, let normal density detection check the enabled chance.
+		state.biasAmount = 0.f;
+	}
+
+	determineLayerDensity(data, state);
+}
+
+void RatriligCoreProcessor::determineLayerDensity(RatriligLayerData& data, RatriligCoreLayerState& state) {
+	// If this is a biased layer, the bias density determination will already have enabled it. So only do this for a layer that is not yet enabled.
+	if (!state.enabled) {
+		state.enabled = m_chanceGenerator->generateSkipChance() >= data.skipChance;
+	}
+
+	// If the layer is enabled, determine its density
+	if (state.enabled) {
+		state.densityModifier = data.densityModifier * m_chanceGenerator->generateDensityModifier();
+	} else {
+		state.densityModifier = 0.f;
+	}
+}
+
+bool RatriligCoreProcessor::advanceLayer(RatriligCoreLayerState& state, RatriligLayerData& data) {
+	// Advance the layer
+	state.index++;
+
+	// Check if we're starting a new cycle
+	bool started = (state.index >= data.size);
+	if (started) {
+		state.index = 0;
+	}
+
+	return started;
+}
 
 
-RatriligCore::RatriligCore(int id, RatriligCoreListener* listener) : RatriligCore(id, listener, std::make_shared<RatriligUniformChanceGenerator>()) {}
-RatriligCore::RatriligCore(int id, RatriligCoreListener* listener, std::shared_ptr<RatriligChanceGenerator> chanceGenerator) : m_id(id), m_listener(listener), m_chanceGenerator(chanceGenerator) {
+RatriligCore::RatriligCore(int id, RatriligCoreListener* listener) : RatriligCore(id, listener, std::make_shared<RatriligCoreProcessor>(std::make_shared<RatriligUniformChanceGenerator>())) {}
+RatriligCore::RatriligCore(int id, RatriligCoreListener* listener, std::shared_ptr<RatriligCoreProcessor> processor) : m_id(id), m_listener(listener), m_processor(processor) {
+	m_state = std::make_shared<RatriligCoreState>();
+	m_processor->setState(m_state);
 }
 
 void RatriligCore::process(RatriligData& data) {
-	bool clusterStarted = false;
-	bool phraseStarted = false;
-	bool cycleStarted = false;
+	RatriligProcessorProgress progress;
 
-	// Check if we're starting a new cluster
-	if (++m_state.clusterIndex >= data.clusterSize) {
-		// Check if we're starting a new phrase
-		if (++m_state.phraseIndex >= data.phraseSize) {
-			// Check if we're starting a new cycle
-			if (++m_state.cycleIndex >= data.cycleSize) {
-				m_state.cycleIndex = 0;
-				cycleStarted = true;
-				m_state.cycleEnabled = m_chanceGenerator->generateSkipChance() >= data.cycleSkipChance;
-				if (m_state.cycleEnabled) {
-					m_state.cycleDensityModifier = data.cycleDensityModifier * m_chanceGenerator->generateDensityModifier();
-				} else {
-					m_state.cycleDensityModifier = 0.f;
-				}
-			}
+	// First advance the different layers as needed
+	m_processor->advanceCluster(data, progress);
+	m_processor->advancePhrase(data, progress);
+	m_processor->advanceCycle(data, progress);
 
-			// Restart the phrase and check if it should be biased
-			m_state.phraseIndex = 0;
-			phraseStarted = true;
+	// Then determine the new densities of the layers that started a new iteration
+	m_processor->determineClusterDensity(data, progress);
+	m_processor->determinePhraseDensity(data, progress);
+	m_processor->determineCycleDensity(data, progress);
 
-			if ((data.phraseBiasAmount > 0.f) && (isBiased(m_state.cycleIndex, data.cycleSize, data.phraseBiasPosition))) {
-				// A biased phrase is always enabled
-				m_state.phraseEnabled = true;
-				m_state.phraseBiasAmount = data.phraseBiasAmount;
-			} else {
-				m_state.phraseEnabled = m_chanceGenerator->generateSkipChance() >= data.phraseSkipChance;
-				m_state.phraseBiasAmount = 0.f;
-			}
-			// If the phrase is enabled, determine its density
-			if (m_state.phraseEnabled) {
-				m_state.phraseDensityModifier = data.phraseDensityModifier * m_chanceGenerator->generateDensityModifier();
-			} else {
-				m_state.phraseDensityModifier = 0.f;
-			}
-		}
+	// Determine the overall density and trigger state
+	m_processor->determineDensity(data, progress);
+	m_processor->determineHigh(progress);
 
-		// Restart the cluster and check if it should be biased
-		m_state.clusterIndex = 0;
-		clusterStarted = true;
-
-		if ((data.clusterBiasAmount > 0.f) && (isBiased(m_state.phraseIndex, data.phraseSize, data.clusterBiasPosition))) {
-			// A biased cluster is always enabled
-			m_state.clusterEnabled = true;
-			m_state.clusterBiasAmount = data.clusterBiasAmount;
-		} else {
-			m_state.clusterEnabled = m_chanceGenerator->generateSkipChance() >= data.clusterSkipChance;
-			m_state.clusterBiasAmount = 0.f;
-		}
-		// If the cluster is enabled, determine its density
-		if (m_state.clusterEnabled) {
-			m_state.clusterDensityModifier = data.clusterDensityModifier * m_chanceGenerator->generateDensityModifier();
-		} else {
-			m_state.clusterDensityModifier = 0.f;
-		}
-	}
-
-	float bias = std::max(m_state.clusterBiasAmount, m_state.phraseBiasAmount) + (std::min(m_state.clusterBiasAmount, m_state.phraseBiasAmount) / 2);
-	m_state.density = data.density + m_state.clusterDensityModifier + m_state.phraseDensityModifier + m_state.cycleDensityModifier + bias;
-
-	m_state.high = false;
-	float chance = 0.f;
-	if ((m_state.cycleEnabled) && (m_state.phraseEnabled) && (m_state.clusterEnabled)) {
-		chance = m_chanceGenerator->generateTrigger();
-		m_state.high = chance < m_state.density;
-	}
-
+	// Notify the listener if needed
 	if (m_listener != nullptr) {
-		m_listener->valueChanged(m_id, m_state.cycleIndex, m_state.phraseIndex, m_state.clusterIndex, std::min(m_state.density, 1.f), chance, m_state.high);
-		if (clusterStarted) {
+		m_listener->valueChanged(m_id, m_state->cycleState.index, m_state->phraseState.index, m_state->clusterState.index, std::min(progress.density, 1.f), progress.chance, m_state->high);
+		if (progress.clusterStarted) {
 			m_listener->clusterStarted(m_id);
 		}
-		if (phraseStarted) {
+		if (progress.phraseStarted) {
 			m_listener->phraseStarted(m_id);
 		}
-		if (cycleStarted) {
+		if (progress.cycleStarted) {
 			m_listener->cycleStarted(m_id);
 		}
 
-		m_listener->clusterStateChanged(m_id, m_state.clusterEnabled, m_state.clusterDensityModifier, m_state.clusterBiasAmount);
-		m_listener->phraseStateChanged(m_id, m_state.phraseEnabled, m_state.phraseDensityModifier, m_state.phraseBiasAmount);
-		m_listener->cycleStateChanged(m_id, m_state.cycleEnabled, m_state.cycleDensityModifier);
+		m_listener->clusterStateChanged(m_id, m_state->clusterState.enabled, m_state->clusterState.densityModifier, m_state->clusterState.biasAmount);
+		m_listener->phraseStateChanged(m_id, m_state->phraseState.enabled, m_state->phraseState.densityModifier, m_state->phraseState.biasAmount);
+		m_listener->cycleStateChanged(m_id, m_state->cycleState.enabled, m_state->cycleState.densityModifier);
 	}
 }
 
 void RatriligCore::reset() {
-	m_state.clusterIndex = 1024;
-	m_state.phraseIndex = 1024;
-	m_state.cycleIndex = 1024;
+	m_state->clusterState.index = RATRILIG_INDEX_WRAP_ON_ADVANCE;
+	m_state->phraseState.index = RATRILIG_INDEX_WRAP_ON_ADVANCE;
+	m_state->cycleState.index = RATRILIG_INDEX_WRAP_ON_ADVANCE;
 
-	m_state.clusterEnabled = true;
-	m_state.phraseEnabled = true;
-	m_state.cycleEnabled = true;
+	m_state->clusterState.enabled = true;
+	m_state->phraseState.enabled = true;
+	m_state->cycleState.enabled = true;
 
-	m_state.high = false;
+	m_state->high = false;
 
 	if (m_listener != nullptr) {
-		m_listener->valueChanged(m_id, 0.f, 0.f, 0.f, std::min(m_state.density, 1.f), 0.f, m_state.high);
-		m_listener->clusterStateChanged(m_id, m_state.clusterEnabled, m_state.clusterDensityModifier, m_state.clusterBiasAmount);
-		m_listener->phraseStateChanged(m_id, m_state.phraseEnabled, m_state.phraseDensityModifier, m_state.phraseBiasAmount);
-		m_listener->cycleStateChanged(m_id, m_state.cycleEnabled, m_state.cycleDensityModifier);
+		m_listener->valueChanged(m_id, 0.f, 0.f, 0.f, 0.f, 0.f, false);
+		m_listener->clusterStateChanged(m_id, m_state->clusterState.enabled, m_state->clusterState.densityModifier, m_state->clusterState.biasAmount);
+		m_listener->phraseStateChanged(m_id, m_state->phraseState.enabled, m_state->phraseState.densityModifier, m_state->phraseState.biasAmount);
+		m_listener->cycleStateChanged(m_id, m_state->cycleState.enabled, m_state->cycleState.densityModifier);
 	}
 }
 
 bool RatriligCore::isHigh()  {
-	return m_state.high;
+	return m_state->high;
 }
