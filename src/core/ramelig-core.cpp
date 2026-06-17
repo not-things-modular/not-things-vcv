@@ -201,6 +201,11 @@ float RameligCore::process(RameligDistributionData& data, bool forceJump, bool f
 		calculateDistribution(m_state.distributionData, m_state.actionDistribution);
 	}
 
+	// If the last result is outside of the limits, something changed to make it move outside of the limits, so set the state to dirty
+	if ((m_state.lastResult < lowerLimit) || (m_state.lastResult > upperLimit)) {
+		m_state.isDirty = true;
+	}
+
 	// If the state is dirty, quantize the lastResult to the current scale
 	if (m_state.isDirty) {
 		quantized = m_scale->quantize(m_state.lastResult, lowerLimit, upperLimit);
