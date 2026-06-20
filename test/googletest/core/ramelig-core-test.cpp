@@ -255,7 +255,7 @@ TEST(RameligCore, processShouldPreferForceShiftOverForceStay) {
 }
 
 TEST(RameligCore, processShouldPerformRandomJumpActionWhenGenerated) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -286,7 +286,7 @@ TEST(RameligCore, processShouldPerformRandomJumpActionWhenGenerated) {
 }
 
 TEST(RameligCore, processShouldPerformRandomShiftActionWhenGenerated) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -317,7 +317,7 @@ TEST(RameligCore, processShouldPerformRandomShiftActionWhenGenerated) {
 }
 
 TEST(RameligCore, processShouldPerformUpTwoActionWhenGenerated) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -375,7 +375,7 @@ TEST(RameligCore, processShouldPerformUpOneActionWhenGenerated) {
 }
 
 TEST(RameligCore, processShouldPerformDownOneActionWhenGenerated) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -404,7 +404,7 @@ TEST(RameligCore, processShouldPerformDownOneActionWhenGenerated) {
 }
 
 TEST(RameligCore, processShouldPerformDownTwoActionWhenGenerated) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -433,7 +433,7 @@ TEST(RameligCore, processShouldPerformDownTwoActionWhenGenerated) {
 }
 
 TEST(RameligCore, processShouldPerformStayActionWhenGeneratedWithRepeatReduction) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -468,7 +468,7 @@ TEST(RameligCore, processShouldPerformStayActionWhenGeneratedWithRepeatReduction
 }
 
 TEST(RameligCore, processShouldPerformStayActionWhenGeneratedWithoutRepeatReduction) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -501,7 +501,7 @@ TEST(RameligCore, processShouldPerformStayActionWhenGeneratedWithoutRepeatReduct
 }
 
 TEST(RameligCore, processShouldKeepUpOneActionWithinBounds) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -525,7 +525,7 @@ TEST(RameligCore, processShouldKeepUpOneActionWithinBounds) {
 }
 
 TEST(RameligCore, processShouldKeepUpTwoActionWithinBounds) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -549,7 +549,7 @@ TEST(RameligCore, processShouldKeepUpTwoActionWithinBounds) {
 }
 
 TEST(RameligCore, processShouldKeepDownOneActionWithinBounds) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -573,7 +573,7 @@ TEST(RameligCore, processShouldKeepDownOneActionWithinBounds) {
 }
 
 TEST(RameligCore, processShouldKeepDownTwoActionWithinBounds) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -597,7 +597,7 @@ TEST(RameligCore, processShouldKeepDownTwoActionWithinBounds) {
 }
 
 TEST(RameligCore, processAfterRandomJumpShouldReturnToOriginalLocation) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -623,7 +623,7 @@ TEST(RameligCore, processAfterRandomJumpShouldReturnToOriginalLocation) {
 }
 
 TEST(RameligCore, processAfterRandomShiftShouldStayInNewLocation) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -649,7 +649,7 @@ TEST(RameligCore, processAfterRandomShiftShouldStayInNewLocation) {
 }
 
 TEST(RameligCore, guideShouldInfluenceNextProcessForStay) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -671,7 +671,7 @@ TEST(RameligCore, guideShouldInfluenceNextProcessForStay) {
 }
 
 TEST(RameligCore, guideShouldInfluenceNextProcessForMovement) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -715,7 +715,7 @@ TEST(RameligCore, guideShouldInfluenceNextProcessForMovement) {
 }
 
 TEST(RameligCore, guideShouldNotInfluenceProcessWithShiftAction) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -743,7 +743,7 @@ TEST(RameligCore, guideShouldNotInfluenceProcessWithShiftAction) {
 }
 
 TEST(RameligCore, guideShouldNotInfluenceJumpActionInProcessButDoInfluenceReturnValueAfterJump) {
-	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chacne (1.f) for each of the possible actions
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
 	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
 	MockRameligChanceGenerator mockRameligChanceGenerator;
 	MockRameligActionListener mockRameligActionListener;
@@ -768,6 +768,154 @@ TEST(RameligCore, guideShouldNotInfluenceJumpActionInProcessButDoInfluenceReturn
 
 	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
 	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(2.f, -5.f, 5.f)), 0.0001f);
+}
+
+TEST(RameligCore, loweredRangeShouldInfluenceNextProcessForStay) {
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	MockRameligChanceGenerator mockRameligChanceGenerator;
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0, 2, 4, 5, 7, 9, 11 }); // A C major scale
+
+	EXPECT_CALL(mockRameligChanceGenerator, generateActionChance)
+		.Times(0);
+	EXPECT_CALL(mockRameligChanceGenerator, generateJumpChance)
+		.Times(0);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::STAY))
+		.Times(2);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, &mockRameligChanceGenerator);
+	rameligCore.guideLast(2.25f);
+
+	float result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(2.25f, -10.f, 10.f)), 0.0001f);
+	result = rameligCore.process(data, false, false, true, -5.f, -1.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(-1.f, -10.f, 10.f)), 0.0001f);
+}
+
+TEST(RameligCore, increasedRangeShouldInfluenceNextProcessForStay) {
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	MockRameligChanceGenerator mockRameligChanceGenerator;
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0, 2, 4, 5, 7, 9, 11 }); // A C major scale
+
+	EXPECT_CALL(mockRameligChanceGenerator, generateActionChance)
+		.Times(0);
+	EXPECT_CALL(mockRameligChanceGenerator, generateJumpChance)
+		.Times(0);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::STAY))
+		.Times(2);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, &mockRameligChanceGenerator);
+	rameligCore.guideLast(2.25f);
+
+	float result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(2.25f, -10.f, 10.f)), 0.0001f);
+	result = rameligCore.process(data, false, false, true, -5.f, -1.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(rameligScale->quantize(-1.f, -10.f, 10.f)), 0.0001f);
+}
+
+TEST(RameligCore, loweredRangeShouldInfluenceNextProcessForMovement) {
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	MockRameligChanceGenerator mockRameligChanceGenerator;
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0, 2, 4, 5, 7, 9, 11 }); // A C major scale
+
+	EXPECT_CALL(mockRameligChanceGenerator, generateActionChance)
+		.Times(4)
+		.WillOnce(testing::Return(2.5))
+		.WillOnce(testing::Return(3.5))
+		.WillOnce(testing::Return(4.5))
+		.WillOnce(testing::Return(5.5));
+	EXPECT_CALL(mockRameligChanceGenerator, generateJumpChance)
+		.Times(0);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::STAY))
+		.Times(4);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::DOWN_ONE))
+		.Times(2);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::DOWN_TWO))
+		.Times(2);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, &mockRameligChanceGenerator);
+
+	rameligCore.guideLast(2.f);
+	float result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, 2.f);
+	result = rameligCore.process(data, false, false, false, -5.f, 0.f); // UP_TWO becomes DOWN_TWO due to the limit
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(-1, 5)), 0.0001f);
+
+	rameligCore.guideLast(2.f);
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, 2.f);
+	result = rameligCore.process(data, false, false, false, -5.f, 0.f); // UP_ONE becomes DOWN_ONE due to the limit
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(-1, 6)), 0.0001f);
+
+	rameligCore.guideLast(2.f);
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, 2.f);
+	result = rameligCore.process(data, false, false, false, -5.f, 0.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(-1, 6)), 0.0001f);
+
+	rameligCore.guideLast(2.f);
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, 2.f);
+	result = rameligCore.process(data, false, false, false, -5.f, 0.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(-1, 5)), 0.0001f);
+}
+
+TEST(RameligCore, increasedRangeShouldInfluenceNextProcessForMovement) {
+	RameligDistributionData data = populateDistributionData(1.f, 1.f, 2.f, 1.f, 2.f, .5f); // A distribution that results in an equal chance (1.f) for each of the possible actions
+	std::shared_ptr<RameligScale> rameligScale = std::make_shared<RameligScale>();
+	MockRameligChanceGenerator mockRameligChanceGenerator;
+	MockRameligActionListener mockRameligActionListener;
+
+	rameligScale->setScale({ 0, 2, 4, 5, 7, 9, 11 }); // A C major scale
+
+	EXPECT_CALL(mockRameligChanceGenerator, generateActionChance)
+		.Times(4)
+		.WillOnce(testing::Return(2.5))
+		.WillOnce(testing::Return(3.5))
+		.WillOnce(testing::Return(4.5))
+		.WillOnce(testing::Return(5.5));
+	EXPECT_CALL(mockRameligChanceGenerator, generateJumpChance)
+		.Times(0);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::STAY))
+		.Times(4);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::UP_ONE))
+		.Times(2);
+	EXPECT_CALL(mockRameligActionListener, rameligActionPerformed(42, RameligActions::UP_TWO))
+		.Times(2);
+
+	RameligCore rameligCore(42, rameligScale, &mockRameligActionListener, &mockRameligChanceGenerator);
+
+	rameligCore.guideLast(-2.f);
+	float result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, -2.f);
+	result = rameligCore.process(data, false, false, false, 0.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(0, 2)), 0.0001f);
+
+	rameligCore.guideLast(-2.f);
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, -2.f);
+	result = rameligCore.process(data, false, false, false, 0.f, 5.f);
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(0, 1)), 0.0001f);
+
+	rameligCore.guideLast(-2.f);
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, -2.f);
+	result = rameligCore.process(data, false, false, false, 0.f, 5.f); // DOWN_ONE becomes UP_ONE due to the limit
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(0, 1)), 0.0001f);
+
+	rameligCore.guideLast(-2.f);
+	result = rameligCore.process(data, false, false, true, -5.f, 5.f);
+	EXPECT_EQ(result, -2.f);
+	result = rameligCore.process(data, false, false, false, 0.f, 5.f); // DOWN_TWO becomes UP_TWO due to the limit
+	EXPECT_NEAR(result, rameligScale->quantizedToVoltage(std::pair<int, int>(0, 2)), 0.0001f);
 }
 
 TEST(RameligCore, processShouldRequantizeAfterDistributionChange) {
