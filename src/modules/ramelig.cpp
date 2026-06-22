@@ -130,7 +130,7 @@ void RameligModule::process(const ProcessArgs& args) {
 	bool guiding[16] = { false };
 
 	// Make sure the output polyphony is up to date
-	updatePolyphony(false);
+	updatePolyphony(false, getRameligExpander());
 
 	// Detect when the active scale is changed
 	bool scaleChanged = false;
@@ -250,7 +250,7 @@ void RameligModule::draw(const widget::Widget::DrawArgs& args) {
 }
 
 void RameligModule::onPortChange(const PortChangeEvent& e) {
-	updatePolyphony(true);
+	updatePolyphony(true, getRameligExpander());
 
 	if (e.type == Port::Type::OUTPUT) {
 		if (e.portId == OUT_TRIGGER) {
@@ -262,11 +262,11 @@ void RameligModule::onPortChange(const PortChangeEvent& e) {
 }
 
 void RameligModule::onUnBypass(const UnBypassEvent& e) {
-	updatePolyphony(true);
+	updatePolyphony(true, getRameligExpander());
 }
 
 void RameligModule::onExpanderChange(const ExpanderChangeEvent& e) {
-	updatePolyphony(true);
+	updatePolyphony(true, getRameligExpander());
 }
 
 void RameligModule::rameligActionPerformed(int channel, RameligActions action) {
@@ -348,7 +348,7 @@ void RameligModule::updateScale() {
 	}
 }
 
-void RameligModule::updatePolyphony(bool forceUpdateOutputs) {
+void RameligModule::updatePolyphony(bool forceUpdateOutputs, RameligExpanderModule* expander) {
 	int channels = std::max(inputs[IN_GATE].getChannels(), 1);
 
 	// Make sure the output polyphony is up to date
@@ -357,10 +357,8 @@ void RameligModule::updatePolyphony(bool forceUpdateOutputs) {
 		outputs[OUT_CV].setChannels(m_channelCount);
 		outputs[OUT_TRIGGER].setChannels(m_channelCount);
 
-		RameligExpanderModule* expander = getRameligExpander();
 		if (expander != nullptr) {
-			expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setChannels(m_channelCount);
-			expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_SHIFT].setChannels(m_channelCount);
+			expander->setChannels(m_channelCount);
 		}
 	}
 

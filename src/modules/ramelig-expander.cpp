@@ -19,6 +19,24 @@ void RameligExpanderModule::process(const ProcessArgs& args) {
 	lights[LIGHT_TRIG_SHIFT].setBrightnessSmooth(0.f, args.sampleTime);
 }
 
+void RameligExpanderModule::onPortChange(const PortChangeEvent& e) {
+	if (e.connecting) {
+		updatePolyphony();
+	}
+}
+
+void RameligExpanderModule::setChannels(int channelCount) {
+	if (channelCount != m_channelCount) {
+		m_channelCount = channelCount;
+		updatePolyphony();
+	}
+}
+
+void RameligExpanderModule::updatePolyphony() {
+	outputs[OutputId::OUT_TRIG_JUMP].setChannels(m_channelCount);
+	outputs[OutputId::OUT_TRIG_SHIFT].setChannels(m_channelCount);
+}
+
 RameligExpanderWidget::RameligExpanderWidget(RameligExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ramelig-expander") {
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 68.5f), module, RameligExpanderModule::IN_GUIDE_GATE));
 	addInput(createInputCentered<NTPort>(Vec(22.5f, 113.5f), module, RameligExpanderModule::IN_GUIDE_CV));

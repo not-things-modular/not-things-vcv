@@ -24,6 +24,25 @@ void RatriligExpanderModule::process(const ProcessArgs& args) {
 	lights[LIGHT_TRIG_CYCLE].setBrightnessSmooth(0.f, args.sampleTime);
 }
 
+void RatriligExpanderModule::onPortChange(const PortChangeEvent& e) {
+	if (e.connecting) {
+		updatePolyphony();
+	}
+}
+
+void RatriligExpanderModule::setChannels(int channelCount) {
+	if (channelCount != m_channelCount) {
+		m_channelCount = channelCount;
+		updatePolyphony();
+	}
+}
+
+void RatriligExpanderModule::updatePolyphony() {
+	outputs[OUT_TRIG_CLUSTER].setChannels(m_channelCount);
+	outputs[OUT_TRIG_PHRASE].setChannels(m_channelCount);
+	outputs[OUT_TRIG_CYCLE].setChannels(m_channelCount);
+}
+
 RatriligExpanderWidget::RatriligExpanderWidget(RatriligExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig-expander") {
 	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 68.5f), module, RatriligExpanderModule::OUT_TRIG_CLUSTER));
 	addOutput(createOutputCentered<NTPort>(Vec(22.5f, 113.5f), module, RatriligExpanderModule::OUT_TRIG_PHRASE));

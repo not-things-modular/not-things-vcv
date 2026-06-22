@@ -63,6 +63,7 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 	void onExpanderChange(const ExpanderChangeEvent& e) override;
+	void onPortChange(const PortChangeEvent& e) override;
 
 	void clusterStateChanged(int channel, bool enabled, float density, float bias) override;
 	void phraseStateChanged(int channel, bool enabled, float density, float bias) override;
@@ -104,7 +105,7 @@ struct RatriligModule : NTModule, DrawListener, RatriligCoreListener {
 		std::array<bool, 16> m_phraseStarted = {};
 		std::array<bool, 16> m_cycleStarted = {};
 
-		void updatePolyphony(bool forceUpdateOutputs);
+		void updatePolyphony(bool forceUpdateOutputs, RatriligExpanderModule* expander);
 
 		float getValue(ParamId paramId, InputId inputId, int channel);
 		float getValue(ParamId paramId, Module* expander, RatriligExpanderModule::InputId inputId, int channel);

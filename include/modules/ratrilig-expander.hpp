@@ -29,7 +29,15 @@ struct RatriligExpanderModule : NTModule {
 	RatriligExpanderModule();
 
 	void process(const ProcessArgs& args) override;
-};
+	void onPortChange(const PortChangeEvent& e) override;
+
+	void setChannels(int channelCount);
+
+	private:
+		int m_channelCount = 0;
+
+		void updatePolyphony();
+	};
 
 struct RatriligExpanderWidget : NTModuleWidget {
 	RatriligExpanderWidget(RatriligExpanderModule* module);

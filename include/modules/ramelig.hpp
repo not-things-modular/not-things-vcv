@@ -120,7 +120,7 @@ struct RameligModule : NTModule, DrawListener, RameligActionListener {
 		int determineActiveScale();
 		void updateScale();
 
-		void updatePolyphony(bool forceUpdateOutputs);
+		void updatePolyphony(bool forceUpdateOutputs, RameligExpanderModule* expander);
 
 		float getParamValue(ParamId paramId, int channel, float lowerLimit, float upperLimit, InputId inputId, float inputScaling);
 		RameligExpanderModule* getRameligExpander();

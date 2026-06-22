@@ -60,7 +60,7 @@ void RatriligModule::process(const ProcessArgs& args) {
 	RatriligExpanderModule* expander = getRatriligExpander();
 
 	// Make sure the output polyphony is up to date
-	updatePolyphony(false);
+	updatePolyphony(false, expander);
 
 	// Check if the trigger button was pushed
 	bool triggerPushed = m_buttonTrigger.process(params[PARAM_TRIGGER].getValue());
@@ -153,7 +153,13 @@ void RatriligModule::draw(const widget::Widget::DrawArgs& args) {
 }
 
 void RatriligModule::onExpanderChange(const ExpanderChangeEvent& e) {
-	updatePolyphony(true);
+	updatePolyphony(true, getRatriligExpander());
+}
+
+void RatriligModule::onPortChange(const PortChangeEvent& e) {
+	if (e.connecting) {
+		updatePolyphony(true, getRatriligExpander());
+	}
 }
 
 void RatriligModule::clusterStateChanged(int channel, bool enabled, float density, float bias) {
@@ -252,20 +258,18 @@ void RatriligModule::setRatriligGlobalProbability(RatriligProbability* ratriligG
 	m_ratriligGlobalProbability = ratriligGlobalProbability;
 }
 
-void RatriligModule::updatePolyphony(bool forceUpdateOutputs) {
+void RatriligModule::updatePolyphony(bool forceUpdateOutputs, RatriligExpanderModule* expander) {
 	int channels = std::max(inputs[IN_GATE].getChannels(), 1);
 
 	// Make sure the output polyphony is up to date
 	if ((forceUpdateOutputs) || (channels != m_channelCount)) {
-		RatriligExpanderModule* expander = getRatriligExpander();
+	// Update the expander if one is present
+		if (expander != nullptr) {
+			expander->setChannels(channels);
+		}
 
 		m_channelCount = channels;
 		outputs[OUT_GATE].setChannels(m_channelCount);
-		if (expander != nullptr) {
-			expander->outputs[RatriligExpanderModule::OUT_TRIG_CLUSTER].setChannels(channels);
-			expander->outputs[RatriligExpanderModule::OUT_TRIG_PHRASE].setChannels(channels);
-			expander->outputs[RatriligExpanderModule::OUT_TRIG_CYCLE].setChannels(channels);
-		}
 	}
 
 	// Set all the 'started' flags for the channels that are out of range to false
