@@ -14,6 +14,11 @@ extern Model* modelPipoInput;
 extern Model* modelPolySameDiff;
 extern Model* modelTimeSeq;
 
+extern Model* modelRamelig;
+extern Model* modelRatrilig;
+extern Model* modelRameligExpander;
+extern Model* modelRatriligExpander;
+
 Plugin* pluginInstance;
 
 void init(Plugin* p) {
@@ -29,4 +34,8 @@ void init(Plugin* p) {
 	p->addModel(modelPipoOutput);
 	p->addModel(modelPolySameDiff);
 	p->addModel(modelTimeSeq);
+	p->addModel(modelRamelig);
+	p->addModel(modelRatrilig);
+	p->addModel(modelRameligExpander);
+	p->addModel(modelRatriligExpander);
 }

@@ -2,6 +2,13 @@
 
 ## 2.0.7 (TBD)
 
+* **TimeSeq**
+  * Minor fix in detection of circular `if`, `segment` and `value` references
+* **Ramelig**
+  * First release of the Ramelig module
+* **Ratrilig**
+  * First release of the Ratrilig module
+
 ## 2.0.6 (2026-03-13)
 
 * **TimeSeq**

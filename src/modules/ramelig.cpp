@@ -1,0 +1,472 @@
+#include "modules/ramelig.hpp"
+#include "modules/ramelig-expander.hpp"
+#include "components/ntport.hpp"
+#include "components/lights.hpp"
+#include "components/ramelig-distribution.hpp"
+#include "util/notes.hpp"
+#include <algorithm>
+
+
+extern Model* modelRamelig;
+extern Model* modelRameligExpander;
+
+RameligModule::RameligModule() {
+	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
+	configInput(IN_GATE, "Clock");
+	configInput(IN_LOWER_LIMIT, "Lower limit CV");
+	configInput(IN_UPPER_LIMIT, "Upper limit CV");
+	configInput(IN_CHANCE_RANDOM_JUMP, "Random jump CV");
+	configInput(IN_CHANCE_RANDOM_SHIFT, "Random shift CV");
+	configInput(IN_CHANCE_MOVE_UP, "Move up chance CV");
+	configInput(IN_CHANCE_STAY, "Stay chance CV");
+	configInput(IN_CHANCE_MOVE_DOWN, "Move down chance CV");
+	configInput(IN_SCALE, "Scale CV");
+
+	configOutput(OUT_CV, "CV");
+	configOutput(OUT_TRIGGER, "Trigger");
+
+	configParam(PARAM_LOWER_LIMIT, -10.f, 10.f, -1.f, "Lower limit", " V");
+	configParam(PARAM_UPPER_LIMIT, -10.f, 10.f, 1.f, "Upper limit", " V");
+
+	configParam(PARAM_CHANCE_RANDOM_JUMP, 0.f, 10.f, 3.5f, "Random jump chance");
+	configButton(PARAM_TRIG_RANDOM_JUMP, "Random jump trigger");
+	configParam(PARAM_CHANCE_RANDOM_SHIFT, 0.f, 10.f, 2.5f, "Random shift chance");
+	configButton(PARAM_TRIG_RANDOM_SHIFT, "Random shift trigger");
+
+	configParam(PARAM_CHANCE_MOVE_UP, 0.f, 10.f, 9.f, "Move up chance");
+	configParam(PARAM_CHANCE_STAY, 0.f, 10.f, 2.f, "Stay chance");
+	configParam(PARAM_CHANCE_MOVE_DOWN, 0.f, 10.f, 9.f, "Move down chance");
+	configParam(PARAM_FACTOR_MOVE_TWO, 0.f, 10.f, 3.f, "Move by one or two steps factor");
+	configParam(PARAM_FACTOR_STAY_REPEAT, 0.f, 10.f, 7.f, "Stay repeat factor");
+
+	configButton(PARAM_TRIGGER, "Trigger");
+
+	ParamQuantity* pq = configParam(PARAM_SCALE, 0.f, 11.f, 0.f, "Scale");
+	pq->snapEnabled = true;
+	pq->smoothEnabled = false;
+	pq->displayOffset = 1.f;
+
+	const char* notes[] = { "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B" };
+	for (int i = 0; i < 12; i++) {
+		configButton(PARAM_SCALE_NOTES + i, notes[i]);
+		m_scales[i] = { true, false, true, false, true, true, false, true, false, true, false, true };
+	}
+
+	m_scaleMode = ScaleMode::SCALE_MODE_DECIMAL;
+	m_activeScaleIndex = 0;
+	updateScale();
+	m_rameligScale = std::make_shared<RameligScale>();
+	m_rameligScale->setScale(m_activeScaleIndices);
+
+	for (int i = 0; i < 16; i++) {
+		m_rameligCore[i] = std::unique_ptr<RameligCore>(new RameligCore(i, m_rameligScale, this));
+	}
+
+	m_channelCount = 1;
+	m_triggerLightDivider.setDivision(128);
+
+	m_rameligDistribution = nullptr;
+}
+
+json_t* RameligModule::dataToJson() {
+	json_t* rootJ = NTModule::dataToJson();
+
+	json_t* scales = json_array();
+	for (int i = 0; i < 12; i++) {
+		json_int_t scale = 0;
+		for (size_t j = 0; j < m_scales[i].size(); j++) {
+			if (m_scales[i][j]) {
+				scale |= (1 << j);
+			}
+		}
+		json_array_append_new(scales, json_integer(scale));
+	}
+	json_object_set(rootJ,"ntRameligScales", scales);
+	json_decref(scales);
+
+	json_object_set(rootJ, "ntRameligScaleMode", json_integer(m_scaleMode));
+
+	return rootJ;
+}
+
+void RameligModule::dataFromJson(json_t* rootJ) {
+	NTModule::dataFromJson(rootJ);
+
+	json_t* ntRameligScaleMode = json_object_get(rootJ, "ntRameligScaleMode");
+	if (json_is_integer(ntRameligScaleMode)) {
+		json_int_t scaleMode = json_integer_value(ntRameligScaleMode);
+		if ((scaleMode >= 0) && (scaleMode < ScaleMode::NUM_SCALE_MODES)) {
+			setScaleMode(static_cast<ScaleMode>(scaleMode));
+		} else {
+			setScaleMode(ScaleMode::SCALE_MODE_DECIMAL);
+		}
+	}
+
+	json_t* ntRameligScales = json_object_get(rootJ, "ntRameligScales");
+	if (json_is_array(ntRameligScales)) {
+		for (size_t i = 0; i < 12; i++) {
+			if (i < json_array_size(ntRameligScales)) {
+				json_t* scaleJ = json_array_get(ntRameligScales, i);
+				if (json_is_integer(scaleJ)) {
+					json_int_t scale = json_integer_value(scaleJ);
+					for (int j = 0; j < 12; j++) {
+						m_scales[i][j] = ((scale & (1 << j))) != 0;
+					}
+				} else {
+					m_scales[i] = { true, false, true, false, true, true, false, true, false, true, false, true };
+				}
+			} else {
+				m_scales[i] = { true, false, true, false, true, true, false, true, false, true, false, true };
+			}
+		}
+	}
+	updateScale();
+}
+
+void RameligModule::process(const ProcessArgs& args) {
+	RameligDistributionData rameligDistributionData;
+	RameligExpanderModule* expander = getRameligExpander();
+	bool guiding[16] = { false };
+
+	// Make sure the output polyphony is up to date
+	updatePolyphony(false, getRameligExpander());
+
+	// Detect when the active scale is changed
+	bool scaleChanged = false;
+	int activeScaleIndex = determineActiveScale();
+	if (activeScaleIndex != m_activeScaleIndex) {
+		m_activeScaleIndex = activeScaleIndex;
+		scaleChanged = true;
+	}
+	// Detect when the user changes the scale through the scale buttons
+	for (int i = 0; i < 12; i++) {
+		if (m_scaleButtonTriggers[i].process(params[PARAM_SCALE_NOTES + i].getValue(), 0.f, 1.f)) {
+			m_scales[m_activeScaleIndex][i] = !m_scales[m_activeScaleIndex][i];
+			scaleChanged = true;
+		}
+	}
+	if (scaleChanged) {
+		updateScale();
+		m_rameligScale->setScale(m_activeScaleIndices);
+	}
+
+	// Detect if the expander is guiding the melody
+	if (expander != nullptr) {
+		for (int i = 0; i < m_channelCount; i++) {
+			int inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_GATE].isPolyphonic() ? i : 0;
+			guiding[i] = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_GATE].getVoltage(inputChannel) >= 1.f;
+			if (guiding[i]) {
+				inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_CV].isPolyphonic() ? i : 0;
+				m_rameligCore[i]->guideLast(expander->inputs[RameligExpanderModule::InputId::IN_GUIDE_CV].getVoltage(inputChannel));
+			}
+		}
+	}
+
+	// Check if the trigger button was pushed
+	bool triggerPushed = m_buttonTrigger.process(params[PARAM_TRIGGER].getValue());
+	if (triggerPushed) {
+		m_triggerPulse.trigger();
+	}
+	// And determine if the trigger pulse should cause the trigger outputs to be high
+	bool pulseTriggered = m_triggerPulse.process(args.sampleTime);
+
+	// Check if the shift or jump buttons were pushed
+	bool shiftPushed = m_buttonShift.process(params[PARAM_TRIG_RANDOM_SHIFT].getValue());
+	bool jumpPushed = m_buttonJump.process(params[PARAM_TRIG_RANDOM_JUMP].getValue());
+
+	bool oneTriggered = false;
+	for (int channel = 0; channel < m_channelCount; channel++) {
+		// Determine if there is a force shift or jump for this channel
+		if (expander != nullptr) {
+			int inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_TRIG_SHIFT].isPolyphonic() ? channel : 0;
+			m_forceShift[channel] = m_triggerShift[channel].process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_SHIFT].getVoltage(inputChannel)) || m_forceShift[channel];
+			inputChannel = expander->inputs[RameligExpanderModule::InputId::IN_TRIG_JUMP].isPolyphonic() ? channel : 0;
+			m_forceJump[channel] = m_triggerJump[channel].process(expander->inputs[RameligExpanderModule::InputId::IN_TRIG_JUMP].getVoltage(inputChannel)) || m_forceJump[channel];
+		} else {
+			// No expander, so reset the trigger detectors
+			m_triggerShift[channel].process(0.f);
+			m_triggerJump[channel].process(0.f);
+		}
+		m_forceShift[channel] = shiftPushed || m_forceShift[channel];
+		m_forceJump[channel] = jumpPushed || m_forceJump[channel];
+
+		// Do the actual processing if needed
+		if ((m_inputTrigger[channel].process(inputs[IN_GATE].getVoltage(channel), 0.f, 1.f)) || (triggerPushed)) {
+			float upperLimit = getParamValue(PARAM_UPPER_LIMIT, channel, -10.f, 10.f, IN_UPPER_LIMIT, 1.f);
+			float lowerLimit = getParamValue(PARAM_LOWER_LIMIT, channel, -10.f, 10.f, IN_LOWER_LIMIT, 1.f);
+
+			readDistributionData(channel, rameligDistributionData);
+
+			m_values[channel] = m_rameligCore[channel]->process(rameligDistributionData, m_forceJump[channel], m_forceShift[channel], guiding[channel], std::min(lowerLimit, upperLimit), std::max(lowerLimit, upperLimit));
+			outputs[OUT_CV].setVoltage(m_values[channel], channel);
+			lights[LIGHT_TRIGGER].setBrightness(1.f);
+			oneTriggered = true;
+
+			// Reset any possible force shift or jump flags for this channel since they have been used now
+			m_forceShift[channel] = m_forceJump[channel] = false;
+
+			// If this is the first channel, update the distribution status display
+			if ((channel == 0) && (m_rameligDistribution != nullptr)) {
+				m_rameligDistribution->setLastValue(m_values[channel], lowerLimit, upperLimit);
+			}
+		}
+
+		// Update the trigger output based on either the input trigger, or the trigger button pulse and update the expander outputs
+		if ((outputs[OUT_TRIGGER].isConnected()) || (expander != nullptr)) {
+			if ((pulseTriggered) || (inputs[IN_GATE].getVoltage(channel) >= 1.f)) {
+				outputs[OUT_TRIGGER].setVoltage(10.f, channel);
+				if (expander != nullptr) {
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setVoltage(m_jumped[channel] ? 10.f : 0.f, channel);
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_SHIFT].setVoltage(m_shifted[channel] ? 10.f : 0.f, channel);
+				}
+			} else {
+				outputs[OUT_TRIGGER].setVoltage(0.f, channel);
+				if (expander != nullptr) {
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_JUMP].setVoltage(0.f, channel);
+					expander->outputs[RameligExpanderModule::OutputId::OUT_TRIG_SHIFT].setVoltage(0.f, channel);
+				}
+				m_jumped[channel] = false;
+				m_shifted[channel] = false;
+			}
+		}
+	}
+
+	// If none of the channels triggered in this cycle, reduce the LED lights that indicated that one of the actions was triggered (if needed)
+	if ((!oneTriggered) && (m_triggerLightDivider.process())) {
+		reduceLightWithThreshold(lights[LIGHT_TRIGGER], args.sampleTime * 128, 10.f);
+	}
+}
+
+void RameligModule::draw(const widget::Widget::DrawArgs& args) {
+	if (m_rameligDistribution != nullptr) {
+		RameligDistributionData distributionData;
+		std::array<float, 7> distribution;
+
+		readDistributionData(0, distributionData);
+		m_rameligCore[0]->calculateDistribution(distributionData, distribution);
+		m_rameligDistribution->setDistribution(distribution);
+	}
+}
+
+void RameligModule::onPortChange(const PortChangeEvent& e) {
+	updatePolyphony(true, getRameligExpander());
+
+	if (e.type == Port::Type::OUTPUT) {
+		if (e.portId == OUT_TRIGGER) {
+			m_triggerPulse.reset();
+		} else if (e.portId == OUT_CV) {
+			outputs[OUT_CV].writeVoltages(m_values.data());
+		}
+	}
+}
+
+void RameligModule::onUnBypass(const UnBypassEvent& e) {
+	updatePolyphony(true, getRameligExpander());
+}
+
+void RameligModule::onExpanderChange(const ExpanderChangeEvent& e) {
+	updatePolyphony(true, getRameligExpander());
+}
+
+void RameligModule::rameligActionPerformed(int channel, RameligActions action) {
+	if (action == RameligActions::RANDOM_JUMP) {
+		RameligExpanderModule* expander = getRameligExpander();
+
+		m_jumped[channel] = true;
+		if (expander != nullptr) {
+			expander->lights[RameligExpanderModule::LIGHT_TRIG_JUMP].setBrightnessSmooth(1.f, .01f);
+		}
+	} else if (action == RameligActions::RANDOM_SHIFT) {
+		RameligExpanderModule* expander = getRameligExpander();
+
+		m_shifted[channel] = true;
+		if (expander != nullptr) {
+			expander->lights[RameligExpanderModule::LIGHT_TRIG_SHIFT].setBrightnessSmooth(1.f, .01f);
+		}
+	}
+
+	if ((channel == 0) && (m_rameligDistribution != nullptr)) {
+		m_rameligDistribution->setLastAction(action);
+	}
+}
+
+RameligModule::ScaleMode RameligModule::getScaleMode() {
+	return m_scaleMode;
+}
+
+void RameligModule::setScaleMode(ScaleMode scaleMode) {
+	m_scaleMode = scaleMode;
+	updateScale();
+}
+
+void RameligModule::setRameligDistribution(RameligDistribution* rameligDistribution) {
+	m_rameligDistribution = rameligDistribution;
+}
+
+void RameligModule::readDistributionData(int channel, RameligDistributionData& rameligDistributionData) {
+	rameligDistributionData.randomJumpChance = getParamValue(PARAM_CHANCE_RANDOM_JUMP, channel, 0.f, 10.f, IN_CHANCE_RANDOM_JUMP, 1.f) / 10.f;
+	rameligDistributionData.randomShiftChance = getParamValue(PARAM_CHANCE_RANDOM_SHIFT, channel, 0.f, 10.f, IN_CHANCE_RANDOM_SHIFT, 1.f) / 10.f;
+	rameligDistributionData.moveUpChance = getParamValue(PARAM_CHANCE_MOVE_UP, channel, 0.f, 10.f, IN_CHANCE_MOVE_UP, 1.f) / 10.f;
+	rameligDistributionData.stayChance = getParamValue(PARAM_CHANCE_STAY, channel, 0.f, 10.f, IN_CHANCE_STAY, 1.f) / 10.f;
+	rameligDistributionData.moveDownChance = getParamValue(PARAM_CHANCE_MOVE_DOWN, channel, 0.f, 10.f, IN_CHANCE_MOVE_DOWN, 1.f) / 10.f;
+	rameligDistributionData.moveTwoFactor = params[PARAM_FACTOR_MOVE_TWO].getValue() / 10.f;
+	rameligDistributionData.stayRepeatFactor = params[PARAM_FACTOR_STAY_REPEAT].getValue() / 10.f;
+}
+
+int RameligModule::determineActiveScale() {
+	int scale = 0;
+	if (inputs[IN_SCALE].isConnected()) {
+		if (m_scaleMode == ScaleMode::SCALE_MODE_DECIMAL) {
+			float integral = std::min(std::max(inputs[IN_SCALE].getVoltage(), -9.99f), 9.99f);
+			scale = std::floor((integral + 10) * 12 / 10);
+		} else {
+			float dummy;
+			float fract = std::modf(inputs[IN_SCALE].getVoltage(), &dummy);
+			scale = voltageToChromaticIndex(fract);
+		}
+	}
+	return (scale + (int) params[PARAM_SCALE].getValue()) % 12;
+}
+
+void RameligModule::updateScale() {
+	std::vector<int> scaleIndices = {};
+
+	for (int i = 0; i < 12; i++) {
+		if (m_scales[m_activeScaleIndex][i]) {
+			lights[LIGHT_SCALE_NOTES + i].setBrightness(1.f);
+			scaleIndices.push_back(i);
+		} else {
+			lights[LIGHT_SCALE_NOTES + i].setBrightness(0.f);
+		}
+	}
+
+	if (!scaleIndices.empty()) {
+		m_activeScaleIndices = scaleIndices;
+	} else {
+		m_activeScaleIndices = { 0 };
+	}
+}
+
+void RameligModule::updatePolyphony(bool forceUpdateOutputs, RameligExpanderModule* expander) {
+	int channels = std::max(inputs[IN_GATE].getChannels(), 1);
+
+	// Make sure the output polyphony is up to date
+	if ((forceUpdateOutputs) || (channels != m_channelCount)) {
+		m_channelCount = channels;
+		outputs[OUT_CV].setChannels(m_channelCount);
+		outputs[OUT_TRIGGER].setChannels(m_channelCount);
+
+		if (expander != nullptr) {
+			expander->setChannels(m_channelCount);
+		}
+	}
+
+	// Set all the jumped/shifted flags for the channels that are out of range to false
+	for (int i = channels; i < 16; i++) {
+		m_jumped[i] = false;
+		m_shifted[i] = false;
+	}
+}
+
+float RameligModule::getParamValue(ParamId paramId, int channel, float lowerLimit, float upperLimit, InputId inputId, float inputScaling) {
+	// If the input is not polyphonic, use the first (monophonic) channel for all channels
+	if (!inputs[inputId].isPolyphonic()) {
+		channel = 0;
+	}
+	float value = params[paramId].getValue() + (inputs[inputId].getVoltage(channel) * inputScaling);
+	return std::max(std::min(value, upperLimit), lowerLimit);
+}
+
+RameligExpanderModule* RameligModule::getRameligExpander() {
+	Expander *expander = &getRightExpander();
+	if ((expander->module != nullptr) && (expander->module->getModel() == modelRameligExpander)) {
+		return dynamic_cast<RameligExpanderModule*>(expander->module);
+	}
+	expander = &getLeftExpander();
+	if ((expander->module != nullptr) && (expander->module->getModel() == modelRameligExpander)) {
+		return dynamic_cast<RameligExpanderModule*>(expander->module);
+	}
+	return nullptr;
+}
+
+RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ramelig") {
+	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 232.5f), module, RameligModule::PARAM_LOWER_LIMIT));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 232.5f), module, RameligModule::PARAM_UPPER_LIMIT));
+
+	addParam(createParamCentered<Rogan1PWhite>(Vec(32.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_JUMP));
+	addParam(createParamCentered<VCVButton>(Vec(32.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_JUMP));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(72.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_SHIFT));
+	addParam(createParamCentered<VCVButton>(Vec(72.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_SHIFT));
+
+	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_UP));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 47.f), module, RameligModule::PARAM_CHANCE_STAY));
+	addParam(createParamCentered<Rogan1PWhite>(Vec(97.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_DOWN));
+	addParam(createParamCentered<Trimpot>(Vec(117.5f, 127.5f), module, RameligModule::PARAM_FACTOR_MOVE_TWO));
+	addParam(createParamCentered<Trimpot>(Vec(177.5f, 127.f), module, RameligModule::PARAM_FACTOR_STAY_REPEAT));
+
+	addParam(createParamCentered<Trimpot>(Vec(32.5f, 137.f), module, RameligModule::PARAM_SCALE));
+
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<MediumSimpleLight<RedLight>>>>(Vec(32.5f, 87.f), module, RameligModule::PARAM_TRIGGER, RameligModule::LIGHT_TRIGGER));
+
+	addInput(createInputCentered<NTPort>(Vec(32.5f, 47.f), module, RameligModule::IN_GATE));
+
+	addInput(createInputCentered<NTPort>(Vec(137.5f, 272.5f), module, RameligModule::IN_LOWER_LIMIT));
+	addInput(createInputCentered<NTPort>(Vec(177.5f, 272.5f), module, RameligModule::IN_UPPER_LIMIT));
+
+	addInput(createInputCentered<NTPort>(Vec(32.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_JUMP));
+	addInput(createInputCentered<NTPort>(Vec(72.5f, 272.5f), module, RameligModule::IN_CHANCE_RANDOM_SHIFT));
+	addInput(createInputCentered<NTPort>(Vec(137.5f, 87.f), module, RameligModule::IN_CHANCE_MOVE_UP));
+	addInput(createInputCentered<NTPort>(Vec(177.5f, 87.f), module, RameligModule::IN_CHANCE_STAY));
+	addInput(createInputCentered<NTPort>(Vec(97.5f, 87.f), module, RameligModule::IN_CHANCE_MOVE_DOWN));
+
+	addInput(createInputCentered<NTPort>(Vec(32.5f, 172.f), module, RameligModule::IN_SCALE));
+
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(65.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 0, RameligModule::LIGHT_SCALE_NOTES + 0));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(85.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 2, RameligModule::LIGHT_SCALE_NOTES + 2));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(105.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 4, RameligModule::LIGHT_SCALE_NOTES + 4));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(125.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 5, RameligModule::LIGHT_SCALE_NOTES + 5));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(145.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 7, RameligModule::LIGHT_SCALE_NOTES + 7));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(165.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 9, RameligModule::LIGHT_SCALE_NOTES + 9));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(185.5f, 182.f), module, RameligModule::PARAM_SCALE_NOTES + 11, RameligModule::LIGHT_SCALE_NOTES + 11));
+
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(75.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 1, RameligModule::LIGHT_SCALE_NOTES + 1));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(95.f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 3, RameligModule::LIGHT_SCALE_NOTES + 3));
+	addParam(createLightParamCentered<VCVLightButton<LargeLight<RedLight>>>(Vec(135.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 6, RameligModule::LIGHT_SCALE_NOTES + 6));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(155.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 8, RameligModule::LIGHT_SCALE_NOTES + 8));
+	addParam(createLightParamCentered<VCVLightButton<DimmedLight<LargeLight<RedLight>>>>(Vec(175.5f, 162.f), module, RameligModule::PARAM_SCALE_NOTES + 10, RameligModule::LIGHT_SCALE_NOTES + 10));
+
+	addOutput(createOutputCentered<NTPort>(Vec(137.5f, 332.5f), module, RameligModule::OUT_CV));
+	addOutput(createOutputCentered<NTPort>(Vec(177.5f, 332.5f), module, RameligModule::OUT_TRIGGER));
+
+	RameligDistribution* rameligDistribution = createWidget<RameligDistribution>(Vec(14.5f, 336.f));
+	rameligDistribution->setSize(Vec(76.f, 19.f));
+	addChild(rameligDistribution);
+	if (module != nullptr) {
+		module->setRameligDistribution(rameligDistribution);
+	}
+}
+
+void RameligWidget::appendContextMenu(Menu* menu) {
+	NTModuleWidget::appendContextMenu(menu);
+
+	RameligModule::ScaleMode scaleMode = getModule() ? dynamic_cast<RameligModule *>(getModule())->getScaleMode() : RameligModule::ScaleMode::SCALE_MODE_DECIMAL;
+	menu->addChild(new MenuSeparator);
+	menu->addChild(createSubmenuItem("Scale CV mode", "",
+		[this, scaleMode](Menu* menu) {
+			menu->addChild(createCheckMenuItem("Decimal (0V-10V)", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_DECIMAL; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_DECIMAL); }));
+			menu->addChild(createCheckMenuItem("Chromatic (1V/Oct)", "", [scaleMode]() { return scaleMode == RameligModule::ScaleMode::SCALE_MODE_CHROMATIC; }, [this, scaleMode]() { this->setScaleMode(RameligModule::ScaleMode::SCALE_MODE_CHROMATIC); }));
+		}
+	));
+}
+
+void RameligWidget::setScaleMode(RameligModule::ScaleMode scaleMode) {
+	RameligModule* rameligModule = dynamic_cast<RameligModule *>(getModule());
+	if ((rameligModule != nullptr) && (scaleMode != rameligModule->getScaleMode())) {
+		rameligModule->setScaleMode(scaleMode);
+	}
+}
+
+
+
+Model* modelRamelig = createModel<RameligModule, RameligWidget>("ramelig");
