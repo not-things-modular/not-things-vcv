@@ -126,7 +126,7 @@ The bottom bar represents the full range specified by the controls in the [range
 If Ramelig receives a polyphonic input signal on the *Trig* input port, the module will run in polyphonic mode:
 
 * A polyphonic output signal will be generated on the output ports, with the channel count matching that of the input signal
-* Each input channel will be processed independently by Ramelig
+* Each *Trig* input channel will be processed independently by Ramelig
 * All the CV input ports (except the SCALE input CV) expect either a monophonic or a polyphonic signal:
   * If the CV input signal is monophonic, its voltage will be used for all channels
   * If the CV input signal is polyphonic, each channel uses the corresponding CV channel. If fewer CV channels are present than trigger channels, missing channels default to 0V.
