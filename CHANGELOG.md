@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2.0.7 (TBD)
+## 2.0.7 (2026-06-22)
 
 * **TimeSeq**
   * Minor fix in detection of circular `if`, `segment` and `value` references
