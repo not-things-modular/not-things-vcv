@@ -16,13 +16,13 @@ struct MockPortHandler : PortHandler {
 };
 
 struct MockVariableHandler : VariableHandler {
-	MOCK_METHOD(float, getVariable, (std::string&), (override));
-	MOCK_METHOD(void, setVariable, (std::string&, float), (override));
+	MOCK_METHOD(float, getVariable, (const std::string&), (override));
+	MOCK_METHOD(void, setVariable, (const std::string&, float), (override));
 };
 
 struct MockTriggerHandler : TriggerHandler {
-	MOCK_METHOD(std::vector<std::string>&, getTriggers, (), (override));
-	MOCK_METHOD(void, setTrigger, (std::string&), (override));
+	MOCK_METHOD(const std::vector<std::string>&, getTriggers, (), (override));
+	MOCK_METHOD(void, setTrigger, (const std::string&), (override));
 };
 
 struct MockSampleRateReader : SampleRateReader {
@@ -49,7 +49,7 @@ static std::vector<std::string> mockDefaultTriggerHandlerEmptyTriggers;
 	ON_CALL(mockTriggerHandler, getTriggers).WillByDefault(testing::ReturnRef(mockDefaultTriggerHandlerEmptyTriggers));
 
 
-pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, json& json, vector<ValidationError> *validationErrors);
+pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, nlohmann::json& json, vector<ValidationError> *validationErrors);
 
 static std::string inputVariableName = "input-variable";
 static std::string outputVariableName = "output-variable";

@@ -1,5 +1,7 @@
 #include "core/timeseq-core.hpp"
-#include "core/timeseq-script.hpp"
+#include "core/timeseq-script-parser.hpp"
+#include "core/timeseq-processor-parser.hpp"
+#include "core/timeseq-processor.hpp"
 #include <rack.hpp>
 #include <iostream>
 #include <fstream>
@@ -130,7 +132,7 @@ void TimeSeqCore::process(int rate) {
 	}
 }
 
-float TimeSeqCore::getVariable(std::string& name) {
+float TimeSeqCore::getVariable(const std::string& name) {
 	std::unordered_map<std::string, float>::iterator it = m_variables.find(name);
 	if (it != m_variables.end()) {
 		return it->second;
@@ -139,7 +141,7 @@ float TimeSeqCore::getVariable(std::string& name) {
 	}
 }
 
-void TimeSeqCore::setVariable(std::string& name, float value) {
+void TimeSeqCore::setVariable(const std::string& name, float value) {
 	if (value == 0.f) {
 		std::unordered_map<std::string, float>::iterator it = m_variables.find(name);
 		if (it != m_variables.end()) {
@@ -150,11 +152,11 @@ void TimeSeqCore::setVariable(std::string& name, float value) {
 	}
 }
 
-std::vector<std::string>& TimeSeqCore::getTriggers() {
+const std::vector<std::string>& TimeSeqCore::getTriggers() {
 	return m_triggers[m_triggerIdx];
 }
 
-void TimeSeqCore::setTrigger(std::string& name) {
+void TimeSeqCore::setTrigger(const std::string& name) {
 	m_triggers[!m_triggerIdx].push_back(name);
 	m_eventListener->triggerTriggered();
 }

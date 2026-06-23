@@ -92,7 +92,7 @@ void NTModuleWidget::appendContextMenu(Menu* menu) {
 void NTModuleWidget::addThemeChangeListener(Widget* widget) {
 	if (getModule()) {
 		ThemeChangeListener* listener = dynamic_cast<ThemeChangeListener*>(widget);
-		if ((listener) && (getModule())) {
+		if (listener) {
 			NTModule* ntModule = getNTModule();
 			assert(ntModule);
 			ntModule->addThemeChangeListener(listener);

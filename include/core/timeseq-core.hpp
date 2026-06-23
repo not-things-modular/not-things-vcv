@@ -1,10 +1,22 @@
 #pragma once
 
-#include "core/timeseq-json.hpp"
-#include "core/timeseq-processor.hpp"
+#include <string>
+#include <vector>
+#include <memory>
+#include <cstdint>
+#include <unordered_map>
+#include "timeseq-validation.hpp"
 
+#ifndef nt_private
+	#define nt_private private
+#endif
 
 namespace timeseq {
+
+struct JsonLoader;
+struct ProcessorLoader;
+struct Script;
+struct Processor;
 
 struct PortHandler {
 	virtual float getInputPortVoltage(int index, int channel) = 0;
@@ -17,13 +29,13 @@ struct PortHandler {
 };
 
 struct VariableHandler {
-	virtual float getVariable(std::string& name) = 0;
-	virtual void setVariable(std::string& name, float value) = 0;
+	virtual float getVariable(const std::string& name) = 0;
+	virtual void setVariable(const std::string& name, float value) = 0;
 };
 
 struct TriggerHandler {
-	virtual std::vector<std::string>& getTriggers() = 0;
-	virtual void setTrigger(std::string& name) = 0;
+	const virtual std::vector<std::string>& getTriggers() = 0;
+	virtual void setTrigger(const std::string& name) = 0;
 };
 
 struct AssertListener {
@@ -60,11 +72,11 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 
 	void process(int rate);
 
-	float getVariable(std::string& name) override;
-	void setVariable(std::string& name, float value) override;
+	float getVariable(const std::string& name) override;
+	void setVariable(const std::string& name, float value) override;
 
-	std::vector<std::string>& getTriggers() override;
-	void setTrigger(std::string& name) override;
+	const std::vector<std::string>& getTriggers() override;
+	void setTrigger(const std::string& name) override;
 
 	uint32_t getCurrentSampleRate();
 	uint32_t getElapsedSamples();

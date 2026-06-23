@@ -1,8 +1,9 @@
-#include "core/timeseq-json.hpp"
+#include "core/timeseq-script-parser.hpp"
 #include "util/notes.hpp"
 
 using namespace std;
 using namespace timeseq;
+using namespace nlohmann;
 
 
 struct timeseq::JsonScriptParseContext {

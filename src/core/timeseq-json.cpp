@@ -1,17 +1,12 @@
-#include "core/timeseq-json.hpp"
+#include "core/timeseq-script-parser.hpp"
 #include <sstream>
 
 using namespace std;
 using namespace timeseq;
+using namespace nlohmann;
 
 
-JsonLoader::JsonLoader() {
-	m_jsonScriptParser = new JsonScriptParser();
-}
-
-JsonLoader::~JsonLoader() {
-	delete m_jsonScriptParser;
-}
+JsonLoader::~JsonLoader() {}
 
 shared_ptr<json> JsonLoader::loadJson(istream& inputStream, vector<ValidationError> *validationErrors) {
 	shared_ptr<json> json;
@@ -34,7 +29,7 @@ shared_ptr<Script> JsonLoader::loadScript(istream& inputStream, vector<Validatio
 	
 	shared_ptr<json> json = loadJson(inputStream, validationErrors);
 	if (json) {
-		script = m_jsonScriptParser->parseScript(*json, validationErrors, vector<string>());
+		script = m_jsonScriptParser.parseScript(*json, validationErrors, vector<string>());
 	}
 
 	return script;

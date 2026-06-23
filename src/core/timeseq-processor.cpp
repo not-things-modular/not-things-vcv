@@ -120,7 +120,7 @@ CalcQuantizeProcessor::CalcQuantizeProcessor(ScriptTuning* scriptTuning) {
 	// Based on the tuningValues list, determine all the quantization points as being halfway between each tuning value
 	for (unsigned int i = 0; i < tuningValues.size() - 1; i++) {
 		float boundary = tuningValues[i] + ((tuningValues[i + 1] - tuningValues[i]) / 2.f);
-		m_quantizeValues.push_back({ boundary, tuningValues[i]});
+		m_quantizeValues.push_back({ boundary, tuningValues[i] });
 	}
 	// Add in the last tuningValue entry as a round-up entry
 	m_quantizeValues.push_back({ 2.f, tuningValues.back()});
@@ -905,7 +905,7 @@ void LaneProcessor::reset() {
 	}
 }
 
-void LaneProcessor::processTriggers(vector<string>& triggers) {
+void LaneProcessor::processTriggers(const vector<string>& triggers) {
 	// No use in starting if we have no segments...
 	if (m_segments.size() > 0) {
 		// Restarts must be done no matter the current state
@@ -939,7 +939,7 @@ void TimelineProcessor::process() {
 	bool checkLoop = false;
 
 	// Check if any lane start or stop triggers were fired
-	vector<string>& triggers = m_triggerHandler->getTriggers();
+	const vector<string>& triggers = m_triggerHandler->getTriggers();
 	if (triggers.size() > 0) {
 		for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
 			it->get()->processTriggers(triggers);

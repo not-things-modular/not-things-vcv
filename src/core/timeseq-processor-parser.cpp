@@ -1,3 +1,4 @@
+#include "core/timeseq-processor-parser.hpp"
 #include "core/timeseq-processor.hpp"
 #include "core/timeseq-script.hpp"
 #include "core/timeseq-core.hpp"
@@ -38,7 +39,7 @@ ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableH
 	m_randomValueGenerator = randomValueGenerator;
 }
 
-shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string> location) {
+shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string>& location) {
 	ProcessorScriptParseContext context;
 
 	context.script = script.get();
@@ -103,7 +104,7 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	return shared_ptr<Processor>(new Processor(script, timelineProcessors, triggerProcessors, startActionProcessors));
 }
 
-shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, vector<string> location) {
+shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, vector<string>& location) {
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers;
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers;
 
@@ -139,7 +140,7 @@ shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScri
 	return shared_ptr<TimelineProcessor>(new TimelineProcessor(scriptTimeline, laneProcessors, startTriggers, stopTriggers, m_triggerHandler));
 }
 
-shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* scriptInputTrigger, vector<string> location) {
+shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* scriptInputTrigger, vector<string>& location) {
 	// Check if it's a ref input trigger object or a full one
 	if (scriptInputTrigger->input.ref.length() == 0) {
 		return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, scriptInputTrigger->input.index - 1, ((bool) scriptInputTrigger->input.channel) ? *scriptInputTrigger->input.channel.get() - 1 : 0, m_portHandler, m_triggerHandler));
@@ -158,7 +159,7 @@ shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorS
 	}
 }
 
-shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, vector<string> location) {
+shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, vector<string>& location) {
 	unsigned int validationCount = context->validationErrors->size();
 
 	location.push_back("segments");
@@ -173,7 +174,7 @@ shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ProcessorScriptParseC
 	}
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(ProcessorScriptParseContext* context, vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(ProcessorScriptParseContext* context, vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string>& location, vector<string> segmentStack) {
 	int count = 0;
 	vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 
@@ -188,7 +189,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(Proces
 	return segmentProcessors;
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string>& location, vector<string> segmentStack) {
 	// Check if it's a ref segment object or a full one
 	if (scriptSegment->ref.length() == 0) {
 		if (!scriptSegment->segmentBlock) {
@@ -227,7 +228,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(Process
 	}
 }
 
-shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> location, vector<string> segmentStack) {
+shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string>& location, vector<string> segmentStack) {
 	location.push_back("duration");
 	shared_ptr<DurationProcessor> durationProcessor = parseDuration(context, &scriptSegment->duration, timeScale, location);
 	location.pop_back();
@@ -266,7 +267,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(Process
 	return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener));
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<ScriptAction>& actions, vector<string> location, vector<string> actionsLocation, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<ScriptAction>& actions, vector<string>& location, vector<string> actionsLocation, vector<string> segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
 		location.push_back("segments");
@@ -355,7 +356,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 	}
 }
 
-shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, vector<string> location) {
+shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, vector<string>& location) {
 	if (scriptDuration->samples || scriptDuration->millis || scriptDuration->beats || scriptDuration->hz) {
 		// Construct a constant duration processor
 		uint64_t duration = 0;
@@ -434,7 +435,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& location) {
 	shared_ptr<ActionProcessor> actionProcessor;
 	shared_ptr<IfProcessor> ifProcessor;
 
@@ -491,7 +492,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(Processor
 	return actionProcessor;
 }
 
-shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& location) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
@@ -531,7 +532,7 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction
 	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
 }
 
-shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string> location) {
+shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& location) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
@@ -558,7 +559,7 @@ shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(P
 	return shared_ptr<ActionGateProcessor>(new ActionGateProcessor(gateHighRatio, ifProcessor, outputPort, outputChannel, m_portHandler));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	location.push_back("value");
 	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setValue.get()->value, location, vector<string>());
 	location.pop_back();
@@ -570,7 +571,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(Processor
 	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	location.push_back("value");
 	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setVariable.get()->value, location, vector<string>());
 	location.pop_back();
@@ -578,17 +579,17 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Proces
 	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
 	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	ScriptSetLabel* scriptSetLabel = scriptAction->setLabel.get();
 	return shared_ptr<ActionProcessor>(new ActionSetLabelProcessor(scriptSetLabel->index - 1, scriptSetLabel->label, m_portHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	ScriptAssert* scriptAssert = scriptAction->assert.get();
 
 	location.push_back("expect");
@@ -598,11 +599,11 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorSc
 	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	ScriptMoveSequence* moveSequence = &(*scriptAction->moveSequence);
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, moveSequence->id);
 
@@ -623,7 +624,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(Proce
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, scriptAction->clearSequence);
 	if (!sequenceProcessor) {
 		sequenceProcessor = resolveNonSharedSequence(context, scriptAction->clearSequence);
@@ -637,7 +638,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(Proc
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	ScriptAddToSequence* addToSequence = &(*scriptAction->addToSequence);
 
 	location.push_back("value");
@@ -657,7 +658,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(Proc
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string> location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
 	ScriptRemoveFromSequence* removeFromSequence = &(*scriptAction->removeFromSequence);
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, removeFromSequence->id);
 	if (!sequenceProcessor) {
@@ -672,7 +673,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction
 	}
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<string> location, vector<string> valueStack) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<string>& location, vector<string> valueStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptValue->ref.length() == 0) {
 		int count = 0;
@@ -724,7 +725,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptPars
 	return shared_ptr<ValueProcessor>();
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
 	float value = 0.f;
 	if (scriptValue->voltage) {
 		value = *scriptValue->voltage.get();
@@ -743,11 +744,11 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScri
 	return shared_ptr<ValueProcessor>(new StaticValueProcessor(value, calcProcessors, scriptValue->quantize));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
 	return shared_ptr<ValueProcessor>(new VariableValueProcessor(*scriptValue->variable.get(), calcProcessors, scriptValue->quantize, m_variableHandler));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
 	location.push_back("input");
 	pair<int, int> input = parseInput(context, scriptValue->input.get(), location);
 	location.pop_back();
@@ -755,7 +756,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScrip
 	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors, scriptValue->quantize, m_portHandler));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
 	location.push_back("output");
 	pair<int, int> output = parseOutput(context, scriptValue->output.get(), location);
 	location.pop_back();
@@ -763,7 +764,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScri
 	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors, scriptValue->quantize, m_portHandler));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> location, vector<string> valueStack) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location, vector<string> valueStack) {
 	location.push_back("rand");
 
 	location.push_back("lower");
@@ -779,7 +780,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScript
 	return shared_ptr<ValueProcessor>(new RandValueProcessor(lowerValueProcessor, upperValueProcessor, m_randomValueGenerator, calcProcessors, scriptValue->quantize));
 }
 
-std::shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> location, std::vector<std::string> valueStack) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location, vector<string> valueStack) {
 	location.push_back("sequence");
 
 	shared_ptr<ValueProcessor> processor = nullptr;
@@ -801,7 +802,7 @@ std::shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(Proces
 	return processor;
 }
 
-shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string> location, vector<string> valueStack) {
+shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string>& location, vector<string> valueStack) {
 	if (scriptCalc->ref.length() == 0) {
 		bool valueProcessor = false;
 		bool truncProcessor = false;
@@ -928,7 +929,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 	return shared_ptr<CalcProcessor>();
 }
 
-shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string> location, vector<string> ifStack) {
+shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string>& location, vector<string> ifStack) {
 	if (scriptIf->ref.length() == 0) {
 		pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
 		vector<shared_ptr<IfProcessor>> ifs;
@@ -1011,7 +1012,7 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseConte
 	return shared_ptr<IfProcessor>();
 }
 
-void ProcessorScriptParser::parseSequence(ProcessorScriptParseContext* context, ScriptSequence* scriptSequence, vector<string> location) {
+void ProcessorScriptParser::parseSequence(ProcessorScriptParseContext* context, ScriptSequence* scriptSequence, vector<string>& location) {
 	vector<shared_ptr<ValueProcessor>> values;
 	for (vector<ScriptValue>::iterator it = scriptSequence->values.begin(); it != scriptSequence->values.end(); it++) {
 		values.push_back(parseValue(context, &(*it), location, vector<string>()));
@@ -1025,7 +1026,7 @@ void ProcessorScriptParser::parseSequence(ProcessorScriptParseContext* context, 
 	}
 }
 
-pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, vector<string> location) {
+pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, vector<string>& location) {
 	// Check if it's a ref input or a full one
 	if (scriptInput->ref.length() == 0) {
 		return pair<int, int>(scriptInput->index - 1, scriptInput->channel ? *scriptInput->channel.get() - 1 : 0);
@@ -1046,7 +1047,7 @@ pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* co
 
 }
 
-pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, vector<string> location) {
+pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, vector<string>& location) {
 	// Check if it's a ref output or a full one
 	if (scriptOutput->ref.length() == 0) {
 		return pair<int, int>(scriptOutput->index - 1, scriptOutput->channel ? *scriptOutput->channel.get() - 1 : 0);
@@ -1121,5 +1122,6 @@ ProcessorLoader::~ProcessorLoader() {
 }
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
-	return m_processorScriptParser.parseScript(script, validationErrors, vector<string>());
+	vector<string> location;
+	return m_processorScriptParser.parseScript(script, validationErrors, location);
 }
