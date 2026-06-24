@@ -6,11 +6,6 @@ using namespace timeseq;
 using namespace nlohmann;
 
 
-struct timeseq::JsonScriptParseContext {
-	int version;
-	vector<ValidationError> *validationErrors;
-};
-
 template<size_t N>
 bool hasOneOf(const json& json, const char* (&propertyNames)[N]) {
 	for (const char* propertyName : propertyNames) {
@@ -25,7 +20,7 @@ bool hasOneOf(const json& json, const char* (&propertyNames)[N]) {
 #define VERSION_1_1_0 110
 #define VERSION_1_2_0 120
 
-void verifyVersion(int expectedVersion, JsonScriptParseContext* context, const char* feature, vector<string> location) {
+void verifyVersion(int expectedVersion, JsonScriptParseContext* context, const char* feature) {
 	if (context->version < expectedVersion) {
 		map<int, string> versionMap = {
 			{ VERSION_1_0_0, "1.0.0" },
@@ -33,11 +28,11 @@ void verifyVersion(int expectedVersion, JsonScriptParseContext* context, const c
 			{ VERSION_1_2_0, "1.2.0" }
 		};
 
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Feature_Not_In_Version, feature, " requires version ", versionMap[expectedVersion].c_str(), " but the script has its version set to ", versionMap[context->version].c_str(), ".");
+		ADD_VALIDATION_ERROR(&context->validationErrors, context->location, ValidationErrorCode::Feature_Not_In_Version, feature, " requires version ", versionMap[expectedVersion].c_str(), " but the script has its version set to ", versionMap[context->version].c_str(), ".");
 	}
 }
 
-bool verifyAllowedProperties(const json& json, vector<string> propertyNames, bool allowRef, vector<ValidationError> *validationErrors, vector<string> location) {
+bool verifyAllowedProperties(const json& json, vector<string> propertyNames, bool allowRef, JsonScriptParseContext* context) {
 	uint64_t count = 0;
 	string unexpectedKeys;
 
@@ -57,15 +52,15 @@ bool verifyAllowedProperties(const json& json, vector<string> propertyNames, boo
 	}
 
 	if (count == 1) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Unknown_Property, "Unknown property encountered: ", unexpectedKeys.c_str(), ".");
+		ADD_VALIDATION_ERROR(&context->validationErrors, context->location, ValidationErrorCode::Unknown_Property, "Unknown property encountered: ", unexpectedKeys.c_str(), ".");
 	} else if (count > 1) {
-		ADD_VALIDATION_ERROR(validationErrors, location, ValidationErrorCode::Unknown_Property, "Unknown properties encountered: ", unexpectedKeys.c_str(), ".");
+		ADD_VALIDATION_ERROR(&context->validationErrors, context->location, ValidationErrorCode::Unknown_Property, "Unknown properties encountered: ", unexpectedKeys.c_str(), ".");
 	}
 
 	return count > 0;
 }
 
-ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDirectionJson, const char* property, ValidationErrorCode enumErrorCode, ValidationErrorCode stringErrorCode, vector<ValidationError> *validationErrors, vector<string> location) {
+ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDirectionJson, const char* property, ValidationErrorCode enumErrorCode, ValidationErrorCode stringErrorCode, JsonScriptParseContext* context) {
 	ScriptSequenceMoveDirection moveDirection = ScriptSequenceMoveDirection::NONE;
 
 	if (moveDirectionJson.is_string()) {
@@ -79,155 +74,158 @@ ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDir
 		} else if (moveDirectionString == "none") {
 			moveDirection = ScriptSequenceMoveDirection::NONE;
 		} else {
-			ADD_VALIDATION_ERROR(validationErrors, location, enumErrorCode, "'", property, "' must be either 'forward', 'backward', 'random' or 'none'.");
+			ADD_VALIDATION_ERROR(&context->validationErrors, context->location, enumErrorCode, "'", property, "' must be either 'forward', 'backward', 'random' or 'none'.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(validationErrors, location, stringErrorCode, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
+		ADD_VALIDATION_ERROR(&context->validationErrors, context->location, stringErrorCode, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
 	}
 
 	return moveDirection;
 }
 
-JsonScriptParser::~JsonScriptParser() {}
-
-shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<ValidationError>* validationErrors, vector<string> location) {
+const std::vector<ValidationError> JsonScriptParser::getValidationErrors() {
+	if (m_context) {
+		return m_context->validationErrors;
+	} else {
+		return {};
+	}
+}
+shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "sequences", "component-pool", "$schema" };
 	shared_ptr<Script> script = make_shared<Script>();
 	vector<string> ids;
 
-	JsonScriptParseContext context;
-	context.validationErrors = validationErrors;
-
-	verifyAllowedProperties(scriptJson, scriptProperties, false, context.validationErrors, location);
+	m_context.reset(new JsonScriptParseContext());
+	verifyAllowedProperties(scriptJson, scriptProperties, false, m_context.get());
 
 	json::const_iterator type = scriptJson.find("type");
 	if ((type == scriptJson.end()) || (!type->is_string())) {
-		ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TypeMissing, "'type' is required and must be a string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_TypeMissing, "'type' is required and must be a string.");
 	} else {
 		script->type = *type;
 		if (script->type != "not-things_timeseq_script") {
 			string typeValue = (*type);
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TypeUnsupported, "'type' '", typeValue.c_str(), "' is not supported.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_TypeUnsupported, "'type' '", typeValue.c_str(), "' is not supported.");
 		}
 	}
 
 	json::const_iterator version = scriptJson.find("version");
 	if ((version == scriptJson.end()) || (!version->is_string())) {
-		ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_VersionMissing, "'version' is required and must be a string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_VersionMissing, "'version' is required and must be a string.");
 	}
 	else {
 		script->version = *version;
 		if (script->version == "1.0.0") {
-			context.version = 100;
+			m_context->version = 100;
 		} else if (script->version == "1.1.0") {
-			context.version = 110;
+			m_context->version = 110;
 		} else if (script->version == "1.2.0") {
-			context.version = 120;
+			m_context->version = 120;
 		}
 		else {
 			string versionValue = (*version);
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0 and 1.2.0 are currently supported.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0 and 1.2.0 are currently supported.");
 		}
 	}
 
 	json::const_iterator timelines = scriptJson.find("timelines");
 	if ((timelines != scriptJson.end()) && (timelines->is_array())) {
-		location.push_back("timelines");
+		m_context->location.push_back("timelines");
 
 		int count = 0;
 		vector<json> timelineElements = (*timelines);
 		for (const json& timeline : timelineElements) {
-			location.push_back(to_string(count));
+			m_context->location.push_back(to_string(count));
 			if (timeline.is_object()) {
-				script->timelines.push_back(parseTimeline(timeline, &context, location));
+				script->timelines.push_back(parseTimeline(timeline));
 			} else {
-				ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TimelineObject, "'timelines' elements must be objects.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_TimelineObject, "'timelines' elements must be objects.");
 			}
-			location.pop_back();
+			m_context->location.pop_back();
 			count++;
 		}
 
-		location.pop_back();
+		m_context->location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TimelinesMissing, "'timelines' is required and must be an array.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_TimelinesMissing, "'timelines' is required and must be an array.");
 	}
 
 	json::const_iterator globalActions = scriptJson.find("global-actions");
 	if (globalActions != scriptJson.end()) {
 		if (globalActions->is_array()) {
-			location.push_back("global-actions");
+			m_context->location.push_back("global-actions");
 
 			int count = 0;
 			vector<json> actionElements = (*globalActions);
 			for (const json& action : actionElements) {
-				location.push_back(to_string(count));
+				m_context->location.push_back(to_string(count));
 				if (action.is_object()) {
-					script->globalActions.push_back(parseAction(action, true, &context, location));
+					script->globalActions.push_back(parseAction(action, true));
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionsObject, "'global-actions' elements must be action objects.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_GlobalActionsObject, "'global-actions' elements must be action objects.");
 				}
-				location.pop_back();
+				m_context->location.pop_back();
 				count++;
 			}
 
-			location.pop_back();
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionsArray, "'global-actions' must be an array.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_GlobalActionsArray, "'global-actions' must be an array.");
 		}
 	}
 
 	json::const_iterator inputTriggers = scriptJson.find("input-triggers");
 	if (inputTriggers != scriptJson.end()) {
 		if (inputTriggers->is_array()) {
-			location.push_back("input-triggers");
+			m_context->location.push_back("input-triggers");
 
 			int count = 0;
 			vector<json> inputTriggerElements = (*inputTriggers);
 			for (const json& inputTrigger : inputTriggerElements) {
-				location.push_back(to_string(count));
+				m_context->location.push_back(to_string(count));
 				if (inputTrigger.is_object()) {
-					script->inputTriggers.push_back(parseInputTrigger(inputTrigger, &context, location));
+					script->inputTriggers.push_back(parseInputTrigger(inputTrigger));
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_InputTriggerObject, "'input-triggers' elements must be objects.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_InputTriggerObject, "'input-triggers' elements must be objects.");
 				}
-				location.pop_back();
+				m_context->location.pop_back();
 				count++;
 			}
 
-			location.pop_back();
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
 		}
 	}
 
 	json::const_iterator sequences = scriptJson.find("sequences");
 	if (sequences != scriptJson.end()) {
-		verifyVersion(VERSION_1_1_0, &context, "'sequences'", location);
+		verifyVersion(VERSION_1_1_0, m_context.get(), "'sequences'");
 		if (sequences->is_array()) {
-			location.push_back("sequences");
+			m_context->location.push_back("sequences");
 
 			ids.clear();
 			int count = 0;
 			vector<json> sequenceElements = (*sequences);
 			for (const json& sequence : sequenceElements) {
-				location.push_back(to_string(count));
+				m_context->location.push_back(to_string(count));
 				if (sequence.is_object()) {
-					script->sequences.push_back(parseSequence(sequence, &context, location));
+					script->sequences.push_back(parseSequence(sequence));
 					if (find(ids.begin(), ids.end(), script->sequences.back().id) != ids.end()) {
-						ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->sequences.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->sequences.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 					} else if (script->sequences.back().id.size() > 0) {
 						ids.push_back(script->sequences.back().id);
 					}
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SequenceObject, "'sequences' elements must be objects.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_SequenceObject, "'sequences' elements must be objects.");
 				}
-				location.pop_back();
+				m_context->location.pop_back();
 				count++;
 			}
 
-			location.pop_back();
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SequencesArray, "'sequences' must be an array.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_SequencesArray, "'sequences' must be an array.");
 		}
 	}
 
@@ -235,333 +233,333 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson, vector<
 	if (componentPool != scriptJson.end()) {
 		if (componentPool->is_object()) {
 			static const vector<string> componentPoolProperties = { "segment-blocks", "segments", "inputs", "outputs", "calcs", "values", "actions", "ifs", "tunings" };
-			location.push_back("component-pool");
+			m_context->location.push_back("component-pool");
 
-			verifyAllowedProperties(*componentPool, componentPoolProperties, false, context.validationErrors, location);
+			verifyAllowedProperties(*componentPool, componentPoolProperties, false, m_context.get());
 
 			json::const_iterator segmentBlocks = componentPool->find("segment-blocks");
 			if (segmentBlocks != componentPool->end()) {
 				if (segmentBlocks->is_array()) {
-					location.push_back("segment-blocks");
+					m_context->location.push_back("segment-blocks");
 
 					int count = 0;
 					vector<json> segmentBlockElements = (*segmentBlocks);
 					for (const json& segmentBlock : segmentBlockElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (segmentBlock.is_object()) {
-							script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock, &context, location));
+							script->segmentBlocks.push_back(parseSegmentBlock(segmentBlock));
 							if (find(ids.begin(), ids.end(), script->segmentBlocks.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->segmentBlocks.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->segmentBlocks.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->segmentBlocks.back().id.size() > 0) {
 								ids.push_back(script->segmentBlocks.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SegmentBlockObject, "'segment-blocks' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_SegmentBlockObject, "'segment-blocks' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SegmentBlocksArray, "'segment-blocks' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_SegmentBlocksArray, "'segment-blocks' must be an array.");
 				}
 			}
 
 			json::const_iterator segments = componentPool->find("segments");
 			if (segments != componentPool->end()) {
 				if (segments->is_array()) {
-					location.push_back("segments");
+					m_context->location.push_back("segments");
 
 					ids.clear();
 					int count = 0;
 					vector<json> segmentElements = (*segments);
 					for (const json& segment : segmentElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (segment.is_object()) {
-							script->segments.push_back(parseSegment(segment, false, &context, location));
+							script->segments.push_back(parseSegment(segment, false));
 							if (find(ids.begin(), ids.end(), script->segments.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->segments.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->segments.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->segments.back().id.size() > 0) {
 								ids.push_back(script->segments.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SegmentObject, "'segments' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_SegmentObject, "'segments' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_SegmentsArray, "'segments' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_SegmentsArray, "'segments' must be an array.");
 				}
 			}
 
 			json::const_iterator inputs = componentPool->find("inputs");
 			if (inputs != componentPool->end()) {
 				if (inputs->is_array()) {
-					location.push_back("inputs");
+					m_context->location.push_back("inputs");
 
 					ids.clear();
 					int count = 0;
 					vector<json> inputElements = (*inputs);
 					for (const json& input : inputElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (input.is_object()) {
-							script->inputs.push_back(parseFullInput(input, false, false, &context, location));
+							script->inputs.push_back(parseFullInput(input, false, false));
 							if (find(ids.begin(), ids.end(), script->inputs.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->inputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->inputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->inputs.back().id.size() > 0) {
 								ids.push_back(script->inputs.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_InputObject, "'inputs' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_InputObject, "'inputs' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_InputsArray, "'inputs' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_InputsArray, "'inputs' must be an array.");
 				}
 			}
 
 			json::const_iterator outputs = componentPool->find("outputs");
 			if (outputs != componentPool->end()) {
 				if (outputs->is_array()) {
-					location.push_back("outputs");
+					m_context->location.push_back("outputs");
 
 					ids.clear();
 					int count = 0;
 					vector<json> outputElements = (*outputs);
 					for (const json& output : outputElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (output.is_object()) {
-							script->outputs.push_back(parseFullOutput(output, false, false, &context, location));
+							script->outputs.push_back(parseFullOutput(output, false, false));
 							if (find(ids.begin(), ids.end(), script->outputs.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->outputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->outputs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->outputs.back().id.size() > 0) {
 								ids.push_back(script->outputs.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_OutputObject, "'outputs' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_OutputObject, "'outputs' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_OutputsArray, "'outputs' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_OutputsArray, "'outputs' must be an array.");
 				}
 			}
 
 			json::const_iterator calcs = componentPool->find("calcs");
 			if (calcs != componentPool->end()) {
 				if (calcs->is_array()) {
-					location.push_back("calcs");
+					m_context->location.push_back("calcs");
 
 					ids.clear();
 					int count = 0;
 					vector<json> calcElements = (*calcs);
 					for (const json& calc : calcElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (calc.is_object()) {
-							script->calcs.push_back(parseCalc(calc, false, &context, location));
+							script->calcs.push_back(parseCalc(calc, false));
 							if (find(ids.begin(), ids.end(), script->calcs.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->calcs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->calcs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->calcs.back().id.size() > 0) {
 								ids.push_back(script->calcs.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_CalcObject, "'calcs' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_CalcObject, "'calcs' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_CalcsArray, "'calcs' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_CalcsArray, "'calcs' must be an array.");
 				}
 			}
 
 			json::const_iterator values = componentPool->find("values");
 			if (values != componentPool->end()) {
 				if (values->is_array()) {
-					location.push_back("values");
+					m_context->location.push_back("values");
 
 					ids.clear();
 					int count = 0;
 					vector<json> valueElements = (*values);
 					for (const json& value : valueElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (value.is_object()) {
-							script->values.push_back(parseFullValue(value, false, false, &context, location));
+							script->values.push_back(parseFullValue(value, false, false));
 							if (find(ids.begin(), ids.end(), script->values.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->values.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->values.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->values.back().id.size() > 0) {
 								ids.push_back(script->values.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_ValueObject, "'values' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_ValueObject, "'values' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_ValuesArray, "'values' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_ValuesArray, "'values' must be an array.");
 				}
 			}
 
 			json::const_iterator actions = componentPool->find("actions");
 			if (actions != componentPool->end()) {
 				if (actions->is_array()) {
-					location.push_back("actions");
+					m_context->location.push_back("actions");
 
 					ids.clear();
 					int count = 0;
 					vector<json> actionElements = (*actions);
 					for (const json& action : actionElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (action.is_object()) {
-							script->actions.push_back(parseAction(action, false, &context, location));
+							script->actions.push_back(parseAction(action, false));
 							if (find(ids.begin(), ids.end(), script->actions.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->actions.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->actions.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->actions.back().id.size() > 0) {
 								ids.push_back(script->actions.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_ActionObject, "'actions' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_ActionObject, "'actions' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_ActionsArray, "'actions' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_ActionsArray, "'actions' must be an array.");
 				}
 			}
 
 			json::const_iterator ifs = componentPool->find("ifs");
 			if (ifs != componentPool->end()) {
 				if (ifs->is_array()) {
-					location.push_back("ifs");
+					m_context->location.push_back("ifs");
 
 					ids.clear();
 					int count = 0;
 					vector<json> ifElements = (*ifs);
 					for (const json& ifObj : ifElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (ifObj.is_object()) {
-							script->ifs.push_back(parseIf(ifObj, false, &context, location));
+							script->ifs.push_back(parseIf(ifObj, false));
 							if (find(ids.begin(), ids.end(), script->ifs.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->ifs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->ifs.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->ifs.back().id.size() > 0) {
 								ids.push_back(script->ifs.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_IfObject, "'ifs' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_IfObject, "'ifs' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_IfsArray, "'ifs' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_IfsArray, "'ifs' must be an array.");
 				}
 			}
 
 			json::const_iterator tunings = componentPool->find("tunings");
 			if (tunings != componentPool->end()) {
-				verifyVersion(VERSION_1_1_0, &context, "'tunings'", location);
+				verifyVersion(VERSION_1_1_0, m_context.get(), "'tunings'");
 				if (tunings->is_array()) {
-					location.push_back("tunings");
+					m_context->location.push_back("tunings");
 
 					ids.clear();
 					int count = 0;
 					vector<json> tuningElements = (*tunings);
 					for (const json& tuningObj : tuningElements) {
-						location.push_back(to_string(count));
+						m_context->location.push_back(to_string(count));
 						if (tuningObj.is_object()) {
-							script->tunings.push_back(parseTuning(tuningObj, false, &context, location));
+							script->tunings.push_back(parseTuning(tuningObj, false));
 							if (find(ids.begin(), ids.end(), script->tunings.back().id) != ids.end()) {
-								ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Id_Duplicate, "Id '", script->tunings.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Duplicate, "Id '", script->tunings.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 							} else if (script->tunings.back().id.size() > 0) {
 								ids.push_back(script->tunings.back().id);
 							}
 						} else {
-							ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TuningObject, "'tunings' elements must be objects.");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_TuningObject, "'tunings' elements must be objects.");
 						}
-						location.pop_back();
+						m_context->location.pop_back();
 						count++;
 					}
 
-					location.pop_back();
+					m_context->location.pop_back();
 				} else {
-					ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_TuningsArray, "'tunings' must be an array.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_TuningsArray, "'tunings' must be an array.");
 				}
 			}
 
-			location.pop_back();
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_ComponentPoolObject, "'component-pool' must be an object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Script_ComponentPoolObject, "'component-pool' must be an object.");
 		}
 	}
 
 	return script;
 }
 
-ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson) {
 	static const vector<string> timelineProperties = { "time-scale", "lanes", "loop-lock" };
 	ScriptTimeline timeline;
 
-	verifyAllowedProperties(timelineJson, timelineProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(timelineJson, timelineProperties, false, m_context.get());
 
 	json::const_iterator timeScale = timelineJson.find("time-scale");
 	if (timeScale != timelineJson.end()) {
 		if (timeScale->is_object()) {
-			location.push_back("time-scale");
-			ScriptTimeScale *scriptTimeScale = new ScriptTimeScale(parseTimeScale(*timeScale, context, location));
+			m_context->location.push_back("time-scale");
+			ScriptTimeScale *scriptTimeScale = new ScriptTimeScale(parseTimeScale(*timeScale));
 			timeline.timeScale.reset(scriptTimeScale);
-			location.pop_back();
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Timeline_TimeScaleObject, "'time-scale' must be an object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Timeline_TimeScaleObject, "'time-scale' must be an object.");
 		}
 	}
 
 	json::const_iterator lanes = timelineJson.find("lanes");
 	if ((lanes != timelineJson.end()) && (lanes->is_array())) {
-		location.push_back("lanes");
+		m_context->location.push_back("lanes");
 
 		int count = 0;
 		vector<json> laneElements = (*lanes);
 		for (const json& lane : laneElements) {
-			location.push_back(to_string(count));
+			m_context->location.push_back(to_string(count));
 			if (lane.is_object()) {
-				timeline.lanes.push_back(parseLane(lane, context, location));
+				timeline.lanes.push_back(parseLane(lane));
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Timeline_LaneObject, "'lanes' elements must be objects.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Timeline_LaneObject, "'lanes' elements must be objects.");
 			}
-			location.pop_back();
+			m_context->location.pop_back();
 			count++;
 		}
 
-		location.pop_back();
+		m_context->location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Timeline_LanesMissing, "'lanes' is required and must be an array.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Timeline_LanesMissing, "'lanes' is required and must be an array.");
 	}
 
 	timeline.loopLock = false;
 	json::const_iterator loopLock = timelineJson.find("loop-lock");
  	if (loopLock != timelineJson.end()) {
  		if (!loopLock->is_boolean()) {
- 			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Timeline_LoopLockBoolean, "'loop-lock' must be a boolean.");
+ 			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Timeline_LoopLockBoolean, "'loop-lock' must be a boolean.");
  		} else {
  			timeline.loopLock = (*loopLock);
  		}
@@ -570,18 +568,18 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson, JsonScr
 	return timeline;
 }
 
-ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson) {
 	static const vector<string> timeScaleProperties = { "sample-rate", "bpm", "bpb" };
 	ScriptTimeScale timeScale;
 
-	verifyAllowedProperties(timeScaleJson, timeScaleProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(timeScaleJson, timeScaleProperties, false, m_context.get());
 
 	json::const_iterator sampleRate = timeScaleJson.find("sample-rate");
 	if (sampleRate != timeScaleJson.end()) {
 		if ((sampleRate->is_number_unsigned()) && (sampleRate->get<int>() > 0)) {
 			timeScale.sampleRate.reset(new int(sampleRate->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::TimeScale_SampleRateNumber, "'sample-rate' must be a positive integer number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::TimeScale_SampleRateNumber, "'sample-rate' must be a positive integer number.");
 		}
 	}
 
@@ -590,7 +588,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, Json
 		if ((bpm->is_number_unsigned()) && (bpm->get<int>() > 0)) {
 			timeScale.bpm.reset(new int(bpm->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::TimeScale_BpmNumber, "'bpm' must be a positive integer number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::TimeScale_BpmNumber, "'bpm' must be a positive integer number.");
 		}
 	}
 
@@ -599,24 +597,24 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson, Json
 		if ((bpb->is_number_unsigned()) && (bpb->get<int>() > 0)) {
 			timeScale.bpb.reset(new int(bpb->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::TimeScale_BpbNumber, "'bpb' must be a positive integer number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::TimeScale_BpbNumber, "'bpb' must be a positive integer number.");
 		}
 	}
 
 	if (!(timeScale.sampleRate) && !(timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::TimeScale_Empty, "One of 'sample-rate' or 'bpm' is required.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::TimeScale_Empty, "One of 'sample-rate' or 'bpm' is required.");
 	} else if ((timeScale.bpb) && !(timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::TimeScale_BpbRequiresBpm, "'bpm' must be set if 'bpb' is set.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::TimeScale_BpbRequiresBpm, "'bpm' must be set if 'bpb' is set.");
 	}
 
 	return timeScale;
 }
 
-ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 	static const vector<string> laneProperties = { "auto-start", "loop", "repeat", "start-trigger", "restart-trigger", "stop-trigger", "segments", "disable-ui" };
 	ScriptLane lane;
 
-	verifyAllowedProperties(laneJson, laneProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(laneJson, laneProperties, false, m_context.get());
 
 	json::const_iterator autoStart = laneJson.find("auto-start");
 	lane.autoStart = true;
@@ -624,7 +622,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		if (autoStart->is_boolean()) {
 			lane.autoStart = autoStart->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_AutoStartBoolean, "'auto-start' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_AutoStartBoolean, "'auto-start' must be a boolean.");
 		}
 	}
 
@@ -634,7 +632,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		if (loop->is_boolean()) {
 			lane.loop = loop->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_LoopBoolean, "'loop' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_LoopBoolean, "'loop' must be a boolean.");
 		}
 	}
 
@@ -644,7 +642,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		if (repeat->is_number_unsigned()) {
 			lane.repeat = repeat->get<int>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_RepeatNumber, "'repeat' must be an unsigned number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_RepeatNumber, "'repeat' must be an unsigned number.");
 		}
 	}
 
@@ -653,10 +651,10 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		if (startTrigger->is_string()) {
 			lane.startTrigger = *startTrigger;
 			if (lane.startTrigger.length() == 0) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_StartTriggerLength, "'start-trigger' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_StartTriggerLength, "'start-trigger' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_StartTriggerString, "'start-trigger' must be a string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_StartTriggerString, "'start-trigger' must be a string.");
 		}
 	}
 
@@ -665,10 +663,10 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		if (restartTrigger->is_string()) {
 			lane.restartTrigger = *restartTrigger;
 			if (lane.restartTrigger.length() == 0) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_RestartTriggerLength, "'restart-trigger' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_RestartTriggerLength, "'restart-trigger' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_RestartTriggerString, "'restart-trigger' must be a string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_RestartTriggerString, "'restart-trigger' must be a string.");
 		}
 	}
 
@@ -677,33 +675,33 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		if (stopTrigger->is_string()) {
 			lane.stopTrigger = *stopTrigger;
 			if (lane.stopTrigger.length() == 0) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_StopTriggerLength, "'stop-trigger' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_StopTriggerLength, "'stop-trigger' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_StopTriggerString, "'stop-trigger' must be a string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_StopTriggerString, "'stop-trigger' must be a string.");
 		}
 	}
 
 	json::const_iterator segments = laneJson.find("segments");
 	if ((segments != laneJson.end()) && (segments->is_array())) {
-		location.push_back("segments");
+		m_context->location.push_back("segments");
 
 		int count = 0;
 		vector<json> segmentElements = (*segments);
 		for (const json& segment : segmentElements) {
-			location.push_back(to_string(count));
+			m_context->location.push_back(to_string(count));
 			if (segment.is_object()) {
-				lane.segments.push_back(parseSegment(segment, true, context, location));
+				lane.segments.push_back(parseSegment(segment, true));
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_SegmentObject, "'segments' elements must be Segment objects.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_SegmentObject, "'segments' elements must be Segment objects.");
 			}
-			location.pop_back();
+			m_context->location.pop_back();
 			count++;
 		}
 
-		location.pop_back();
+		m_context->location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_SegmentsMissing, "'segments' is required and must be an array.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_SegmentsMissing, "'segments' is required and must be an array.");
 	}
 
 	lane.disableUi = false;
@@ -712,24 +710,24 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson, JsonScriptParseCont
 		if (disableUi->is_boolean()) {
 			lane.disableUi = disableUi->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Lane_DisableUiBoolean, "'disable-ui' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Lane_DisableUiBoolean, "'disable-ui' must be a boolean.");
 		}
 	}
 
 	return lane;
 }
 
-ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
+ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allowRefs) {
 	static const char* cSegmentProperties[] = { "duration", "actions", "disable-ui", "segment-block" };
 	static const vector<string> vSegmentProperties(begin(cSegmentProperties), end(cSegmentProperties));
 	ScriptSegment segment;
 
-	verifyAllowedProperties(segmentJson, vSegmentProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(segmentJson, vSegmentProperties, true, m_context.get());
 
-	populateRef(segment, segmentJson, allowRefs, context, location);
+	populateRef(segment, segmentJson, allowRefs);
 	if (segment.ref.length() > 0) {
 		if (hasOneOf(segmentJson, cSegmentProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_RefOrInstance, "A ref segment can not be combined other non-ref segment properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_RefOrInstance, "A ref segment can not be combined other non-ref segment properties.");
 		}
 	} else {
 		static const char* segmentBlockProperty[] = { "segment-block" };
@@ -737,11 +735,11 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 		if (!hasOneOf(segmentJson, segmentBlockProperty)) {
 			json::const_iterator duration = segmentJson.find("duration");
 			if ((duration != segmentJson.end()) && (duration->is_object())) {
-				location.push_back("duration");
-				segment.duration = parseDuration(*duration, context, location);
-				location.pop_back();
+				m_context->location.push_back("duration");
+				segment.duration = parseDuration(*duration);
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_DurationObject, "'duration' is required and must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_DurationObject, "'duration' is required and must be an object.");
 			}
 
 			segment.disableUi = false;
@@ -750,7 +748,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				if (disableUi->is_boolean()) {
 					segment.disableUi = disableUi->get<bool>();
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_DisableUiBoolean, "'disable-ui' must be a boolean.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_DisableUiBoolean, "'disable-ui' must be a boolean.");
 				}
 			}
 		} else if (!hasOneOf(segmentJson, nonSegmentBlockProperties)) {
@@ -762,37 +760,37 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 						segment.segmentBlock.reset(new ScriptSegmentBlock());
 						segment.segmentBlock->ref = segmentBlockRef;
 					} else {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_SegmentBlockLength, "'segment-block' must be a non-empty string");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_SegmentBlockLength, "'segment-block' must be a non-empty string");
 					}
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_SegmentBlockString, "'segment-block' must be a non-empty string");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_SegmentBlockString, "'segment-block' must be a non-empty string");
 				}
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference and optional 'actions', but not both.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference and optional 'actions', but not both.");
 		}
 
 		json::const_iterator actions = segmentJson.find("actions");
 		if (actions != segmentJson.end()) {
 			if (actions->is_array()) {
-				location.push_back("actions");
+				m_context->location.push_back("actions");
 
 				int count = 0;
 				vector<json> actionElements = (*actions);
 				for (const json& action : actionElements) {
-					location.push_back(to_string(count));
+					m_context->location.push_back(to_string(count));
 					if (action.is_object()) {
-						segment.actions.push_back(parseAction(action, true, context, location));
+						segment.actions.push_back(parseAction(action, true));
 					} else {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
 					}
-					location.pop_back();
+					m_context->location.pop_back();
 					count++;
 				}
 
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Segment_ActionsArray, "'actions' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Segment_ActionsArray, "'actions' must be an array.");
 			}
 		}
 	}
@@ -800,53 +798,53 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 	return segment;
 }
 
-ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJson) {
 	static const vector<string> segmentBlockProperties = { "repeat", "segments" };
 	ScriptSegmentBlock segmentBlock;
 
-	verifyAllowedProperties(segmentBlockJson, segmentBlockProperties, true, context->validationErrors, location); // Refs aren't really allowed, but that will be caught by the populateRef method.
+	verifyAllowedProperties(segmentBlockJson, segmentBlockProperties, true, m_context.get()); // Refs aren't really allowed, but that will be caught by the populateRef method.
 
-	populateRef(segmentBlock, segmentBlockJson, false, context, location);
+	populateRef(segmentBlock, segmentBlockJson, false);
 
 	json::const_iterator repeat = segmentBlockJson.find("repeat");
 	if (repeat != segmentBlockJson.end()) {
 		if ((repeat->is_number_unsigned()) && (repeat->is_number_unsigned() > 0)) {
 			segmentBlock.repeat.reset(new int(repeat->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
 		}
 	}
 	json::const_iterator segments = segmentBlockJson.find("segments");
 	if ((segments != segmentBlockJson.end()) && (segments->is_array())) {
-		location.push_back("segments");
+		m_context->location.push_back("segments");
 
 		int count = 0;
 		vector<json> segmentElements = (*segments);
 		for (const json& segment : segmentElements) {
-			location.push_back(to_string(count));
+			m_context->location.push_back(to_string(count));
 			if (segment.is_object()) {
-				segmentBlock.segments.push_back(parseSegment(segment, true, context, location));
+				segmentBlock.segments.push_back(parseSegment(segment, true));
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be Segment objects.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be Segment objects.");
 			}
-			location.pop_back();
+			m_context->location.pop_back();
 			count++;
 		}
 
-		location.pop_back();
+		m_context->location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SegmentBlock_SegmentsArray, "'segments' is required and must be an array.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SegmentBlock_SegmentsArray, "'segments' is required and must be an array.");
 	}
 
 	return segmentBlock;
 }
 
-ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 	static const vector<string> durationProperties = { "samples", "millis", "bars", "beats", "hz" };
 	ScriptDuration duration;
 	int durationCount = 0;
 
-	verifyAllowedProperties(durationJson, durationProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(durationJson, durationProperties, false, m_context.get());
 
 	json::const_iterator samples = durationJson.find("samples");
 	if (samples != durationJson.end()) {
@@ -854,10 +852,10 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((samples->is_number_unsigned()) && (samples->get<uint64_t>() > 0)) {
 			duration.samples.reset(new uint64_t(samples->get<uint64_t>()));
 		} else if (samples->is_object()) {
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*samples, true, context, location, "samples", ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*samples, true, "samples", ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be an object."));
 			duration.samplesValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be a positive integer number or a value object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be a positive integer number or a value object.");
 		}
 	}
 
@@ -867,10 +865,10 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((millis->is_number()) && (millis->get<float>() > 0)) {
 			duration.millis.reset(new float(millis->get<float>()));
 		} else if (millis->is_object()) {
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*millis, true, context, location, "millis", ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*millis, true, "millis", ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be an object."));
 			duration.millisValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be a positive decimal number or a value object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be a positive decimal number or a value object.");
 		}
 	}
 
@@ -879,7 +877,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((bars->is_number_unsigned()) && (bars->get<uint64_t>() > 0)) {
 			duration.bars.reset(new uint64_t(bars->get<uint64_t>()));
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsNumber, "'bars' must be a positive integer number or a value object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_BarsNumber, "'bars' must be a positive integer number or a value object.");
 		}
 	}
 
@@ -889,10 +887,10 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((beats->is_number()) && (beats->get<float>() >= 0)) {
 			duration.beats.reset(new float(beats->get<float>()));
 		} else if (beats->is_object()) {
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*beats, true, context, location, "beats", ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*beats, true, "beats", ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be an object."));
 			duration.beatsValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be a positive decimal number or a value object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be a positive decimal number or a value object.");
 		}
 	}
 
@@ -902,39 +900,39 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson, JsonScr
 		if ((hz->is_number()) && (hz->get<float>() > 0)) {
 			duration.hz.reset(new float(hz->get<float>()));
 		} else if (hz->is_object()) {
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*hz, true, context, location, "hz", ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*hz, true, "hz", ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be an object."));
 			duration.hzValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be a positive decimal number or a value object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be a positive decimal number or a value object.");
 		}
 	}
 
 	if (durationCount == 0) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
 	} else if (durationCount > 1) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
 	} else if (duration.bars && duration.beatsValue) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can only be used with a constant 'beats', not with a value-based 'beats'.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can only be used with a constant 'beats', not with a value-based 'beats'.");
 	} else if (duration.bars && !duration.beats) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
 	} else if ((!duration.bars) && (duration.beats) && (*duration.beats.get() == 0)) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsNotZero, "'beats' can not be 0 unless 'bars' is also used.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Duration_BeatsNotZero, "'beats' can not be 0 unless 'bars' is also used.");
 	}
 
 	return duration;
 }
 
-ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
+ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs) {
 	static const char* cActionProperties[] = { "timing", "set-value", "set-variable", "set-polyphony", "set-label", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" };
 	static const vector<string> vActionProperties(begin(cActionProperties), end(cActionProperties));
 	ScriptAction action;
 
-	verifyAllowedProperties(actionJson, vActionProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(actionJson, vActionProperties, true, m_context.get());
 
-	populateRef(action, actionJson, allowRefs, context, location);
+	populateRef(action, actionJson, allowRefs);
 	if (action.ref.length() > 0) {
 		if (hasOneOf(actionJson, cActionProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
 		}
 	} else {
 		int actionCount = 0;
@@ -950,7 +948,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			} else if (*timing == "gate") {
 				action.timing = ScriptAction::ActionTiming::GATE;
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_TimingEnum, "timing must be either 'start', 'end', 'glide' or 'gate'.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_TimingEnum, "timing must be either 'start', 'end', 'glide' or 'gate'.");
 			}
 		} else {
 			action.timing = ScriptAction::ActionTiming::START;
@@ -960,12 +958,12 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		if (setValue != actionJson.end()) {
 			actionCount++;
 			if (setValue->is_object()) {
-				location.push_back("set-value");
-				ScriptSetValue *scriptSetValue = new ScriptSetValue(parseSetValue(*setValue, context, location));
+				m_context->location.push_back("set-value");
+				ScriptSetValue *scriptSetValue = new ScriptSetValue(parseSetValue(*setValue));
 				action.setValue.reset(scriptSetValue);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_SetValueObject, "'set-value' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_SetValueObject, "'set-value' must be an object.");
 			}
 		}
 
@@ -973,12 +971,12 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		if (setVariable != actionJson.end()) {
 			actionCount++;
 			if (setVariable->is_object()) {
-				location.push_back("set-variable");
-				ScriptSetVariable *scriptSetVariable = new ScriptSetVariable(parseSetVariable(*setVariable, context, location));
+				m_context->location.push_back("set-variable");
+				ScriptSetVariable *scriptSetVariable = new ScriptSetVariable(parseSetVariable(*setVariable));
 				action.setVariable.reset(scriptSetVariable);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_SetVariableObject, "'set-variable' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_SetVariableObject, "'set-variable' must be an object.");
 			}
 		}
 
@@ -986,12 +984,12 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		if (setPolyphony != actionJson.end()) {
 			actionCount++;
 			if (setPolyphony->is_object()) {
-				location.push_back("set-polyphony");
-				ScriptSetPolyphony *scriptSetPolyphony = new ScriptSetPolyphony(parseSetPolyphony(*setPolyphony, context, location));
+				m_context->location.push_back("set-polyphony");
+				ScriptSetPolyphony *scriptSetPolyphony = new ScriptSetPolyphony(parseSetPolyphony(*setPolyphony));
 				action.setPolyphony.reset(scriptSetPolyphony);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_SetPolyphonyObject, "'set-polyphony' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_SetPolyphonyObject, "'set-polyphony' must be an object.");
 			}
 		}
 
@@ -999,12 +997,12 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		if (setLabel != actionJson.end()) {
 			actionCount++;
 			if (setLabel->is_object()) {
-				location.push_back("set-label");
-				ScriptSetLabel *scriptSetLabel = new ScriptSetLabel(parseSetLabel(*setLabel, context, location));
+				m_context->location.push_back("set-label");
+				ScriptSetLabel *scriptSetLabel = new ScriptSetLabel(parseSetLabel(*setLabel));
 				action.setLabel.reset(scriptSetLabel);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_SetLabelObject, "'set-label' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_SetLabelObject, "'set-label' must be an object.");
 			}
 		}
 
@@ -1012,12 +1010,12 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		if (assert != actionJson.end()) {
 			actionCount++;
 			if (assert->is_object()) {
-				location.push_back("assert");
-				ScriptAssert *scriptAssert = new ScriptAssert(parseAssert(*assert, context, location));
+				m_context->location.push_back("assert");
+				ScriptAssert *scriptAssert = new ScriptAssert(parseAssert(*assert));
 				action.assert.reset(scriptAssert);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_AssertObject, "'assert' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_AssertObject, "'assert' must be an object.");
 			}
 		}
 
@@ -1027,78 +1025,78 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (trigger->is_string()) {
 				action.trigger = *trigger;
 				if (action.trigger.size() == 0) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_TriggerLength, "'trigger' can not be an empty string.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_TriggerLength, "'trigger' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_TriggerString, "'trigger' must be a string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_TriggerString, "'trigger' must be a string.");
 			}
 		}
 
 		json::const_iterator moveSequence = actionJson.find("move-sequence");
 		if (moveSequence != actionJson.end()) {
-			verifyVersion(VERSION_1_2_0, context, "'move-sequence'", location);
+			verifyVersion(VERSION_1_2_0, m_context.get(), "'move-sequence'");
 			actionCount++;
 			if (moveSequence->is_object()) {
-				location.push_back("move-sequence");
-				ScriptMoveSequence *scriptMoveSequence = new ScriptMoveSequence(parseMoveSequence(*moveSequence, context, location));
+				m_context->location.push_back("move-sequence");
+				ScriptMoveSequence *scriptMoveSequence = new ScriptMoveSequence(parseMoveSequence(*moveSequence));
 				action.moveSequence.reset(scriptMoveSequence);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_MoveSequenceObject, "'move-sequence' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_MoveSequenceObject, "'move-sequence' must be an object.");
 			}
 		}
 
 		json::const_iterator clearSequence = actionJson.find("clear-sequence");
 		if (clearSequence != actionJson.end()) {
-			verifyVersion(VERSION_1_2_0, context, "'clear-sequence'", location);
+			verifyVersion(VERSION_1_2_0, m_context.get(), "'clear-sequence'");
 			actionCount++;
 			if (clearSequence->is_string()) {
 				action.clearSequence = *clearSequence;
 				if (action.clearSequence.size() == 0) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_ClearSequenceLength, "'clear-sequence' can not be an empty string.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_ClearSequenceLength, "'clear-sequence' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_ClearSequenceString, "'clear-sequence' must be a string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_ClearSequenceString, "'clear-sequence' must be a string.");
 			}
 		}
 
 		json::const_iterator addToSequence = actionJson.find("add-to-sequence");
 		if (addToSequence != actionJson.end()) {
-			verifyVersion(VERSION_1_2_0, context, "'add-to-sequence'", location);
+			verifyVersion(VERSION_1_2_0, m_context.get(), "'add-to-sequence'");
 			actionCount++;
 			if (addToSequence->is_object()) {
-				location.push_back("add-to-sequence");
-				ScriptAddToSequence *scriptAddToSequence = new ScriptAddToSequence(parseAddToSequence(*addToSequence, context, location));
+				m_context->location.push_back("add-to-sequence");
+				ScriptAddToSequence *scriptAddToSequence = new ScriptAddToSequence(parseAddToSequence(*addToSequence));
 				action.addToSequence.reset(scriptAddToSequence);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_AddToSequenceObject, "'add-to-sequence' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_AddToSequenceObject, "'add-to-sequence' must be an object.");
 			}
 		}
 
 		json::const_iterator removeFromSequence = actionJson.find("remove-from-sequence");
 		if (removeFromSequence != actionJson.end()) {
-			verifyVersion(VERSION_1_2_0, context, "'remove-from-sequence'", location);
+			verifyVersion(VERSION_1_2_0, m_context.get(), "'remove-from-sequence'");
 			actionCount++;
 			if (removeFromSequence->is_object()) {
-				location.push_back("remove-from-sequence");
-				ScriptRemoveFromSequence *scriptRemoveFromSequence = new ScriptRemoveFromSequence(parseRemoveFromSequence(*removeFromSequence, context, location));
+				m_context->location.push_back("remove-from-sequence");
+				ScriptRemoveFromSequence *scriptRemoveFromSequence = new ScriptRemoveFromSequence(parseRemoveFromSequence(*removeFromSequence));
 				action.removeFromSequence.reset(scriptRemoveFromSequence);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_RemoveFromSequenceObject, "'remove-from-sequence' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_RemoveFromSequenceObject, "'remove-from-sequence' must be an object.");
 			}
 		}
 
 		json::const_iterator startValue = actionJson.find("start-value");
 		if (startValue != actionJson.end()) {
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*startValue, true, context, location, "start-value", ValidationErrorCode::Action_StartValueObject, "'start-value' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*startValue, true, "start-value", ValidationErrorCode::Action_StartValueObject, "'start-value' must be an object."));
 			action.startValue.reset(scriptValue);
 		}
 
 		json::const_iterator endValue = actionJson.find("end-value");
 		if (endValue != actionJson.end()) {
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*endValue, true, context, location, "end-value", ValidationErrorCode::Action_EndValueObject, "'end-value' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*endValue, true, "end-value", ValidationErrorCode::Action_EndValueObject, "'end-value' must be an object."));
 			action.endValue.reset(scriptValue);
 		}
 
@@ -1107,10 +1105,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (easeFactor->is_number()) {
 				action.easeFactor.reset(new float(easeFactor->get<float>()));
 				if ((*action.easeFactor.get() < -5.0) || (*action.easeFactor.get() > 5.0)) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_EaseFactorRange, "'ease-factor' must be a number between -5.0 and 5.0.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_EaseFactorRange, "'ease-factor' must be a number between -5.0 and 5.0.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_EaseFactorFloat, "'ease-factor' must be a number between -5.0 and 5.0.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_EaseFactorFloat, "'ease-factor' must be a number between -5.0 and 5.0.");
 			}
 		}
 
@@ -1122,10 +1120,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				} else if (easeAlgorithm->get<string>() == "sig") {
 					action.easeAlgorithm.reset(new ScriptAction::EaseAlgorithm(ScriptAction::EaseAlgorithm::SIG));
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
 			}
 		}
 
@@ -1134,16 +1132,16 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (gateHighRatio->is_number()) {
 				action.gateHighRatio.reset(new float(gateHighRatio->get<float>()));
 				if ((*action.gateHighRatio.get() < 0.f) || (*action.gateHighRatio.get() > 1.f)) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_GateHighRatioRange, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_GateHighRatioRange, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_GateHighRatioFloat, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_GateHighRatioFloat, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
 			}
 		}
 
 		json::const_iterator output = actionJson.find("output");
 		if (output != actionJson.end()) {
-			ScriptOutput *scriptOutput = new ScriptOutput(parseOutput(*output, true, context, location, "output", ValidationErrorCode::Action_OutputObject, "'output' must be an object."));
+			ScriptOutput *scriptOutput = new ScriptOutput(parseOutput(*output, true, "output", ValidationErrorCode::Action_OutputObject, "'output' must be an object."));
 			action.output.reset(scriptOutput);
 		}
 
@@ -1152,62 +1150,62 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (variable->is_string()) {
 				action.variable = *variable;
 				if (action.variable.size() == 0) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_VariableLength, "'variable' can not be an empty string.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_VariableLength, "'variable' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_VariableString, "'variable' must be a string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_VariableString, "'variable' must be a string.");
 			}
 		}
 
 		json::const_iterator ifCondition = actionJson.find("if");
 		if (ifCondition != actionJson.end()) {
 			if (ifCondition->is_object()) {
-				location.push_back("if");
-				ScriptIf *scriptIf = new ScriptIf(parseIf(*ifCondition, true, context, location));
+				m_context->location.push_back("if");
+				ScriptIf *scriptIf = new ScriptIf(parseIf(*ifCondition, true));
 				action.condition.reset(scriptIf);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_IfObject, "'if' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_IfObject, "'if' must be an object.");
 			}
 		}
 
 		if (action.timing == ScriptAction::ActionTiming::GLIDE) {
 			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.moveSequence) || (action.clearSequence.length() > 0) || (action.addToSequence) || (action.removeFromSequence) || (action.gateHighRatio)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.startValue) || (!action.endValue)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when 'GLIDE' timing is used.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when 'GLIDE' timing is used.");
 			}
 			if ((!action.output) && (action.variable.length() == 0)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_MissingGlideActions, "Either 'output' or 'variable' must be present when 'GLIDE' timing is used.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_MissingGlideActions, "Either 'output' or 'variable' must be present when 'GLIDE' timing is used.");
 			}
 			if ((action.output) && (action.variable.length() > 0)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when 'GLIDE' timing is used.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when 'GLIDE' timing is used.");
 			}
 		} else if (action.timing == ScriptAction::ActionTiming::GATE) {
 			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.moveSequence) || (action.clearSequence.length() > 0) || (action.addToSequence) || (action.removeFromSequence) || (action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
 			}
 			if (!action.output) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_GateOutput, "'output' must be present when 'GATE' timing is used.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_GateOutput, "'output' must be present when 'GATE' timing is used.");
 			}
 			if (action.variable.length() > 0) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_NonGateProperties, "'variable' can only be used in combination with 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_NonGateProperties, "'variable' can only be used in combination with 'GLIDE' timing.");
 			}
 		} else {
 			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm) || (action.gateHighRatio)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' 'ease-algorithm' and 'gate-high-ratio' can only be used in combination with 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' 'ease-algorithm' and 'gate-high-ratio' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((action.output) || (action.variable.length() > 0)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.setLabel) && (!action.assert) && (action.trigger.size() == 0) && (!action.moveSequence) && (action.clearSequence.length() == 0) && (!action.addToSequence) && (!action.removeFromSequence)) {
 				string timingStr = timing != actionJson.end() ? *timing : "start";
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' must be present for '", timingStr.c_str(), "' timing.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' must be present for '", timingStr.c_str(), "' timing.");
 			}
 			if (actionCount > 1) {
 				string timingStr = timing != actionJson.end() ? *timing : "start";
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' can be used in the same '", timingStr.c_str(), "' action.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' can be used in the same '", timingStr.c_str(), "' action.");
 			}
 		}
 	}
@@ -1215,31 +1213,31 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 	return action;
 }
 
-ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
+ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 	static const char* cIfProperties[] = { "eq", "ne", "lt", "lte", "gt", "gte", "and", "or", "tolerance" };
 	static const vector<string> vIfProperties(begin(cIfProperties), end(cIfProperties));
 	ScriptIf scriptIf;
 
-	populateRef(scriptIf, ifJson, allowRefs, context, location);
+	populateRef(scriptIf, ifJson, allowRefs);
 	if (scriptIf.ref.length() > 0) {
 		if (hasOneOf(ifJson, cIfProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_RefOrinstance, "A ref if can not be combined other non-ref if properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_RefOrinstance, "A ref if can not be combined other non-ref if properties.");
 		}
 	} else {
 		int operatorCount = 0;
 
-		verifyAllowedProperties(ifJson, vIfProperties, true, context->validationErrors, location);
+		verifyAllowedProperties(ifJson, vIfProperties, true, m_context.get());
 
 		json::const_iterator eqValue = ifJson.find("eq");
 		if (eqValue != ifJson.end()) {
 			operatorCount++;
 			if (eqValue->is_array()) {
-				location.push_back("eq");
+				m_context->location.push_back("eq");
 				scriptIf.ifOperator = ScriptIf::IfOperator::EQ;
-				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("eq", *eqValue, context, location)));
-				location.pop_back();
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("eq", *eqValue)));
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_EqArray, "'eq' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_EqArray, "'eq' must be an array.");
 			}
 		}
 
@@ -1247,12 +1245,12 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 		if (neValue != ifJson.end()) {
 			operatorCount++;
 			if (neValue->is_array()) {
-				location.push_back("ne");
+				m_context->location.push_back("ne");
 				scriptIf.ifOperator = ScriptIf::IfOperator::NE;
-				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("ne", *neValue, context, location)));
-				location.pop_back();
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("ne", *neValue)));
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_NeArray, "'ne' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_NeArray, "'ne' must be an array.");
 			}
 		}
 
@@ -1260,12 +1258,12 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 		if (ltValue != ifJson.end()) {
 			operatorCount++;
 			if (ltValue->is_array()) {
-				location.push_back("lt");
+				m_context->location.push_back("lt");
 				scriptIf.ifOperator = ScriptIf::IfOperator::LT;
-				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lt", *ltValue, context, location)));
-				location.pop_back();
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lt", *ltValue)));
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_LtArray, "'lt' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_LtArray, "'lt' must be an array.");
 			}
 		}
 
@@ -1273,12 +1271,12 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 		if (lteValue != ifJson.end()) {
 			operatorCount++;
 			if (lteValue->is_array()) {
-				location.push_back("lte");
+				m_context->location.push_back("lte");
 				scriptIf.ifOperator = ScriptIf::IfOperator::LTE;
-				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lte", *lteValue, context, location)));
-				location.pop_back();
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lte", *lteValue)));
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_LteArray, "'lte' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_LteArray, "'lte' must be an array.");
 			}
 		}
 
@@ -1286,12 +1284,12 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 		if (gtValue != ifJson.end()) {
 			operatorCount++;
 			if (gtValue->is_array()) {
-				location.push_back("gt");
+				m_context->location.push_back("gt");
 				scriptIf.ifOperator = ScriptIf::IfOperator::GT;
-				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gt", *gtValue, context, location)));
-				location.pop_back();
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gt", *gtValue)));
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_GtArray, "'gt' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_GtArray, "'gt' must be an array.");
 			}
 		}
 
@@ -1299,12 +1297,12 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 		if (gteValue != ifJson.end()) {
 			operatorCount++;
 			if (gteValue->is_array()) {
-				location.push_back("gte");
+				m_context->location.push_back("gte");
 				scriptIf.ifOperator = ScriptIf::IfOperator::GTE;
-				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gte", *gteValue, context, location)));
-				location.pop_back();
+				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gte", *gteValue)));
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_GteArray, "'gte' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_GteArray, "'gte' must be an array.");
 			}
 		}
 
@@ -1312,12 +1310,12 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 		if (andValue != ifJson.end()) {
 			operatorCount++;
 			if (andValue->is_array()) {
-				location.push_back("and");
+				m_context->location.push_back("and");
 				scriptIf.ifOperator = ScriptIf::IfOperator::AND;
-				scriptIf.ifs = parseIfIfs("and", *andValue, context, location);
-				location.pop_back();
+				scriptIf.ifs = parseIfIfs("and", *andValue);
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_AndArray, "'and' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_AndArray, "'and' must be an array.");
 			}
 		}
 
@@ -1325,12 +1323,12 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 		if (orValue != ifJson.end()) {
 			operatorCount++;
 			if (orValue->is_array()) {
-				location.push_back("or");
+				m_context->location.push_back("or");
 				scriptIf.ifOperator = ScriptIf::IfOperator::OR;
-				scriptIf.ifs = parseIfIfs("or", *orValue, context, location);
-				location.pop_back();
+				scriptIf.ifs = parseIfIfs("or", *orValue);
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_OrArray, "'or' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_OrArray, "'or' must be an array.");
 			}
 		}
 
@@ -1340,38 +1338,38 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs, JsonScrip
 				if (toleranceValue->get<float>() >= 0.f) {
 					scriptIf.tolerance.reset(new float(toleranceValue->get<float>()));
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
 			}
 		}
 
 		if (operatorCount == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_NoOperation, "One of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is required.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_NoOperation, "One of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is required.");
 		} else if (operatorCount > 1) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_MultipleOperations, "Only one of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is allowed.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_MultipleOperations, "Only one of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is allowed.");
 		}
 	}
 
 	return scriptIf;
 }
 
-pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(string ifOperator, const json& valuesJson, JsonScriptParseContext* context, vector<string> location) {
+pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(string ifOperator, const json& valuesJson) {
 	pair<ScriptValue, ScriptValue> valuePair;
 
 	vector<json> valueElements = valuesJson.get<vector<json>>();
 	if (valueElements.size() == 2) {
-		valuePair.first = parseValue(valueElements[0], true, context, location, "0", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
-		valuePair.second = parseValue(valueElements[1], true, context, location, "1", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
+		valuePair.first = parseValue(valueElements[0], true, "0", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
+		valuePair.second = parseValue(valueElements[1], true, "1", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator.c_str(), "' array");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator.c_str(), "' array");
 	}
 
 	return valuePair;
 }
 
-unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, const json& ifsJson, JsonScriptParseContext* context, vector<string> location) {
+unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, const json& ifsJson) {
 	unique_ptr<vector<ScriptIf>> ifs;
 
 	vector<json> ifElements = ifsJson.get<vector<json>>();
@@ -1379,159 +1377,159 @@ unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, con
 		int count = 0;
 		ifs.reset(new vector<ScriptIf>());
 		for (const json& ifElement : ifElements) {
-			location.push_back(to_string(count));
-			ifs->push_back(parseIf(ifElement, true, context, location));
-			location.pop_back();
+			m_context->location.push_back(to_string(count));
+			ifs->push_back(parseIf(ifElement, true));
+			m_context->location.pop_back();
 			count++;
 		}
 		if (count > 2) {
-			verifyVersion(VERSION_1_2_0, context, (ifOperator + " ifs with more then two conditions").c_str(), location);
+			verifyVersion(VERSION_1_2_0, m_context.get(), (ifOperator + " ifs with more then two conditions").c_str());
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::If_TwoValues, "At least two if items are expected in the '", ifOperator.c_str(), "' array");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::If_TwoValues, "At least two if items are expected in the '", ifOperator.c_str(), "' array");
 	}
 
 	return ifs;
 }
 
-ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson) {
 	static const vector<string> setValueProperties = { "output", "value" };
 	ScriptSetValue setValue;
 
-	verifyAllowedProperties(setValueJson, setValueProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(setValueJson, setValueProperties, false, m_context.get());
 
 	json::const_iterator output = setValueJson.find("output");
 	if (output != setValueJson.end()) {
-		setValue.output = parseOutput(*output, true, context, location, "output", ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be an object.");
+		setValue.output = parseOutput(*output, true, "output", ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be a output object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be a output object.");
 	}
 
 	json::const_iterator value = setValueJson.find("value");
 	if (value != setValueJson.end()) {
-		setValue.value = parseValue(*value, true, context, location, "value", ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be an object.");
+		setValue.value = parseValue(*value, true, "value", ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be a value object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	return setValue;
 }
 
-ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson) {
 	static const vector<string> setVariableProperties  = { "name", "value" };
 	ScriptSetVariable setVariable;
 
-	verifyAllowedProperties(setVariableJson, setVariableProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(setVariableJson, setVariableProperties, false, m_context.get());
 
 	json::const_iterator name = setVariableJson.find("name");
 	if ((name != setVariableJson.end()) && (name->is_string())) {
 		setVariable.name = *name;
 		if (setVariable.name.length() == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetVariable_NameLength, "'name' must be a non-empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetVariable_NameLength, "'name' must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetVariable_NameString, "'name' is required and must be a non-empty string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetVariable_NameString, "'name' is required and must be a non-empty string.");
 	}
 
 	json::const_iterator value = setVariableJson.find("value");
 	if (value != setVariableJson.end()) {
-		setVariable.value = parseValue(*value, true, context, location, "value", ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be an object.");
+		setVariable.value = parseValue(*value, true, "value", ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be a value object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	return setVariable;
 }
 
-ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJson) {
 	static const vector<string> setPolyphonyProperties = { "index", "channels" };
 	ScriptSetPolyphony setPolyphony;
 
-	verifyAllowedProperties(setPolyphonyJson, setPolyphonyProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(setPolyphonyJson, setPolyphonyProperties, false, m_context.get());
 
 	json::const_iterator index = setPolyphonyJson.find("index");
 	if ((index != setPolyphonyJson.end()) && (index->is_number_unsigned())) {
 		setPolyphony.index = index->get<int>();
 		if ((setPolyphony.index < 1) || (setPolyphony.index > 8)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 8.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 8.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetPolyphony_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetPolyphony_IndexNumber, "'index' is required and must be a number between 1 and 8.");
 	}
 
 	json::const_iterator channels = setPolyphonyJson.find("channels");
 	if ((channels != setPolyphonyJson.end()) && (channels->is_number_unsigned())) {
 		setPolyphony.channels = channels->get<int>();
 		if ((setPolyphony.channels < 1) || (setPolyphony.channels > 16)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetPolyphony_ChannelsRange, "'channels' must be a number between 1 and 16.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetPolyphony_ChannelsRange, "'channels' must be a number between 1 and 16.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetPolyphony_ChannelsNumber, "'channels' is required and must be a number between 1 and 16.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetPolyphony_ChannelsNumber, "'channels' is required and must be a number between 1 and 16.");
 	}
 
 	return setPolyphony;
 }
 
-ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson) {
 	static const vector<string> setLabelProperties = { "index", "label" };
 	ScriptSetLabel setLabel;
 
-	verifyAllowedProperties(setLabelJson, setLabelProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(setLabelJson, setLabelProperties, false, m_context.get());
 
 	json::const_iterator index = setLabelJson.find("index");
 	if ((index != setLabelJson.end()) && (index->is_number_unsigned())) {
 		setLabel.index = index->get<int>();
 		if ((setLabel.index < 1) || (setLabel.index > 8)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetLabel_IndexRange, "'index' must be a number between 1 and 8.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetLabel_IndexRange, "'index' must be a number between 1 and 8.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetLabel_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetLabel_IndexNumber, "'index' is required and must be a number between 1 and 8.");
 	}
 
 	json::const_iterator label = setLabelJson.find("label");
 	if ((label != setLabelJson.end()) && (label->is_string())) {
 		setLabel.label = label->get<string>();
 		if (setLabel.label.size() == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetLabel_LabelLength, "'label' can not be an empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetLabel_LabelLength, "'label' can not be an empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SetLabel_LabelString, "'label' must be a non-empty string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SetLabel_LabelString, "'label' must be a non-empty string.");
 	}
 
 	return setLabel;
 }
 
-ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptAssert JsonScriptParser::parseAssert(const json& assertJson) {
 	static const vector<string> assertProperties = { "name", "expect", "stop-on-fail" };
 	ScriptAssert scriptAssert;
 
-	verifyAllowedProperties(assertJson, assertProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(assertJson, assertProperties, false, m_context.get());
 
 	json::const_iterator name = assertJson.find("name");
 	if (name != assertJson.end()) {
 		if (name->is_string()) {
 			scriptAssert.name = name->get<string>();
 			if (scriptAssert.name.length() < 1) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Assert_NameLength, "'name' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Assert_NameLength, "'name' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Assert_NameString, "'name' is required and must be a non-empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Assert_NameString, "'name' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Assert_NameString, "'name' must be a non-empty string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Assert_NameString, "'name' must be a non-empty string.");
 	}
 
 	json::const_iterator expect = assertJson.find("expect");
 	if (expect != assertJson.end()) {
 		if (expect->is_object()) {
-			location.push_back("expect");
-			scriptAssert.expect = parseIf(*expect, true, context, location);
-			location.pop_back();
+			m_context->location.push_back("expect");
+			scriptAssert.expect = parseIf(*expect, true);
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Assert_ExpectObject, "'expect' must be an object.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Assert_ExpectObject, "'expect' must be an object.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Assert_ExpectObject, "'expect' is required and must be an object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Assert_ExpectObject, "'expect' is required and must be an object.");
 	}
 
 	json::const_iterator stopOnFail = assertJson.find("stop-on-fail");
@@ -1540,36 +1538,36 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson, JsonScriptPar
 		if (stopOnFail->is_boolean()) {
 			scriptAssert.stopOnFail = stopOnFail->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Assert_StopOnFailBool, "'stop-on-fail' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Assert_StopOnFailBool, "'stop-on-fail' must be a boolean.");
 		}
 	}
 
 	return scriptAssert;
 }
 
-ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJson) {
 	static const vector<string> moveSequenceProperties = { "id", "direction", "wrap", "position" };
 	ScriptMoveSequence scriptMoveSequence;
 
-	verifyAllowedProperties(moveSequenceJson, moveSequenceProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(moveSequenceJson, moveSequenceProperties, false, m_context.get());
 
 	json::const_iterator id = moveSequenceJson.find("id");
 	if (id != moveSequenceJson.end()) {
 		if (id->is_string()) {
 			scriptMoveSequence.id = id->get<string>();
 			if (scriptMoveSequence.id.length() < 1) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_IdLength, "'id' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::MoveSequence_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_IdString, "'id' is required and must be a non-empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::MoveSequence_IdString, "'id' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_IdString, "'id' must be a non-empty string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::MoveSequence_IdString, "'id' must be a non-empty string.");
 	}
 
 	json::const_iterator direction = moveSequenceJson.find("direction");
 	if (direction != moveSequenceJson.end()) {
-		scriptMoveSequence.direction.reset(new ScriptSequenceMoveDirection(parseScriptSequenceMoveDirection(*direction, "direction", ValidationErrorCode::MoveSequence_MoveDirectionEnum, ValidationErrorCode::MoveSequence_MoveDirectionString, context->validationErrors, location)));
+		scriptMoveSequence.direction.reset(new ScriptSequenceMoveDirection(parseScriptSequenceMoveDirection(*direction, "direction", ValidationErrorCode::MoveSequence_MoveDirectionEnum, ValidationErrorCode::MoveSequence_MoveDirectionString, m_context.get())));
 	}
 
 	json::const_iterator position = moveSequenceJson.find("position");
@@ -1577,7 +1575,7 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 		if (position->is_number_integer()) {
 			scriptMoveSequence.position.reset(new int(position->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_PositionNumber, "'position' must be a number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::MoveSequence_PositionNumber, "'position' must be a number.");
 		}
 	}
 
@@ -1585,17 +1583,17 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 	json::const_iterator wrap = moveSequenceJson.find("wrap");
 	if (wrap != moveSequenceJson.end()) {
 		if (scriptMoveSequence.position) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_NoWrapWithPosition, "'wrap' can not be used in combination with 'position'.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::MoveSequence_NoWrapWithPosition, "'wrap' can not be used in combination with 'position'.");
 		}
 		if (wrap->is_boolean()) {
 			scriptMoveSequence.wrap = wrap->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_WrapBoolean, "'wrap' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::MoveSequence_WrapBoolean, "'wrap' must be a boolean.");
 		}
 	}
 
 	if ((scriptMoveSequence.direction) && (scriptMoveSequence.position)) {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "Only one of 'direction' or 'position' can be used at a time.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "Only one of 'direction' or 'position' can be used at a time.");
 	}
 
 	if ((!scriptMoveSequence.direction) && (!scriptMoveSequence.position)) {
@@ -1605,11 +1603,11 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 	return scriptMoveSequence;
 }
 
-ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequenceJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequenceJson) {
 	static const vector<string> addToSequenceProperties = { "id", "value", "position", "as-constant-voltage" };
 	ScriptAddToSequence scriptAddToSequence;
 
-	verifyAllowedProperties(addToSequenceJson, addToSequenceProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(addToSequenceJson, addToSequenceProperties, false, m_context.get());
 
 	scriptAddToSequence.position = -1;
 	scriptAddToSequence.asConstantVoltage = true;
@@ -1619,20 +1617,20 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		if (id->is_string()) {
 			scriptAddToSequence.id = id->get<string>();
 			if (scriptAddToSequence.id.length() < 1) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_IdLength, "'id' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::AddToSequence_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_IdString, "'id' is required and must be a non-empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::AddToSequence_IdString, "'id' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_IdString, "'id' must be a non-empty string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::AddToSequence_IdString, "'id' must be a non-empty string.");
 	}
 
 	json::const_iterator value = addToSequenceJson.find("value");
 	if (value != addToSequenceJson.end()) {
-		scriptAddToSequence.value = parseValue(*value, true, context, location, "value", ValidationErrorCode::AddToSequence_ValueObject, "'value' must be a value object.");
+		scriptAddToSequence.value = parseValue(*value, true, "value", ValidationErrorCode::AddToSequence_ValueObject, "'value' must be a value object.");
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_ValueObject, "'value' is required and must be a value object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::AddToSequence_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	scriptAddToSequence.position = -1;
@@ -1641,7 +1639,7 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		if (position->is_number_integer()) {
 			scriptAddToSequence.position = position->get<int>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_PositionNumber, "'position' must be a number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::AddToSequence_PositionNumber, "'position' must be a number.");
 		}
 	}
 
@@ -1651,18 +1649,18 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		if (asConstantVoltage->is_boolean()) {
 			scriptAddToSequence.asConstantVoltage = asConstantVoltage->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_AsConstantVoltageBoolean, "'as-constant-voltage' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::AddToSequence_AsConstantVoltageBoolean, "'as-constant-voltage' must be a boolean.");
 		}
 	}
 
 	return scriptAddToSequence;
 }
 
-ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& removeFromJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& removeFromJson) {
 	static const vector<string> removeFromSequenceProperties = { "id", "position" };
 	ScriptRemoveFromSequence scriptRemoveFromSquence;
 
-	verifyAllowedProperties(removeFromJson, removeFromSequenceProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(removeFromJson, removeFromSequenceProperties, false, m_context.get());
 
 	scriptRemoveFromSquence.position = -1;
 
@@ -1671,13 +1669,13 @@ ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& r
 		if (id->is_string()) {
 			scriptRemoveFromSquence.id = id->get<string>();
 			if (scriptRemoveFromSquence.id.length() < 1) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::RemoveFromSequence_IdLength, "'id' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::RemoveFromSequence_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' is required and must be a non-empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' must be a non-empty string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' must be a non-empty string.");
 	}
 
 	json::const_iterator position = removeFromJson.find("position");
@@ -1685,44 +1683,44 @@ ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& r
 		if (position->is_number_integer()) {
 			scriptRemoveFromSquence.position = position->get<int>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::RemoveFromSequence_PositionNumber, "'position' must be a number.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::RemoveFromSequence_PositionNumber, "'position' must be a number.");
 		}
 	}
 
 	return scriptRemoveFromSquence;
 }
 
-ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
+ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
 	ScriptValue scriptValue;
-	location.push_back(subLocation);
+	m_context->location.push_back(subLocation);
 
 	if (valueJson.is_object()) {
-		scriptValue = parseFullValue(valueJson, allowRefs, false, context, location);
+		scriptValue = parseFullValue(valueJson, allowRefs, false);
 	} else if (valueJson.is_number()) {
 		json fullValueJson = { { "voltage", valueJson } };
-		scriptValue = parseFullValue(fullValueJson, allowRefs, true, context, location);
+		scriptValue = parseFullValue(fullValueJson, allowRefs, true);
 	} else if (valueJson.is_string()) {
 		json fullValueJson = { { "note", valueJson } };
-		scriptValue = parseFullValue(fullValueJson, allowRefs, true, context, location);
+		scriptValue = parseFullValue(fullValueJson, allowRefs, true);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, validationErrorCode, validationErrorMessage.c_str());
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
-	location.pop_back();
+	m_context->location.pop_back();
 	return scriptValue;
 }
 
-ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, vector<string> location) {
+ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRefs, bool fromShorthand) {
 	static const char* cValueProperties[] = { "voltage", "no-limit", "note", "variable", "input", "output", "rand", "sequence", "calc", "quantize" };
 	static const vector<string> vValueProperties(begin(cValueProperties), end(cValueProperties));
 	ScriptValue value;
 
-	verifyAllowedProperties(valueJson, vValueProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(valueJson, vValueProperties, true, m_context.get());
 
-	populateRef(value, valueJson, allowRefs, context, location);
+	populateRef(value, valueJson, allowRefs);
 	if (value.ref.length() > 0) {
 		if (hasOneOf(valueJson, cValueProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_RefOrInstance, "A ref value can not be combined other non-ref value properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_RefOrInstance, "A ref value can not be combined other non-ref value properties.");
 		}
 	} else {
 		int valueTypes = 0;
@@ -1733,7 +1731,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (nolimit->is_boolean()) {
 				noLimitValue.reset(new bool(nolimit->get<bool>()));
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoLimitBoolean, "'no-limit' must be a boolean.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoLimitBoolean, "'no-limit' must be a boolean.");
 			}
 		}
 
@@ -1744,14 +1742,14 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 				value.voltage.reset(new float(voltage->get<float>()));
 				if ((!noLimitValue) || (!*noLimitValue.get())) {
 					if ((*value.voltage < -10) || (*value.voltage > 10)) {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VoltageRange, fromShorthand ? "A 'voltage' value must be a decimal number between -10 and 10." : "'voltage' must be a decimal number between -10 and 10.");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_VoltageRange, fromShorthand ? "A 'voltage' value must be a decimal number between -10 and 10." : "'voltage' must be a decimal number between -10 and 10.");
 					}
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
 			}
 		} else if (noLimitValue) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoLimitOnNonVoltage, "'no-limit' can only be used with a 'voltage' value.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoLimitOnNonVoltage, "'no-limit' can only be used with a 'voltage' value.");
 		}
 
 		json::const_iterator note = valueJson.find("note");
@@ -1760,25 +1758,25 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (note->is_string()) {
 				value.note.reset(new string(*note));
 				if ((value.note->size() < 2) || (value.note->size() > 3)) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 				} else {
 					char n = toupper((*value.note)[0]);
 					if (n < 'A' || n > 'G') {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must start with a valid note name (A-G)." : "'note' must start with a valid note name (A-G).");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must start with a valid note name (A-G)." : "'note' must start with a valid note name (A-G).");
 					}
 					char s = (*value.note)[1];
 					if (s < '0' || s > '9') {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must have a valid scale (0-9) as second character." : "'note' must have a valid scale (0-9) as second character.");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must have a valid scale (0-9) as second character." : "'note' must have a valid scale (0-9) as second character.");
 					}
 					if (value.note->size() == 3) {
 						char a = (*value.note)[2];
 						if (a != '+' && a != '-') {
-							ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "The third character of a 'note' value must be a valid accidental (+ for sharp, - for flat)." : "The third character of 'note' must be a valid accidental (+ for sharp, - for flat).");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "The third character of a 'note' value must be a valid accidental (+ for sharp, - for flat)." : "The third character of 'note' must be a valid accidental (+ for sharp, - for flat).");
 						}
 					}
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoteString, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoteString, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 			}
 		}
 
@@ -1788,24 +1786,24 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (variable->is_string()) {
 				value.variable.reset(new string(*variable));
 				if (value.variable->length() == 0) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VariableNonEmpty, "'variable' must be a non-empty string.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_VariableNonEmpty, "'variable' must be a non-empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_VariableString, "'variable' must be a non-empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_VariableString, "'variable' must be a non-empty string.");
 			}
 		}
 
 		json::const_iterator input = valueJson.find("input");
 		if (input != valueJson.end()) {
 			valueTypes++;
-			ScriptInput* scriptInput = new ScriptInput(parseInput(*input, true, context, location, "input", ValidationErrorCode::Value_InputObject, "'input' must be an object."));
+			ScriptInput* scriptInput = new ScriptInput(parseInput(*input, true, "input", ValidationErrorCode::Value_InputObject, "'input' must be an object."));
 			value.input.reset(scriptInput);
 		}
 
 		json::const_iterator output = valueJson.find("output");
 		if (output != valueJson.end()) {
 			valueTypes++;
-			ScriptOutput* scriptOutput = new ScriptOutput(parseOutput(*output, true, context, location, "output", ValidationErrorCode::Value_OutputObject, "'output' must be an object."));
+			ScriptOutput* scriptOutput = new ScriptOutput(parseOutput(*output, true, "output", ValidationErrorCode::Value_OutputObject, "'output' must be an object."));
 			value.output.reset(scriptOutput);
 		}
 
@@ -1813,53 +1811,53 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 		if (rand != valueJson.end()) {
 			valueTypes++;
 			if (rand->is_object()) {
-				location.push_back("rand");
-				ScriptRand* scriptRand = new ScriptRand(parseRand(*rand, context, location));
+				m_context->location.push_back("rand");
+				ScriptRand* scriptRand = new ScriptRand(parseRand(*rand));
 				value.rand.reset(scriptRand);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_RandObject, "'rand' must be an object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_RandObject, "'rand' must be an object.");
 			}
 		}
 
 		json::const_iterator sequence = valueJson.find("sequence");
 		if (sequence != valueJson.end()) {
-			verifyVersion(VERSION_1_2_0, context, "value 'sequence'", location);
+			verifyVersion(VERSION_1_2_0, m_context.get(), "value 'sequence'");
 			valueTypes++;
 
-			location.push_back("sequence");
-			ScriptSequenceValue* scriptSequenceValue = new ScriptSequenceValue(parseSequenceValue(*sequence, true, context, location));
+			m_context->location.push_back("sequence");
+			ScriptSequenceValue* scriptSequenceValue = new ScriptSequenceValue(parseSequenceValue(*sequence, true));
 			value.sequence.reset(scriptSequenceValue);
-			location.pop_back();
+			m_context->location.pop_back();
 		}
 
 		if (valueTypes == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_NoActualValue, "One of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' must be set.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_NoActualValue, "One of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' must be set.");
 		} else if (valueTypes > 1) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_MultipleValues, "Only one of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' can be used.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_MultipleValues, "Only one of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' can be used.");
 		}
 
 		json::const_iterator calcs = valueJson.find("calc");
 		if (calcs != valueJson.end()) {
 			if (calcs->is_array()) {
-				location.push_back("calc");
+				m_context->location.push_back("calc");
 
 				int count = 0;
 				vector<json> calcElements = (*calcs);
 				for (const json& calc : calcElements) {
-					location.push_back(to_string(count));
+					m_context->location.push_back(to_string(count));
 					if (calc.is_object()) {
-						value.calc.push_back(parseCalc(calc, true, context, location));
+						value.calc.push_back(parseCalc(calc, true));
 					} else {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_CalcObject, "'calc' elements must be objects.");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_CalcObject, "'calc' elements must be objects.");
 					}
-					location.pop_back();
+					m_context->location.pop_back();
 					count++;
 				}
 
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");
 			}
 		}
 
@@ -1869,7 +1867,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (quantize->is_boolean()) {
 				value.quantize = quantize->get<bool>();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Value_QuantizeBool, "'quantize' must be a boolean.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Value_QuantizeBool, "'quantize' must be a boolean.");
 			}
 		}
 	}
@@ -1877,44 +1875,44 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 	return value;
 }
 
-ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
+ScriptOutput JsonScriptParser::parseOutput(const json& outputJson, bool allowRefs, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
 	ScriptOutput scriptOutput;
 
 	if (outputJson.is_object()) {
-		location.push_back(subLocation);
-		scriptOutput = parseFullOutput(outputJson, allowRefs, false, context, location);
-		location.pop_back();
+		m_context->location.push_back(subLocation);
+		scriptOutput = parseFullOutput(outputJson, allowRefs, false);
+		m_context->location.pop_back();
 	} else if (outputJson.is_number()) {
 		json fullOutputJson = { { "index", outputJson } };
-		scriptOutput = parseFullOutput(fullOutputJson, allowRefs, true, context, location);
+		scriptOutput = parseFullOutput(fullOutputJson, allowRefs, true);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, validationErrorCode, validationErrorMessage.c_str());
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
 	return scriptOutput;
 }
 
-ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, vector<string> location) {
+ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allowRefs, bool fromShorthand) {
 	static const char* cOutputProperties[] = { "index", "channel" };
 	static const vector<string> vOutputProperties(begin(cOutputProperties), end(cOutputProperties));
 	ScriptOutput output;
 
-	verifyAllowedProperties(outputJson, vOutputProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(outputJson, vOutputProperties, true, m_context.get());
 
-	populateRef(output, outputJson, allowRefs, context, location);
+	populateRef(output, outputJson, allowRefs);
 	if (output.ref.length() > 0) {
 		if (hasOneOf(outputJson, cOutputProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Output_RefOrInstance, "A ref output can not be combined other non-ref output properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Output_RefOrInstance, "A ref output can not be combined other non-ref output properties.");
 		}
 	} else {
 		json::const_iterator index = outputJson.find("index");
 		if ((index != outputJson.end()) && (index->is_number_unsigned())) {
 			output.index = index->get<int>();
 			if ((output.index < 1) || (output.index > 8)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Output_IndexRange, fromShorthand ? "The output 'index' must be a number between 1 and 8." : "'index' must be a number between 1 and 8.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Output_IndexRange, fromShorthand ? "The output 'index' must be a number between 1 and 8." : "'index' must be a number between 1 and 8.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Output_IndexNumber, fromShorthand ? "The output 'index' is required and must be a (non-decimal) number between 1 and 8." : "'index' is required and must be a (non-decimal) number between 1 and 8.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Output_IndexNumber, fromShorthand ? "The output 'index' is required and must be a (non-decimal) number between 1 and 8." : "'index' is required and must be a (non-decimal) number between 1 and 8.");
 		}
 
 		json::const_iterator channel = outputJson.find("channel");
@@ -1922,10 +1920,10 @@ ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allo
 			if (channel->is_number_unsigned()) {
 				output.channel.reset(new int(channel->get<int>()));
 				if ((*output.channel < 1) || (*output.channel > 16)) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Output_ChannelRange, "'channel' must be a number between 1 and 16.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Output_ChannelRange, "'channel' must be a number between 1 and 16.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Output_ChannelNumber, "'channel' must be a number between 1 and 16.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Output_ChannelNumber, "'channel' must be a number between 1 and 16.");
 			}
 		}
 	}
@@ -1933,44 +1931,44 @@ ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allo
 	return output;
 }
 
-ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
+ScriptInput JsonScriptParser::parseInput(const json& inputJson, bool allowRefs, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
 	ScriptInput scriptInput;
 
 	if (inputJson.is_object()) {
-		location.push_back(subLocation);
-		scriptInput = parseFullInput(inputJson, allowRefs, false, context, location);
-		location.pop_back();
+		m_context->location.push_back(subLocation);
+		scriptInput = parseFullInput(inputJson, allowRefs, false);
+		m_context->location.pop_back();
 	} else if (inputJson.is_number()) {
 		json fullInputJson = { { "index", inputJson } };
-		scriptInput = parseFullInput(fullInputJson, allowRefs, true, context, location);
+		scriptInput = parseFullInput(fullInputJson, allowRefs, true);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, validationErrorCode, validationErrorMessage.c_str());
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
 	return scriptInput;
 }
 
-ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRefs, bool fromShorthand, JsonScriptParseContext* context, vector<string> location) {
+ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRefs, bool fromShorthand) {
 	static const char* cInputProperties[] = { "index", "channel" };
 	static const vector<string> vInputProperties(begin(cInputProperties), end(cInputProperties));
 	ScriptInput input;
 
-	verifyAllowedProperties(inputJson, vInputProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(inputJson, vInputProperties, true, m_context.get());
 
-	populateRef(input, inputJson, allowRefs, context, location);
+	populateRef(input, inputJson, allowRefs);
 	if (input.ref.length() > 0) {
 		if (hasOneOf(inputJson, cInputProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Input_RefOrInstance, "A ref input can not be combined other non-ref input properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Input_RefOrInstance, "A ref input can not be combined other non-ref input properties.");
 		}
 	} else {
 		json::const_iterator index = inputJson.find("index");
 		if ((index != inputJson.end()) && (index->is_number_unsigned())) {
 			input.index = index->get<int>();
 			if ((input.index < 1) || (input.index > 8)) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Input_IndexRange, fromShorthand ? "The input 'index' must be a number between 1 and 8." : "'index' must be a number between 1 and 8.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Input_IndexRange, fromShorthand ? "The input 'index' must be a number between 1 and 8." : "'index' must be a number between 1 and 8.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Input_IndexNumber, fromShorthand ? "The input 'index' is required and must be a (non-decimal) number between 1 and 8." : "'index' is required and must be a (non-decimal) number between 1 and 8.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Input_IndexNumber, fromShorthand ? "The input 'index' is required and must be a (non-decimal) number between 1 and 8." : "'index' is required and must be a (non-decimal) number between 1 and 8.");
 		}
 
 		json::const_iterator channel = inputJson.find("channel");
@@ -1978,10 +1976,10 @@ ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRe
 			if (channel->is_number_unsigned()) {
 				input.channel.reset(new int(channel->get<int>()));
 				if ((*input.channel < 1) || (*input.channel > 16)) {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Input_ChannelRange, "'channel' must be a number between 1 and 16.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Input_ChannelRange, "'channel' must be a number between 1 and 16.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Input_ChannelNumber, "'channel' must be a number between 1 and 16.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Input_ChannelNumber, "'channel' must be a number between 1 and 16.");
 			}
 		}
 	}
@@ -1989,42 +1987,42 @@ ScriptInput JsonScriptParser::parseFullInput(const json& inputJson, bool allowRe
 	return input;
 }
 
-ScriptRand JsonScriptParser::parseRand(const json& randJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptRand JsonScriptParser::parseRand(const json& randJson) {
 	static const vector<string> randProperties = { "lower", "upper" };
 	ScriptRand rand;
 
-	verifyAllowedProperties(randJson, randProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(randJson, randProperties, false, m_context.get());
 
 	json::const_iterator lower = randJson.find("lower");
 	if (lower != randJson.end()) {
-		ScriptValue *scriptValue = new ScriptValue(parseValue(*lower, true, context, location, "lower", ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be an object."));
+		ScriptValue *scriptValue = new ScriptValue(parseValue(*lower, true, "lower", ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be an object."));
 		rand.lower.reset(scriptValue);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be a value object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be a value object.");
 	}
 
 	json::const_iterator upper = randJson.find("upper");
 	if (upper != randJson.end()) {
-		ScriptValue *scriptValue = new ScriptValue(parseValue(*upper, true, context, location, "upper", ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be an object."));
+		ScriptValue *scriptValue = new ScriptValue(parseValue(*upper, true, "upper", ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be an object."));
 		rand.upper.reset(scriptValue);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be a value object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be a value object.");
 	}
 
 	return rand;
 }
 
-ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
+ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 	static const char* cCalcProperties[] = { "add", "sub", "div", "mult", "max", "min", "remain", "frac", "trunc", "round", "quantize", "sign", "vtof" };
 	static const vector<string> vCalcProperties(begin(cCalcProperties), end(cCalcProperties));
 	ScriptCalc calc;
 
-	verifyAllowedProperties(calcJson, vCalcProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(calcJson, vCalcProperties, true, m_context.get());
 
-	populateRef(calc, calcJson, allowRefs, context, location);
+	populateRef(calc, calcJson, allowRefs);
 	if (calc.ref.length() > 0) {
 		if (hasOneOf(calcJson, cCalcProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
 		}
 	} else {
 		int count = 0;
@@ -2033,7 +2031,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 		if (add != calcJson.end()) {
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::ADD;
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*add, true, context, location, "add", ValidationErrorCode::Calc_AddObject, "'add' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*add, true, "add", ValidationErrorCode::Calc_AddObject, "'add' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
@@ -2041,7 +2039,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 		if (sub != calcJson.end()) {
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::SUB;
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*sub, true, context, location, "sub", ValidationErrorCode::Calc_SubObject, "'sub' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*sub, true, "sub", ValidationErrorCode::Calc_SubObject, "'sub' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
@@ -2049,7 +2047,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 		if (div != calcJson.end()) {
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::DIV;
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*div, true, context, location, "div", ValidationErrorCode::Calc_DivObject, "'div' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*div, true, "div", ValidationErrorCode::Calc_DivObject, "'div' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
@@ -2057,60 +2055,60 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 		if (mult != calcJson.end()) {
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::MULT;
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*mult, true, context, location, "mult", ValidationErrorCode::Calc_MultObject, "'mult' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*mult, true, "mult", ValidationErrorCode::Calc_MultObject, "'mult' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
 		json::const_iterator max = calcJson.find("max");
 		if (max != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'max'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'max'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::MAX;
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*max, true, context, location, "max", ValidationErrorCode::Calc_MaxObject, "'max' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*max, true, "max", ValidationErrorCode::Calc_MaxObject, "'max' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
 		json::const_iterator min = calcJson.find("min");
 		if (min != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'min'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'min'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::MIN;
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*min, true, context, location, "min", ValidationErrorCode::Calc_MinObject, "'min' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*min, true, "min", ValidationErrorCode::Calc_MinObject, "'min' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
 		json::const_iterator remain = calcJson.find("remain");
 		if (remain != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'remain'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'remain'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::REMAIN;
-			ScriptValue *scriptValue = new ScriptValue(parseValue(*remain, true, context, location, "remain", ValidationErrorCode::Calc_RemainObject, "'remain' must be an object."));
+			ScriptValue *scriptValue = new ScriptValue(parseValue(*remain, true, "remain", ValidationErrorCode::Calc_RemainObject, "'remain' must be an object."));
 			calc.value.reset(scriptValue);
 		}
 
 		json::const_iterator trunc = calcJson.find("trunc");
 		if (trunc != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'trunc'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'trunc'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::TRUNC;
 			if ((!trunc->is_boolean()) || (!trunc->get<bool>())) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_TruncBoolean, "'trunc' must be a boolean, with its value set to true.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_TruncBoolean, "'trunc' must be a boolean, with its value set to true.");
 			}
 		}
 
 		json::const_iterator frac = calcJson.find("frac");
 		if (frac != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'frac'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'frac'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::FRAC;
 			if ((!frac->is_boolean()) || (!frac->get<bool>())) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_FracBoolean, "'frac' must be a boolean, with its value set to true.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_FracBoolean, "'frac' must be a boolean, with its value set to true.");
 			}
 		}
 
 		json::const_iterator round = calcJson.find("round");
 		if (round != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'round'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'round'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::ROUND;
 			if (round->is_string()) {
@@ -2122,31 +2120,31 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 				} else if (roundString == "near") {
 					calc.roundType.reset(new ScriptCalc::RoundType(ScriptCalc::RoundType::NEAR));
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_RoundEnum, "'round' must be a string set to either 'up', 'down' or 'near'.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_RoundEnum, "'round' must be a string set to either 'up', 'down' or 'near'.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_RoundString, "'round' must be a string set to either 'up', 'down' or 'near'.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_RoundString, "'round' must be a string set to either 'up', 'down' or 'near'.");
 			}
 		}
 
 		json::const_iterator quantize = calcJson.find("quantize");
 		if (quantize != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'quantize'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'quantize'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::QUANTIZE;
 			if (quantize->is_object()) {
-				location.push_back("quantize");
-				ScriptTuning *scriptTuning = new ScriptTuning(parseTuning(*quantize, true, context, location));
+				m_context->location.push_back("quantize");
+				ScriptTuning *scriptTuning = new ScriptTuning(parseTuning(*quantize, true));
 				calc.tuning.reset(scriptTuning);
-				location.pop_back();
+				m_context->location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_QuantizeObject, "'quantize' must be a tuning object.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_QuantizeObject, "'quantize' must be a tuning object.");
 			}
 		}
 
 		json::const_iterator sign = calcJson.find("sign");
 		if (sign != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'sign'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'sign'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::SIGN;
 			if (sign->is_string()) {
@@ -2156,80 +2154,80 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs, Jso
 				} else if (signString == "neg") {
 					calc.signType.reset(new ScriptCalc::SignType(ScriptCalc::SignType::NEG));
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_SignEnum, "'sign' must be a string set to either 'pos' or 'neg'.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_SignEnum, "'sign' must be a string set to either 'pos' or 'neg'.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_SignString, "'sign' must be a string set to either 'pos' or 'neg'.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_SignString, "'sign' must be a string set to either 'pos' or 'neg'.");
 			}
 		}
 
 		json::const_iterator vtof = calcJson.find("vtof");
 		if (vtof != calcJson.end()) {
-			verifyVersion(VERSION_1_1_0, context, "calc 'vtof'", location);
+			verifyVersion(VERSION_1_1_0, m_context.get(), "calc 'vtof'");
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::VTOF;
 			if ((!vtof->is_boolean()) || (!vtof->get<bool>())) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_VtofBoolean, "'vtof' must be a boolean, with its value set to true.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_VtofBoolean, "'vtof' must be a boolean, with its value set to true.");
 			}
 		}
 
 		if (count == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' must be set.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' must be set.");
 		} else if (count > 1) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_MultipleOperations, "At most one of 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' may be set.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Calc_MultipleOperations, "At most one of 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' may be set.");
 		}
 	}
 
 	return calc;
 }
 
-ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson, JsonScriptParseContext* context, vector<string> location) {
+ScriptInputTrigger JsonScriptParser::parseInputTrigger(const json& inputTriggerJson) {
 	static const vector<string> inputTriggerProperties = { "id", "input" };
 	ScriptInputTrigger inputTrigger;
 
-	verifyAllowedProperties(inputTriggerJson, inputTriggerProperties, false, context->validationErrors, location);
+	verifyAllowedProperties(inputTriggerJson, inputTriggerProperties, false, m_context.get());
 
 	json::const_iterator id = inputTriggerJson.find("id");
 	if ((id != inputTriggerJson.end()) && (id->is_string())) {
 		inputTrigger.id = *id;
 		if (inputTrigger.id.length() == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::InputTrigger_IdLength, "'id' can not be an empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::InputTrigger_IdLength, "'id' can not be an empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::InputTrigger_IdString, "'id' is required and must be a string.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::InputTrigger_IdString, "'id' is required and must be a string.");
 	}
 
 	json::const_iterator input = inputTriggerJson.find("input");
 	if (input != inputTriggerJson.end()) {
-		inputTrigger.input = parseInput(*input, true, context, location, "input", ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an object.");
+		inputTrigger.input = parseInput(*input, true, "input", ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an input object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::InputTrigger_InputObject, "'input' is required and must be an input object.");
 	}
 
 	return inputTrigger;
 }
 
-ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
+ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRefs) {
 	static const char* cTuningProperties[] = { "notes" };
 	static const vector<string> vTuningProperties(begin(cTuningProperties), end(cTuningProperties));
 	ScriptTuning tuning;
 
-	verifyAllowedProperties(tuningJson, vTuningProperties, true, context->validationErrors, location);
+	verifyAllowedProperties(tuningJson, vTuningProperties, true, m_context.get());
 
-	populateRef(tuning, tuningJson, allowRefs, context, location);
+	populateRef(tuning, tuningJson, allowRefs);
 	if (tuning.ref.length() > 0) {
 		if (hasOneOf(tuningJson, cTuningProperties)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_RefOrInstance, "A ref tuning can not be combined other non-ref tuning properties.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Tuning_RefOrInstance, "A ref tuning can not be combined other non-ref tuning properties.");
 		}
 	} else {
 		json::const_iterator notes = tuningJson.find("notes");
 		if ((notes != tuningJson.end()) && (notes->is_array())) {
-			location.push_back("notes");
+			m_context->location.push_back("notes");
 
 			int count = 0;
 			vector<json> noteElements = (*notes);
 			for (const json& noteElement : noteElements) {
-				location.push_back(to_string(count));
+				m_context->location.push_back(to_string(count));
 				if (noteElement.is_number()) {
 					float x;
 					float note = noteElement.get<float>();
@@ -2241,12 +2239,12 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 				} else if (noteElement.is_string()) {
 					string noteString = noteElement.get<string>();
 					if ((noteString.size() < 1) || (noteString.size() > 2)) {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must be a string with a note name (A-G) and optionally an accidental (+ for sharp, - for flat).");
+						ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Tuning_NoteFormat, "A note value must be a string with a note name (A-G) and optionally an accidental (+ for sharp, - for flat).");
 					} else {
 						int noteIndex = 0;
 						char n = toupper((noteString)[0]);
 						if (n < 'A' || n > 'G') {
-							ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "A note value must start with a valid note name (A-G).");
+							ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Tuning_NoteFormat, "A note value must start with a valid note name (A-G).");
 						} else {
 							noteIndex = noteNameToIndex(n);
 						}
@@ -2257,7 +2255,7 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 							} else if (a == '-') {
 								noteIndex--;
 							} else {
-								ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
+								ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
 							}
 						}
 						if (noteIndex > 11) {
@@ -2268,9 +2266,9 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 						tuning.notes.push_back((float) noteIndex / 12);
 					}
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NoteFloatOrString, "'notes' elements must be either 1V/Oct floats or note name strings.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Tuning_NoteFloatOrString, "'notes' elements must be either 1V/Oct floats or note name strings.");
 				}
-				location.pop_back();
+				m_context->location.pop_back();
 				count++;
 			}
 
@@ -2280,19 +2278,19 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 			tuning.notes.erase(end, tuning.notes.end());
 
 			if (noteElements.size() == 0) {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NotesArraySize, "'notes' must contain at least one element.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Tuning_NotesArraySize, "'notes' must contain at least one element.");
 			}
 
-			location.pop_back();
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Tuning_NotesArray, "'notes' is required and must be an array.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Tuning_NotesArray, "'notes' is required and must be an array.");
 		}
 	}
 
 	return tuning;
 }
 
-ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJson, bool allowRefs, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJson, bool allowRefs) {
 	ScriptSequenceValue scriptSequenceValue;
 
 	// Set the default values
@@ -2304,7 +2302,7 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 	if (sequenceJson.is_string()) {
 		scriptSequenceValue.id = sequenceJson.get<string>();
 		if (scriptSequenceValue.id.length() == 0) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_EmptyString, "'sequence' can not be an empty string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SequenceValue_EmptyString, "'sequence' can not be an empty string.");
 		}
 	} else if (sequenceJson.is_object()) {
 		json::const_iterator id = sequenceJson.find("id");
@@ -2313,20 +2311,20 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 			if (idValue.length() > 0) {
 				scriptSequenceValue.id = idValue;
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_IdLength, "'id' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SequenceValue_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_IdString, "'id' is required and must be a string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SequenceValue_IdString, "'id' is required and must be a string.");
 		}
 
 		json::const_iterator moveBefore = sequenceJson.find("move-before");
 		if (moveBefore != sequenceJson.end()) {
-			scriptSequenceValue.moveBefore = parseScriptSequenceMoveDirection(*moveBefore, "move-before", ValidationErrorCode::SequenceValue_MoveDirectionEnum, ValidationErrorCode::SequenceValue_MoveDirectionString, context->validationErrors, location);
+			scriptSequenceValue.moveBefore = parseScriptSequenceMoveDirection(*moveBefore, "move-before", ValidationErrorCode::SequenceValue_MoveDirectionEnum, ValidationErrorCode::SequenceValue_MoveDirectionString, m_context.get());
 		}
 
 		json::const_iterator moveAfter = sequenceJson.find("move-after");
 		if (moveAfter != sequenceJson.end()) {
-			scriptSequenceValue.moveAfter = parseScriptSequenceMoveDirection(*moveAfter, "move-after", ValidationErrorCode::SequenceValue_MoveDirectionEnum, ValidationErrorCode::SequenceValue_MoveDirectionString, context->validationErrors, location);
+			scriptSequenceValue.moveAfter = parseScriptSequenceMoveDirection(*moveAfter, "move-after", ValidationErrorCode::SequenceValue_MoveDirectionEnum, ValidationErrorCode::SequenceValue_MoveDirectionString, m_context.get());
 		}
 
 		json::const_iterator wrap = sequenceJson.find("wrap");
@@ -2334,23 +2332,23 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 			if (wrap->is_boolean()) {
 				scriptSequenceValue.wrap = wrap->get<bool>();
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_WrapBoolean, "'wrap' must be a boolean.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SequenceValue_WrapBoolean, "'wrap' must be a boolean.");
 			}
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_StringOrObject, "A 'sequence' value should either be a string or an object.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::SequenceValue_StringOrObject, "A 'sequence' value should either be a string or an object.");
 	}
 
 	return scriptSequenceValue;
 }
 
-ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, JsonScriptParseContext* context, std::vector<std::string> location) {
+ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson) {
 	static const char* cSequenceProperties[] = { "id", "values", "shared", "retrieve-voltage-once" };
 	static const vector<string> vSequenceProperties(begin(cSequenceProperties), end(cSequenceProperties));
 	ScriptSequence sequence;
 
-	verifyAllowedProperties(sequenceJson, vSequenceProperties, false, context->validationErrors, location);
-	populateRef(sequence, sequenceJson, false, context, location);
+	verifyAllowedProperties(sequenceJson, vSequenceProperties, false, m_context.get());
+	populateRef(sequence, sequenceJson, false);
 
 	sequence.shared = true;
 	json::const_iterator shared = sequenceJson.find("shared");
@@ -2358,7 +2356,7 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, JsonScr
 		if (shared->is_boolean()) {
 			sequence.shared = shared->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
 		}
 	}
 
@@ -2368,34 +2366,34 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson, JsonScr
 		if (retrieveVoltageOnce->is_boolean()) {
 			sequence.retrieveVoltageOnce = retrieveVoltageOnce->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "'retrieve-voltage-once' must be a boolean.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "'retrieve-voltage-once' must be a boolean.");
 		}
 	}
 
 	json::const_iterator values = sequenceJson.find("values");
 	if (values != sequenceJson.end()) {
 		if (values->is_array()) {
-			location.push_back("values");
+			m_context->location.push_back("values");
 
 			int count = 0;
 			vector<json> valueElements = (*values);
 			for (const json& value : valueElements) {
-				sequence.values.push_back(parseValue(value, true, context, location, to_string(count), Sequence_ValueObject, "'values' elements must be objects."));
+				sequence.values.push_back(parseValue(value, true, to_string(count), Sequence_ValueObject, "'values' elements must be objects."));
 				count++;
 			}
 
-			location.pop_back();
+			m_context->location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' must be an array.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Sequence_ValuesArray, "'values' must be an array.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Sequence_ValuesArray, "'values' is required and must be an array.");
+		ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Sequence_ValuesArray, "'values' is required and must be an array.");
 	}
 
 	return sequence;
 }
 
-void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs, JsonScriptParseContext* context, vector<string> location) {
+void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJson, bool allowRefs) {
 	json::const_iterator ref = refJson.find("ref");
 	json::const_iterator id = refJson.find("id");
 
@@ -2406,14 +2404,14 @@ void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJs
 				if (refValue.length() > 0) {
 					refObject.ref = refValue;
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_Length, "'ref' can not be an empty string.");
+					ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Ref_Length, "'ref' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_String, "'ref' must be a string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Ref_String, "'ref' must be a string.");
 			}
 		}
 		if (id != refJson.end()) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Id_NotAllowed, "'id' is not allowed here.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_NotAllowed, "'id' is not allowed here.");
 		}
 	} else {
 		if ((id != refJson.end()) && (id->is_string())) {
@@ -2421,13 +2419,13 @@ void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJs
 			if (idValue.length() > 0) {
 				refObject.id = idValue;
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Id_Length, "'id' can not be an empty string.");
+				ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_Length, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Id_String, "'id'is required and must be a string.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Id_String, "'id'is required and must be a string.");
 		}
 		if (ref != refJson.end()) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotAllowed, "'ref' is not allowed here.");
+			ADD_VALIDATION_ERROR(&m_context->validationErrors, m_context->location, ValidationErrorCode::Ref_NotAllowed, "'ref' is not allowed here.");
 		}
 	}
 }

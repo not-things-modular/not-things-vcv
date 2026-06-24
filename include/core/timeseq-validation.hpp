@@ -286,7 +286,7 @@ std::string createValidationErrorLocation(std::vector<std::string> location);
 	if (validationErrors != nullptr) { \
 		string errorLocation = createValidationErrorLocation(location); \
 		string errorMessage = createValidationErrorMessage(code, message, ""); \
-		validationErrors->emplace_back(errorLocation, errorMessage); \
+		(validationErrors)->emplace_back(errorLocation, errorMessage); \
 	}
 
 

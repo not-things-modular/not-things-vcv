@@ -26,10 +26,14 @@ shared_ptr<json> JsonLoader::loadJson(istream& inputStream, vector<ValidationErr
 
 shared_ptr<Script> JsonLoader::loadScript(istream& inputStream, vector<ValidationError> *validationErrors) {
 	shared_ptr<Script> script;
-	
+
 	shared_ptr<json> json = loadJson(inputStream, validationErrors);
 	if (json) {
-		script = m_jsonScriptParser.parseScript(*json, validationErrors, vector<string>());
+		JsonScriptParser parser;
+		script = parser.parseScript(*json);
+		if (validationErrors != nullptr) {
+			*validationErrors = parser.getValidationErrors();
+		}
 	}
 
 	return script;
