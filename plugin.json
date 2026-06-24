@@ -26,36 +26,36 @@
       "description": "Input expander for Solim",
       "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/SOLIM.html",
       "tags": [ "Utility", "Expander", "Polyphonic" ],
-	  "keywords": "sli"
+    "keywords": "sli"
     },
     {
       "slug": "solim-input-octaver-expander",
       "name": "SL-IO",
-      "description": "Input Octaver expander for Solim",
+      "description": "Input Octaver expander for Solim (SLI)",
       "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/SOLIM.html",
       "tags": [ "Utility", "Expander", "Polyphonic" ],
-	  "keywords": "slio"
+    "keywords": "slio"
     },
     {
       "slug": "solim-output-expander",
       "name": "SL-O",
-      "description": "Output expander for Solim",
+      "description": "Output expander for Solim (SLO)",
       "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/SOLIM.html",
       "tags": [ "Utility", "Expander", "Polyphonic" ],
-	  "keywords": "slo"
+    "keywords": "slo"
     },
     {
       "slug": "solim-output-octaver-expander",
       "name": "SL-OO",
-      "description": "Output Octaver expander for Solim",
+      "description": "Output Octaver expander for Solim (SLOO)",
       "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/SOLIM.html",
       "tags": [ "Utility", "Expander", "Polyphonic" ],
-	  "keywords": "sloo"
+    "keywords": "sloo"
     },
     {
       "slug": "solim-random-expander",
       "name": "SL-R",
-      "description": "Random expander for Solim",
+      "description": "Random expander for Solim (SLR)",
       "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/SOLIM.html",
       "tags": [ "Utility", "Expander", "Random", "Polyphonic" ],
       "keywords": "slr"
@@ -63,62 +63,61 @@
     {
       "slug": "pipo-output",
       "name": "P-O",
-      "description": "Polyphonic Output",
+      "description": "Polyphonic Output - Combine the PI and PO modules to split and merge different (monophonic and polyphonic) input signals into a different combination of signals",
       "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/PIPO.html",
       "tags": [ "Utility", "Polyphonic" ],
-	  "keywords": "po pipo"
+      "keywords": "po pipo"
     },
     {
-		"slug": "pipo-input",
-		"name": "P-I",
-		"description": "Polyphonic Input",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/PIPO.html",
-		"tags": [ "Utility", "Polyphonic" ],
-		"keywords": "pi pipo"
-	},
+      "slug": "pipo-input",
+      "name": "P-I",
+      "description": "Polyphonic Input - Combine the PI and PO modules to split and merge different (monophonic and polyphonic) input signals into a different combination of signals",
+      "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/PIPO.html",
+      "tags": [ "Utility", "Polyphonic" ],
+      "keywords": "pi pipo"
+    },
     {
-		"slug": "poly-same-diff",
-		"name": "P-SD",
-		"description": "Polyphonic Same and Different",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/PSD.html",
-		"tags": [ "Utility", "Polyphonic" ],
-		"keywords": "psd compare"
-	},
+      "slug": "poly-same-diff",
+      "name": "P-SD",
+      "description": "Polyphonic Same and Different (PSD) - Compare two polyphonic signals to determine which channels in them are the same, and which are different",
+      "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/PSD.html",
+      "tags": [ "Utility", "Polyphonic" ],
+      "keywords": "psd compare"
+    },
     {
-		"slug": "timeseq",
-		"name": "TimeSeq",
-		"description": "Time Based Sequencer",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/TIMESEQ.html",
-		"tags": [ "Utility", "Sequencer", "Polyphonic" ]
-	},
-	{
-		"slug": "ramelig",
-		"name": "Ramelig",
-		"description": "Random Melody Line Generator",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAMELIG.html",
-		"tags": [ "Utility" ]
-	},
-	{
-		"slug": "ratrilig",
-		"name": "Ratrilig",
-		"description": "Random Trigger Line Generator",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
-		"tags": [ "Utility" ]
-	},
-	{
-		"slug": "ramelig-expander",
-		"name": "RM-X",
-		"description": "Ramelig Expander",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAMELIG.html",
-		"tags": [ "Utility" ]
-	},
-	{
-		"slug": "ratrilig-expander",
-		"name": "RT-X",
-		"description": "Ratrilig Expander",
-		"manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
-		"tags": [ "Utility" ]
-	}
+      "slug": "timeseq",
+      "name": "TimeSeq",
+      "description": "Time Based Sequencer",
+      "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/TIMESEQ.html",
+      "tags": [ "Utility", "Sequencer", "Polyphonic" ]
+    },
+    {
+      "slug": "ramelig",
+      "name": "Ramelig",
+      "description": "Random Melody Line Generator",
+      "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAMELIG.html",
+      "tags": [ "Polyphonic", "Random", "Sequencer" ]
+    },
+    {
+      "slug": "ratrilig",
+      "name": "Ratrilig",
+      "description": "Random Trigger Line Generator",
+      "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
+      "tags": [ "Polyphonic", "Random", "Sequencer" ]
+    },
+    {
+      "slug": "ramelig-expander",
+      "name": "RM-X",
+      "description": "Ramelig Expander",
+      "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RAMELIG.html",
+      "tags": [ "Expander", "Polyphonic", "Random", "Sequencer" ]
+    },
+    {
+      "slug": "ratrilig-expander",
+      "name": "RT-X",
+      "description": "Ratrilig Expander",
+      "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
+      "tags": [ "Expander", "Polyphonic", "Random", "Sequencer" ]
+    }
   ]
 }
-
