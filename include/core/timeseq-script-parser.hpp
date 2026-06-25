@@ -14,12 +14,14 @@ struct JsonScriptParseContext {
 	int version;
 	std::vector<std::string> location;
 	std::vector<ValidationError> validationErrors;
+
+	void reset();
 };
 
 struct JsonScriptParser {
 	std::shared_ptr<Script> parseScript(const nlohmann::json& scriptJson);
 
-	const std::vector<ValidationError> getValidationErrors();
+	const std::vector<ValidationError>& getValidationErrors();
 
 	private:
 		ScriptTimeline parseTimeline(const nlohmann::json& timelineJson);
@@ -56,7 +58,7 @@ struct JsonScriptParser {
 
 		void populateRef(ScriptRefObject &refObject, const nlohmann::json& refJson, bool allowRefs);
 
-		std::unique_ptr<JsonScriptParseContext> m_context;
+		JsonScriptParseContext m_context;
 };
 
 struct JsonLoader {

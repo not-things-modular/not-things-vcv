@@ -29,6 +29,16 @@ inline SequencePositionProcessor::SequenceMoveDirection convertScriptSequenceMov
 	return SequencePositionProcessor::SequenceMoveDirection::NONE;
 }
 
+void ProcessorScriptParseContext::stashLocation() {
+	stashedLocations.push_back(location);
+}
+
+void ProcessorScriptParseContext::popLocation() {
+	location = stashedLocations.back();
+	stashedLocations.pop_back();
+}
+
+
 ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) {
 	m_portHandler = portHandler;
 	m_variableHandler = variableHandler;
@@ -39,86 +49,86 @@ ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableH
 	m_randomValueGenerator = randomValueGenerator;
 }
 
-shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors, vector<string>& location) {
-	ProcessorScriptParseContext context;
-
-	context.script = script.get();
+shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
+	m_context.script = script.get();
 	if (validationErrors != nullptr) {
-		context.validationErrors = validationErrors;
+		m_context.validationErrors = validationErrors;
 	} else {
-		context.validationErrors = new vector<ValidationError>();
+		m_context.validationErrors = new vector<ValidationError>();
 	}
 
 	int count = 0;
 	for (vector<ScriptSequence>::iterator it = script->sequences.begin(); it != script->sequences.end(); it++) {
-		vector<string> seqLocation = { "component-pool",  "sequences", to_string(count) };
-		parseSequence(&context, &(*it), seqLocation);
+		vector<string> location = m_context.location;
+		m_context.location = { "component-pool",  "sequences", to_string(count) };
+		parseSequence(&(*it));
+		m_context.location = location;
 	}
 
 	count = 0;
-	location.push_back("timelines");
+	m_context.location.push_back("timelines");
 	vector<shared_ptr<TimelineProcessor>> timelineProcessors;
 	for (vector<ScriptTimeline>::iterator it = script->timelines.begin(); it != script->timelines.end(); it++) {
-		location.push_back(to_string(count));
-		timelineProcessors.push_back(parseTimeline(&context, &(*it), location));
-		location.pop_back();
+		m_context.location.push_back(to_string(count));
+		timelineProcessors.push_back(parseTimeline(&(*it)));
+		m_context.location.pop_back();
 		count++;
 	}
-	location.pop_back();
+	m_context.location.pop_back();
 
 	count = 0;
-	location.push_back("input-triggers");
+	m_context.location.push_back("input-triggers");
 	vector<shared_ptr<TriggerProcessor>> triggerProcessors;
 	for (vector<ScriptInputTrigger>::iterator it = script->inputTriggers.begin(); it != script->inputTriggers.end(); it++) {
-		location.push_back(to_string(count));
-		triggerProcessors.push_back(parseInputTrigger(&context, &(*it), location));
-		location.pop_back();
+		m_context.location.push_back(to_string(count));
+		triggerProcessors.push_back(parseInputTrigger(&(*it)));
+		m_context.location.pop_back();
 		count++;
 	}
-	location.pop_back();
+	m_context.location.pop_back();
 
 	count = 0;
-	location.push_back("global-actions");
+	m_context.location.push_back("global-actions");
 	vector<shared_ptr<ActionProcessor>> startActionProcessors;
 	for (vector<ScriptAction>::iterator it = script->globalActions.begin(); it != script->globalActions.end(); it++) {
-		location.push_back(to_string(count));
+		m_context.location.push_back(to_string(count));
 
 		vector<string> actionLocation;
 		ScriptAction& scriptAction = *it;
-		ScriptAction* resolvedAction = resolveScriptAction(&context, &scriptAction, location, actionLocation);
+		ScriptAction* resolvedAction = resolveScriptAction(&scriptAction, actionLocation);
 
 		if (resolvedAction) {
 			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
-				startActionProcessors.push_back(parseResolvedAction(&context, resolvedAction, location));
+				startActionProcessors.push_back(parseResolvedAction(resolvedAction));
 			} else {
-				ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
+				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(context.validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 		}
-		location.pop_back();
+		m_context.location.pop_back();
 		count++;
 	}
-	location.pop_back();
+	m_context.location.pop_back();
 
 	return shared_ptr<Processor>(new Processor(script, timelineProcessors, triggerProcessors, startActionProcessors));
 }
 
-shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, vector<string>& location) {
+shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ScriptTimeline* scriptTimeline) {
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers;
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers;
 
 	int count = 0;
-	location.push_back("lanes");
+	m_context.location.push_back("lanes");
 	vector<shared_ptr<LaneProcessor>> laneProcessors;
 	for (vector<ScriptLane>::iterator it = scriptTimeline->lanes.begin(); it != scriptTimeline->lanes.end(); it++) {
 		ScriptLane& scriptLane = *it;
 
 		shared_ptr<LaneProcessor> laneProcessor;
-		location.push_back(to_string(count));
-		laneProcessor = parseLane(context, &scriptLane, scriptTimeline->timeScale.get(), location);
+		m_context.location.push_back(to_string(count));
+		laneProcessor = parseLane(&scriptLane, scriptTimeline->timeScale.get());
 		laneProcessors.push_back(laneProcessor);
-		location.pop_back();
+		m_context.location.pop_back();
 		count++;
 
 		if (scriptLane.startTrigger.length() > 0) {
@@ -135,146 +145,151 @@ shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ProcessorScri
 			stopTriggers[scriptLane.stopTrigger].push_back(laneProcessor);
 		}
 	}
-	location.pop_back();
+	m_context.location.pop_back();
 
 	return shared_ptr<TimelineProcessor>(new TimelineProcessor(scriptTimeline, laneProcessors, startTriggers, stopTriggers, m_triggerHandler));
 }
 
-shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* scriptInputTrigger, vector<string>& location) {
+shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ScriptInputTrigger* scriptInputTrigger) {
 	// Check if it's a ref input trigger object or a full one
 	if (scriptInputTrigger->input.ref.length() == 0) {
 		return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, scriptInputTrigger->input.index - 1, ((bool) scriptInputTrigger->input.channel) ? *scriptInputTrigger->input.channel.get() - 1 : 0, m_portHandler, m_triggerHandler));
 	} else {
-		for (vector<ScriptInput>::iterator it = context->script->inputs.begin(); it != context->script->inputs.end(); it++) {
+		for (vector<ScriptInput>::iterator it = m_context.script->inputs.begin(); it != m_context.script->inputs.end(); it++) {
 			if (scriptInputTrigger->input.ref.compare(it->id) == 0) {
 				return shared_ptr<TriggerProcessor>(new TriggerProcessor(scriptInputTrigger->id, it->index - 1, ((bool) it->channel) ? *it->channel.get() - 1 : 0, m_portHandler, m_triggerHandler));
 			}
 		}
 
 		// Couldn't find the referenced input...
-		location.push_back("input");
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInputTrigger->input.ref.c_str(), "' in the script inputs.");
-		location.pop_back();
+		m_context.location.push_back("input");
+		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInputTrigger->input.ref.c_str(), "' in the script inputs.");
+		m_context.location.pop_back();
 		return shared_ptr<TriggerProcessor>();
 	}
 }
 
-shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, vector<string>& location) {
-	unsigned int validationCount = context->validationErrors->size();
+shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ScriptLane* scriptLane, ScriptTimeScale* timeScale) {
+	unsigned int validationCount = m_context.validationErrors->size();
 
-	location.push_back("segments");
-	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(context, &scriptLane->segments, timeScale, location, vector<string>());
-	location.pop_back();
+	m_context.location.push_back("segments");
+	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(&scriptLane->segments, timeScale, vector<string>());
+	m_context.location.pop_back();
 
 	// Only return an actual processor if there were no validation errors during parsing. Otherwise there might be partially loaded children, and we can't reliably continue with this processor.
-	if (validationCount == context->validationErrors->size()) {
+	if (validationCount == m_context.validationErrors->size()) {
 		return shared_ptr<LaneProcessor>(new LaneProcessor(scriptLane, segmentProcessors, m_eventListener));
 	} else {
 		return shared_ptr<LaneProcessor>();
 	}
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(ProcessorScriptParseContext* context, vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string>& location, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> segmentStack) {
 	int count = 0;
 	vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 
 	for (vector<ScriptSegment>::iterator it = scriptSegments->begin(); it != scriptSegments->end(); it++) {
-		location.push_back(to_string(count));
-		vector<shared_ptr<SegmentProcessor>> segmentProcessorsSubset = parseSegment(context, &(*it), timeScale, location, segmentStack);
+		m_context.location.push_back(to_string(count));
+		vector<shared_ptr<SegmentProcessor>> segmentProcessorsSubset = parseSegment(&(*it), timeScale, segmentStack);
 		segmentProcessors.insert(segmentProcessors.end(), segmentProcessorsSubset.begin(), segmentProcessorsSubset.end());
-		location.pop_back();
+		m_context.location.pop_back();
 		count++;
 	}
 
 	return segmentProcessors;
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string>& location, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
 	// Check if it's a ref segment object or a full one
 	if (scriptSegment->ref.length() == 0) {
 		if (!scriptSegment->segmentBlock) {
 			// It's an inline non-segment-block segment
-			return { parseResolvedSegment(context, scriptSegment, timeScale, location, segmentStack) };
+			return { parseResolvedSegment(scriptSegment, timeScale, segmentStack) };
 		} else {
 			// It's a segment-block segment
 			vector<shared_ptr<SegmentProcessor>> blockSegments;
-			vector<string> actionsLocation = location;
-			location.push_back("segment-block");
-			blockSegments = parseSegmentBlock(context, scriptSegment->segmentBlock.get(), timeScale, scriptSegment->actions, location, actionsLocation, segmentStack);
-			location.pop_back();
+			vector<string> actionsLocation = m_context.location;
+			m_context.location.push_back("segment-block");
+			blockSegments = parseSegmentBlock(scriptSegment->segmentBlock.get(), timeScale, scriptSegment->actions, actionsLocation, segmentStack);
+			m_context.location.pop_back();
 			return blockSegments;
 		}
 	} else {
 		if (find(segmentStack.begin(), segmentStack.end(), string("s-") + scriptSegment->ref) == segmentStack.end()) {
 			int count = 0;
-			for (vector<ScriptSegment>::iterator it = context->script->segments.begin(); it != context->script->segments.end(); it++) {
+			for (vector<ScriptSegment>::iterator it = m_context.script->segments.begin(); it != m_context.script->segments.end(); it++) {
 				if (scriptSegment->ref.compare(it->id) == 0) {
 					vector<shared_ptr<SegmentProcessor>> segments;
-					vector<string> refLocation = { "component-pool",  "segments", to_string(count) };
+					vector<string> location = m_context.location;
+					m_context.location = { "component-pool",  "segments", to_string(count) };
 					segmentStack.push_back(string("s-") + scriptSegment->ref);
-					segments = parseSegment(context, &(*it), timeScale, refLocation, segmentStack);
+					segments = parseSegment(&(*it), timeScale, segmentStack);
 					segmentStack.pop_back();
+					m_context.location = location;
 					return segments;
 				}
 				count++;
 			}
 
 			// Couldn't find the referenced segment...
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment with the id '", scriptSegment->ref.c_str(), "'. Circular references can not be resolved.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment with the id '", scriptSegment->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 		return {};
 	}
 }
 
-shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string>& location, vector<string> segmentStack) {
-	location.push_back("duration");
-	shared_ptr<DurationProcessor> durationProcessor = parseDuration(context, &scriptSegment->duration, timeScale, location);
-	location.pop_back();
+shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
+	m_context.location.push_back("duration");
+	shared_ptr<DurationProcessor> durationProcessor = parseDuration(&scriptSegment->duration, timeScale);
+	m_context.location.pop_back();
 
 	int count = 0;
 	vector<shared_ptr<ActionProcessor>> startActions;
 	vector<shared_ptr<ActionProcessor>> endActions;
 	vector<shared_ptr<ActionOngoingProcessor>> ongoingActions;
-	location.push_back("actions");
+	m_context.location.push_back("actions");
 	for (vector<ScriptAction>::iterator it = scriptSegment->actions.begin(); it != scriptSegment->actions.end(); it++) {
-		location.push_back(to_string(count));
+		m_context.location.push_back(to_string(count));
 
 		vector<string> actionLocation;
 		ScriptAction& scriptAction = *it;
-		ScriptAction* resolvedAction = resolveScriptAction(context, &scriptAction, location, actionLocation);
+		ScriptAction* resolvedAction = resolveScriptAction(&scriptAction, actionLocation);
 
 		if (resolvedAction) {
+			vector<string> location = m_context.location;
+			m_context.location = actionLocation;
 			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
-				startActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
+				startActions.push_back(parseResolvedAction(resolvedAction));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
-				endActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
+				endActions.push_back(parseResolvedAction(resolvedAction));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::GLIDE) {
-				ongoingActions.push_back(parseResolvedGlideAction(context, resolvedAction, actionLocation));
+				ongoingActions.push_back(parseResolvedGlideAction(resolvedAction));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::GATE) {
-				ongoingActions.push_back(parseResolvedGateAction(context, resolvedAction, actionLocation));
+				ongoingActions.push_back(parseResolvedGateAction(resolvedAction));
 			}
+			m_context.location = location;
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 		}
 
-		location.pop_back();
+		m_context.location.pop_back();
 		count++;
 	}
-	location.pop_back();
+	m_context.location.pop_back();
 
 	return shared_ptr<SegmentProcessor>(new SegmentProcessor(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener));
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<ScriptAction>& actions, vector<string>& location, vector<string> actionsLocation, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<ScriptAction>& actions, vector<string> actionsLocation, vector<string> segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
-		location.push_back("segments");
+		m_context.location.push_back("segments");
 
 		// Build the full list of segments for the segment block
-		vector<shared_ptr<SegmentProcessor>> blockSegmentProcessors = parseSegments(context, &scriptSegmentBlock->segments, timeScale, location, segmentStack);
-		location.pop_back();
+		vector<shared_ptr<SegmentProcessor>> blockSegmentProcessors = parseSegments(&scriptSegmentBlock->segments, timeScale, segmentStack);
+		m_context.location.pop_back();
 
 		vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 		if (!scriptSegmentBlock->repeat) {
@@ -285,7 +300,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 			}
 		}
 
-		if ((segmentProcessors.size() > 0) && (context->validationErrors->size() == 0)) {
+		if ((segmentProcessors.size() > 0) && (m_context.validationErrors->size() == 0)) {
 			// Build the lists of start and end actions defined on the segment block.
 			vector<shared_ptr<ActionProcessor>> startActions;
 			vector<shared_ptr<ActionProcessor>> endActions;
@@ -297,18 +312,21 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 
 				vector<string> actionLocation;
 				ScriptAction& scriptAction = *it;
-				ScriptAction* resolvedAction = resolveScriptAction(context, &scriptAction, actionsLocation, actionLocation);
+				ScriptAction* resolvedAction = resolveScriptAction(&scriptAction, actionLocation);
 
 				if (resolvedAction) {
+					vector<string> location = m_context.location;
+					m_context.location = actionLocation;
 					if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
-						startActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
+						startActions.push_back(parseResolvedAction(resolvedAction));
 					} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
-						endActions.push_back(parseResolvedAction(context, resolvedAction, actionLocation));
+						endActions.push_back(parseResolvedAction(resolvedAction));
 					} else {
-						ADD_VALIDATION_ERROR(context->validationErrors, actionsLocation, ValidationErrorCode::Segment_SegmentBlockActionTimings, "The 'timing' of actions on a segment with a 'segment-block' reference can only be 'start' or 'end'.");
+						ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Segment_SegmentBlockActionTimings, "The 'timing' of actions on a segment with a 'segment-block' reference can only be 'start' or 'end'.");
 					}
+					m_context.location = location;
 				} else {
-					ADD_VALIDATION_ERROR(context->validationErrors, actionsLocation, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
+					ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 				}
 
 				actionsLocation.pop_back();
@@ -317,7 +335,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 			actionsLocation.pop_back();
 
 			// If there are start or end actions, they will have to be added to the first and/or the last segments of the block (but only if there are no current validation errors, since we assume a correctly loaded segment here)
-			if ((context->validationErrors->size() == 0) && ((startActions.size() > 0) || (endActions.size() > 0))) {
+			if ((m_context.validationErrors->size() == 0) && ((startActions.size() > 0) || (endActions.size() > 0))) {
 				if ((!scriptSegmentBlock->repeat) || ((*scriptSegmentBlock->repeat.get()) < 2)) {
 					// If the segment block is not repeating, we can assign the additional actions directly on the relevant segments
 					segmentProcessors.front()->pushStartActions(startActions);
@@ -336,27 +354,29 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Pr
 	} else {
 		if (find(segmentStack.begin(), segmentStack.end(), string("sb-") + scriptSegmentBlock->ref) == segmentStack.end()) {
 			int count = 0;
-			for (vector<ScriptSegmentBlock>::iterator it = context->script->segmentBlocks.begin(); it != context->script->segmentBlocks.end(); it++) {
+			for (vector<ScriptSegmentBlock>::iterator it = m_context.script->segmentBlocks.begin(); it != m_context.script->segmentBlocks.end(); it++) {
 				if (scriptSegmentBlock->ref.compare(it->id) == 0) {
-					vector<string> refLocation = { "component-pool",  "segment-blocks", to_string(count) };
+					vector<string> location = m_context.location;
+					m_context.location = { "component-pool",  "segment-blocks", to_string(count) };
 					segmentStack.push_back(string("sb-") + scriptSegmentBlock->ref);
-					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(context, &(*it), timeScale, actions, refLocation, actionsLocation, segmentStack);
+					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(&(*it), timeScale, actions, actionsLocation, segmentStack);
 					segmentStack.pop_back();
+					m_context.location = location;
 					return segments;
 				}
 				count++;
 			}
 
 			// Couldn't find the referenced segment-block...
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment-block with the id '", scriptSegmentBlock->ref.c_str(), "'. Circular references can not be resolved.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment-block with the id '", scriptSegmentBlock->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 		return vector<shared_ptr<SegmentProcessor>>();
 	}
 }
 
-shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, vector<string>& location) {
+shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ScriptDuration* scriptDuration, ScriptTimeScale* timeScale) {
 	if (scriptDuration->samples || scriptDuration->millis || scriptDuration->beats || scriptDuration->hz) {
 		// Construct a constant duration processor
 		uint64_t duration = 0;
@@ -383,7 +403,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 					if (timeScale->bpb) {
 						beats += ((*scriptDuration->bars.get()) * (*timeScale->bpb.get()));
 					} else {
-						ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
+						ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
 						return shared_ptr<DurationProcessor>();
 					}
 				}
@@ -392,7 +412,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 				duration = uint64_max(floor(refactoredDuration), 1);
 				drift = refactoredDuration - duration;
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
+				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
 				return shared_ptr<DurationProcessor>();
 			}
 		} else if (scriptDuration->hz) {
@@ -404,7 +424,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 		return make_shared<DurationConstantProcessor>(duration, drift);
 	} else if (scriptDuration->hzValue) {
 		// Construct a variable duration processor with a sample rate
-		shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptDuration->hzValue.get(), location, vector<string>());
+		shared_ptr<ValueProcessor> valueProcessor = parseValue(scriptDuration->hzValue.get(), vector<string>());
 		return make_shared<DurationVariableHzProcessor>(valueProcessor, m_sampleRateReader->getSampleRate());
 	} else {
 		// Construct a variable duration processor with a factor
@@ -416,17 +436,17 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 			if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
 				factor = activeSampleRate / (*timeScale->sampleRate.get());
 			}
-			valueProcessor = parseValue(context, scriptDuration->samplesValue.get(), location, vector<string>());
+			valueProcessor = parseValue(scriptDuration->samplesValue.get(), vector<string>());
 		} else if (scriptDuration->millisValue) {
 			factor = (double) m_sampleRateReader->getSampleRate() / 1000;
-			valueProcessor = parseValue(context, scriptDuration->millisValue.get(), location, vector<string>());
+			valueProcessor = parseValue(scriptDuration->millisValue.get(), vector<string>());
 		} else if (scriptDuration->beatsValue) {
 			if ((timeScale) && (timeScale->bpm)) {
 				int bpm = *timeScale->bpm.get();
 				factor = (double) m_sampleRateReader->getSampleRate() * 60 / bpm;
-				valueProcessor = parseValue(context, scriptDuration->beatsValue.get(), location, vector<string>());
+				valueProcessor = parseValue(scriptDuration->beatsValue.get(), vector<string>());
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
+				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
 				return shared_ptr<DurationProcessor>();
 			}
 		}
@@ -435,56 +455,56 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ProcessorScri
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ScriptAction* scriptAction) {
 	shared_ptr<ActionProcessor> actionProcessor;
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
-		location.push_back("if");
-		ifProcessor = parseIf(context, scriptAction->condition.get(), location, vector<string>());
-		location.pop_back();
+		m_context.location.push_back("if");
+		ifProcessor = parseIf(scriptAction->condition.get(), vector<string>());
+		m_context.location.pop_back();
 	}
 
 	if (scriptAction->setValue) {
-		location.push_back("set-value");
-		actionProcessor = parseSetValueAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("set-value");
+		actionProcessor = parseSetValueAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->setVariable) {
-		location.push_back("set-variable");
-		actionProcessor = parseSetVariableAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("set-variable");
+		actionProcessor = parseSetVariableAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->setPolyphony) {
-		location.push_back("set-polyphony");
-		actionProcessor = parseSetPolyphonyAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("set-polyphony");
+		actionProcessor = parseSetPolyphonyAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->setLabel) {
-		location.push_back("set-label");
-		actionProcessor = parseSetLabelAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("set-label");
+		actionProcessor = parseSetLabelAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->assert) {
-		location.push_back("assert");
-		actionProcessor = parseAssertAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("assert");
+		actionProcessor = parseAssertAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->trigger.length() > 0) {
-		location.push_back("trigger");
-		actionProcessor = parseTriggerAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("trigger");
+		actionProcessor = parseTriggerAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->moveSequence) {
-		location.push_back("move-sequence");
-		actionProcessor = parseMoveSequenceAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("move-sequence");
+		actionProcessor = parseMoveSequenceAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->clearSequence.length() > 0) {
-		location.push_back("clear-sequence");
-		actionProcessor = parseClearSequenceAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("clear-sequence");
+		actionProcessor = parseClearSequenceAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->addToSequence) {
-		location.push_back("add-to-sequence");
-		actionProcessor = parseAddToSequenceAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("add-to-sequence");
+		actionProcessor = parseAddToSequenceAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else if (scriptAction->removeFromSequence) {
-		location.push_back("remove-from-sequence");
-		actionProcessor = parseRemoveFromSequenceAction(context, scriptAction, ifProcessor, location);
-		location.pop_back();
+		m_context.location.push_back("remove-from-sequence");
+		actionProcessor = parseRemoveFromSequenceAction(scriptAction, ifProcessor);
+		m_context.location.pop_back();
 	} else {
 		return actionProcessor;
 	}
@@ -492,28 +512,28 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(Processor
 	return actionProcessor;
 }
 
-shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& location) {
+shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(ScriptAction* scriptAction) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
-		location.push_back("if");
-		ifProcessor = parseIf(context, scriptAction->condition.get(), location, vector<string>());
-		location.pop_back();
+		m_context.location.push_back("if");
+		ifProcessor = parseIf(scriptAction->condition.get(), vector<string>());
+		m_context.location.pop_back();
 	}
 
-	location.push_back("start-value");
-	shared_ptr<ValueProcessor> startValueProcessor = parseValue(context, &(*scriptAction->startValue.get()), location, vector<string>());
-	location.pop_back();
-	location.push_back("end-value");
-	shared_ptr<ValueProcessor> endValueProcessor = parseValue(context, &(*scriptAction->endValue.get()), location, vector<string>());
-	location.pop_back();
+	m_context.location.push_back("start-value");
+	shared_ptr<ValueProcessor> startValueProcessor = parseValue(&(*scriptAction->startValue.get()), vector<string>());
+	m_context.location.pop_back();
+	m_context.location.push_back("end-value");
+	shared_ptr<ValueProcessor> endValueProcessor = parseValue(&(*scriptAction->endValue.get()), vector<string>());
+	m_context.location.pop_back();
 
 	int outputPort = -1;
 	int outputChannel = -1;
 	if (scriptAction->output) {
-		location.push_back("output");
-		pair<int, int> output = parseOutput(context, &(*scriptAction->output), location);
-		location.pop_back();
+		m_context.location.push_back("output");
+		pair<int, int> output = parseOutput(&(*scriptAction->output));
+		m_context.location.pop_back();
 		outputPort = output.first;
 		outputChannel = output.second;
 	}
@@ -532,21 +552,21 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction
 	return shared_ptr<ActionGlideProcessor>(new ActionGlideProcessor(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler));
 }
 
-shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& location) {
+shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(ScriptAction* scriptAction) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
-		location.push_back("if");
-		ifProcessor = parseIf(context, scriptAction->condition.get(), location, vector<string>());
-		location.pop_back();
+		m_context.location.push_back("if");
+		ifProcessor = parseIf(scriptAction->condition.get(), vector<string>());
+		m_context.location.pop_back();
 	}
 
 	int outputPort = -1;
 	int outputChannel = -1;
 	if (scriptAction->output) {
-		location.push_back("output");
-		pair<int, int> output = parseOutput(context, &(*scriptAction->output), location);
-		location.pop_back();
+		m_context.location.push_back("output");
+		pair<int, int> output = parseOutput(&(*scriptAction->output));
+		m_context.location.pop_back();
 		outputPort = output.first;
 		outputChannel = output.second;
 	}
@@ -559,59 +579,59 @@ shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(P
 	return shared_ptr<ActionGateProcessor>(new ActionGateProcessor(gateHighRatio, ifProcessor, outputPort, outputChannel, m_portHandler));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
-	location.push_back("value");
-	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setValue.get()->value, location, vector<string>());
-	location.pop_back();
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+	m_context.location.push_back("value");
+	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setValue.get()->value, vector<string>());
+	m_context.location.pop_back();
 
-	location.push_back("output");
-	pair<int, int> output = parseOutput(context, &scriptAction->setValue.get()->output, location);
-	location.pop_back();
+	m_context.location.push_back("output");
+	pair<int, int> output = parseOutput(&scriptAction->setValue.get()->output);
+	m_context.location.pop_back();
 
 	return shared_ptr<ActionSetValueProcessor>(new ActionSetValueProcessor(valueProcessor, output.first, output.second, m_portHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
-	location.push_back("value");
-	shared_ptr<ValueProcessor> valueProcessor = parseValue(context, &scriptAction->setVariable.get()->value, location, vector<string>());
-	location.pop_back();
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+	m_context.location.push_back("value");
+	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setVariable.get()->value, vector<string>());
+	m_context.location.pop_back();
 
 	return shared_ptr<ActionSetVariableProcessor>(new ActionSetVariableProcessor(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
 	return shared_ptr<ActionProcessor>(new ActionSetPolyphonyProcessor(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptSetLabel* scriptSetLabel = scriptAction->setLabel.get();
 	return shared_ptr<ActionProcessor>(new ActionSetLabelProcessor(scriptSetLabel->index - 1, scriptSetLabel->label, m_portHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptAssert* scriptAssert = scriptAction->assert.get();
 
-	location.push_back("expect");
-	shared_ptr<IfProcessor> expect = parseIf(context, &scriptAssert->expect, location, vector<string>());
-	location.pop_back();
+	m_context.location.push_back("expect");
+	shared_ptr<IfProcessor> expect = parseIf(&scriptAssert->expect, vector<string>());
+	m_context.location.pop_back();
 
 	return shared_ptr<ActionProcessor>(new ActionAssertProcessor(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	return shared_ptr<ActionProcessor>(new ActionTriggerProcessor(scriptAction->trigger, m_triggerHandler, ifProcessor));
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptMoveSequence* moveSequence = &(*scriptAction->moveSequence);
-	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, moveSequence->id);
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(moveSequence->id);
 
 	if (!sequenceProcessor) {
-		if (hasNonSharedSequence(context, moveSequence->id)) {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_NonSharedSequence, "The sequence with id '", moveSequence->id.c_str(), "' is not a 'shared' sequence. Only shared sequences can be moved.");
+		if (hasNonSharedSequence(moveSequence->id)) {
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_NonSharedSequence, "The sequence with id '", moveSequence->id.c_str(), "' is not a 'shared' sequence. Only shared sequences can be moved.");
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", moveSequence->id.c_str(), "' could not be found.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", moveSequence->id.c_str(), "' could not be found.");
 		}
 
 		return nullptr;
@@ -624,108 +644,110 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(Proce
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
-	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, scriptAction->clearSequence);
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(scriptAction->clearSequence);
 	if (!sequenceProcessor) {
-		sequenceProcessor = resolveNonSharedSequence(context, scriptAction->clearSequence);
+		sequenceProcessor = resolveNonSharedSequence(scriptAction->clearSequence);
 	}
 
 	if (sequenceProcessor) {
 		return make_shared<ActionClearSequenceProcessor>(sequenceProcessor, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::ClearSequence_SequenceNotFound, "The sequence with id '", scriptAction->clearSequence.c_str(), "' could not be found.");
+		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::ClearSequence_SequenceNotFound, "The sequence with id '", scriptAction->clearSequence.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptAddToSequence* addToSequence = &(*scriptAction->addToSequence);
 
-	location.push_back("value");
-	shared_ptr<ValueProcessor> value = parseValue(context, &addToSequence->value, location, vector<string>());
-	location.pop_back();
+	m_context.location.push_back("value");
+	shared_ptr<ValueProcessor> value = parseValue(&addToSequence->value, vector<string>());
+	m_context.location.pop_back();
 
-	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, addToSequence->id);
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(addToSequence->id);
 	if (!sequenceProcessor) {
-		sequenceProcessor = resolveNonSharedSequence(context, addToSequence->id);
+		sequenceProcessor = resolveNonSharedSequence(addToSequence->id);
 	}
 
 	if (sequenceProcessor) {
 		return make_shared<ActionAddToSequenceSequenceProcessor>(sequenceProcessor, value, addToSequence->position, addToSequence->asConstantVoltage, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::AddToSequence_SequenceNotFound, "The sequence with id '", addToSequence->id.c_str(), "' could not be found.");
+		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_SequenceNotFound, "The sequence with id '", addToSequence->id.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor, vector<string>& location) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptRemoveFromSequence* removeFromSequence = &(*scriptAction->removeFromSequence);
-	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, removeFromSequence->id);
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(removeFromSequence->id);
 	if (!sequenceProcessor) {
-		sequenceProcessor = resolveNonSharedSequence(context, removeFromSequence->id);
+		sequenceProcessor = resolveNonSharedSequence(removeFromSequence->id);
 	}
 
 	if (sequenceProcessor) {
 		return make_shared<ActionRemoveFromSequenceProcessor>(sequenceProcessor, removeFromSequence->position, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::RemoveFromSequence_SequenceNotFound, "The sequence with id '", removeFromSequence->id.c_str(), "' could not be found.");
+		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_SequenceNotFound, "The sequence with id '", removeFromSequence->id.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<string>& location, vector<string> valueStack) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ScriptValue* scriptValue, vector<string> valueStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptValue->ref.length() == 0) {
 		int count = 0;
-		location.push_back("calc");
+		m_context.location.push_back("calc");
 		vector<shared_ptr<CalcProcessor>> calcProcessors;
 		for (vector<ScriptCalc>::iterator it = scriptValue->calc.begin(); it != scriptValue->calc.end(); it++) {
-			location.push_back(to_string(count));
-			calcProcessors.push_back(parseCalc(context, &(*it), location, valueStack));
-			location.pop_back();
+			m_context.location.push_back(to_string(count));
+			calcProcessors.push_back(parseCalc(&(*it), valueStack));
+			m_context.location.pop_back();
 			count++;
 		}
-		location.pop_back();
+		m_context.location.pop_back();
 
 		if ((scriptValue->voltage) || (scriptValue->note)) {
-			return parseStaticValue(context, scriptValue, calcProcessors, location);
+			return parseStaticValue(scriptValue, calcProcessors);
 		} else if (scriptValue->variable) {
-			return parseVariableValue(context, scriptValue, calcProcessors, location);
+			return parseVariableValue(scriptValue, calcProcessors);
 		} else if (scriptValue->input) {
-			return parseInputValue(context, scriptValue, calcProcessors, location);
+			return parseInputValue(scriptValue, calcProcessors);
 		} else if (scriptValue->output) {
-			return parseOutputValue(context, scriptValue, calcProcessors, location);
+			return parseOutputValue(scriptValue, calcProcessors);
 		} else if (scriptValue->rand) {
-			return parseRandValue(context, scriptValue, calcProcessors, location, valueStack);
+			return parseRandValue(scriptValue, calcProcessors, valueStack);
 		} else if (scriptValue->sequence) {
-			return parseSequenceValue(context, scriptValue, calcProcessors, location, valueStack);
+			return parseSequenceValue(scriptValue, calcProcessors, valueStack);
 		}
 
 	} else {
 		if (find(valueStack.begin(), valueStack.end(), string("v-") + scriptValue->ref) == valueStack.end()) {
 			int count = 0;
-			for (vector<ScriptValue>::iterator it = context->script->values.begin(); it != context->script->values.end(); it++) {
+			for (vector<ScriptValue>::iterator it = m_context.script->values.begin(); it != m_context.script->values.end(); it++) {
 				if (scriptValue->ref.compare(it->id) == 0) {
-					vector<string> refLocation = { "component-pool",  "values", to_string(count) };
+					vector<string> location = m_context.location;
+					m_context.location = { "component-pool",  "values", to_string(count) };
 					valueStack.push_back(string("v-") + scriptValue->ref);
-					shared_ptr<ValueProcessor> value = parseValue(context, &(*it), refLocation, valueStack);
+					shared_ptr<ValueProcessor> value = parseValue(&(*it), valueStack);
 					valueStack.pop_back();
+					m_context.location = location;
 					return value;
 				}
 				count++;
 			}
 
 			// Couldn't find the referenced value...
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced value with id '", scriptValue->ref.c_str(), "' in the script values.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced value with id '", scriptValue->ref.c_str(), "' in the script values.");
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the value with the id '", scriptValue->ref.c_str(), "'. Circular references can not be resolved.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the value with the id '", scriptValue->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 	}
 
 	return shared_ptr<ValueProcessor>();
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	float value = 0.f;
 	if (scriptValue->voltage) {
 		value = *scriptValue->voltage.get();
@@ -744,65 +766,65 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ProcessorScri
 	return shared_ptr<ValueProcessor>(new StaticValueProcessor(value, calcProcessors, scriptValue->quantize));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	return shared_ptr<ValueProcessor>(new VariableValueProcessor(*scriptValue->variable.get(), calcProcessors, scriptValue->quantize, m_variableHandler));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
-	location.push_back("input");
-	pair<int, int> input = parseInput(context, scriptValue->input.get(), location);
-	location.pop_back();
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+	m_context.location.push_back("input");
+	pair<int, int> input = parseInput(scriptValue->input.get());
+	m_context.location.pop_back();
 
 	return shared_ptr<ValueProcessor>(new InputValueProcessor(input.first, input.second, calcProcessors, scriptValue->quantize, m_portHandler));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location) {
-	location.push_back("output");
-	pair<int, int> output = parseOutput(context, scriptValue->output.get(), location);
-	location.pop_back();
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+	m_context.location.push_back("output");
+	pair<int, int> output = parseOutput(scriptValue->output.get());
+	m_context.location.pop_back();
 
 	return shared_ptr<ValueProcessor>(new OutputValueProcessor(output.first, output.second, calcProcessors, scriptValue->quantize, m_portHandler));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location, vector<string> valueStack) {
-	location.push_back("rand");
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
+	m_context.location.push_back("rand");
 
-	location.push_back("lower");
-	shared_ptr<ValueProcessor> lowerValueProcessor = parseValue(context, scriptValue->rand.get()->lower.get(), location, valueStack);
-	location.pop_back();
+	m_context.location.push_back("lower");
+	shared_ptr<ValueProcessor> lowerValueProcessor = parseValue(scriptValue->rand.get()->lower.get(), valueStack);
+	m_context.location.pop_back();
 
-	location.push_back("upper");
-	shared_ptr<ValueProcessor> upperValueProcessor = parseValue(context, scriptValue->rand.get()->upper.get(), location, valueStack);
-	location.pop_back();
+	m_context.location.push_back("upper");
+	shared_ptr<ValueProcessor> upperValueProcessor = parseValue(scriptValue->rand.get()->upper.get(), valueStack);
+	m_context.location.pop_back();
 
-	location.pop_back();
+	m_context.location.pop_back();
 
 	return shared_ptr<ValueProcessor>(new RandValueProcessor(lowerValueProcessor, upperValueProcessor, m_randomValueGenerator, calcProcessors, scriptValue->quantize));
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& location, vector<string> valueStack) {
-	location.push_back("sequence");
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
+	m_context.location.push_back("sequence");
 
 	shared_ptr<ValueProcessor> processor = nullptr;
 
 	ScriptSequenceValue *sequence = &(*scriptValue->sequence);
-	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(context, sequence->id);
+	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(sequence->id);
 	if (!sequenceProcessor) {
-		sequenceProcessor = resolveNonSharedSequence(context, sequence->id);
+		sequenceProcessor = resolveNonSharedSequence(sequence->id);
 	}
 
 	if (sequenceProcessor) {
 		return make_shared<SequenceValueProcessor>(sequenceProcessor, convertScriptSequenceMoveDirection(sequence->moveBefore), convertScriptSequenceMoveDirection(sequence->moveAfter), sequence->wrap, calcProcessors, scriptValue->quantize);
 	} else {
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::SequenceValue_SequenceNotFound, "The sequence with id '", sequence->id.c_str(), "' could not be found.");
+		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_SequenceNotFound, "The sequence with id '", sequence->id.c_str(), "' could not be found.");
 	}
 
-	location.pop_back();
+	m_context.location.pop_back();
 
 	return processor;
 }
 
-shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, vector<string>& location, vector<string> valueStack) {
+shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ScriptCalc* scriptCalc, vector<string> valueStack) {
 	if (scriptCalc->ref.length() == 0) {
 		bool valueProcessor = false;
 		bool truncProcessor = false;
@@ -814,55 +836,55 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 
 		switch (scriptCalc->operation) {
 			case ScriptCalc::CalcOperation::ADD:
-				location.push_back("add");
+				m_context.location.push_back("add");
 				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::SUB:
-				location.push_back("sub");
+				m_context.location.push_back("sub");
 				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::DIV:
-				location.push_back("div");
+				m_context.location.push_back("div");
 				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::MULT:
-				location.push_back("mult");
+				m_context.location.push_back("mult");
 				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::MAX:
-				location.push_back("max");
+				m_context.location.push_back("max");
 				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::MIN:
-				location.push_back("min");
+				m_context.location.push_back("min");
 				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::REMAIN:
-				location.push_back("remain");
+				m_context.location.push_back("remain");
 				valueProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::TRUNC:
-				location.push_back("trunc");
+				m_context.location.push_back("trunc");
 				truncProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::FRAC:
-				location.push_back("frac");
+				m_context.location.push_back("frac");
 				fracProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::ROUND:
-				location.push_back("round");
+				m_context.location.push_back("round");
 				roundProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::QUANTIZE:
-				location.push_back("quantize");
+				m_context.location.push_back("quantize");
 				quantizeProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::SIGN:
-				location.push_back("sign");
+				m_context.location.push_back("sign");
 				signProcessor = true;
 				break;
 			case ScriptCalc::CalcOperation::VTOF:
-				location.push_back("vtof");
+				m_context.location.push_back("vtof");
 				vtofProcessor = true;
 				break;
 		}
@@ -870,7 +892,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 		shared_ptr<CalcProcessor> calcProcessor;
 
 		if (valueProcessor) {
-			shared_ptr<ValueProcessor> valueProcessor = parseValue(context, scriptCalc->value.get(), location, valueStack);
+			shared_ptr<ValueProcessor> valueProcessor = parseValue(scriptCalc->value.get(), valueStack);
 			calcProcessor = make_shared<CalcValueProcessor>(scriptCalc, valueProcessor);
 		} else if (truncProcessor) {
 			calcProcessor = make_shared<CalcTruncProcessor>();
@@ -883,7 +905,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 			if (scriptCalc->tuning->ref.length() == 0) {
 				scriptTuning = scriptCalc->tuning.get();
 			} else {
-				for (vector<ScriptTuning>::iterator it = context->script->tunings.begin(); it != context->script->tunings.end(); it++) {
+				for (vector<ScriptTuning>::iterator it = m_context.script->tunings.begin(); it != m_context.script->tunings.end(); it++) {
 					if (it->id == scriptCalc->tuning->ref) {
 						scriptTuning = &(*it);
 						break;
@@ -894,7 +916,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 			if (scriptTuning != nullptr) {
 				calcProcessor = make_shared<CalcQuantizeProcessor>(scriptTuning);
 			} else {
-				ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Calc_QuantizeTuningNotFound, "Could not find the referenced tuning with id '", scriptCalc->tuning->ref.c_str(), "' in the script tunings.");
+				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_QuantizeTuningNotFound, "Could not find the referenced tuning with id '", scriptCalc->tuning->ref.c_str(), "' in the script tunings.");
 			}
 		} else if (signProcessor) {
 			calcProcessor = make_shared<CalcSignProcessor>(scriptCalc);
@@ -902,34 +924,36 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ProcessorScriptParseC
 			calcProcessor = make_shared<CalcVtoFProcessor>();
 		}
 
-		location.pop_back();
+		m_context.location.pop_back();
 
 		return calcProcessor;
 	} else {
 		if (find(valueStack.begin(), valueStack.end(), string("c-") + scriptCalc->ref) == valueStack.end()) {
 			int count = 0;
-			for (vector<ScriptCalc>::iterator it = context->script->calcs.begin(); it != context->script->calcs.end(); it++) {
+			for (vector<ScriptCalc>::iterator it = m_context.script->calcs.begin(); it != m_context.script->calcs.end(); it++) {
 				if (scriptCalc->ref.compare(it->id) == 0) {
-					vector<string> refLocation = { "component-pool",  "calcs", to_string(count) };
+					vector<string> location = m_context.location;
+					m_context.location = { "component-pool",  "calcs", to_string(count) };
 					valueStack.push_back(string("c-") + scriptCalc->ref);
-					shared_ptr<CalcProcessor> calc = parseCalc(context, &(*it), refLocation, valueStack);
+					shared_ptr<CalcProcessor> calc = parseCalc(&(*it), valueStack);
 					valueStack.pop_back();
+					m_context.location = location;
 					return calc;
 				}
 				count++;
 			}
 
 			// Couldn't find the referenced calc...
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced calc with id '", scriptCalc->ref.c_str(), "' in the script calcs.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced calc with id '", scriptCalc->ref.c_str(), "' in the script calcs.");
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the calc with the id '", scriptCalc->ref.c_str(), "'. Circular references can not be resolved.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the calc with the id '", scriptCalc->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 	}
 
 	return shared_ptr<CalcProcessor>();
 }
 
-shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, vector<string>& location, vector<string> ifStack) {
+shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ScriptIf* scriptIf, vector<string> ifStack) {
 	if (scriptIf->ref.length() == 0) {
 		pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
 		vector<shared_ptr<IfProcessor>> ifs;
@@ -938,142 +962,148 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ProcessorScriptParseConte
 
 		switch (scriptIf->ifOperator) {
 			case ScriptIf::IfOperator::EQ:
-				location.push_back("eq");
+				m_context.location.push_back("eq");
 				break;
 			case ScriptIf::IfOperator::NE:
-				location.push_back("ne");
+				m_context.location.push_back("ne");
 				break;
 			case ScriptIf::IfOperator::LT:
-				location.push_back("lt");
+				m_context.location.push_back("lt");
 				break;
 			case ScriptIf::IfOperator::LTE:
-				location.push_back("lte");
+				m_context.location.push_back("lte");
 				break;
 			case ScriptIf::IfOperator::GT:
-				location.push_back("gt");
+				m_context.location.push_back("gt");
 				break;
 			case ScriptIf::IfOperator::GTE:
-				location.push_back("gte");
+				m_context.location.push_back("gte");
 				break;
 			case ScriptIf::IfOperator::AND:
 				parseValues = false;
 				parseIfs = true;
-				location.push_back("and");
+				m_context.location.push_back("and");
 				break;
 			case ScriptIf::IfOperator::OR:
 				parseValues = false;
 				parseIfs = true;
-				location.push_back("or");
+				m_context.location.push_back("or");
 				break;
 		}
 
 		if (parseValues) {
-			location.push_back("0");
-			values.first = parseValue(context, &scriptIf->values.get()->first, location, vector<string>());
-			location.pop_back();
-			location.push_back("1");
-			values.second = parseValue(context, &scriptIf->values.get()->second, location, vector<string>());
-			location.pop_back();
+			m_context.location.push_back("0");
+			values.first = parseValue(&scriptIf->values.get()->first, vector<string>());
+			m_context.location.pop_back();
+			m_context.location.push_back("1");
+			values.second = parseValue(&scriptIf->values.get()->second, vector<string>());
+			m_context.location.pop_back();
 		}
 		if (parseIfs) {
 			int count = 0;
 			for (ScriptIf& scriptIf : *scriptIf->ifs.get()) {
-				location.push_back(to_string(count));
-				ifs.push_back(parseIf(context, &scriptIf, location, ifStack));
-				location.pop_back();
+				m_context.location.push_back(to_string(count));
+				ifs.push_back(parseIf(&scriptIf, ifStack));
+				m_context.location.pop_back();
 				count++;
 			}
 		}
 
-		location.pop_back();
+		m_context.location.pop_back();
 
 		return shared_ptr<IfProcessor>(new IfProcessor(scriptIf, values, ifs));
 	} else {
 		if (find(ifStack.begin(), ifStack.end(), scriptIf->ref) == ifStack.end()) {
 			int count = 0;
-			for (vector<ScriptIf>::iterator it = context->script->ifs.begin(); it != context->script->ifs.end(); it++) {
+			for (vector<ScriptIf>::iterator it = m_context.script->ifs.begin(); it != m_context.script->ifs.end(); it++) {
 				if (scriptIf->ref.compare(it->id) == 0) {
-					vector<string> refLocation = { "component-pool",  "ifs", to_string(count) };
+					vector<string> location = m_context.location;
+					m_context.location = { "component-pool",  "ifs", to_string(count) };
 					ifStack.push_back(scriptIf->ref);
-					shared_ptr<IfProcessor> ifProcessor = parseIf(context, &(*it), refLocation, ifStack);
+					shared_ptr<IfProcessor> ifProcessor = parseIf(&(*it), ifStack);
 					ifStack.pop_back();
+					m_context.location = location;
 					return ifProcessor;
 				}
 				count++;
 			}
 
 			// Couldn't find the referenced if...
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced if with id '", scriptIf->ref.c_str(), "' in the script ifs.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced if with id '", scriptIf->ref.c_str(), "' in the script ifs.");
 		} else {
-			ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular if reference while processing the if with the id '", scriptIf->ref.c_str(), "'. Circular references can not be resolved.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular if reference while processing the if with the id '", scriptIf->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 	}
 
 	return shared_ptr<IfProcessor>();
 }
 
-void ProcessorScriptParser::parseSequence(ProcessorScriptParseContext* context, ScriptSequence* scriptSequence, vector<string>& location) {
+void ProcessorScriptParser::parseSequence(ScriptSequence* scriptSequence) {
 	vector<shared_ptr<ValueProcessor>> values;
 	for (vector<ScriptValue>::iterator it = scriptSequence->values.begin(); it != scriptSequence->values.end(); it++) {
-		values.push_back(parseValue(context, &(*it), location, vector<string>()));
+		values.push_back(parseValue(&(*it), vector<string>()));
 	}
 	shared_ptr<SequenceProcessor> sequenceProcessor = make_shared<SequenceProcessor>(scriptSequence->id, values, scriptSequence->retrieveVoltageOnce);
 
 	if (scriptSequence->shared) {
-		context->sharedSequences.push_back(make_shared<SequencePositionProcessor>(sequenceProcessor, m_randomValueGenerator));
+		m_context.sharedSequences.push_back(make_shared<SequencePositionProcessor>(sequenceProcessor, m_randomValueGenerator));
 	} else {
-		context->nonSharedSequences.push_back(sequenceProcessor);
+		m_context.nonSharedSequences.push_back(sequenceProcessor);
 	}
 }
 
-pair<int, int> ProcessorScriptParser::parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, vector<string>& location) {
+pair<int, int> ProcessorScriptParser::parseInput(ScriptInput* scriptInput) {
 	// Check if it's a ref input or a full one
 	if (scriptInput->ref.length() == 0) {
 		return pair<int, int>(scriptInput->index - 1, scriptInput->channel ? *scriptInput->channel.get() - 1 : 0);
 	} else {
 		int count = 0;
-		for (vector<ScriptInput>::iterator it = context->script->inputs.begin(); it != context->script->inputs.end(); it++) {
+		for (vector<ScriptInput>::iterator it = m_context.script->inputs.begin(); it != m_context.script->inputs.end(); it++) {
 			if (scriptInput->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "component-pool",  "inputs", to_string(count) };
-				return parseInput(context, &(*it), refLocation);
+				vector<string> location = m_context.location;
+				m_context.location = { "component-pool",  "inputs", to_string(count) };
+				return parseInput(&(*it));
+				m_context.location = location;
 			}
 			count++;
 		}
 
 		// Couldn't find the referenced input...
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInput->ref.c_str(), "' in the script inputs.");
+		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInput->ref.c_str(), "' in the script inputs.");
 		return pair<int, int>(-1, -1);
 	}
 
 }
 
-pair<int, int> ProcessorScriptParser::parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, vector<string>& location) {
+pair<int, int> ProcessorScriptParser::parseOutput(ScriptOutput* scriptOutput) {
 	// Check if it's a ref output or a full one
 	if (scriptOutput->ref.length() == 0) {
 		return pair<int, int>(scriptOutput->index - 1, scriptOutput->channel ? *scriptOutput->channel.get() - 1 : 0);
 	} else {
 		int count = 0;
-		for (vector<ScriptOutput>::iterator it = context->script->outputs.begin(); it != context->script->outputs.end(); it++) {
+		for (vector<ScriptOutput>::iterator it = m_context.script->outputs.begin(); it != m_context.script->outputs.end(); it++) {
 			if (scriptOutput->ref.compare(it->id) == 0) {
-				vector<string> refLocation = { "component-pool",  "outputs", to_string(count) };
-				return parseOutput(context, &(*it), refLocation);
+				vector<string> location = m_context.location;
+				m_context.location = { "component-pool",  "outputs", to_string(count) };
+				return parseOutput(&(*it));
+				m_context.location = location;
 			}
 			count++;
 		}
 
 		// Couldn't find the referenced output...
-		ADD_VALIDATION_ERROR(context->validationErrors, location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced output with id '", scriptOutput->ref.c_str(), "' in the script outputs.");
+		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced output with id '", scriptOutput->ref.c_str(), "' in the script outputs.");
 		return pair<int, int>(-1, -1);
 	}
 }
 
-ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, vector<string>& currentLocation, vector<string>& resolvedLocation) {
+ScriptAction* ProcessorScriptParser::resolveScriptAction(ScriptAction* scriptAction, vector<string>& resolvedLocation) {
 	if (scriptAction->ref.length() == 0) {
-		resolvedLocation = currentLocation;
+		resolvedLocation = m_context.location;
 		return scriptAction;
 	} else {
 		int count = 0;
-		for (vector<ScriptAction>::iterator it = context->script->actions.begin(); it != context->script->actions.end(); it++) {
+		for (vector<ScriptAction>::iterator it = m_context.script->actions.begin(); it != m_context.script->actions.end(); it++) {
 			if (scriptAction->ref.compare(it->id) == 0) {
 				resolvedLocation = { "component-pool", "actions", to_string(count) };
 				return &(*it);
@@ -1085,8 +1115,8 @@ ScriptAction* ProcessorScriptParser::resolveScriptAction(ProcessorScriptParseCon
 	}
 }
 
-shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequence(ProcessorScriptParseContext* context, string id) {
-	for (vector<shared_ptr<SequencePositionProcessor>>::iterator it = context->sharedSequences.begin(); it != context->sharedSequences.end(); it++) {
+shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequence(string id) {
+	for (vector<shared_ptr<SequencePositionProcessor>>::iterator it = m_context.sharedSequences.begin(); it != m_context.sharedSequences.end(); it++) {
 		if (id == it->get()->getSequenceProcessor()->getId()) {
 			return *it;
 		}
@@ -1095,8 +1125,8 @@ shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequen
 	return nullptr;
 }
 
-bool ProcessorScriptParser::hasNonSharedSequence(ProcessorScriptParseContext* context, string id) {
-	for (vector<shared_ptr<SequenceProcessor>>::iterator it = context->nonSharedSequences.begin(); it != context->nonSharedSequences.end(); it++) {
+bool ProcessorScriptParser::hasNonSharedSequence(string id) {
+	for (vector<shared_ptr<SequenceProcessor>>::iterator it = m_context.nonSharedSequences.begin(); it != m_context.nonSharedSequences.end(); it++) {
 		if (id == it->get()->getId()) {
 			return true;
 		}
@@ -1105,8 +1135,8 @@ bool ProcessorScriptParser::hasNonSharedSequence(ProcessorScriptParseContext* co
 	return false;
 }
 
-shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSequence(ProcessorScriptParseContext* context, string id) {
-	for (vector<shared_ptr<SequenceProcessor>>::iterator it = context->nonSharedSequences.begin(); it != context->nonSharedSequences.end(); it++) {
+shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSequence(string id) {
+	for (vector<shared_ptr<SequenceProcessor>>::iterator it = m_context.nonSharedSequences.begin(); it != m_context.nonSharedSequences.end(); it++) {
 		if (id == it->get()->getId()) {
 			return make_shared<SequencePositionProcessor>(*it, m_randomValueGenerator);
 		}
@@ -1122,6 +1152,5 @@ ProcessorLoader::~ProcessorLoader() {
 }
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
-	vector<string> location;
-	return m_processorScriptParser.parseScript(script, validationErrors, location);
+	return m_processorScriptParser.parseScript(script, validationErrors);
 }

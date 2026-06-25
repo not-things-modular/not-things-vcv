@@ -65,55 +65,63 @@ struct ProcessorScriptParseContext {
 
 	std::vector<std::shared_ptr<SequencePositionProcessor>> sharedSequences;
 	std::vector<std::shared_ptr<SequenceProcessor>> nonSharedSequences;
+
+	std::vector<std::string> location;
+	std::vector<std::vector<std::string>> stashedLocations;
+
+	void stashLocation();
+	void popLocation();
 };
 
 struct ProcessorScriptParser {
 	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, std::shared_ptr<RandValueGenerator> randomValueGenerator);
 
-	std::shared_ptr<Processor> parseScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors, std::vector<std::string>& location);
-	std::shared_ptr<TimelineProcessor> parseTimeline(ProcessorScriptParseContext* context, ScriptTimeline* scriptTimeline, std::vector<std::string>& location);
-	std::shared_ptr<TriggerProcessor> parseInputTrigger(ProcessorScriptParseContext* context, ScriptInputTrigger* ScriptInputTrigger, std::vector<std::string>& location);
-	std::shared_ptr<LaneProcessor> parseLane(ProcessorScriptParseContext* context, ScriptLane* scriptLane, ScriptTimeScale* timeScale, std::vector<std::string>& location);
-	std::vector<std::shared_ptr<SegmentProcessor>> parseSegments(ProcessorScriptParseContext* context, std::vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, std::vector<std::string>& location, std::vector<std::string> segmentStack);
-	std::vector<std::shared_ptr<SegmentProcessor>> parseSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string>& location, std::vector<std::string> segmentStack);
-	std::shared_ptr<SegmentProcessor> parseResolvedSegment(ProcessorScriptParseContext* context, ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string>& location, std::vector<std::string> segmentStack);
-	std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ProcessorScriptParseContext* context, ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<ScriptAction>& actions, std::vector<std::string>& location, std::vector<std::string> actionsLocation, std::vector<std::string> segmentStack);
-	std::shared_ptr<DurationProcessor> parseDuration(ProcessorScriptParseContext* context, ScriptDuration* scriptDuration, ScriptTimeScale* timeScale, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseResolvedAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string>& location);
-	std::shared_ptr<ActionGlideProcessor> parseResolvedGlideAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string>& location);
-	std::shared_ptr<ActionGateProcessor> parseResolvedGateAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseSetValueAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseSetVariableAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseSetLabelAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseAssertAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseTriggerAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseMoveSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseClearSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseAddToSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ActionProcessor> parseRemoveFromSequenceAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor, std::vector<std::string>& location);
-	std::shared_ptr<ValueProcessor> parseValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::string>& location, std::vector<std::string> valueStack);
-	std::shared_ptr<ValueProcessor> parseStaticValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string>& location);
-	std::shared_ptr<ValueProcessor> parseVariableValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string>& location);
-	std::shared_ptr<ValueProcessor> parseInputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string>& location);
-	std::shared_ptr<ValueProcessor> parseOutputValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string>& location);
-	std::shared_ptr<ValueProcessor> parseRandValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string>& location, std::vector<std::string> valueStack);
-	std::shared_ptr<ValueProcessor> parseSequenceValue(ProcessorScriptParseContext* context, ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string>& location, std::vector<std::string> valueStack);
-	std::shared_ptr<CalcProcessor> parseCalc(ProcessorScriptParseContext* context, ScriptCalc* scriptCalc, std::vector<std::string>& location, std::vector<std::string> valueStack);
-	std::shared_ptr<IfProcessor> parseIf(ProcessorScriptParseContext* context, ScriptIf* scriptIf, std::vector<std::string>& location, std::vector<std::string> ifStack);
-
-	void parseSequence(ProcessorScriptParseContext* context, ScriptSequence* scriptSequence, std::vector<std::string>& location);
-
-	std::pair<int, int> parseInput(ProcessorScriptParseContext* context, ScriptInput* scriptInput, std::vector<std::string>& location);
-	std::pair<int, int> parseOutput(ProcessorScriptParseContext* context, ScriptOutput* scriptOutput, std::vector<std::string>& location);
-
-	ScriptAction* resolveScriptAction(ProcessorScriptParseContext* context, ScriptAction* scriptAction, std::vector<std::string>& currentLocation, std::vector<std::string>& resolvedLocation);
-
-	std::shared_ptr<SequencePositionProcessor> resolveSharedSequence(ProcessorScriptParseContext* context, std::string id);
-	bool hasNonSharedSequence(ProcessorScriptParseContext* context, std::string id);
-	std::shared_ptr<SequencePositionProcessor> resolveNonSharedSequence(ProcessorScriptParseContext* context, std::string id);
+	std::shared_ptr<Processor> parseScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 
 	nt_private:
+		std::shared_ptr<TimelineProcessor> parseTimeline(ScriptTimeline* scriptTimeline);
+		std::shared_ptr<TriggerProcessor> parseInputTrigger(ScriptInputTrigger* ScriptInputTrigger);
+		std::shared_ptr<LaneProcessor> parseLane(ScriptLane* scriptLane, ScriptTimeScale* timeScale);
+		std::vector<std::shared_ptr<SegmentProcessor>> parseSegments(std::vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, std::vector<std::string> segmentStack);
+		std::vector<std::shared_ptr<SegmentProcessor>> parseSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> segmentStack);
+		std::shared_ptr<SegmentProcessor> parseResolvedSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, std::vector<std::string> segmentStack);
+		std::vector<std::shared_ptr<SegmentProcessor>> parseSegmentBlock(ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, std::vector<ScriptAction>& actions, std::vector<std::string> actionsLocation, std::vector<std::string> segmentStack);
+		std::shared_ptr<DurationProcessor> parseDuration(ScriptDuration* scriptDuration, ScriptTimeScale* timeScale);
+		std::shared_ptr<ActionProcessor> parseResolvedAction(ScriptAction* scriptAction);
+		std::shared_ptr<ActionGlideProcessor> parseResolvedGlideAction(ScriptAction* scriptAction);
+		std::shared_ptr<ActionGateProcessor> parseResolvedGateAction(ScriptAction* scriptAction);
+		std::shared_ptr<ActionProcessor> parseSetValueAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseSetVariableAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseSetLabelAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseAssertAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseTriggerAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseMoveSequenceAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseClearSequenceAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseAddToSequenceAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ActionProcessor> parseRemoveFromSequenceAction(ScriptAction* scriptAction, std::shared_ptr<IfProcessor> ifProcessor);
+		std::shared_ptr<ValueProcessor> parseValue(ScriptValue* scriptValue, std::vector<std::string> valueStack);
+		std::shared_ptr<ValueProcessor> parseStaticValue(ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors);
+		std::shared_ptr<ValueProcessor> parseVariableValue(ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors);
+		std::shared_ptr<ValueProcessor> parseInputValue(ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors);
+		std::shared_ptr<ValueProcessor> parseOutputValue(ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors);
+		std::shared_ptr<ValueProcessor> parseRandValue(ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> valueStack);
+		std::shared_ptr<ValueProcessor> parseSequenceValue(ScriptValue* scriptValue, std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, std::vector<std::string> valueStack);
+		std::shared_ptr<CalcProcessor> parseCalc(ScriptCalc* scriptCalc, std::vector<std::string> valueStack);
+		std::shared_ptr<IfProcessor> parseIf(ScriptIf* scriptIf, std::vector<std::string> ifStack);
+
+		void parseSequence(ScriptSequence* scriptSequence);
+
+		std::pair<int, int> parseInput(ScriptInput* scriptInput);
+		std::pair<int, int> parseOutput(ScriptOutput* scriptOutput);
+
+		ScriptAction* resolveScriptAction(ScriptAction* scriptAction, std::vector<std::string>& resolvedLocation);
+
+		std::shared_ptr<SequencePositionProcessor> resolveSharedSequence(std::string id);
+		bool hasNonSharedSequence(std::string id);
+		std::shared_ptr<SequencePositionProcessor> resolveNonSharedSequence(std::string id);
+
+		ProcessorScriptParseContext m_context;
 		PortHandler* m_portHandler;
 		VariableHandler* m_variableHandler;
 		TriggerHandler* m_triggerHandler;

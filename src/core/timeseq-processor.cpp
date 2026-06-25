@@ -336,7 +336,7 @@ bool IfProcessor::process(string* message) {
 				if (!condition->process(&message)) {
 					result = false;
 				}
-				
+
 				if (addAnd) {
 					oss << " and ";
 				} else {
@@ -358,7 +358,7 @@ bool IfProcessor::process(string* message) {
 				if (condition->process(&message)) {
 					result = true;
 				}
-				
+
 				if (addOr) {
 					oss << " or ";
 				} else {
