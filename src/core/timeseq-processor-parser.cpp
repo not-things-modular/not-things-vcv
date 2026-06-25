@@ -59,10 +59,10 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 
 	int count = 0;
 	for (vector<ScriptSequence>::iterator it = script->sequences.begin(); it != script->sequences.end(); it++) {
-		vector<string> location = m_context.location;
+		m_context.stashLocation();
 		m_context.location = { "component-pool",  "sequences", to_string(count) };
 		parseSequence(&(*it));
-		m_context.location = location;
+		m_context.popLocation();
 	}
 
 	count = 0;
@@ -220,12 +220,12 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ScriptS
 			for (vector<ScriptSegment>::iterator it = m_context.script->segments.begin(); it != m_context.script->segments.end(); it++) {
 				if (scriptSegment->ref.compare(it->id) == 0) {
 					vector<shared_ptr<SegmentProcessor>> segments;
-					vector<string> location = m_context.location;
+					m_context.stashLocation();
 					m_context.location = { "component-pool",  "segments", to_string(count) };
 					segmentStack.push_back(string("s-") + scriptSegment->ref);
 					segments = parseSegment(&(*it), timeScale, segmentStack);
 					segmentStack.pop_back();
-					m_context.location = location;
+					m_context.popLocation();
 					return segments;
 				}
 				count++;
@@ -259,7 +259,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ScriptS
 
 		if (resolvedAction) {
 			vector<string> location = m_context.location;
-			m_context.location = actionLocation;
+			m_context.stashLocation();
 			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
 				startActions.push_back(parseResolvedAction(resolvedAction));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
@@ -269,7 +269,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ScriptS
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::GATE) {
 				ongoingActions.push_back(parseResolvedGateAction(resolvedAction));
 			}
-			m_context.location = location;
+			m_context.popLocation();
 		} else {
 			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 		}
@@ -316,7 +316,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Sc
 
 				if (resolvedAction) {
 					vector<string> location = m_context.location;
-					m_context.location = actionLocation;
+					m_context.stashLocation();
 					if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
 						startActions.push_back(parseResolvedAction(resolvedAction));
 					} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
@@ -324,7 +324,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Sc
 					} else {
 						ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Segment_SegmentBlockActionTimings, "The 'timing' of actions on a segment with a 'segment-block' reference can only be 'start' or 'end'.");
 					}
-					m_context.location = location;
+					m_context.popLocation();
 				} else {
 					ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
 				}
@@ -356,12 +356,12 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Sc
 			int count = 0;
 			for (vector<ScriptSegmentBlock>::iterator it = m_context.script->segmentBlocks.begin(); it != m_context.script->segmentBlocks.end(); it++) {
 				if (scriptSegmentBlock->ref.compare(it->id) == 0) {
-					vector<string> location = m_context.location;
+					m_context.stashLocation();
 					m_context.location = { "component-pool",  "segment-blocks", to_string(count) };
 					segmentStack.push_back(string("sb-") + scriptSegmentBlock->ref);
 					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(&(*it), timeScale, actions, actionsLocation, segmentStack);
 					segmentStack.pop_back();
-					m_context.location = location;
+					m_context.popLocation();
 					return segments;
 				}
 				count++;
@@ -726,12 +726,12 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ScriptValue* script
 			int count = 0;
 			for (vector<ScriptValue>::iterator it = m_context.script->values.begin(); it != m_context.script->values.end(); it++) {
 				if (scriptValue->ref.compare(it->id) == 0) {
-					vector<string> location = m_context.location;
+					m_context.stashLocation();
 					m_context.location = { "component-pool",  "values", to_string(count) };
 					valueStack.push_back(string("v-") + scriptValue->ref);
 					shared_ptr<ValueProcessor> value = parseValue(&(*it), valueStack);
 					valueStack.pop_back();
-					m_context.location = location;
+					m_context.popLocation();
 					return value;
 				}
 				count++;
@@ -932,12 +932,12 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ScriptCalc* scriptCal
 			int count = 0;
 			for (vector<ScriptCalc>::iterator it = m_context.script->calcs.begin(); it != m_context.script->calcs.end(); it++) {
 				if (scriptCalc->ref.compare(it->id) == 0) {
-					vector<string> location = m_context.location;
+					m_context.stashLocation();
 					m_context.location = { "component-pool",  "calcs", to_string(count) };
 					valueStack.push_back(string("c-") + scriptCalc->ref);
 					shared_ptr<CalcProcessor> calc = parseCalc(&(*it), valueStack);
 					valueStack.pop_back();
-					m_context.location = location;
+					m_context.popLocation();
 					return calc;
 				}
 				count++;
@@ -1017,12 +1017,12 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ScriptIf* scriptIf, vecto
 			int count = 0;
 			for (vector<ScriptIf>::iterator it = m_context.script->ifs.begin(); it != m_context.script->ifs.end(); it++) {
 				if (scriptIf->ref.compare(it->id) == 0) {
-					vector<string> location = m_context.location;
+					m_context.stashLocation();
 					m_context.location = { "component-pool",  "ifs", to_string(count) };
 					ifStack.push_back(scriptIf->ref);
 					shared_ptr<IfProcessor> ifProcessor = parseIf(&(*it), ifStack);
 					ifStack.pop_back();
-					m_context.location = location;
+					m_context.popLocation();
 					return ifProcessor;
 				}
 				count++;
@@ -1060,10 +1060,10 @@ pair<int, int> ProcessorScriptParser::parseInput(ScriptInput* scriptInput) {
 		int count = 0;
 		for (vector<ScriptInput>::iterator it = m_context.script->inputs.begin(); it != m_context.script->inputs.end(); it++) {
 			if (scriptInput->ref.compare(it->id) == 0) {
-				vector<string> location = m_context.location;
+				m_context.stashLocation();
 				m_context.location = { "component-pool",  "inputs", to_string(count) };
 				return parseInput(&(*it));
-				m_context.location = location;
+				m_context.popLocation();
 			}
 			count++;
 		}
@@ -1083,10 +1083,10 @@ pair<int, int> ProcessorScriptParser::parseOutput(ScriptOutput* scriptOutput) {
 		int count = 0;
 		for (vector<ScriptOutput>::iterator it = m_context.script->outputs.begin(); it != m_context.script->outputs.end(); it++) {
 			if (scriptOutput->ref.compare(it->id) == 0) {
-				vector<string> location = m_context.location;
+				m_context.stashLocation();
 				m_context.location = { "component-pool",  "outputs", to_string(count) };
 				return parseOutput(&(*it));
-				m_context.location = location;
+				m_context.popLocation();
 			}
 			count++;
 		}
