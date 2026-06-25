@@ -138,8 +138,14 @@ struct ProcessorLoader {
 
 	virtual std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
 
-	nt_private:
-		ProcessorScriptParser m_processorScriptParser;
+	private:
+		PortHandler* m_portHandler;
+		VariableHandler* m_variableHandler;
+		TriggerHandler* m_triggerHandler;
+		SampleRateReader* m_sampleRateReader;
+		EventListener* m_eventListener;
+		AssertListener* m_assertListener;
+		std::shared_ptr<RandValueGenerator> m_randomValueGenerator;
 };
 
 }

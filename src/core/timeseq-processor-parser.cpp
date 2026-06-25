@@ -1145,12 +1145,13 @@ shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSeq
 	return nullptr;
 }
 
-ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener, shared_ptr<RandValueGenerator>(new RandValueGenerator())) {}
-ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) : m_processorScriptParser(portHandler, variableHandler, triggerHandler, sampleRateReader, eventListener, assertListener, randomValueGenerator) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_portHandler(portHandler), m_variableHandler(variableHandler), m_triggerHandler(triggerHandler), m_sampleRateReader(sampleRateReader), m_eventListener(eventListener), m_assertListener(assertListener), m_randomValueGenerator(shared_ptr<RandValueGenerator>(new RandValueGenerator())) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) : m_portHandler(portHandler), m_variableHandler(variableHandler), m_triggerHandler(triggerHandler), m_sampleRateReader(sampleRateReader), m_eventListener(eventListener), m_assertListener(assertListener), m_randomValueGenerator(randomValueGenerator) {}
 
 ProcessorLoader::~ProcessorLoader() {
 }
 
 shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
-	return m_processorScriptParser.parseScript(script, validationErrors);
+	ProcessorScriptParser processorScriptParser(m_portHandler, m_variableHandler, m_triggerHandler, m_sampleRateReader, m_eventListener, m_assertListener, m_randomValueGenerator);
+	return processorScriptParser.parseScript(script, validationErrors);
 }
