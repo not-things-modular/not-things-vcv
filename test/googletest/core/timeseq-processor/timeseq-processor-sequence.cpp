@@ -15,7 +15,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefButNoComponentPoolShouldFail
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SequenceValue_SequenceNotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-value/value/sequence");
 }
@@ -36,7 +36,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefButNoSequencePoolShouldFail)
 	});
 	json["component-pool"] = json::object();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SequenceValue_SequenceNotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-value/value/sequence");
 }
@@ -57,7 +57,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToUnknownSequenceShouldFail)
 	});
 	json["sequences"] = json::array();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::SequenceValue_SequenceNotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-value/value/sequence");
 }
@@ -80,7 +80,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToInvalidSequenceShouldFail)
 		{ { "id", "a-sequence" }, { "values", 5 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Sequence_ValuesArray, "/sequences/0");
 }
@@ -103,7 +103,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToSequenceWithoutIdShouldFai
 		{ { "values", json::array({ 0, 1, 2, 3, 4, 5 }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/sequences/0");
 }
@@ -127,7 +127,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithShorthandSequenceRefShouldUseSequence) 
 		{ { "id", "a-sequence" }, { "values", json::array({ 0, 1, 2, 3, 4, 5 }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -165,7 +165,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithFullSequenceRefShouldUseSequence) {
 		{ { "id", "a-sequence" }, { "values", json::array({ 0, 1, 2, 3, 4, 5 }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -213,7 +213,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithRetrieveVoltageOnceUndefinedShouldOnl
 		 ) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -270,7 +270,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithRetrieveVoltageOnceTrueShouldOnlyRetr
 		 ) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -327,7 +327,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithRetrieveVoltageOnceFalseShouldRetriev
 		 ) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -383,7 +383,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithSharedFalseShouldMoveIndependently) {
 		{ { "id", "a-sequence" }, { "shared", false }, { "values", json::array({ 0.f, 1.f, 2.f, 3.f, 4.f }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -440,7 +440,7 @@ TEST(TimeSeqProcessorSequence, SequenceWithSharedFalseAndWrapFalseShouldMoveInde
 		{ { "id", "a-sequence" }, { "shared", false }, { "values", json::array({ 0.f, 1.f, 2.f, 3.f, 4.f }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int value2 = 0;
@@ -508,7 +508,7 @@ TEST(TimeSeqProcessorSequence, SharedSequenceWithMoveBeforeAndMoveAfterShouldCom
 		{ { "id", "a-sequence" }, { "values", json::array({ 0.f, 1.f, 2.f, 3.f, 4.f }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -570,7 +570,7 @@ TEST(TimeSeqProcessorSequence, ScriptWithEmptySequenceShouldUseZeroValues) {
 		{ { "id", "an-empty-sequence" }, { "values", json::array({}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};

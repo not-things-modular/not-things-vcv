@@ -28,9 +28,9 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 	std::istringstream scriptStream(scriptData);
 	std::vector<ValidationError> validationErrors;
 
-	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, &validationErrors);
+	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, validationErrors);
 	if ((validationErrors.size() == 0) && (script)) {
-		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
+		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, validationErrors);
 
 		if ((validationErrors.size() == 0) && (processor)) {
 			m_sampleRate = m_sampleRateReader->getSampleRate();
@@ -49,8 +49,9 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 
 void TimeSeqCore::reloadScript() {
 	if (m_script) {
+		std::vector<ValidationError> validationErrors;
 		m_danglingProcessors.push_back(m_processor);
-		m_processor = m_processorLoader->loadScript(m_script, nullptr);
+		m_processor = m_processorLoader->loadScript(m_script, validationErrors);
 		m_sampleRate = m_sampleRateReader->getSampleRate();
 		m_reset = true;
 

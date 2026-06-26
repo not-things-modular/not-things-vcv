@@ -18,7 +18,7 @@ TEST(TimeSeqProcessorValue, ScriptWithValueRefButNoComponentPoolShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value");
 }
@@ -39,7 +39,7 @@ TEST(TimeSeqProcessorValue, ScriptWithActionRefButNoValuePoolShouldFail) {
 	});
 	json["component-pool"] = json::object();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value");
 }
@@ -61,7 +61,7 @@ TEST(TimeSeqProcessorValue, ScriptWithValueRefToUnknownValueShouldFail) {
 	json["component-pool"] = json::object();
 	json["component-pool"]["values"] = json::array({});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value");
 }
@@ -85,7 +85,7 @@ TEST(TimeSeqProcessorValue, ScriptWithValueRefToInvalidValueShouldFail) {
 		{ { "id", "value-id" }, { "voltage", "4.2" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/component-pool/values/0");
 }
@@ -111,7 +111,7 @@ TEST(TimeSeqProcessorValue, ScriptWithActionRefShouldUseAction) {
 		{ { "id", "value-id" }, { "voltage", 4.2f } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -145,7 +145,7 @@ TEST(TimeSeqProcessorValue, VoltageValueShouldUseExactValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -193,7 +193,7 @@ TEST(TimeSeqProcessorValue, NoteValueShouldUseExactValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -239,7 +239,7 @@ TEST(TimeSeqProcessorValue, InputValueShouldFailOnUnknownInputRef) {
 		{ { "id", "not-it-input-2" }, { "index", 6 }, { "channel", 9 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/input");
 }
@@ -274,7 +274,7 @@ TEST(TimeSeqProcessorValue, InputValueShouldReadInputVoltage) {
 		{ { "id", "value-2" }, { "input", { { "ref", "input-2" } } } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -285,22 +285,22 @@ TEST(TimeSeqProcessorValue, InputValueShouldReadInputVoltage) {
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(0, 14)).Times(1).WillOnce(testing::Return(2.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 2.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(7, 0)).Times(1).WillOnce(testing::Return(3.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(2, 5)).Times(1).WillOnce(testing::Return(4.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 4.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getInputPortVoltage(5, 8)).Times(1).WillOnce(testing::Return(5.f));
@@ -333,8 +333,8 @@ TEST(TimeSeqProcessorValue, OutputValueShouldFailOnUnknownOutputRef) {
 		{ { "id", "not-it-output-1" }, { "index", 8 } },
 		{ { "id", "not-it-output-2" }, { "index", 6 }, { "channel", 9 } }
 	});
-	
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/output");
 }
@@ -369,7 +369,7 @@ TEST(TimeSeqProcessorValue, OutputValueShouldReadOutputVoltage) {
 		{ { "id", "value-2" }, { "output", { { "ref", "output-2" } } } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -380,22 +380,22 @@ TEST(TimeSeqProcessorValue, OutputValueShouldReadOutputVoltage) {
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(1, 0)).Times(1).WillOnce(testing::Return(1.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 1.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(0, 14)).Times(1).WillOnce(testing::Return(2.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 2.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(7, 0)).Times(1).WillOnce(testing::Return(3.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 3.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(2, 5)).Times(1).WillOnce(testing::Return(4.f));
 		EXPECT_CALL(mockVariableHandler, setVariable(outputVariableName, 4.f)).Times(1);
-		
+
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
 		EXPECT_CALL(mockPortHandler, getOutputPortVoltage(5, 8)).Times(1).WillOnce(testing::Return(5.f));
@@ -430,7 +430,7 @@ TEST(TimeSeqProcessorValue, RandValueWithUnknownLowerValueRefShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/rand/lower");
 }
@@ -458,7 +458,7 @@ TEST(TimeSeqProcessorValue, RandValueWithInvalidLowerValueRefShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/rand/lower");
 }
@@ -486,7 +486,7 @@ TEST(TimeSeqProcessorValue, RandValueWithUnknownUpperValueRefShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/rand/upper");
 }
@@ -514,7 +514,7 @@ TEST(TimeSeqProcessorValue, RandValueWithInvalidUpperValueRefShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/rand/upper");
 }
@@ -546,7 +546,7 @@ TEST(TimeSeqProcessorValue, RandValueShouldDetectCircularReferenceInLowerValue) 
 		} } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/values/0/rand/lower");
 }
@@ -578,7 +578,7 @@ TEST(TimeSeqProcessorValue, RandValueShouldDetectCircularReferenceInUpperValue) 
 		} } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/values/0/rand/upper");
 }
@@ -606,7 +606,7 @@ TEST(TimeSeqProcessorValue, RandValueShouldUseProvidedValues) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -675,7 +675,7 @@ TEST(TimeSeqProcessorValue, RandValueShouldRandomizeInRange) {
 		{ { "id", "upper-value-id" }, { "variable", "upper-value" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -742,7 +742,7 @@ TEST(TimeSeqProcessorValue, RandValueShouldHandleEqualLowerAndUpper) {
 		{ { "id", "upper-value-id" }, { "variable", "upper-value" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};

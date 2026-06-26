@@ -18,7 +18,7 @@ TEST(TimeSeqProcessorGateAction, GateActionWithRefToUnknownOutputShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/output");
 }
@@ -41,7 +41,7 @@ TEST(TimeSeqProcessorGateAction, GlideActionWithInvalidOutputShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/timelines/0/lanes/0/segments/0/actions/0/output");
 }
@@ -63,7 +63,7 @@ TEST(TimeSeqProcessorGateAction, GlideActionWithNoOutputShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_GateOutput, "/timelines/0/lanes/0/segments/0/actions/0");
 }
@@ -92,7 +92,7 @@ TEST(TimeSeqProcessorGateAction, GateActionWithoutGateHighRatioShouldRemainHighF
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
  	vector<string> emptyTriggers = {};
@@ -162,7 +162,7 @@ TEST(TimeSeqProcessorGateAction, GateActionWithGateHighRatioShouldRemainHighForR
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
  	vector<string> emptyTriggers = {};
@@ -226,7 +226,7 @@ TEST(TimeSeqProcessorGateAction, GateActionWithGateHighRatioZeroShouldBeHighForO
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
  	vector<string> emptyTriggers = {};
@@ -266,7 +266,7 @@ TEST(TimeSeqProcessorGateAction, GateActionWithGateHighRatioOneShouldStayHighUnt
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
  	vector<string> emptyTriggers = {};
@@ -312,7 +312,7 @@ TEST(TimeSeqProcessorGateAction, GateActionWithShouldRunBasedOnIfCondition) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
  	vector<string> emptyTriggers = {};

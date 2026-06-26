@@ -55,7 +55,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithUnknownSegmentBlockRefFromOtherSegm
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/component-pool/segment-blocks/2/segments/1/segment-block");
 	EXPECT_NE(validationErrors[0].message.find("'segment-block-4'"), std::string::npos);
@@ -91,7 +91,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithUnknownSegmentBlockRefFromSegmentsS
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/segment-block");
 	EXPECT_NE(validationErrors[0].message.find("'segment-block-4'"), std::string::npos);
@@ -128,7 +128,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlocksShouldNotAllowSegmentB
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/segment-blocks/2/segments/1/segment-block");
 	EXPECT_NE(validationErrors[0].message.find("'segment-block-1'"), std::string::npos);
@@ -174,7 +174,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlockShouldNotAllowNonStartO
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::Segment_SegmentBlockActionTimings, "/timelines/0/lanes/0/segments/0/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Segment_SegmentBlockActionTimings, "/timelines/0/lanes/0/segments/0/actions/1");
@@ -220,7 +220,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlockShouldFailOnUnresolvabl
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/1");
 }
@@ -259,7 +259,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlocksInlineInLaneShouldExec
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -328,7 +328,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentBlocksFromSegmentsPoolLaneSh
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -408,7 +408,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithTwoLanesWithSegmentBlocksShouldExec
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 2u);
@@ -493,7 +493,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithMixOfSegmentBlocksAndSingleSegments
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -578,7 +578,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockShouldRepleatI
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -648,7 +648,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithCircularSegmentBlockReferenceInSegm
 		{ { "id", "segment-block-2" }, { "segments", json::array({ { { "ref", "segment-1" } }, { { "ref", "segment-3" } } })} },
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/segments/2/segment-block");
 	EXPECT_NE(validationErrors[0].message.find("'segment-block-1'"), std::string::npos);
@@ -680,7 +680,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithCircularSegmentBlockReferenceInSegm
 		{ { "id", "segment-block-2" }, { "segments", json::array({ { { "ref", "segment-1" } }, { { "segment-block", "segment-block-1" } } })} },
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/segment-blocks/1/segments/1/segment-block");
 	EXPECT_NE(validationErrors[0].message.find("'segment-block-1'"), std::string::npos);
@@ -717,7 +717,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithSegmentAndSegmentBlocksWithSameIdsS
 		{ { "id", "id-2" }, { "segments", json::array({ { { "ref", "id-3" } } })} },
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -779,7 +779,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithSingleS
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -788,7 +788,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithSingleS
 	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
-		
+
 		// First the 0.1 segment before the segment-block is executed
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
@@ -907,7 +907,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -916,7 +916,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
-		
+
 		// First the 0.1 segment before the segment-block is executed
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
@@ -973,7 +973,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithNonRepeatingSegmentBlockWithStartAn
 
 			// The segment glide actions should get executed (for the last invocation, the exact end value should be used)
 			EXPECT_CALL(mockPortHandler, setOutputPortVoltage(2, 0, 4 - j)).Times(1);
-			
+
 			// If this is the last time the segment is executed, the segment end actions should get executed and then the segment-block end actions
 			if (j == 4) {
 				EXPECT_CALL(mockTriggerHandler, setTrigger(triggere131)).Times(1);
@@ -1069,7 +1069,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -1078,7 +1078,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 	vector<string> emptyTriggers = {};
 	{
 		testing::InSequence inSequence;
-		
+
 		// First the 0.1 segment before the segment-block is executed
 		EXPECT_CALL(mockTriggerHandler, getTriggers()).Times(1).WillOnce(testing::ReturnRef(emptyTriggers));
 		EXPECT_CALL(mockEventListener, segmentStarted()).Times(1);
@@ -1139,7 +1139,7 @@ TEST(TimeSeqProcessorSegmentBlock, ScriptWithRepeatingSegmentBlockWithStartAndEn
 
 				// The segment glide actions should get executed (for the last invocation, the exact end value should be used)
 				EXPECT_CALL(mockPortHandler, setOutputPortVoltage(2, 0, 4 - j)).Times(1);
-				
+
 				// If this is the last time the segment is executed, the segment end actions should get executed
 				if (j == 4) {
 					EXPECT_CALL(mockTriggerHandler, setTrigger(triggere131)).Times(1);

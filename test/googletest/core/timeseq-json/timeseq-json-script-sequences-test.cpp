@@ -5,13 +5,13 @@ TEST(TimeSeqJsonScriptSequence, ParseShouldSucceedWithoutSequencessVersion110And
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_0_0);
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->sequences.size(), 0u);
 
 	json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 
-	script = loadScript(jsonLoader, json, &validationErrors);
+	script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->sequences.size(), 0u);
 }
@@ -21,7 +21,7 @@ TEST(TimeSeqJsonScriptSequence, ParseShouldSucceedWithoutSequencessVersion120) {
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->sequences.size(), 0u);
 }
@@ -32,7 +32,7 @@ TEST(TimeSeqJsonScriptSequence, ParseShouldFailWithSequencessPre110Version) {
 	json json = getMinimalJson(SCRIPT_VERSION_1_0_0);
 	json["sequences"] = json::array();
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/");
 
@@ -40,7 +40,7 @@ TEST(TimeSeqJsonScriptSequence, ParseShouldFailWithSequencessPre110Version) {
 	json = getMinimalJson(SCRIPT_VERSION_1_0_0);
 	json["sequences"] = json::array();
 
-	script = loadScript(jsonLoader, json, &validationErrors);
+	script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/");
 }
@@ -51,7 +51,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnNonArraySequences) {
 	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
 	json["sequences"] = "not-an-array";
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_SequencesArray, "/");
 }
@@ -66,7 +66,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequenceShouldFailOnNonObjectSequence) {
 		{ { "id", "sequence-2" }, { "values", json::array( { .5f } ) } },
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_SequenceObject, "/sequences/1");
 }
@@ -81,7 +81,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnDuplicateId) {
 		{ { "id", "sequence-2" }, { "values", json::array( { .3f } ) } },
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/sequences/2");
 }
@@ -97,7 +97,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnMissingId) {
 		{ { "id", "" }, { "values", json::array( { .5f } ) } },
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/sequences/1");
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/sequences/2");
@@ -114,7 +114,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnMissingValues) {
 		{ { "id", "sequence-3" } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Sequence_ValuesArray, "/sequences/2");
 }
@@ -129,7 +129,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequenceshouldFailOnNonArrayValues) {
 		{ { "id", "sequence-3" }, { "values", json::array( { .5f } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Sequence_ValuesArray, "/sequences/1");
 }
@@ -144,7 +144,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequenceShouldFailOnNonUnknownSequencePrope
 		{ { "id", "sequence-3" }, { "values", json::array( { .5f } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/sequences/1");
 }
@@ -159,7 +159,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequenceshouldAllowEmptyValues) {
 		{ { "id", "sequence-3" }, { "values", json::array( { .5f } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script->sequences.size(), 3u);
 	EXPECT_EQ(script->sequences[0].values.size(), 0u);
@@ -175,7 +175,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnInvalidFormatValues) {
 		{ { "id", "sequence-3" }, { "values", json::array( { .5f } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Sequence_ValueObject, "/sequences/1/values/0");
 }
@@ -188,7 +188,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnInvalidValueFormat) {
 		{ { "id", "sequence-1" }, { "values", json::array( { 10.1f, 5.f, "", "h5", "a4", { { "voltage",  0.f } }, { { "voltage", 10.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 4u);
 	expectError(validationErrors, ValidationErrorCode::Value_VoltageRange, "/sequences/0/values/0");
 	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/sequences/0/values/2");
@@ -204,7 +204,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldParseInlineValues) {
 		{ { "id", "sequence-1" }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	ASSERT_EQ(script->sequences.size(), 1u);
@@ -226,7 +226,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldDefaultRetrieveVoltageOnceAn
 		{ { "id", "sequence-1" }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	ASSERT_EQ(script->sequences.size(), 1u);
@@ -242,7 +242,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnNonBooleanShared) {
 		{ { "id", "sequence-1" }, { "shared", "true" }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Sequence_SharedBoolean, "/sequences/0");
 }
@@ -256,7 +256,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldParseSharedBoolean) {
 		{ { "id", "sequence-2" }, { "shared", false }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	ASSERT_EQ(script->sequences.size(), 2u);
@@ -274,7 +274,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldFailOnNonBooleanRetrieveVolt
 		{ { "id", "sequence-1" }, { "retrieve-voltage-once", "true" }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "/sequences/0");
 }
@@ -288,7 +288,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldParseSharedRetrieveVoltageOn
 		{ { "id", "sequence-2" }, { "retrieve-voltage-once", false }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	ASSERT_EQ(script->sequences.size(), 2u);
@@ -306,7 +306,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesFailOnUnknownProperty) {
 		{ { "id", "sequence-1" }, { "unknown-property", true }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/sequences/0");
 }
@@ -319,7 +319,7 @@ TEST(TimeSeqJsonScriptSequence, ParseSequencesShouldAllowUnknownXProperties) {
 		{ { "id", "sequence-1" }, { "x-unknown-property", true }, { "values", json::array( { 1.1f, 5.f, "c1", "g5", "a4", { { "voltage",  0.f } }, { { "voltage", -5.1f } } } ) } }
 	});
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	ASSERT_EQ(script->sequences.size(), 1u);

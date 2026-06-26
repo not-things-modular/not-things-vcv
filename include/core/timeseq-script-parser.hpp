@@ -64,8 +64,8 @@ struct JsonScriptParser {
 struct JsonLoader {
 	virtual ~JsonLoader();
 
-	virtual std::shared_ptr<nlohmann::json> loadJson(std::istream& inputStream, std::vector<ValidationError>* validationErrors=nullptr);
-	virtual std::shared_ptr<Script> loadScript(std::istream& inputStream, std::vector<ValidationError>* validationErrors);
+	virtual std::shared_ptr<nlohmann::json> loadJson(std::istream& inputStream, std::vector<ValidationError>& validationErrors);
+	virtual std::shared_ptr<Script> loadScript(std::istream& inputStream, std::vector<ValidationError>& validationErrors);
 };
 
 }

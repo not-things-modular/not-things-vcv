@@ -49,7 +49,7 @@ static std::vector<std::string> mockDefaultTriggerHandlerEmptyTriggers;
 	ON_CALL(mockTriggerHandler, getTriggers).WillByDefault(testing::ReturnRef(mockDefaultTriggerHandlerEmptyTriggers));
 
 
-pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, nlohmann::json& json, vector<ValidationError> *validationErrors);
+pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, nlohmann::json& json, vector<ValidationError>& validationErrors);
 
 static std::string inputVariableName = "input-variable";
 static std::string outputVariableName = "output-variable";

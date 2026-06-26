@@ -76,7 +76,7 @@ struct ProcessorScriptParseContext {
 struct ProcessorScriptParser {
 	ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, std::shared_ptr<RandValueGenerator> randomValueGenerator);
 
-	std::shared_ptr<Processor> parseScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
+	std::shared_ptr<Processor> parseScript(std::shared_ptr<Script> script, std::vector<ValidationError>& validationErrors);
 
 	nt_private:
 		std::shared_ptr<TimelineProcessor> parseTimeline(ScriptTimeline* scriptTimeline);
@@ -136,7 +136,7 @@ struct ProcessorLoader {
 	ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, std::shared_ptr<RandValueGenerator> randomValueGenerator);
 	virtual ~ProcessorLoader();
 
-	virtual std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError> *validationErrors);
+	virtual std::shared_ptr<Processor> loadScript(std::shared_ptr<Script> script, std::vector<ValidationError>& validationErrors);
 
 	private:
 		PortHandler* m_portHandler;

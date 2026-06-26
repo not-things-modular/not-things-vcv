@@ -49,13 +49,9 @@ ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableH
 	m_randomValueGenerator = randomValueGenerator;
 }
 
-shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
+shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError>& validationErrors) {
 	m_context.script = script.get();
-	if (validationErrors != nullptr) {
-		m_context.validationErrors = validationErrors;
-	} else {
-		m_context.validationErrors = new vector<ValidationError>();
-	}
+	m_context.validationErrors = &validationErrors;
 
 	int count = 0;
 	for (vector<ScriptSequence>::iterator it = script->sequences.begin(); it != script->sequences.end(); it++) {
@@ -1062,8 +1058,9 @@ pair<int, int> ProcessorScriptParser::parseInput(ScriptInput* scriptInput) {
 			if (scriptInput->ref.compare(it->id) == 0) {
 				m_context.stashLocation();
 				m_context.location = { "component-pool",  "inputs", to_string(count) };
-				return parseInput(&(*it));
+				pair<int, int> result = parseInput(&(*it));
 				m_context.popLocation();
+				return result;
 			}
 			count++;
 		}
@@ -1085,8 +1082,9 @@ pair<int, int> ProcessorScriptParser::parseOutput(ScriptOutput* scriptOutput) {
 			if (scriptOutput->ref.compare(it->id) == 0) {
 				m_context.stashLocation();
 				m_context.location = { "component-pool",  "outputs", to_string(count) };
-				return parseOutput(&(*it));
+				pair<int, int> result = parseOutput(&(*it));
 				m_context.popLocation();
+				return result;
 			}
 			count++;
 		}
@@ -1151,7 +1149,7 @@ ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* vari
 ProcessorLoader::~ProcessorLoader() {
 }
 
-shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError> *validationErrors) {
+shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError>& validationErrors) {
 	ProcessorScriptParser processorScriptParser(m_portHandler, m_variableHandler, m_triggerHandler, m_sampleRateReader, m_eventListener, m_assertListener, m_randomValueGenerator);
 	return processorScriptParser.parseScript(script, validationErrors);
 }

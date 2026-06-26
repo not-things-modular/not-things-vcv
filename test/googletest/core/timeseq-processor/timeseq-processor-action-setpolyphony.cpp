@@ -11,12 +11,12 @@ TEST(TimeSeqProcessorSetPolyphony, SetPolyphonyActionShouldUpdateOutputPolyphony
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
-				{ { "set-polyphony", { { "index", 3 }, { "channels", 10 } } } } 
+				{ { "set-polyphony", { { "index", 3 }, { "channels", 10 } } } }
 			}) } } }) } },
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
