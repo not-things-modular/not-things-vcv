@@ -11,7 +11,7 @@ using namespace timeseq;
 
 
 TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) :
-		TimeSeqCore(std::shared_ptr<JsonLoader>(new JsonLoader()), std::shared_ptr<ProcessorLoader>(new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener, assertListener)), sampleRateReader, eventListener) {
+		TimeSeqCore(std::make_shared<JsonLoader>(), std::make_shared<ProcessorLoader>(portHandler, this, this, sampleRateReader, eventListener, assertListener), sampleRateReader, eventListener) {
 }
 
 TimeSeqCore::TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, SampleRateReader* sampleRateReader, EventListener* eventListener) {
