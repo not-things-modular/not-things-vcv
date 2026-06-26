@@ -86,7 +86,7 @@ void parseChildArray(JsonScriptParseContext& context, const json& parent, std::s
 						ids.push_back(scriptArray.back().id);
 					}
 				} else {
-					ADD_VALIDATION_ERROR(&context.validationErrors, context.location, objectErrorCode, "'", jsonTag, "' elements must be objects.");
+					ADD_VALIDATION_ERROR(&context.validationErrors, context.location, objectErrorCode, "'", jsonTag.c_str(), "' elements must be objects.");
 				}
 				context.location.pop_back();
 				count++;
@@ -94,7 +94,7 @@ void parseChildArray(JsonScriptParseContext& context, const json& parent, std::s
 
 			context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&context.validationErrors, context.location, arrayErrorCode, "'", jsonTag, "' must be an array.");
+			ADD_VALIDATION_ERROR(&context.validationErrors, context.location, arrayErrorCode, "'", jsonTag.c_str(), "' must be an array.");
 		}
 	}
 }
