@@ -106,7 +106,6 @@ enum ValidationErrorCode {
 	SegmentBlock_RepeatNumber = 703,
 
 	Duration_SamplesNumberOrValue = 800,
-	Duration_SamplesValue = 800,
 	Duration_MillisNumberOrValue = 801,
 	Duration_BarsNumber = 802,
 	Duration_BeatsNumberOrValue = 803,

@@ -458,7 +458,7 @@ The `segments` in the block will be executed in the order that they appear in th
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `segments` | yes | [segment](#segment) list | The list of segments in this *segment-block* |
-| `repeat` | no | unsigned number | The amount of times that the `segments` list should be repeated. |
+| `repeat` | no | unsigned number | The amount of times that the `segments` list should be repeated. Must be greater then 0. |
 
 ### Example
 

@@ -810,7 +810,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 
 	json::const_iterator repeat = segmentBlockJson.find("repeat");
 	if (repeat != segmentBlockJson.end()) {
-		if ((repeat->is_number_unsigned()) && (repeat->is_number_unsigned() > 0)) {
+		if ((repeat->is_number_unsigned()) && (repeat->get<int>() > 0)) {
 			segmentBlock.repeat.reset(new int(repeat->get<int>()));
 		} else {
 			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
@@ -2421,7 +2421,7 @@ void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJs
 				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_Length, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_String, "'id'is required and must be a string.");
+			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_String, "'id' is required and must be a string.");
 		}
 		if (ref != refJson.end()) {
 			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotAllowed, "'ref' is not allowed here.");

@@ -179,6 +179,21 @@ TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnNegativeRepeat) {
 	expectError(validationErrors, ValidationErrorCode::SegmentBlock_RepeatNumber, "/component-pool/segment-blocks/0");
 }
 
+TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnZeroRepeat) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "segment-blocks", json::array({
+			{ { "id", "segment-block-1" }, { "repeat", 0 }, { "segments", json::array() } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::SegmentBlock_RepeatNumber, "/component-pool/segment-blocks/0");
+}
+
 TEST(TimeSeqJsonScriptSegmentBlocks, ParseScriptShouldFailOnFloatRepeat) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
