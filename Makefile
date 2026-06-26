@@ -11,7 +11,7 @@ CXXFLAGS +=
 LDFLAGS +=
 
 # Add .cpp files to the build
-SOURCES += $(wildcard src/*.cpp) $(wildcard src/**/*.cpp)
+SOURCES += $(wildcard src/*.cpp) $(wildcard src/**/*.cpp) $(wildcard src/**/**/*.cpp) $(wildcard src/**/**/**/*.cpp)
 
 # Add json-schema-validator to the build
 SOURCES += $(wildcard dep/src/*.cpp)
