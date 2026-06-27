@@ -10,7 +10,7 @@ using namespace std;
 using namespace timeseq;
 
 
-LaneProcessor::LaneProcessor(ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments, EventListener* eventListener) : m_scriptLane(scriptLane), m_segments(segments), m_eventListener(eventListener) {
+LaneProcessor::LaneProcessor(const ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments, EventListener* eventListener) : m_scriptLane(scriptLane), m_segments(segments), m_eventListener(eventListener) {
 	reset();
 }
 
@@ -117,7 +117,7 @@ void LaneProcessor::processTriggers(const vector<string>& triggers) {
 }
 
 TimelineProcessor::TimelineProcessor(
-	ScriptTimeline* scriptTimeline,
+	const ScriptTimeline* scriptTimeline,
 	vector<shared_ptr<LaneProcessor>> lanes,
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers,
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers,
@@ -130,21 +130,21 @@ void TimelineProcessor::process() {
 	// Check if any lane start or stop triggers were fired
 	const vector<string>& triggers = m_triggerHandler->getTriggers();
 	if (triggers.size() > 0) {
-		for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
-			it->get()->processTriggers(triggers);
+		for (const shared_ptr<LaneProcessor>& laneProcessor : m_lanes) {
+			laneProcessor->processTriggers(triggers);
 		}
 	}
 
 	// Call process on all lanes
-	for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
-		bool stopped = (*it)->process();
+	for (const shared_ptr<LaneProcessor>& lane : m_lanes) {
+		bool stopped = lane->process();
 		if (stopped) {
 			if (m_scriptTimeline->loopLock) {
 				// There is a loop-lock, so check looping for all lanes after we processed them all
 				checkLoop = true;
 			} else {
 				// There is no loop-lock, so the lane should immediately check if it needs to loop
-				(*it)->loop();
+				lane->loop();
 			}
 		}
 	}
@@ -152,8 +152,8 @@ void TimelineProcessor::process() {
 	if (checkLoop) {
 		// Check if all lanes are either idle or pending a loop
 		bool loop = true;
-		for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
-			if ((*it)->getState() == LaneProcessor::LaneState::STATE_PROCESSING) {
+		for (const shared_ptr<LaneProcessor>& lane : m_lanes) {
+			if (lane->getState() == LaneProcessor::LaneState::STATE_PROCESSING) {
 				// There is one still processing, so don't loop yet
 				loop = false;
 				break;
@@ -161,16 +161,16 @@ void TimelineProcessor::process() {
 		}
 
 		if (loop) {
-			for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
-				(*it)->loop();
+			for (const shared_ptr<LaneProcessor>& lane : m_lanes) {
+				lane->loop();
 			}
 		}
 	}
 }
 
 void TimelineProcessor::reset() {
-	for (vector<shared_ptr<LaneProcessor>>::iterator it = m_lanes.begin(); it != m_lanes.end(); it++) {
-		(*it)->reset();
+	for (const shared_ptr<LaneProcessor>& lanes : m_lanes) {
+		lanes->reset();
 	}
 }
 
@@ -298,21 +298,21 @@ void SequencePositionProcessor::move(int position) {
 Processor::Processor(shared_ptr<Script> script, vector<shared_ptr<TimelineProcessor>> timelines, vector<shared_ptr<TriggerProcessor>> triggers, vector<shared_ptr<ActionProcessor>> startActions) : m_timelines(timelines), m_triggers(triggers), m_startActions(startActions), m_script(script) {}
 
 void Processor::reset() {
-	for (vector<shared_ptr<ActionProcessor>>::iterator it = m_startActions.begin(); it != m_startActions.end(); it++) {
-		(*it)->process();
+	for (const shared_ptr<ActionProcessor>& actions : m_startActions) {
+		actions->process();
 	}
 
-	for (vector<shared_ptr<TimelineProcessor>>::iterator it = m_timelines.begin(); it != m_timelines.end(); it++) {
-		(*it)->reset();
+	for (const shared_ptr<TimelineProcessor>& timeline : m_timelines) {
+		timeline->reset();
 	}
 }
 
 void Processor::process() {
-	for (vector<shared_ptr<TimelineProcessor>>::iterator it = m_timelines.begin(); it != m_timelines.end(); it++) {
-		(*it)->process();
+	for (const shared_ptr<TimelineProcessor>& timeline : m_timelines) {
+		timeline->process();
 	}
 
-	for (vector<shared_ptr<TriggerProcessor>>::iterator it = m_triggers.begin(); it != m_triggers.end(); it++) {
-		(*it)->process();
+	for (const shared_ptr<TriggerProcessor>& trigger : m_triggers) {
+		trigger->process();
 	}
 }

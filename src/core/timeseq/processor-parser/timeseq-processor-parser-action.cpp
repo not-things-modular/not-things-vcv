@@ -21,7 +21,7 @@ inline SequencePositionProcessor::SequenceMoveDirection convertScriptSequenceMov
 	return SequencePositionProcessor::SequenceMoveDirection::NONE;
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ScriptAction* scriptAction) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(const ScriptAction* scriptAction) {
 	shared_ptr<ActionProcessor> actionProcessor;
 	shared_ptr<IfProcessor> ifProcessor;
 
@@ -78,7 +78,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(ScriptAct
 	return actionProcessor;
 }
 
-shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(ScriptAction* scriptAction) {
+shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(const ScriptAction* scriptAction) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
@@ -118,7 +118,7 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction
 	return make_shared<ActionGlideProcessor>(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler);
 }
 
-shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(ScriptAction* scriptAction) {
+shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(const ScriptAction* scriptAction) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
@@ -145,7 +145,7 @@ shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(S
 	return make_shared<ActionGateProcessor>(gateHighRatio, ifProcessor, outputPort, outputChannel, m_portHandler);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	m_context.location.push_back("value");
 	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setValue.get()->value, vector<string>());
 	m_context.location.pop_back();
@@ -157,7 +157,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(ScriptAct
 	return make_shared<ActionSetValueProcessor>(valueProcessor, output.first, output.second, m_portHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	m_context.location.push_back("value");
 	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setVariable.get()->value, vector<string>());
 	m_context.location.pop_back();
@@ -165,17 +165,17 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(Script
 	return make_shared<ActionSetVariableProcessor>(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
 	return make_shared<ActionSetPolyphonyProcessor>(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptSetLabel* scriptSetLabel = scriptAction->setLabel.get();
 	return make_shared<ActionSetLabelProcessor>(scriptSetLabel->index - 1, scriptSetLabel->label, m_portHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptAssert* scriptAssert = scriptAction->assert.get();
 
 	m_context.location.push_back("expect");
@@ -185,11 +185,11 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(ScriptActio
 	return make_shared<ActionAssertProcessor>(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	return make_shared<ActionTriggerProcessor>(scriptAction->trigger, m_triggerHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptMoveSequence* moveSequence = &(*scriptAction->moveSequence);
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(moveSequence->id);
 
@@ -210,7 +210,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(Scrip
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(scriptAction->clearSequence);
 	if (!sequenceProcessor) {
 		sequenceProcessor = resolveNonSharedSequence(scriptAction->clearSequence);
@@ -224,7 +224,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(Scri
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptAddToSequence* addToSequence = &(*scriptAction->addToSequence);
 
 	m_context.location.push_back("value");
@@ -244,7 +244,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(Scri
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
 	ScriptRemoveFromSequence* removeFromSequence = &(*scriptAction->removeFromSequence);
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(removeFromSequence->id);
 	if (!sequenceProcessor) {
@@ -259,16 +259,16 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction
 	}
 }
 
-ScriptAction* ProcessorScriptParser::resolveScriptAction(ScriptAction* scriptAction, vector<string>& resolvedLocation) {
+const ScriptAction* ProcessorScriptParser::resolveScriptAction(const ScriptAction* scriptAction, vector<string>& resolvedLocation) {
 	if (scriptAction->ref.length() == 0) {
 		resolvedLocation = m_context.location;
 		return scriptAction;
 	} else {
 		int count = 0;
-		for (vector<ScriptAction>::iterator it = m_context.script->actions.begin(); it != m_context.script->actions.end(); it++) {
-			if (scriptAction->ref.compare(it->id) == 0) {
+		for (const ScriptAction& action : m_context.script->actions) {
+			if (scriptAction->ref.compare(action.id) == 0) {
 				resolvedLocation = { "component-pool", "actions", to_string(count) };
-				return &(*it);
+				return &action;
 			}
 			count++;
 		}

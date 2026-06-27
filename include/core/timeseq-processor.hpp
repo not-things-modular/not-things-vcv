@@ -40,7 +40,7 @@ struct CalcProcessor {
 struct CalcValueProcessor : CalcProcessor {
 	enum ValueCalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN };
 
-	CalcValueProcessor(ScriptCalc* scriptCalc, std::shared_ptr<ValueProcessor> value);
+	CalcValueProcessor(const ScriptCalc* scriptCalc, std::shared_ptr<ValueProcessor> value);
 
 	double calc(double value) override;
 
@@ -58,16 +58,16 @@ struct CalcFracProcessor : CalcProcessor {
 };
 
 struct CalcRoundProcessor : CalcProcessor {
-	CalcRoundProcessor(ScriptCalc* scriptCalc);
+	CalcRoundProcessor(const ScriptCalc* scriptCalc);
 
 	double calc(double value) override;
 
 	nt_private:
-		ScriptCalc* m_scriptCalc;
+		const ScriptCalc* m_scriptCalc;
 };
 
 struct CalcQuantizeProcessor : CalcProcessor {
-	CalcQuantizeProcessor(ScriptTuning* scriptTuning);
+	CalcQuantizeProcessor(const ScriptTuning* scriptTuning);
 
 	double calc(double value) override;
 
@@ -76,7 +76,7 @@ struct CalcQuantizeProcessor : CalcProcessor {
 };
 
 struct CalcSignProcessor : CalcProcessor {
-	CalcSignProcessor(ScriptCalc* scriptCalc);
+	CalcSignProcessor(const ScriptCalc* scriptCalc);
 
 	double calc(double value) override;
 
@@ -216,12 +216,12 @@ struct SequenceValueProcessor : ValueProcessor {
 };
 
 struct IfProcessor {
-	IfProcessor(ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::vector<std::shared_ptr<IfProcessor>> ifs);
+	IfProcessor(const ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::vector<std::shared_ptr<IfProcessor>> ifs);
 
 	bool process(std::string* message);
 
 	nt_private:
-		ScriptIf* m_scriptIf;
+		const ScriptIf* m_scriptIf;
 		std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> m_values;
 		std::vector<std::shared_ptr<IfProcessor>> m_ifs;
 };
@@ -474,7 +474,7 @@ struct DurationVariableHzProcessor : DurationProcessor {
 struct SegmentProcessor {
 	SegmentProcessor(SegmentProcessor& segmentProcessor);
 	SegmentProcessor(
-		ScriptSegment* scriptSegment,
+		const ScriptSegment* scriptSegment,
 		std::shared_ptr<DurationProcessor> durationProcessor,
 		std::vector<std::shared_ptr<ActionProcessor>> startActions,
 		std::vector<std::shared_ptr<ActionProcessor>> endActions,
@@ -491,7 +491,7 @@ struct SegmentProcessor {
 	void reset();
 
 	nt_private:
-		ScriptSegment* m_scriptSegment;
+		const ScriptSegment* m_scriptSegment;
 		std::shared_ptr<DurationProcessor> m_duration;
 
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
@@ -508,7 +508,7 @@ struct SegmentProcessor {
 struct LaneProcessor {
 	enum LaneState { STATE_IDLE, STATE_PROCESSING, STATE_PENDING_LOOP };
 
-	LaneProcessor(ScriptLane* scriptLane, std::vector<std::shared_ptr<SegmentProcessor>> segments, EventListener* eventListener);
+	LaneProcessor(const ScriptLane* scriptLane, std::vector<std::shared_ptr<SegmentProcessor>> segments, EventListener* eventListener);
 
 	LaneState getState();
 
@@ -519,7 +519,7 @@ struct LaneProcessor {
 	void processTriggers(const std::vector<std::string>& triggers);
 
 	nt_private:
-		ScriptLane* m_scriptLane;
+		const ScriptLane* m_scriptLane;
 		std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
 
 		LaneState m_state = LaneState::STATE_IDLE;
@@ -533,7 +533,7 @@ struct LaneProcessor {
 
 struct TimelineProcessor {
 	TimelineProcessor(
-		ScriptTimeline* scriptTimeline,
+		const ScriptTimeline* scriptTimeline,
 		std::vector<std::shared_ptr<LaneProcessor>> lanes,
 		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> startTriggers,
 		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> stopTriggers,
@@ -544,7 +544,7 @@ struct TimelineProcessor {
 	void reset();
 
 	nt_private:
-		ScriptTimeline* m_scriptTimeline;
+		const ScriptTimeline* m_scriptTimeline;
 		std::vector<std::shared_ptr<LaneProcessor>> m_lanes;
 
 		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_startTriggers;

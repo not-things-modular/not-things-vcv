@@ -15,7 +15,7 @@ SegmentProcessor::SegmentProcessor(SegmentProcessor& segmentProcessor) :
 }
 
 SegmentProcessor::SegmentProcessor(
-	ScriptSegment* scriptSegment,
+	const ScriptSegment* scriptSegment,
 	shared_ptr<DurationProcessor> duration,
 	vector<shared_ptr<ActionProcessor>> startActions,
 	vector<shared_ptr<ActionProcessor>> endActions,
@@ -71,27 +71,27 @@ void SegmentProcessor::reset() {
 }
 
 void SegmentProcessor::processStartActions() {
-	for (vector<shared_ptr<ActionProcessor>>::iterator it = m_startActions.begin(); it != m_startActions.end(); it++) {
-		(*it)->process();
+	for (const shared_ptr<ActionProcessor>& actionProcessor : m_startActions) {
+		actionProcessor->process();
 	}
 }
 
 void SegmentProcessor::processEndActions() {
-	for (vector<shared_ptr<ActionProcessor>>::iterator it = m_endActions.begin(); it != m_endActions.end(); it++) {
-		(*it)->process();
+	for (const shared_ptr<ActionProcessor>& actionProcessor : m_endActions) {
+		actionProcessor->process();
 	}
 }
 
 void SegmentProcessor::processOngoingActions(bool start, bool end) {
-	for (vector<shared_ptr<ActionOngoingProcessor>>::iterator it = m_ongoingActions.begin(); it != m_ongoingActions.end(); it++) {
+	for (const shared_ptr<ActionOngoingProcessor>& actionProcessor : m_ongoingActions) {
 		if (start) {
-			(*it)->start(m_duration->getDuration());
+			actionProcessor->start(m_duration->getDuration());
 		}
 
 		if (end) {
-			(*it)->end();
+			actionProcessor->end();
 		} else {
-			(*it)->process(m_duration->getPosition());
+			actionProcessor->process(m_duration->getPosition());
 		}
 	}
 }

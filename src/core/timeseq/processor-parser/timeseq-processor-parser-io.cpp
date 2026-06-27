@@ -6,14 +6,14 @@
 using namespace std;
 using namespace timeseq;
 
-shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ScriptInputTrigger* scriptInputTrigger) {
+shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(const ScriptInputTrigger* scriptInputTrigger) {
 	// Check if it's a ref input trigger object or a full one
 	if (scriptInputTrigger->input.ref.length() == 0) {
 		return make_shared<TriggerProcessor>(scriptInputTrigger->id, scriptInputTrigger->input.index - 1, ((bool) scriptInputTrigger->input.channel) ? *scriptInputTrigger->input.channel.get() - 1 : 0, m_portHandler, m_triggerHandler);
 	} else {
-		for (vector<ScriptInput>::iterator it = m_context.script->inputs.begin(); it != m_context.script->inputs.end(); it++) {
-			if (scriptInputTrigger->input.ref.compare(it->id) == 0) {
-				return make_shared<TriggerProcessor>(scriptInputTrigger->id, it->index - 1, ((bool) it->channel) ? *it->channel.get() - 1 : 0, m_portHandler, m_triggerHandler);
+		for (const ScriptInput& input : m_context.script->inputs) {
+			if (scriptInputTrigger->input.ref.compare(input.id) == 0) {
+				return make_shared<TriggerProcessor>(scriptInputTrigger->id, input.index - 1, ((bool) input.channel) ? *input.channel.get() - 1 : 0, m_portHandler, m_triggerHandler);
 			}
 		}
 
@@ -25,17 +25,17 @@ shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(ScriptInpu
 	}
 }
 
-pair<int, int> ProcessorScriptParser::parseInput(ScriptInput* scriptInput) {
+const pair<int, int> ProcessorScriptParser::parseInput(const ScriptInput* scriptInput) {
 	// Check if it's a ref input or a full one
 	if (scriptInput->ref.length() == 0) {
 		return pair<int, int>(scriptInput->index - 1, scriptInput->channel ? *scriptInput->channel.get() - 1 : 0);
 	} else {
 		int count = 0;
-		for (vector<ScriptInput>::iterator it = m_context.script->inputs.begin(); it != m_context.script->inputs.end(); it++) {
-			if (scriptInput->ref.compare(it->id) == 0) {
+		for (const ScriptInput& input : m_context.script->inputs) {
+			if (scriptInput->ref.compare(input.id) == 0) {
 				m_context.stashLocation();
 				m_context.location = { "component-pool",  "inputs", to_string(count) };
-				pair<int, int> result = parseInput(&(*it));
+				pair<int, int> result = parseInput(&input);
 				m_context.popLocation();
 				return result;
 			}
@@ -49,17 +49,17 @@ pair<int, int> ProcessorScriptParser::parseInput(ScriptInput* scriptInput) {
 
 }
 
-pair<int, int> ProcessorScriptParser::parseOutput(ScriptOutput* scriptOutput) {
+const pair<int, int> ProcessorScriptParser::parseOutput(const ScriptOutput* scriptOutput) {
 	// Check if it's a ref output or a full one
 	if (scriptOutput->ref.length() == 0) {
 		return pair<int, int>(scriptOutput->index - 1, scriptOutput->channel ? *scriptOutput->channel.get() - 1 : 0);
 	} else {
 		int count = 0;
-		for (vector<ScriptOutput>::iterator it = m_context.script->outputs.begin(); it != m_context.script->outputs.end(); it++) {
-			if (scriptOutput->ref.compare(it->id) == 0) {
+		for (const ScriptOutput& output : m_context.script->outputs) {
+			if (scriptOutput->ref.compare(output.id) == 0) {
 				m_context.stashLocation();
 				m_context.location = { "component-pool",  "outputs", to_string(count) };
-				pair<int, int> result = parseOutput(&(*it));
+				pair<int, int> result = parseOutput(&output);
 				m_context.popLocation();
 				return result;
 			}

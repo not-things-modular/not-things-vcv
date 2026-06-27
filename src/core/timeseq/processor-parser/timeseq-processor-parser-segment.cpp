@@ -10,13 +10,13 @@ inline uint64_t uint64_max(uint64_t a, uint64_t b) {
 	return a > b ? a : b;
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(const vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> segmentStack) {
 	int count = 0;
 	vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 
-	for (vector<ScriptSegment>::iterator it = scriptSegments->begin(); it != scriptSegments->end(); it++) {
+	for (const ScriptSegment& segment : *scriptSegments) {
 		m_context.location.push_back(to_string(count));
-		vector<shared_ptr<SegmentProcessor>> segmentProcessorsSubset = parseSegment(&(*it), timeScale, segmentStack);
+		vector<shared_ptr<SegmentProcessor>> segmentProcessorsSubset = parseSegment(&segment, timeScale, segmentStack);
 		segmentProcessors.insert(segmentProcessors.end(), segmentProcessorsSubset.begin(), segmentProcessorsSubset.end());
 		m_context.location.pop_back();
 		count++;
@@ -25,7 +25,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(vector
 	return segmentProcessors;
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(const ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
 	// Check if it's a ref segment object or a full one
 	if (scriptSegment->ref.length() == 0) {
 		if (!scriptSegment->segmentBlock) {
@@ -43,13 +43,13 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ScriptS
 	} else {
 		if (find(segmentStack.begin(), segmentStack.end(), string("s-") + scriptSegment->ref) == segmentStack.end()) {
 			int count = 0;
-			for (vector<ScriptSegment>::iterator it = m_context.script->segments.begin(); it != m_context.script->segments.end(); it++) {
-				if (scriptSegment->ref.compare(it->id) == 0) {
+			for (const ScriptSegment& segment : m_context.script->segments) {
+				if (scriptSegment->ref.compare(segment.id) == 0) {
 					vector<shared_ptr<SegmentProcessor>> segments;
 					m_context.stashLocation();
 					m_context.location = { "component-pool",  "segments", to_string(count) };
 					segmentStack.push_back(string("s-") + scriptSegment->ref);
-					segments = parseSegment(&(*it), timeScale, segmentStack);
+					segments = parseSegment(&segment, timeScale, segmentStack);
 					segmentStack.pop_back();
 					m_context.popLocation();
 					return segments;
@@ -66,7 +66,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(ScriptS
 	}
 }
 
-shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
+shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(const ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
 	m_context.location.push_back("duration");
 	shared_ptr<DurationProcessor> durationProcessor = parseDuration(&scriptSegment->duration, timeScale);
 	m_context.location.pop_back();
@@ -76,12 +76,11 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ScriptS
 	vector<shared_ptr<ActionProcessor>> endActions;
 	vector<shared_ptr<ActionOngoingProcessor>> ongoingActions;
 	m_context.location.push_back("actions");
-	for (vector<ScriptAction>::iterator it = scriptSegment->actions.begin(); it != scriptSegment->actions.end(); it++) {
+	for (const ScriptAction& action : scriptSegment->actions) {
 		m_context.location.push_back(to_string(count));
 
 		vector<string> actionLocation;
-		ScriptAction& scriptAction = *it;
-		ScriptAction* resolvedAction = resolveScriptAction(&scriptAction, actionLocation);
+		const ScriptAction* resolvedAction = resolveScriptAction(&action, actionLocation);
 
 		if (resolvedAction) {
 			vector<string> location = m_context.location;
@@ -97,7 +96,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ScriptS
 			}
 			m_context.popLocation();
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
 		}
 
 		m_context.location.pop_back();
@@ -108,7 +107,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(ScriptS
 	return make_shared<SegmentProcessor>(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener);
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, vector<ScriptAction>& actions, vector<string> actionsLocation, vector<string> segmentStack) {
+vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(const ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, const vector<ScriptAction>& actions, vector<string> actionsLocation, vector<string> segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
 		m_context.location.push_back("segments");
@@ -133,12 +132,11 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Sc
 			int count = 0;
 
 			actionsLocation.push_back("actions");
-			for (vector<ScriptAction>::iterator it = actions.begin(); it != actions.end(); it++) {
+			for (const ScriptAction& action : actions) {
 				actionsLocation.push_back(to_string(count));
 
 				vector<string> actionLocation;
-				ScriptAction& scriptAction = *it;
-				ScriptAction* resolvedAction = resolveScriptAction(&scriptAction, actionLocation);
+				const ScriptAction* resolvedAction = resolveScriptAction(&action, actionLocation);
 
 				if (resolvedAction) {
 					vector<string> location = m_context.location;
@@ -152,7 +150,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Sc
 					}
 					m_context.popLocation();
 				} else {
-					ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
+					ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
 				}
 
 				actionsLocation.pop_back();
@@ -180,12 +178,12 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Sc
 	} else {
 		if (find(segmentStack.begin(), segmentStack.end(), string("sb-") + scriptSegmentBlock->ref) == segmentStack.end()) {
 			int count = 0;
-			for (vector<ScriptSegmentBlock>::iterator it = m_context.script->segmentBlocks.begin(); it != m_context.script->segmentBlocks.end(); it++) {
-				if (scriptSegmentBlock->ref.compare(it->id) == 0) {
+			for (const ScriptSegmentBlock& segmentBlock : m_context.script->segmentBlocks) {
+				if (scriptSegmentBlock->ref.compare(segmentBlock.id) == 0) {
 					m_context.stashLocation();
 					m_context.location = { "component-pool",  "segment-blocks", to_string(count) };
 					segmentStack.push_back(string("sb-") + scriptSegmentBlock->ref);
-					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(&(*it), timeScale, actions, actionsLocation, segmentStack);
+					vector<shared_ptr<SegmentProcessor>> segments = parseSegmentBlock(&segmentBlock, timeScale, actions, actionsLocation, segmentStack);
 					segmentStack.pop_back();
 					m_context.popLocation();
 					return segments;
@@ -202,7 +200,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(Sc
 	}
 }
 
-shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(ScriptDuration* scriptDuration, ScriptTimeScale* timeScale) {
+shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const ScriptDuration* scriptDuration, ScriptTimeScale* timeScale) {
 	if (scriptDuration->samples || scriptDuration->millis || scriptDuration->beats || scriptDuration->hz) {
 		// Construct a constant duration processor
 		uint64_t duration = 0;

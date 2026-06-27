@@ -22,15 +22,15 @@ inline SequencePositionProcessor::SequenceMoveDirection convertScriptSequenceMov
 	return SequencePositionProcessor::SequenceMoveDirection::NONE;
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ScriptValue* scriptValue, vector<string> valueStack) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(const ScriptValue* scriptValue, vector<string> valueStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptValue->ref.length() == 0) {
 		int count = 0;
 		m_context.location.push_back("calc");
 		vector<shared_ptr<CalcProcessor>> calcProcessors;
-		for (vector<ScriptCalc>::iterator it = scriptValue->calc.begin(); it != scriptValue->calc.end(); it++) {
+		for (const ScriptCalc& calc : scriptValue->calc) {
 			m_context.location.push_back(to_string(count));
-			calcProcessors.push_back(parseCalc(&(*it), valueStack));
+			calcProcessors.push_back(parseCalc(&calc, valueStack));
 			m_context.location.pop_back();
 			count++;
 		}
@@ -53,15 +53,15 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ScriptValue* script
 	} else {
 		if (find(valueStack.begin(), valueStack.end(), string("v-") + scriptValue->ref) == valueStack.end()) {
 			int count = 0;
-			for (vector<ScriptValue>::iterator it = m_context.script->values.begin(); it != m_context.script->values.end(); it++) {
-				if (scriptValue->ref.compare(it->id) == 0) {
+			for (const ScriptValue& value : m_context.script->values) {
+				if (scriptValue->ref.compare(value.id) == 0) {
 					m_context.stashLocation();
 					m_context.location = { "component-pool",  "values", to_string(count) };
 					valueStack.push_back(string("v-") + scriptValue->ref);
-					shared_ptr<ValueProcessor> value = parseValue(&(*it), valueStack);
+					const shared_ptr<ValueProcessor> processorValue = parseValue(&value, valueStack);
 					valueStack.pop_back();
 					m_context.popLocation();
-					return value;
+					return processorValue;
 				}
 				count++;
 			}
@@ -76,7 +76,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(ScriptValue* script
 	return shared_ptr<ValueProcessor>();
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	float value = 0.f;
 	if (scriptValue->voltage) {
 		value = *scriptValue->voltage.get();
@@ -95,11 +95,11 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(ScriptValue* 
 	return make_shared<StaticValueProcessor>(value, calcProcessors, scriptValue->quantize);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	return make_shared<VariableValueProcessor>(*scriptValue->variable.get(), calcProcessors, scriptValue->quantize, m_variableHandler);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	m_context.location.push_back("input");
 	pair<int, int> input = parseInput(scriptValue->input.get());
 	m_context.location.pop_back();
@@ -107,7 +107,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(ScriptValue* s
 	return make_shared<InputValueProcessor>(input.first, input.second, calcProcessors, scriptValue->quantize, m_portHandler);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	m_context.location.push_back("output");
 	pair<int, int> output = parseOutput(scriptValue->output.get());
 	m_context.location.pop_back();
@@ -115,7 +115,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(ScriptValue* 
 	return make_shared<OutputValueProcessor>(output.first, output.second, calcProcessors, scriptValue->quantize, m_portHandler);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
 	m_context.location.push_back("rand");
 
 	m_context.location.push_back("lower");
@@ -131,7 +131,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(ScriptValue* sc
 	return make_shared<RandValueProcessor>(lowerValueProcessor, upperValueProcessor, m_randomValueGenerator, calcProcessors, scriptValue->quantize);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
+shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
 	m_context.location.push_back("sequence");
 
 	shared_ptr<ValueProcessor> processor = nullptr;
@@ -153,7 +153,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(ScriptValue
 	return processor;
 }
 
-shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ScriptCalc* scriptCalc, vector<string> valueStack) {
+shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(const ScriptCalc* scriptCalc, vector<string> valueStack) {
 	if (scriptCalc->ref.length() == 0) {
 		bool valueProcessor = false;
 		bool truncProcessor = false;
@@ -230,13 +230,13 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ScriptCalc* scriptCal
 		} else if (roundProcessor) {
 			calcProcessor = make_shared<CalcRoundProcessor>(scriptCalc);
 		} else if (quantizeProcessor) {
-			ScriptTuning* scriptTuning = nullptr;
+			const ScriptTuning* scriptTuning = nullptr;
 			if (scriptCalc->tuning->ref.length() == 0) {
 				scriptTuning = scriptCalc->tuning.get();
 			} else {
-				for (vector<ScriptTuning>::iterator it = m_context.script->tunings.begin(); it != m_context.script->tunings.end(); it++) {
-					if (it->id == scriptCalc->tuning->ref) {
-						scriptTuning = &(*it);
+				for (const ScriptTuning& tuning : m_context.script->tunings) {
+					if (tuning.id == scriptCalc->tuning->ref) {
+						scriptTuning = &tuning;
 						break;
 					}
 				}
@@ -259,15 +259,15 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(ScriptCalc* scriptCal
 	} else {
 		if (find(valueStack.begin(), valueStack.end(), string("c-") + scriptCalc->ref) == valueStack.end()) {
 			int count = 0;
-			for (vector<ScriptCalc>::iterator it = m_context.script->calcs.begin(); it != m_context.script->calcs.end(); it++) {
-				if (scriptCalc->ref.compare(it->id) == 0) {
+			for (const ScriptCalc& calc : m_context.script->calcs) {
+				if (scriptCalc->ref.compare(calc.id) == 0) {
 					m_context.stashLocation();
 					m_context.location = { "component-pool",  "calcs", to_string(count) };
 					valueStack.push_back(string("c-") + scriptCalc->ref);
-					shared_ptr<CalcProcessor> calc = parseCalc(&(*it), valueStack);
+					shared_ptr<CalcProcessor> calcProcessor = parseCalc(&calc, valueStack);
 					valueStack.pop_back();
 					m_context.popLocation();
-					return calc;
+					return calcProcessor;
 				}
 				count++;
 			}

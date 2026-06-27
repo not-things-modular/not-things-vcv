@@ -6,7 +6,7 @@ using namespace std;
 using namespace timeseq;
 
 
-IfProcessor::IfProcessor(ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, vector<shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
+IfProcessor::IfProcessor(const ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, vector<shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
 
 bool IfProcessor::process(string* message) {
 	if (message == nullptr) {
@@ -35,14 +35,14 @@ bool IfProcessor::process(string* message) {
 			case ScriptIf::IfOperator::GTE:
 				return m_values.first->process() >= m_values.second->process();
 			case ScriptIf::IfOperator::AND:
-				for (shared_ptr<IfProcessor> condition : m_ifs) {
+				for (const shared_ptr<IfProcessor>& condition : m_ifs) {
 					if (!condition->process(nullptr)) {
 						return false;
 					}
 				}
 				return true;
 			case ScriptIf::IfOperator::OR:
-				for (shared_ptr<IfProcessor> condition : m_ifs) {
+				for (const shared_ptr<IfProcessor>& condition : m_ifs) {
 					if (condition->process(nullptr)) {
 						return true;
 					}
@@ -59,7 +59,7 @@ bool IfProcessor::process(string* message) {
 			bool result = true;
 			bool addAnd = false;
 			oss << "(";
-			for (shared_ptr<IfProcessor> condition : m_ifs) {
+			for (const shared_ptr<IfProcessor>& condition : m_ifs) {
 				string message;
 				if (!condition->process(&message)) {
 					result = false;
@@ -81,7 +81,7 @@ bool IfProcessor::process(string* message) {
 			bool result = false;
 			bool addOr = false;
 			oss << "(";
-			for (shared_ptr<IfProcessor> condition : m_ifs) {
+			for (const shared_ptr<IfProcessor>& condition : m_ifs) {
 				string message;
 				if (condition->process(&message)) {
 					result = true;

@@ -33,19 +33,19 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	m_context.validationErrors = &validationErrors;
 
 	int count = 0;
-	for (vector<ScriptSequence>::iterator it = script->sequences.begin(); it != script->sequences.end(); it++) {
+	for (const ScriptSequence& sequence : script->sequences) {
 		m_context.stashLocation();
 		m_context.location = { "component-pool",  "sequences", to_string(count) };
-		parseSequence(&(*it));
+		parseSequence(&sequence);
 		m_context.popLocation();
 	}
 
 	count = 0;
 	m_context.location.push_back("timelines");
 	vector<shared_ptr<TimelineProcessor>> timelineProcessors;
-	for (vector<ScriptTimeline>::iterator it = script->timelines.begin(); it != script->timelines.end(); it++) {
+	for (const ScriptTimeline& timeline : script->timelines) {
 		m_context.location.push_back(to_string(count));
-		timelineProcessors.push_back(parseTimeline(&(*it)));
+		timelineProcessors.push_back(parseTimeline(&timeline));
 		m_context.location.pop_back();
 		count++;
 	}
@@ -54,9 +54,9 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	count = 0;
 	m_context.location.push_back("input-triggers");
 	vector<shared_ptr<TriggerProcessor>> triggerProcessors;
-	for (vector<ScriptInputTrigger>::iterator it = script->inputTriggers.begin(); it != script->inputTriggers.end(); it++) {
+	for (const ScriptInputTrigger& trigger : script->inputTriggers) {
 		m_context.location.push_back(to_string(count));
-		triggerProcessors.push_back(parseInputTrigger(&(*it)));
+		triggerProcessors.push_back(parseInputTrigger(&trigger));
 		m_context.location.pop_back();
 		count++;
 	}
@@ -65,12 +65,11 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	count = 0;
 	m_context.location.push_back("global-actions");
 	vector<shared_ptr<ActionProcessor>> startActionProcessors;
-	for (vector<ScriptAction>::iterator it = script->globalActions.begin(); it != script->globalActions.end(); it++) {
+	for (const ScriptAction& action : script->globalActions) {
 		m_context.location.push_back(to_string(count));
 
 		vector<string> actionLocation;
-		ScriptAction& scriptAction = *it;
-		ScriptAction* resolvedAction = resolveScriptAction(&scriptAction, actionLocation);
+		const ScriptAction* resolvedAction = resolveScriptAction(&action, actionLocation);
 
 		if (resolvedAction) {
 			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
@@ -79,7 +78,7 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", scriptAction.ref.c_str(), "' in the script actions.");
+			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
 		}
 		m_context.location.pop_back();
 		count++;
@@ -89,35 +88,33 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	return make_shared<Processor>(script, timelineProcessors, triggerProcessors, startActionProcessors);
 }
 
-shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ScriptTimeline* scriptTimeline) {
+shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(const ScriptTimeline* scriptTimeline) {
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers;
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers;
 
 	int count = 0;
 	m_context.location.push_back("lanes");
 	vector<shared_ptr<LaneProcessor>> laneProcessors;
-	for (vector<ScriptLane>::iterator it = scriptTimeline->lanes.begin(); it != scriptTimeline->lanes.end(); it++) {
-		ScriptLane& scriptLane = *it;
-
+	for (const ScriptLane& lane : scriptTimeline->lanes) {
 		shared_ptr<LaneProcessor> laneProcessor;
 		m_context.location.push_back(to_string(count));
-		laneProcessor = parseLane(&scriptLane, scriptTimeline->timeScale.get());
+		laneProcessor = parseLane(&lane, scriptTimeline->timeScale.get());
 		laneProcessors.push_back(laneProcessor);
 		m_context.location.pop_back();
 		count++;
 
-		if (scriptLane.startTrigger.length() > 0) {
-			if (startTriggers.find(scriptLane.startTrigger) == startTriggers.end()) {
-				startTriggers[scriptLane.startTrigger] = vector<shared_ptr<LaneProcessor>>();
+		if (lane.startTrigger.length() > 0) {
+			if (startTriggers.find(lane.startTrigger) == startTriggers.end()) {
+				startTriggers[lane.startTrigger] = vector<shared_ptr<LaneProcessor>>();
 			}
-			startTriggers[scriptLane.startTrigger].push_back(laneProcessor);
+			startTriggers[lane.startTrigger].push_back(laneProcessor);
 		}
 
-		if (scriptLane.stopTrigger.length() > 0) {
-			if (stopTriggers.find(scriptLane.stopTrigger) == stopTriggers.end()) {
-				stopTriggers[scriptLane.stopTrigger] = vector<shared_ptr<LaneProcessor>>();
+		if (lane.stopTrigger.length() > 0) {
+			if (stopTriggers.find(lane.stopTrigger) == stopTriggers.end()) {
+				stopTriggers[lane.stopTrigger] = vector<shared_ptr<LaneProcessor>>();
 			}
-			stopTriggers[scriptLane.stopTrigger].push_back(laneProcessor);
+			stopTriggers[lane.stopTrigger].push_back(laneProcessor);
 		}
 	}
 	m_context.location.pop_back();
@@ -125,7 +122,7 @@ shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(ScriptTimelin
 	return make_shared<TimelineProcessor>(scriptTimeline, laneProcessors, startTriggers, stopTriggers, m_triggerHandler);
 }
 
-shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ScriptLane* scriptLane, ScriptTimeScale* timeScale) {
+shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(const ScriptLane* scriptLane, ScriptTimeScale* timeScale) {
 	unsigned int validationCount = m_context.validationErrors->size();
 
 	m_context.location.push_back("segments");
@@ -140,7 +137,7 @@ shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(ScriptLane* scriptLan
 	}
 }
 
-shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ScriptIf* scriptIf, vector<string> ifStack) {
+shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(const ScriptIf* scriptIf, vector<string> ifStack) {
 	if (scriptIf->ref.length() == 0) {
 		pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
 		vector<shared_ptr<IfProcessor>> ifs;
@@ -188,7 +185,7 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ScriptIf* scriptIf, vecto
 		}
 		if (parseIfs) {
 			int count = 0;
-			for (ScriptIf& scriptIf : *scriptIf->ifs.get()) {
+			for (const ScriptIf& scriptIf : *scriptIf->ifs.get()) {
 				m_context.location.push_back(to_string(count));
 				ifs.push_back(parseIf(&scriptIf, ifStack));
 				m_context.location.pop_back();
@@ -202,12 +199,12 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ScriptIf* scriptIf, vecto
 	} else {
 		if (find(ifStack.begin(), ifStack.end(), scriptIf->ref) == ifStack.end()) {
 			int count = 0;
-			for (vector<ScriptIf>::iterator it = m_context.script->ifs.begin(); it != m_context.script->ifs.end(); it++) {
-				if (scriptIf->ref.compare(it->id) == 0) {
+			for (const ScriptIf& refIf : m_context.script->ifs) {
+				if (scriptIf->ref.compare(refIf.id) == 0) {
 					m_context.stashLocation();
 					m_context.location = { "component-pool",  "ifs", to_string(count) };
 					ifStack.push_back(scriptIf->ref);
-					shared_ptr<IfProcessor> ifProcessor = parseIf(&(*it), ifStack);
+					shared_ptr<IfProcessor> ifProcessor = parseIf(&refIf, ifStack);
 					ifStack.pop_back();
 					m_context.popLocation();
 					return ifProcessor;
@@ -225,10 +222,10 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(ScriptIf* scriptIf, vecto
 	return shared_ptr<IfProcessor>();
 }
 
-void ProcessorScriptParser::parseSequence(ScriptSequence* scriptSequence) {
+void ProcessorScriptParser::parseSequence(const ScriptSequence* scriptSequence) {
 	vector<shared_ptr<ValueProcessor>> values;
-	for (vector<ScriptValue>::iterator it = scriptSequence->values.begin(); it != scriptSequence->values.end(); it++) {
-		values.push_back(parseValue(&(*it), vector<string>()));
+	for (const ScriptValue& value : scriptSequence->values) {
+		values.push_back(parseValue(&value, vector<string>()));
 	}
 	shared_ptr<SequenceProcessor> sequenceProcessor = make_shared<SequenceProcessor>(scriptSequence->id, values, scriptSequence->retrieveVoltageOnce);
 
@@ -239,19 +236,19 @@ void ProcessorScriptParser::parseSequence(ScriptSequence* scriptSequence) {
 	}
 }
 
-shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequence(string id) {
-	for (vector<shared_ptr<SequencePositionProcessor>>::iterator it = m_context.sharedSequences.begin(); it != m_context.sharedSequences.end(); it++) {
-		if (id == it->get()->getSequenceProcessor()->getId()) {
-			return *it;
+const shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequence(string id) {
+	for (const shared_ptr<SequencePositionProcessor>& sequencePositionProcessor : m_context.sharedSequences) {
+		if (id == sequencePositionProcessor->getSequenceProcessor()->getId()) {
+			return sequencePositionProcessor;
 		}
 	}
 
-	return nullptr;
+	return shared_ptr<SequencePositionProcessor>();
 }
 
 bool ProcessorScriptParser::hasNonSharedSequence(string id) {
-	for (vector<shared_ptr<SequenceProcessor>>::iterator it = m_context.nonSharedSequences.begin(); it != m_context.nonSharedSequences.end(); it++) {
-		if (id == it->get()->getId()) {
+	for (const shared_ptr<SequenceProcessor>& sequenceProcessor : m_context.nonSharedSequences) {
+		if (id == sequenceProcessor.get()->getId()) {
 			return true;
 		}
 	}
@@ -260,9 +257,9 @@ bool ProcessorScriptParser::hasNonSharedSequence(string id) {
 }
 
 shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSequence(string id) {
-	for (vector<shared_ptr<SequenceProcessor>>::iterator it = m_context.nonSharedSequences.begin(); it != m_context.nonSharedSequences.end(); it++) {
-		if (id == it->get()->getId()) {
-			return make_shared<SequencePositionProcessor>(*it, m_randomValueGenerator);
+	for (const shared_ptr<SequenceProcessor>& sequenceProcessor : m_context.nonSharedSequences) {
+		if (id == sequenceProcessor->getId()) {
+			return make_shared<SequencePositionProcessor>(sequenceProcessor, m_randomValueGenerator);
 		}
 	}
 

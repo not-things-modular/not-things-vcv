@@ -5,7 +5,7 @@
 using namespace std;
 using namespace timeseq;
 
-CalcValueProcessor::CalcValueProcessor(ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_value(value) {
+CalcValueProcessor::CalcValueProcessor(const ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_value(value) {
 	switch (scriptCalc->operation) {
 		case ScriptCalc::ADD:
 			m_operation = ValueCalcOperation::ADD;
@@ -80,7 +80,7 @@ double CalcFracProcessor::calc(double value) {
 	return modf(value, &x);
 }
 
-CalcRoundProcessor::CalcRoundProcessor(ScriptCalc* scriptCalc) : m_scriptCalc(scriptCalc) {}
+CalcRoundProcessor::CalcRoundProcessor(const ScriptCalc* scriptCalc) : m_scriptCalc(scriptCalc) {}
 
 double CalcRoundProcessor::calc(double value) {
 	switch (*m_scriptCalc->roundType) {
@@ -96,7 +96,7 @@ double CalcRoundProcessor::calc(double value) {
 	return value;
 }
 
-CalcQuantizeProcessor::CalcQuantizeProcessor(ScriptTuning* scriptTuning) {
+CalcQuantizeProcessor::CalcQuantizeProcessor(const ScriptTuning* scriptTuning) {
 	vector<float> tuningValues;
 
 	if (scriptTuning->notes.size() == 1) {
@@ -140,7 +140,7 @@ double CalcQuantizeProcessor::calc(double value) {
 	return value;
 }
 
-CalcSignProcessor::CalcSignProcessor(ScriptCalc* scriptCalc) : m_positive(*scriptCalc->signType == ScriptCalc::SignType::POS) {}
+CalcSignProcessor::CalcSignProcessor(const ScriptCalc* scriptCalc) : m_positive(*scriptCalc->signType == ScriptCalc::SignType::POS) {}
 
 double CalcSignProcessor::calc(double value) {
 	if (((m_positive) && (value < 0)) || ((!m_positive) && (value > 0))) {
@@ -159,8 +159,8 @@ ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors,
 double ValueProcessor::process() {
 	double value = processValue();
 
-	for (vector<shared_ptr<CalcProcessor>>::iterator it = m_calcProcessors.begin(); it != m_calcProcessors.end(); it++) {
-		value = (*it)->calc(value);
+	for (const shared_ptr<CalcProcessor>& calcProcessor : m_calcProcessors) {
+		value = calcProcessor->calc(value);
 	}
 
 	if (m_quantize) {
