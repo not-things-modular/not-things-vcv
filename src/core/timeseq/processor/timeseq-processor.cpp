@@ -10,7 +10,7 @@ using namespace std;
 using namespace timeseq;
 
 
-LaneProcessor::LaneProcessor(const ScriptLane* scriptLane, vector<shared_ptr<SegmentProcessor>> segments, EventListener* eventListener) : m_scriptLane(scriptLane), m_segments(segments), m_eventListener(eventListener) {
+LaneProcessor::LaneProcessor(const ScriptLane* scriptLane, const vector<shared_ptr<SegmentProcessor>>& segments, EventListener* eventListener) : m_scriptLane(scriptLane), m_segments(segments), m_eventListener(eventListener) {
 	reset();
 }
 
@@ -22,7 +22,7 @@ bool LaneProcessor::process() {
 	bool stopped = false;
 
 	if ((m_state == LaneState::STATE_PROCESSING) && (m_segments.size() > 0)) {
-		vector<shared_ptr<SegmentProcessor>>::iterator segment = m_segments.begin() + m_activeSegment;
+		vector<shared_ptr<SegmentProcessor>>::const_iterator segment = m_segments.begin() + m_activeSegment;
 		DurationProcessor::DurationState state = (*segment)->getState();
 		switch (state) {
 			case DurationProcessor::DurationState::STATE_START:
@@ -118,9 +118,9 @@ void LaneProcessor::processTriggers(const vector<string>& triggers) {
 
 TimelineProcessor::TimelineProcessor(
 	const ScriptTimeline* scriptTimeline,
-	vector<shared_ptr<LaneProcessor>> lanes,
-	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers,
-	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers,
+	const vector<shared_ptr<LaneProcessor>>& lanes,
+	const unordered_map<string, vector<shared_ptr<LaneProcessor>>>& startTriggers,
+	const unordered_map<string, vector<shared_ptr<LaneProcessor>>>& stopTriggers,
 	TriggerHandler* triggerHandler) :
 		m_scriptTimeline(scriptTimeline), m_lanes(lanes), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers), m_triggerHandler(triggerHandler) {}
 
@@ -174,7 +174,7 @@ void TimelineProcessor::reset() {
 	}
 }
 
-TriggerProcessor::TriggerProcessor(string id, int inputPort, int inputChannel, PortHandler* portHandler, TriggerHandler* triggerHandler) : m_id(id), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler), m_triggerHandler(triggerHandler) {}
+TriggerProcessor::TriggerProcessor(const string& id, int inputPort, int inputChannel, PortHandler* portHandler, TriggerHandler* triggerHandler) : m_id(id), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler), m_triggerHandler(triggerHandler) {}
 
 void TriggerProcessor::process() {
 	if (m_trigger.process(m_portHandler->getInputPortVoltage(m_inputPort, m_inputChannel), 0.f, 1.f)) {
@@ -182,7 +182,7 @@ void TriggerProcessor::process() {
 	}
 }
 
-SequenceProcessor::SequenceProcessor(string id, vector<shared_ptr<ValueProcessor>> values, bool retrieveVoltageOnce) : m_id(id), m_values(values), m_retrieveVoltageOnce(retrieveVoltageOnce) {}
+SequenceProcessor::SequenceProcessor(const string& id, const vector<shared_ptr<ValueProcessor>>& values, bool retrieveVoltageOnce) : m_id(id), m_values(values), m_retrieveVoltageOnce(retrieveVoltageOnce) {}
 
 void SequenceProcessor::clear() {
 	m_values.clear();
@@ -192,7 +192,7 @@ string SequenceProcessor::getId() {
 	return m_id;
 }
 
-vector<shared_ptr<ValueProcessor>> SequenceProcessor::getValues() {
+const vector<shared_ptr<ValueProcessor>> SequenceProcessor::getValues() const {
 	return m_values;
 }
 
@@ -200,7 +200,7 @@ bool SequenceProcessor::isRetrieveVoltageOnce() {
 	return m_retrieveVoltageOnce;
 }
 
-void SequenceProcessor::add(shared_ptr<ValueProcessor> value, int position) {
+void SequenceProcessor::add(const shared_ptr<ValueProcessor>& value, int position) {
 	if (position > -1) {
 		if (position >= (int) m_values.size()) {
 			m_values.push_back(value);
@@ -222,7 +222,7 @@ void SequenceProcessor::remove(int position) {
 	}
 }
 
-SequencePositionProcessor::SequencePositionProcessor(shared_ptr<SequenceProcessor> sequenceProcessor, shared_ptr<RandValueGenerator> randValueGenerator) : m_position(0), m_sequenceProcessor(sequenceProcessor), m_randValueGenerator(randValueGenerator), m_hasStoredVoltage(false) {}
+SequencePositionProcessor::SequencePositionProcessor(const shared_ptr<SequenceProcessor>& sequenceProcessor, const shared_ptr<RandValueGenerator>& randValueGenerator) : m_position(0), m_sequenceProcessor(sequenceProcessor), m_randValueGenerator(randValueGenerator), m_hasStoredVoltage(false) {}
 
 SequenceProcessor* SequencePositionProcessor::getSequenceProcessor() {
 	return m_sequenceProcessor.get();
@@ -295,7 +295,7 @@ void SequencePositionProcessor::move(int position) {
 	}
 }
 
-Processor::Processor(shared_ptr<Script> script, vector<shared_ptr<TimelineProcessor>> timelines, vector<shared_ptr<TriggerProcessor>> triggers, vector<shared_ptr<ActionProcessor>> startActions) : m_timelines(timelines), m_triggers(triggers), m_startActions(startActions), m_script(script) {}
+Processor::Processor(const shared_ptr<Script>& script, const vector<shared_ptr<TimelineProcessor>>& timelines, const vector<shared_ptr<TriggerProcessor>>& triggers, const vector<shared_ptr<ActionProcessor>>& startActions) : m_timelines(timelines), m_triggers(triggers), m_startActions(startActions), m_script(script) {}
 
 void Processor::reset() {
 	for (const shared_ptr<ActionProcessor>& actions : m_startActions) {

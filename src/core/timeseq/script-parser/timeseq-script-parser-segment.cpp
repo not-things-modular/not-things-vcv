@@ -10,7 +10,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 	populateRef(segment, segmentJson, allowRefs);
 	if (segment.ref.length() > 0) {
 		if (hasOneOf(segmentJson, cSegmentProperties)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_RefOrInstance, "A ref segment can not be combined other non-ref segment properties.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_RefOrInstance, "A ref segment can not be combined other non-ref segment properties.");
 		}
 	} else {
 		static const char* segmentBlockProperty[] = { "segment-block" };
@@ -22,7 +22,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				segment.duration = parseDuration(*duration);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_DurationObject, "'duration' is required and must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_DurationObject, "'duration' is required and must be an object.");
 			}
 
 			segment.disableUi = false;
@@ -31,7 +31,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 				if (disableUi->is_boolean()) {
 					segment.disableUi = disableUi->get<bool>();
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_DisableUiBoolean, "'disable-ui' must be a boolean.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_DisableUiBoolean, "'disable-ui' must be a boolean.");
 				}
 			}
 		} else if (!hasOneOf(segmentJson, nonSegmentBlockProperties)) {
@@ -43,14 +43,14 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 						segment.segmentBlock.reset(new ScriptSegmentBlock());
 						segment.segmentBlock->ref = segmentBlockRef;
 					} else {
-						ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_SegmentBlockLength, "'segment-block' must be a non-empty string");
+						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_SegmentBlockLength, "'segment-block' must be a non-empty string");
 					}
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_SegmentBlockString, "'segment-block' must be a non-empty string");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_SegmentBlockString, "'segment-block' must be a non-empty string");
 				}
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference and optional 'actions', but not both.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference and optional 'actions', but not both.");
 		}
 
 		json::const_iterator actions = segmentJson.find("actions");
@@ -65,7 +65,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 					if (action.is_object()) {
 						segment.actions.push_back(parseAction(action, true));
 					} else {
-						ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
+						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
 					}
 					m_context.location.pop_back();
 					count++;
@@ -73,7 +73,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_ActionsArray, "'actions' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_ActionsArray, "'actions' must be an array.");
 			}
 		}
 	}
@@ -94,7 +94,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 		if ((repeat->is_number_unsigned()) && (repeat->get<int>() > 0)) {
 			segmentBlock.repeat.reset(new int(repeat->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
 		}
 	}
 	json::const_iterator segments = segmentBlockJson.find("segments");
@@ -108,7 +108,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 			if (segment.is_object()) {
 				segmentBlock.segments.push_back(parseSegment(segment, true));
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be Segment objects.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be Segment objects.");
 			}
 			m_context.location.pop_back();
 			count++;
@@ -116,7 +116,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 
 		m_context.location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_SegmentsArray, "'segments' is required and must be an array.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_SegmentsArray, "'segments' is required and must be an array.");
 	}
 
 	return segmentBlock;
@@ -138,7 +138,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*samples, true, "samples", ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be an object."));
 			duration.samplesValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be a positive integer number or a value object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_SamplesNumberOrValue, "'samples' must be a positive integer number or a value object.");
 		}
 	}
 
@@ -151,7 +151,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*millis, true, "millis", ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be an object."));
 			duration.millisValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be a positive decimal number or a value object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_MillisNumberOrValue, "'millis' must be a positive decimal number or a value object.");
 		}
 	}
 
@@ -160,7 +160,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 		if ((bars->is_number_unsigned()) && (bars->get<uint64_t>() > 0)) {
 			duration.bars.reset(new uint64_t(bars->get<uint64_t>()));
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsNumber, "'bars' must be a positive integer number or a value object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsNumber, "'bars' must be a positive integer number or a value object.");
 		}
 	}
 
@@ -173,7 +173,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*beats, true, "beats", ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be an object."));
 			duration.beatsValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be a positive decimal number or a value object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsNumberOrValue, "'beats' must be a positive decimal number or a value object.");
 		}
 	}
 
@@ -186,20 +186,20 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 			ScriptValue *scriptValue = new ScriptValue(parseValue(*hz, true, "hz", ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be an object."));
 			duration.hzValue.reset(scriptValue);
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be a positive decimal number or a value object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_HzNumberOrValue, "'hz' must be a positive decimal number or a value object.");
 		}
 	}
 
 	if (durationCount == 0) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
 	} else if (durationCount > 1) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
 	} else if (duration.bars && duration.beatsValue) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can only be used with a constant 'beats', not with a value-based 'beats'.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can only be used with a constant 'beats', not with a value-based 'beats'.");
 	} else if (duration.bars && !duration.beats) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
 	} else if ((!duration.bars) && (duration.beats) && (*duration.beats.get() == 0)) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsNotZero, "'beats' can not be 0 unless 'bars' is also used.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsNotZero, "'beats' can not be 0 unless 'bars' is also used.");
 	}
 
 	return duration;

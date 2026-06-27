@@ -6,7 +6,7 @@
 using namespace std;
 using namespace timeseq;
 
-shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(const ScriptInputTrigger* scriptInputTrigger) {
+const shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(const ScriptInputTrigger* scriptInputTrigger) {
 	// Check if it's a ref input trigger object or a full one
 	if (scriptInputTrigger->input.ref.length() == 0) {
 		return make_shared<TriggerProcessor>(scriptInputTrigger->id, scriptInputTrigger->input.index - 1, ((bool) scriptInputTrigger->input.channel) ? *scriptInputTrigger->input.channel.get() - 1 : 0, m_portHandler, m_triggerHandler);
@@ -19,7 +19,7 @@ shared_ptr<TriggerProcessor> ProcessorScriptParser::parseInputTrigger(const Scri
 
 		// Couldn't find the referenced input...
 		m_context.location.push_back("input");
-		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInputTrigger->input.ref.c_str(), "' in the script inputs.");
+		addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInputTrigger->input.ref.c_str(), "' in the script inputs.");
 		m_context.location.pop_back();
 		return shared_ptr<TriggerProcessor>();
 	}
@@ -43,7 +43,7 @@ const pair<int, int> ProcessorScriptParser::parseInput(const ScriptInput* script
 		}
 
 		// Couldn't find the referenced input...
-		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInput->ref.c_str(), "' in the script inputs.");
+		addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced input with id '", scriptInput->ref.c_str(), "' in the script inputs.");
 		return pair<int, int>(-1, -1);
 	}
 
@@ -67,7 +67,7 @@ const pair<int, int> ProcessorScriptParser::parseOutput(const ScriptOutput* scri
 		}
 
 		// Couldn't find the referenced output...
-		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced output with id '", scriptOutput->ref.c_str(), "' in the script outputs.");
+		addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced output with id '", scriptOutput->ref.c_str(), "' in the script outputs.");
 		return pair<int, int>(-1, -1);
 	}
 }

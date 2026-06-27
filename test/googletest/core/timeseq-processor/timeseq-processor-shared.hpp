@@ -8,25 +8,25 @@
 #include <gmock/gmock.h>
 
 struct MockPortHandler : PortHandler {
-	MOCK_METHOD(float, getInputPortVoltage, (int, int), (override));
-	MOCK_METHOD(float, getOutputPortVoltage, (int, int), (override));
+	MOCK_METHOD(float, getInputPortVoltage, (int, int), (const, override));
+	MOCK_METHOD(float, getOutputPortVoltage, (int, int), (const, override));
 	MOCK_METHOD(void, setOutputPortVoltage, (int, int, float), (override));
 	MOCK_METHOD(void, setOutputPortChannels, (int, int), (override));
-	MOCK_METHOD(void, setOutputPortLabel, (int, std::string&), (override));
+	MOCK_METHOD(void, setOutputPortLabel, (int, const std::string&), (override));
 };
 
 struct MockVariableHandler : VariableHandler {
-	MOCK_METHOD(float, getVariable, (const std::string&), (override));
+	MOCK_METHOD(float, getVariable, (const std::string&), (const, override));
 	MOCK_METHOD(void, setVariable, (const std::string&, float), (override));
 };
 
 struct MockTriggerHandler : TriggerHandler {
-	MOCK_METHOD(const std::vector<std::string>&, getTriggers, (), (override));
+	MOCK_METHOD(const std::vector<std::string>&, getTriggers, (), (const, override));
 	MOCK_METHOD(void, setTrigger, (const std::string&), (override));
 };
 
 struct MockSampleRateReader : SampleRateReader {
-	MOCK_METHOD(float, getSampleRate, (), (override));
+	MOCK_METHOD(float, getSampleRate, (), (const, override));
 };
 
 struct MockEventListener : EventListener {
@@ -37,7 +37,7 @@ struct MockEventListener : EventListener {
 };
 
 struct MockAssertListener : AssertListener {
-	MOCK_METHOD(void, assertFailed, (std::string&, std::string&, bool), (override));
+	MOCK_METHOD(void, assertFailed, (const std::string&, const std::string&, bool), (override));
 };
 
 struct MockRandValueGenerator : RandValueGenerator {

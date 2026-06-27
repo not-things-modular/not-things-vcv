@@ -10,7 +10,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 	populateRef(action, actionJson, allowRefs);
 	if (action.ref.length() > 0) {
 		if (hasOneOf(actionJson, cActionProperties)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_RefOrInstance, "A ref action can not be combined other non-ref action properties.");
 		}
 	} else {
 		int actionCount = 0;
@@ -26,7 +26,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			} else if (*timing == "gate") {
 				action.timing = ScriptAction::ActionTiming::GATE;
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TimingEnum, "timing must be either 'start', 'end', 'glide' or 'gate'.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TimingEnum, "timing must be either 'start', 'end', 'glide' or 'gate'.");
 			}
 		} else {
 			action.timing = ScriptAction::ActionTiming::START;
@@ -41,7 +41,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.setValue.reset(scriptSetValue);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetValueObject, "'set-value' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetValueObject, "'set-value' must be an object.");
 			}
 		}
 
@@ -54,7 +54,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.setVariable.reset(scriptSetVariable);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetVariableObject, "'set-variable' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetVariableObject, "'set-variable' must be an object.");
 			}
 		}
 
@@ -67,7 +67,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.setPolyphony.reset(scriptSetPolyphony);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetPolyphonyObject, "'set-polyphony' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetPolyphonyObject, "'set-polyphony' must be an object.");
 			}
 		}
 
@@ -80,7 +80,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.setLabel.reset(scriptSetLabel);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetLabelObject, "'set-label' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_SetLabelObject, "'set-label' must be an object.");
 			}
 		}
 
@@ -93,7 +93,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.assert.reset(scriptAssert);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_AssertObject, "'assert' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_AssertObject, "'assert' must be an object.");
 			}
 		}
 
@@ -103,10 +103,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (trigger->is_string()) {
 				action.trigger = *trigger;
 				if (action.trigger.size() == 0) {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TriggerLength, "'trigger' can not be an empty string.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TriggerLength, "'trigger' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TriggerString, "'trigger' must be a string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TriggerString, "'trigger' must be a string.");
 			}
 		}
 
@@ -120,7 +120,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.moveSequence.reset(scriptMoveSequence);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MoveSequenceObject, "'move-sequence' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MoveSequenceObject, "'move-sequence' must be an object.");
 			}
 		}
 
@@ -131,10 +131,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (clearSequence->is_string()) {
 				action.clearSequence = *clearSequence;
 				if (action.clearSequence.size() == 0) {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_ClearSequenceLength, "'clear-sequence' can not be an empty string.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_ClearSequenceLength, "'clear-sequence' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_ClearSequenceString, "'clear-sequence' must be a string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_ClearSequenceString, "'clear-sequence' must be a string.");
 			}
 		}
 
@@ -148,7 +148,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.addToSequence.reset(scriptAddToSequence);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_AddToSequenceObject, "'add-to-sequence' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_AddToSequenceObject, "'add-to-sequence' must be an object.");
 			}
 		}
 
@@ -162,7 +162,7 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.removeFromSequence.reset(scriptRemoveFromSequence);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_RemoveFromSequenceObject, "'remove-from-sequence' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_RemoveFromSequenceObject, "'remove-from-sequence' must be an object.");
 			}
 		}
 
@@ -183,10 +183,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (easeFactor->is_number()) {
 				action.easeFactor.reset(new float(easeFactor->get<float>()));
 				if ((*action.easeFactor.get() < -5.0) || (*action.easeFactor.get() > 5.0)) {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseFactorRange, "'ease-factor' must be a number between -5.0 and 5.0.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseFactorRange, "'ease-factor' must be a number between -5.0 and 5.0.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseFactorFloat, "'ease-factor' must be a number between -5.0 and 5.0.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseFactorFloat, "'ease-factor' must be a number between -5.0 and 5.0.");
 			}
 		}
 
@@ -198,10 +198,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				} else if (easeAlgorithm->get<string>() == "sig") {
 					action.easeAlgorithm.reset(new ScriptAction::EaseAlgorithm(ScriptAction::EaseAlgorithm::SIG));
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_EaseAlgorithmEnum, "'ease-algorithm' must be either the string 'pow' or 'sig'.");
 			}
 		}
 
@@ -210,10 +210,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (gateHighRatio->is_number()) {
 				action.gateHighRatio.reset(new float(gateHighRatio->get<float>()));
 				if ((*action.gateHighRatio.get() < 0.f) || (*action.gateHighRatio.get() > 1.f)) {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighRatioRange, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighRatioRange, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighRatioFloat, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighRatioFloat, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
 			}
 		}
 
@@ -228,10 +228,10 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (variable->is_string()) {
 				action.variable = *variable;
 				if (action.variable.size() == 0) {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_VariableLength, "'variable' can not be an empty string.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_VariableLength, "'variable' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_VariableString, "'variable' must be a string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_VariableString, "'variable' must be a string.");
 			}
 		}
 
@@ -243,47 +243,47 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 				action.condition.reset(scriptIf);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_IfObject, "'if' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_IfObject, "'if' must be an object.");
 			}
 		}
 
 		if (action.timing == ScriptAction::ActionTiming::GLIDE) {
 			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.moveSequence) || (action.clearSequence.length() > 0) || (action.addToSequence) || (action.removeFromSequence) || (action.gateHighRatio)) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.startValue) || (!action.endValue)) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when 'GLIDE' timing is used.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when 'GLIDE' timing is used.");
 			}
 			if ((!action.output) && (action.variable.length() == 0)) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MissingGlideActions, "Either 'output' or 'variable' must be present when 'GLIDE' timing is used.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MissingGlideActions, "Either 'output' or 'variable' must be present when 'GLIDE' timing is used.");
 			}
 			if ((action.output) && (action.variable.length() > 0)) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when 'GLIDE' timing is used.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TooManyGlideActions, "Only one of 'output' and 'variable' can be present when 'GLIDE' timing is used.");
 			}
 		} else if (action.timing == ScriptAction::ActionTiming::GATE) {
 			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.moveSequence) || (action.clearSequence.length() > 0) || (action.addToSequence) || (action.removeFromSequence) || (action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm)) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGateProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence', 'start-value', 'end-value', 'ease-factory' and 'ease-algorithm' can not be used in combination with 'GATE' timing.");
 			}
 			if (!action.output) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateOutput, "'output' must be present when 'GATE' timing is used.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateOutput, "'output' must be present when 'GATE' timing is used.");
 			}
 			if (action.variable.length() > 0) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGateProperties, "'variable' can only be used in combination with 'GLIDE' timing.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGateProperties, "'variable' can only be used in combination with 'GLIDE' timing.");
 			}
 		} else {
 			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm) || (action.gateHighRatio)) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' 'ease-algorithm' and 'gate-high-ratio' can only be used in combination with 'GLIDE' timing.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' 'ease-algorithm' and 'gate-high-ratio' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((action.output) || (action.variable.length() > 0)) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.setValue) && (!action.setVariable) && (!action.setPolyphony) && (!action.setLabel) && (!action.assert) && (action.trigger.size() == 0) && (!action.moveSequence) && (action.clearSequence.length() == 0) && (!action.addToSequence) && (!action.removeFromSequence)) {
 				string timingStr = timing != actionJson.end() ? *timing : "start";
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' must be present for '", timingStr.c_str(), "' timing.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MissingNonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' must be present for '", timingStr.c_str(), "' timing.");
 			}
 			if (actionCount > 1) {
 				string timingStr = timing != actionJson.end() ? *timing : "start";
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' can be used in the same '", timingStr.c_str(), "' action.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_TooManyNonGlideProperties, "Only one of 'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence' or 'remove-from-sequence' can be used in the same '", timingStr.c_str(), "' action.");
 			}
 		}
 	}
@@ -301,14 +301,14 @@ ScriptSetValue JsonScriptParser::parseSetValue(const json& setValueJson) {
 	if (output != setValueJson.end()) {
 		setValue.output = parseOutput(*output, true, "output", ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be a output object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetValue_OutputObject, "'output' is required and must be a output object.");
 	}
 
 	json::const_iterator value = setValueJson.find("value");
 	if (value != setValueJson.end()) {
 		setValue.value = parseValue(*value, true, "value", ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be a value object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetValue_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	return setValue;
@@ -324,17 +324,17 @@ ScriptSetVariable JsonScriptParser::parseSetVariable(const json& setVariableJson
 	if ((name != setVariableJson.end()) && (name->is_string())) {
 		setVariable.name = *name;
 		if (setVariable.name.length() == 0) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetVariable_NameLength, "'name' must be a non-empty string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetVariable_NameLength, "'name' must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetVariable_NameString, "'name' is required and must be a non-empty string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetVariable_NameString, "'name' is required and must be a non-empty string.");
 	}
 
 	json::const_iterator value = setVariableJson.find("value");
 	if (value != setVariableJson.end()) {
 		setVariable.value = parseValue(*value, true, "value", ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be an object.");
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be a value object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetVariable_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	return setVariable;
@@ -350,20 +350,20 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 	if ((index != setPolyphonyJson.end()) && (index->is_number_unsigned())) {
 		setPolyphony.index = index->get<int>();
 		if ((setPolyphony.index < 1) || (setPolyphony.index > 8)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 8.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 8.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexNumber, "'index' is required and must be a number between 1 and 8.");
 	}
 
 	json::const_iterator channels = setPolyphonyJson.find("channels");
 	if ((channels != setPolyphonyJson.end()) && (channels->is_number_unsigned())) {
 		setPolyphony.channels = channels->get<int>();
 		if ((setPolyphony.channels < 1) || (setPolyphony.channels > 16)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_ChannelsRange, "'channels' must be a number between 1 and 16.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_ChannelsRange, "'channels' must be a number between 1 and 16.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_ChannelsNumber, "'channels' is required and must be a number between 1 and 16.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_ChannelsNumber, "'channels' is required and must be a number between 1 and 16.");
 	}
 
 	return setPolyphony;
@@ -379,20 +379,20 @@ ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson) {
 	if ((index != setLabelJson.end()) && (index->is_number_unsigned())) {
 		setLabel.index = index->get<int>();
 		if ((setLabel.index < 1) || (setLabel.index > 8)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexRange, "'index' must be a number between 1 and 8.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexRange, "'index' must be a number between 1 and 8.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexNumber, "'index' is required and must be a number between 1 and 8.");
 	}
 
 	json::const_iterator label = setLabelJson.find("label");
 	if ((label != setLabelJson.end()) && (label->is_string())) {
 		setLabel.label = label->get<string>();
 		if (setLabel.label.size() == 0) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_LabelLength, "'label' can not be an empty string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_LabelLength, "'label' can not be an empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_LabelString, "'label' must be a non-empty string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_LabelString, "'label' must be a non-empty string.");
 	}
 
 	return setLabel;
@@ -409,13 +409,13 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson) {
 		if (name->is_string()) {
 			scriptAssert.name = name->get<string>();
 			if (scriptAssert.name.length() < 1) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_NameLength, "'name' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_NameLength, "'name' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_NameString, "'name' is required and must be a non-empty string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_NameString, "'name' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_NameString, "'name' must be a non-empty string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_NameString, "'name' must be a non-empty string.");
 	}
 
 	json::const_iterator expect = assertJson.find("expect");
@@ -425,10 +425,10 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson) {
 			scriptAssert.expect = parseIf(*expect, true);
 			m_context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_ExpectObject, "'expect' must be an object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_ExpectObject, "'expect' must be an object.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_ExpectObject, "'expect' is required and must be an object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_ExpectObject, "'expect' is required and must be an object.");
 	}
 
 	json::const_iterator stopOnFail = assertJson.find("stop-on-fail");
@@ -437,7 +437,7 @@ ScriptAssert JsonScriptParser::parseAssert(const json& assertJson) {
 		if (stopOnFail->is_boolean()) {
 			scriptAssert.stopOnFail = stopOnFail->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_StopOnFailBool, "'stop-on-fail' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Assert_StopOnFailBool, "'stop-on-fail' must be a boolean.");
 		}
 	}
 
@@ -455,13 +455,13 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 		if (id->is_string()) {
 			scriptMoveSequence.id = id->get<string>();
 			if (scriptMoveSequence.id.length() < 1) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_IdLength, "'id' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_IdString, "'id' is required and must be a non-empty string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_IdString, "'id' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_IdString, "'id' must be a non-empty string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_IdString, "'id' must be a non-empty string.");
 	}
 
 	json::const_iterator direction = moveSequenceJson.find("direction");
@@ -474,7 +474,7 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 		if (position->is_number_integer()) {
 			scriptMoveSequence.position.reset(new int(position->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_PositionNumber, "'position' must be a number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_PositionNumber, "'position' must be a number.");
 		}
 	}
 
@@ -482,17 +482,17 @@ ScriptMoveSequence JsonScriptParser::parseMoveSequence(const json& moveSequenceJ
 	json::const_iterator wrap = moveSequenceJson.find("wrap");
 	if (wrap != moveSequenceJson.end()) {
 		if (scriptMoveSequence.position) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_NoWrapWithPosition, "'wrap' can not be used in combination with 'position'.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_NoWrapWithPosition, "'wrap' can not be used in combination with 'position'.");
 		}
 		if (wrap->is_boolean()) {
 			scriptMoveSequence.wrap = wrap->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_WrapBoolean, "'wrap' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_WrapBoolean, "'wrap' must be a boolean.");
 		}
 	}
 
 	if ((scriptMoveSequence.direction) && (scriptMoveSequence.position)) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "Only one of 'direction' or 'position' can be used at a time.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_EitherDirectionOrPosition, "Only one of 'direction' or 'position' can be used at a time.");
 	}
 
 	if ((!scriptMoveSequence.direction) && (!scriptMoveSequence.position)) {
@@ -513,20 +513,20 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		if (id->is_string()) {
 			scriptAddToSequence.id = id->get<string>();
 			if (scriptAddToSequence.id.length() < 1) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_IdLength, "'id' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_IdString, "'id' is required and must be a non-empty string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_IdString, "'id' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_IdString, "'id' must be a non-empty string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_IdString, "'id' must be a non-empty string.");
 	}
 
 	json::const_iterator value = addToSequenceJson.find("value");
 	if (value != addToSequenceJson.end()) {
 		scriptAddToSequence.value = parseValue(*value, true, "value", ValidationErrorCode::AddToSequence_ValueObject, "'value' must be a value object.");
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_ValueObject, "'value' is required and must be a value object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_ValueObject, "'value' is required and must be a value object.");
 	}
 
 	scriptAddToSequence.position = -1;
@@ -535,7 +535,7 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		if (position->is_number_integer()) {
 			scriptAddToSequence.position = position->get<int>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_PositionNumber, "'position' must be a number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_PositionNumber, "'position' must be a number.");
 		}
 	}
 
@@ -545,7 +545,7 @@ ScriptAddToSequence JsonScriptParser::parseAddToSequence(const json& addToSequen
 		if (asConstantVoltage->is_boolean()) {
 			scriptAddToSequence.asConstantVoltage = asConstantVoltage->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_AsConstantVoltageBoolean, "'as-constant-voltage' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_AsConstantVoltageBoolean, "'as-constant-voltage' must be a boolean.");
 		}
 	}
 
@@ -565,13 +565,13 @@ ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& r
 		if (id->is_string()) {
 			scriptRemoveFromSquence.id = id->get<string>();
 			if (scriptRemoveFromSquence.id.length() < 1) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_IdLength, "'id' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' is required and must be a non-empty string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' is required and must be a non-empty string.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' must be a non-empty string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_IdString, "'id' must be a non-empty string.");
 	}
 
 	json::const_iterator position = removeFromJson.find("position");
@@ -579,7 +579,7 @@ ScriptRemoveFromSequence JsonScriptParser::parseRemoveFromSequence(const json& r
 		if (position->is_number_integer()) {
 			scriptRemoveFromSquence.position = position->get<int>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_PositionNumber, "'position' must be a number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_PositionNumber, "'position' must be a number.");
 		}
 	}
 

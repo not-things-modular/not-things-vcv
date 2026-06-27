@@ -5,7 +5,7 @@
 using namespace std;
 using namespace timeseq;
 
-ActionProcessor::ActionProcessor(shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
+ActionProcessor::ActionProcessor(const shared_ptr<IfProcessor>& ifProcessor) : m_ifProcessor(ifProcessor) {}
 
 void ActionProcessor::process() {
 	if ((!m_ifProcessor) || (m_ifProcessor->process(nullptr))) {
@@ -13,33 +13,33 @@ void ActionProcessor::process() {
 	}
 }
 
-ActionSetValueProcessor::ActionSetValueProcessor(shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
+ActionSetValueProcessor::ActionSetValueProcessor(const shared_ptr<ValueProcessor>& value, int outputPort, int outputChannel, PortHandler* portHandler, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
 
 void ActionSetValueProcessor::processAction() {
 	float value = m_value->process();
 	m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, value);
 }
 
-ActionSetVariableProcessor::ActionSetVariableProcessor(shared_ptr<ValueProcessor> value, string name, VariableHandler* variableHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_name(name), m_variableHandler(variableHandler) {}
+ActionSetVariableProcessor::ActionSetVariableProcessor(const shared_ptr<ValueProcessor>& value, const string& name, VariableHandler* variableHandler, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_name(name), m_variableHandler(variableHandler) {}
 
 void ActionSetVariableProcessor::processAction() {
 	float value = m_value->process();
 	m_variableHandler->setVariable(m_name, value);
 }
 
-ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_outputPort(outputPort), m_channelCount(channelCount), m_portHandler(portHandler) {}
+ActionSetPolyphonyProcessor::ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_outputPort(outputPort), m_channelCount(channelCount), m_portHandler(portHandler) {}
 
 void ActionSetPolyphonyProcessor::processAction() {
 	m_portHandler->setOutputPortChannels(m_outputPort, m_channelCount);
 }
 
-ActionSetLabelProcessor::ActionSetLabelProcessor(int outputPort, string label, PortHandler* portHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_outputPort(outputPort), m_label(label), m_portHandler(portHandler) {}
+ActionSetLabelProcessor::ActionSetLabelProcessor(int outputPort, const string& label, PortHandler* portHandler, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_outputPort(outputPort), m_label(label), m_portHandler(portHandler) {}
 
 void ActionSetLabelProcessor::processAction() {
 	m_portHandler->setOutputPortLabel(m_outputPort, m_label);
 }
 
-ActionAssertProcessor::ActionAssertProcessor(string name, shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
+ActionAssertProcessor::ActionAssertProcessor(const string& name, const shared_ptr<IfProcessor>& expect, bool stopOnFail, AssertListener* assertListener, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_name(name), m_expect(expect), m_stopOnFail(stopOnFail), m_assertListener(assertListener) {}
 
 void ActionAssertProcessor::processAction() {
 	// First check the expectation without constructing a message to avoid performance impact
@@ -51,31 +51,31 @@ void ActionAssertProcessor::processAction() {
 	}
 }
 
-ActionTriggerProcessor::ActionTriggerProcessor(string trigger, TriggerHandler* triggerHandler, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_trigger(trigger), m_triggerHandler(triggerHandler) {}
+ActionTriggerProcessor::ActionTriggerProcessor(const string& trigger, TriggerHandler* triggerHandler, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_trigger(trigger), m_triggerHandler(triggerHandler) {}
 
 void ActionTriggerProcessor::processAction() {
 	m_triggerHandler->setTrigger(m_trigger);
 }
 
-ActionMoveSequenceDirectionProcessor::ActionMoveSequenceDirectionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_direction(direction), m_wrap(wrap) {}
+ActionMoveSequenceDirectionProcessor::ActionMoveSequenceDirectionProcessor(shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_direction(direction), m_wrap(wrap) {}
 
 void ActionMoveSequenceDirectionProcessor::processAction() {
 	m_sequencePositionProcessor->move(m_direction, m_wrap);
 }
 
-ActionMoveSequencePositionProcessor::ActionMoveSequencePositionProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
+ActionMoveSequencePositionProcessor::ActionMoveSequencePositionProcessor(shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, int position, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
 
 void ActionMoveSequencePositionProcessor::processAction() {
 	m_sequencePositionProcessor->move(m_position);
 }
 
-ActionClearSequenceProcessor::ActionClearSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor) {}
+ActionClearSequenceProcessor::ActionClearSequenceProcessor(shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor) {}
 
 void ActionClearSequenceProcessor::processAction() {
 	m_sequencePositionProcessor->getSequenceProcessor()->clear();
 }
 
-ActionAddToSequenceSequenceProcessor::ActionAddToSequenceSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, shared_ptr<ValueProcessor> value, int position, bool asConstantVoltage, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_value(value), m_position(position), m_asConstantVoltage(asConstantVoltage) {}
+ActionAddToSequenceSequenceProcessor::ActionAddToSequenceSequenceProcessor(shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, const shared_ptr<ValueProcessor>& value, int position, bool asConstantVoltage, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_value(value), m_position(position), m_asConstantVoltage(asConstantVoltage) {}
 
 void ActionAddToSequenceSequenceProcessor::processAction() {
 	if (!m_asConstantVoltage) {
@@ -85,13 +85,13 @@ void ActionAddToSequenceSequenceProcessor::processAction() {
 	}
 }
 
-ActionRemoveFromSequenceProcessor::ActionRemoveFromSequenceProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, shared_ptr<IfProcessor> ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
+ActionRemoveFromSequenceProcessor::ActionRemoveFromSequenceProcessor(shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, int position, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_sequencePositionProcessor(sequencePositionProcessor), m_position(position) {}
 
 void ActionRemoveFromSequenceProcessor::processAction() {
 	m_sequencePositionProcessor->getSequenceProcessor()->remove(m_position);
 }
 
-ActionOngoingProcessor::ActionOngoingProcessor(shared_ptr<IfProcessor> ifProcessor) : m_ifProcessor(ifProcessor) {}
+ActionOngoingProcessor::ActionOngoingProcessor(const shared_ptr<IfProcessor>& ifProcessor) : m_ifProcessor(ifProcessor) {}
 
 void ActionOngoingProcessor::start(uint64_t glideLength) {
 	m_if = (!m_ifProcessor) || m_ifProcessor->process(nullptr);
@@ -104,12 +104,12 @@ bool ActionOngoingProcessor::shouldProcess() {
 ActionGlideProcessor::ActionGlideProcessor(
 	float easeFactor,
 	bool easePow,
-	shared_ptr<ValueProcessor> startValue,
-	shared_ptr<ValueProcessor> endValue,
-	shared_ptr<IfProcessor> ifProcessor,
+	const shared_ptr<ValueProcessor>& startValue,
+	const shared_ptr<ValueProcessor>& endValue,
+	const shared_ptr<IfProcessor>& ifProcessor,
 	int outputPort,
 	int outputChannel,
-	string variable,
+	const string& variable,
 	PortHandler* portHandler,
 	VariableHandler* variableHandler) :
 		ActionOngoingProcessor(ifProcessor), m_easeFactor(easeFactor), m_easePow(easePow), m_startValueProcessor(startValue), m_endValueProcessor(endValue), m_portHandler(portHandler), m_variableHandler(variableHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_variable(variable) {
@@ -182,7 +182,7 @@ double ActionGlideProcessor::calculateSigEase(float ease) {
 }
 
 
-ActionGateProcessor::ActionGateProcessor(float gateHighRatio, shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
+ActionGateProcessor::ActionGateProcessor(float gateHighRatio, const shared_ptr<IfProcessor>& ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
 	ActionOngoingProcessor(ifProcessor), m_portHandler(portHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_gateHighRatio(gateHighRatio) {}
 
 void ActionGateProcessor::start(uint64_t glideLength) {

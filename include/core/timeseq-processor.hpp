@@ -40,13 +40,13 @@ struct CalcProcessor {
 struct CalcValueProcessor : CalcProcessor {
 	enum ValueCalcOperation { ADD, SUB, DIV, MULT, MAX, MIN, REMAIN };
 
-	CalcValueProcessor(const ScriptCalc* scriptCalc, std::shared_ptr<ValueProcessor> value);
+	CalcValueProcessor(const ScriptCalc* scriptCalc, const std::shared_ptr<ValueProcessor>& value);
 
 	double calc(double value) override;
 
 	nt_private:
 		ValueCalcOperation m_operation;
-		std::shared_ptr<ValueProcessor> m_value;
+		const std::shared_ptr<ValueProcessor> m_value;
 };
 
 struct CalcTruncProcessor : CalcProcessor {
@@ -99,14 +99,14 @@ struct RandValueGenerator {
 };
 
 struct SequenceProcessor {
-	SequenceProcessor(std::string id, std::vector<std::shared_ptr<ValueProcessor>> values, bool retrieveVoltageOnce);
+	SequenceProcessor(const std::string& id, const std::vector<std::shared_ptr<ValueProcessor>>& values, bool retrieveVoltageOnce);
 
 	std::string getId();
-	std::vector<std::shared_ptr<ValueProcessor>> getValues();
+	const std::vector<std::shared_ptr<ValueProcessor>> getValues() const;
 	bool isRetrieveVoltageOnce();
 
 	void clear();
-	void add(std::shared_ptr<ValueProcessor> value, int position);
+	void add(const std::shared_ptr<ValueProcessor>& value, int position);
 	void remove(int position);
 
 	nt_private:
@@ -118,7 +118,7 @@ struct SequenceProcessor {
 struct SequencePositionProcessor {
 	enum SequenceMoveDirection { FORWARD, BACKWARD, RANDOM, NONE };
 
-	SequencePositionProcessor(std::shared_ptr<SequenceProcessor> sequenceProcessor, std::shared_ptr<RandValueGenerator> randValueGenerator);
+	SequencePositionProcessor(const std::shared_ptr<SequenceProcessor>& sequenceProcessor, const std::shared_ptr<RandValueGenerator>& randValueGenerator);
 
 	SequenceProcessor* getSequenceProcessor();
 	double getCurrentValue();
@@ -128,8 +128,8 @@ struct SequencePositionProcessor {
 
 	nt_private:
 		int m_position;
-		std::shared_ptr<SequenceProcessor> m_sequenceProcessor;
-		std::shared_ptr<RandValueGenerator> m_randValueGenerator;
+		const std::shared_ptr<SequenceProcessor> m_sequenceProcessor;
+		const std::shared_ptr<RandValueGenerator> m_randValueGenerator;
 
 		// If the sequence has 'retrieve-voltage-once' set to true, we need to store the voltage
 		// and remember it until a move is done.
@@ -138,20 +138,20 @@ struct SequencePositionProcessor {
 };
 
 struct ValueProcessor {
-	ValueProcessor(std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
+	ValueProcessor(const std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, bool quantize);
 
 	double process();
 	virtual double processValue() = 0;
 
 	nt_private:
-		std::vector<std::shared_ptr<CalcProcessor>> m_calcProcessors;
+		const std::vector<std::shared_ptr<CalcProcessor>> m_calcProcessors;
 		bool m_quantize;
 
 		double quantize(double value);
 };
 
 struct StaticValueProcessor : ValueProcessor {
-	StaticValueProcessor(float value, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
+	StaticValueProcessor(float value, const std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, bool quantize);
 
 	double processValue() override;
 
@@ -160,17 +160,17 @@ struct StaticValueProcessor : ValueProcessor {
 };
 
 struct VariableValueProcessor : ValueProcessor {
-	VariableValueProcessor(std::string name, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize, VariableHandler* variableHandler);
+	VariableValueProcessor(const std::string& name, const std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, bool quantize, VariableHandler* variableHandler);
 
 	double processValue() override;
 
 	nt_private:
-		std::string m_name;
+		const std::string m_name;
 		VariableHandler* m_variableHandler;
 };
 
 struct InputValueProcessor : ValueProcessor {
-	InputValueProcessor(int inputPort, int inputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler);
+	InputValueProcessor(int inputPort, int inputChannel, const std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, bool quantize, PortHandler* portHandler);
 
 	double processValue() override;
 
@@ -181,7 +181,7 @@ struct InputValueProcessor : ValueProcessor {
 };
 
 struct OutputValueProcessor : ValueProcessor {
-	OutputValueProcessor(int outputPort, int outputChannel, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler);
+	OutputValueProcessor(int outputPort, int outputChannel, const std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, bool quantize, PortHandler* portHandler);
 
 	double processValue() override;
 
@@ -192,75 +192,75 @@ struct OutputValueProcessor : ValueProcessor {
 };
 
 struct RandValueProcessor : ValueProcessor {
-	RandValueProcessor(std::shared_ptr<ValueProcessor> lowerValue, std::shared_ptr<ValueProcessor> upperValue, std::shared_ptr<RandValueGenerator> randValueGenerator, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
+	RandValueProcessor(const std::shared_ptr<ValueProcessor>& lowerValue, const std::shared_ptr<ValueProcessor>& upperValue, const std::shared_ptr<RandValueGenerator>& randValueGenerator, const std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, bool quantize);
 
 	double processValue() override;
 
 	nt_private:
-		std::shared_ptr<ValueProcessor> m_lowerValue;
-		std::shared_ptr<ValueProcessor> m_upperValue;
+		const std::shared_ptr<ValueProcessor> m_lowerValue;
+		const std::shared_ptr<ValueProcessor> m_upperValue;
 
-		std::shared_ptr<RandValueGenerator> m_randValueGenerator;
+		const std::shared_ptr<RandValueGenerator> m_randValueGenerator;
 };
 
 struct SequenceValueProcessor : ValueProcessor {
-	SequenceValueProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection moveBefore, SequencePositionProcessor::SequenceMoveDirection moveAfter, bool wrap, std::vector<std::shared_ptr<CalcProcessor>> calcProcessors, bool quantize);
+	SequenceValueProcessor(const std::shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection moveBefore, SequencePositionProcessor::SequenceMoveDirection moveAfter, bool wrap, const std::vector<std::shared_ptr<CalcProcessor>>& calcProcessors, bool quantize);
 
 	double processValue() override;
 
 	nt_private:
-		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
+		const std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
 		SequencePositionProcessor::SequenceMoveDirection m_moveBefore;
 		SequencePositionProcessor::SequenceMoveDirection m_moveAfter;
 		bool m_wrap;
 };
 
 struct IfProcessor {
-	IfProcessor(const ScriptIf* scriptIf, std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> values, std::vector<std::shared_ptr<IfProcessor>> ifs);
+	IfProcessor(const ScriptIf* scriptIf, const std::pair<const std::shared_ptr<ValueProcessor>, const std::shared_ptr<ValueProcessor>>& values, const std::vector<std::shared_ptr<IfProcessor>>& ifs);
 
 	bool process(std::string* message);
 
 	nt_private:
 		const ScriptIf* m_scriptIf;
-		std::pair<std::shared_ptr<ValueProcessor>, std::shared_ptr<ValueProcessor>> m_values;
-		std::vector<std::shared_ptr<IfProcessor>> m_ifs;
+		const std::pair<const std::shared_ptr<ValueProcessor>, const std::shared_ptr<ValueProcessor>> m_values;
+		const std::vector<std::shared_ptr<IfProcessor>> m_ifs;
 };
 
 struct ActionProcessor {
-	ActionProcessor(std::shared_ptr<IfProcessor> ifProcessor);
+	ActionProcessor(const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void process();
 	virtual void processAction() = 0;
 
 	nt_private:
-		std::shared_ptr<IfProcessor> m_ifProcessor;
+		const std::shared_ptr<IfProcessor> m_ifProcessor;
 };
 
 struct ActionSetValueProcessor : ActionProcessor {
-	ActionSetValueProcessor(std::shared_ptr<ValueProcessor> value, int outputPort, int outputChannel, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetValueProcessor(const std::shared_ptr<ValueProcessor>& value, int outputPort, int outputChannel, PortHandler* portHandler, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
 	nt_private:
-		std::shared_ptr<ValueProcessor> m_value;
+		const std::shared_ptr<ValueProcessor> m_value;
 		int m_outputPort;
 		int m_outputChannel;
 		PortHandler* m_portHandler;
 };
 
 struct ActionSetVariableProcessor : ActionProcessor {
-	ActionSetVariableProcessor(std::shared_ptr<ValueProcessor> value, std::string name, VariableHandler* variableHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetVariableProcessor(const std::shared_ptr<ValueProcessor>& value, const std::string& name, VariableHandler* variableHandler, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
 	nt_private:
-		std::shared_ptr<ValueProcessor> m_value;
-		std::string m_name;
+		const std::shared_ptr<ValueProcessor> m_value;
+		const std::string m_name;
 		VariableHandler* m_variableHandler;
 };
 
 struct ActionSetPolyphonyProcessor : ActionProcessor {
-	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetPolyphonyProcessor(int outputPort, int channelCount, PortHandler* portHandler, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
@@ -271,40 +271,40 @@ struct ActionSetPolyphonyProcessor : ActionProcessor {
 };
 
 struct ActionSetLabelProcessor : ActionProcessor {
-	ActionSetLabelProcessor(int outputPort, std::string label, PortHandler* portHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionSetLabelProcessor(int outputPort, const std::string& label, PortHandler* portHandler, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
 	nt_private:
 		int m_outputPort;
-		std::string m_label;
+		const std::string m_label;
 		PortHandler* m_portHandler;
 };
 
 struct ActionAssertProcessor : ActionProcessor {
-	ActionAssertProcessor(std::string name, std::shared_ptr<IfProcessor> expect, bool stopOnFail, AssertListener* assertListener, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionAssertProcessor(const std::string& name, const std::shared_ptr<IfProcessor>& expect, bool stopOnFail, AssertListener* assertListener, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
 	nt_private:
-		std::string m_name;
-		std::shared_ptr<IfProcessor> m_expect;
+		const std::string m_name;
+		const std::shared_ptr<IfProcessor> m_expect;
 		bool m_stopOnFail;
 		AssertListener* m_assertListener;
 };
 
 struct ActionTriggerProcessor : ActionProcessor {
-	ActionTriggerProcessor(std::string trigger, TriggerHandler* triggerHandler, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionTriggerProcessor(const std::string& trigger, TriggerHandler* triggerHandler, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
 	nt_private:
-		std::string m_trigger;
+		const std::string m_trigger;
 		TriggerHandler* m_triggerHandler;
 };
 
 struct ActionMoveSequenceDirectionProcessor : ActionProcessor {
-	ActionMoveSequenceDirectionProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionMoveSequenceDirectionProcessor(std::shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection direction, bool wrap, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
@@ -315,7 +315,7 @@ struct ActionMoveSequenceDirectionProcessor : ActionProcessor {
 };
 
 struct ActionMoveSequencePositionProcessor : ActionProcessor {
-	ActionMoveSequencePositionProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionMoveSequencePositionProcessor(std::shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, int position, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
@@ -325,7 +325,7 @@ struct ActionMoveSequencePositionProcessor : ActionProcessor {
 };
 
 struct ActionClearSequenceProcessor : ActionProcessor {
-	ActionClearSequenceProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionClearSequenceProcessor(std::shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
@@ -334,19 +334,19 @@ struct ActionClearSequenceProcessor : ActionProcessor {
 };
 
 struct ActionAddToSequenceSequenceProcessor : ActionProcessor {
-	ActionAddToSequenceSequenceProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, std::shared_ptr<ValueProcessor> value, int position, bool asConstantVoltage, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionAddToSequenceSequenceProcessor(std::shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, const std::shared_ptr<ValueProcessor>& value, int position, bool asConstantVoltage, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
 	nt_private:
 		std::shared_ptr<SequencePositionProcessor> m_sequencePositionProcessor;
-		std::shared_ptr<ValueProcessor> m_value;
+		const std::shared_ptr<ValueProcessor> m_value;
 		int m_position;
 		bool m_asConstantVoltage;
 };
 
 struct ActionRemoveFromSequenceProcessor : ActionProcessor {
-	ActionRemoveFromSequenceProcessor(std::shared_ptr<SequencePositionProcessor> sequencePositionProcessor, int position, std::shared_ptr<IfProcessor> ifProcessor);
+	ActionRemoveFromSequenceProcessor(std::shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, int position, const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	void processAction() override;
 
@@ -356,7 +356,7 @@ struct ActionRemoveFromSequenceProcessor : ActionProcessor {
 };
 
 struct ActionOngoingProcessor {
-	ActionOngoingProcessor(std::shared_ptr<IfProcessor> ifProcessor);
+	ActionOngoingProcessor(const std::shared_ptr<IfProcessor>& ifProcessor);
 
 	virtual void start(uint64_t glideLength);
 	virtual void process(uint64_t glidePosition) = 0;
@@ -366,14 +366,14 @@ struct ActionOngoingProcessor {
 		bool shouldProcess();
 
 	nt_private:
-		std::shared_ptr<IfProcessor> m_ifProcessor;
+		const std::shared_ptr<IfProcessor> m_ifProcessor;
 
 		// The result of the "if" validation as captured when the ongoing action was started
 		bool m_if;
 };
 
 struct ActionGlideProcessor : ActionOngoingProcessor {
-	ActionGlideProcessor(float easeFactor, bool easePow, std::shared_ptr<ValueProcessor> startValue, std::shared_ptr<ValueProcessor> endValue, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, std::string variable, PortHandler* portHandler, VariableHandler* variableHandler);
+	ActionGlideProcessor(float easeFactor, bool easePow, const std::shared_ptr<ValueProcessor>& startValue, const std::shared_ptr<ValueProcessor>& endValue, const std::shared_ptr<IfProcessor>& ifProcessor, int outputPort, int outputChannel, const std::string& variable, PortHandler* portHandler, VariableHandler* variableHandler);
 
 	void start(uint64_t glideLength) override;
 	void process(uint64_t glidePosition) override;
@@ -382,15 +382,15 @@ struct ActionGlideProcessor : ActionOngoingProcessor {
 	nt_private:
 		float m_easeFactor;
 		bool m_easePow;
-		std::shared_ptr<ValueProcessor> m_startValueProcessor;
-		std::shared_ptr<ValueProcessor> m_endValueProcessor;
+		const std::shared_ptr<ValueProcessor> m_startValueProcessor;
+		const std::shared_ptr<ValueProcessor> m_endValueProcessor;
 
 		PortHandler* m_portHandler;
 		VariableHandler* m_variableHandler;
 
 		int m_outputPort;
 		int m_outputChannel;
-		std::string m_variable;
+		const std::string m_variable;
 
 		// The start and end values that were captured when the glide action was started
 		double m_startValue;
@@ -406,7 +406,7 @@ struct ActionGlideProcessor : ActionOngoingProcessor {
 };
 
 struct ActionGateProcessor : ActionOngoingProcessor {
-	ActionGateProcessor(float gateHighRatio, std::shared_ptr<IfProcessor> ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler);
+	ActionGateProcessor(float gateHighRatio, const std::shared_ptr<IfProcessor>& ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler);
 
 	void start(uint64_t glideLength) override;
 	void process(uint64_t glidePosition) override;
@@ -452,38 +452,38 @@ struct DurationConstantProcessor : DurationProcessor {
 };
 
 struct DurationVariableFactorProcessor : DurationProcessor {
-	DurationVariableFactorProcessor(std::shared_ptr<ValueProcessor> value, double samplesFactor);
+	DurationVariableFactorProcessor(const std::shared_ptr<ValueProcessor>& value, double samplesFactor);
 
 	void prepareForStart() override;
 
 	nt_private:
-		std::shared_ptr<ValueProcessor> m_value;
+		const std::shared_ptr<ValueProcessor> m_value;
 		double m_samplesFactor;
 };
 
 struct DurationVariableHzProcessor : DurationProcessor {
-	DurationVariableHzProcessor(std::shared_ptr<ValueProcessor> value, double sampleRate);
+	DurationVariableHzProcessor(const std::shared_ptr<ValueProcessor>& value, double sampleRate);
 
 	void prepareForStart() override;
 
 	nt_private:
-		std::shared_ptr<ValueProcessor> m_value;
+		const std::shared_ptr<ValueProcessor> m_value;
 		double m_sampleRate;
 };
 
 struct SegmentProcessor {
-	SegmentProcessor(SegmentProcessor& segmentProcessor);
+	SegmentProcessor(const SegmentProcessor& segmentProcessor);
 	SegmentProcessor(
 		const ScriptSegment* scriptSegment,
-		std::shared_ptr<DurationProcessor> durationProcessor,
-		std::vector<std::shared_ptr<ActionProcessor>> startActions,
-		std::vector<std::shared_ptr<ActionProcessor>> endActions,
-		std::vector<std::shared_ptr<ActionOngoingProcessor>> ongoingActions,
+		const std::shared_ptr<DurationProcessor>& durationProcessor,
+		const std::vector<std::shared_ptr<ActionProcessor>>& startActions,
+		const std::vector<std::shared_ptr<ActionProcessor>>& endActions,
+		const std::vector<std::shared_ptr<ActionOngoingProcessor>>& ongoingActions,
 		EventListener* eventListener
 	);
 
-	void pushStartActions(std::vector<std::shared_ptr<ActionProcessor>> startActions);
-	void pushEndActions(std::vector<std::shared_ptr<ActionProcessor>> endActions);
+	void pushStartActions(const std::vector<std::shared_ptr<ActionProcessor>>& startActions);
+	void pushEndActions(const std::vector<std::shared_ptr<ActionProcessor>>& endActions);
 
 	DurationProcessor::DurationState getState();
 
@@ -492,11 +492,11 @@ struct SegmentProcessor {
 
 	nt_private:
 		const ScriptSegment* m_scriptSegment;
-		std::shared_ptr<DurationProcessor> m_duration;
+		const std::shared_ptr<DurationProcessor> m_duration;
 
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
 		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
-		std::vector<std::shared_ptr<ActionOngoingProcessor>> m_ongoingActions;
+		const std::vector<std::shared_ptr<ActionOngoingProcessor>> m_ongoingActions;
 
 		EventListener* m_eventListener;
 
@@ -508,7 +508,7 @@ struct SegmentProcessor {
 struct LaneProcessor {
 	enum LaneState { STATE_IDLE, STATE_PROCESSING, STATE_PENDING_LOOP };
 
-	LaneProcessor(const ScriptLane* scriptLane, std::vector<std::shared_ptr<SegmentProcessor>> segments, EventListener* eventListener);
+	LaneProcessor(const ScriptLane* scriptLane, const std::vector<std::shared_ptr<SegmentProcessor>>& segments, EventListener* eventListener);
 
 	LaneState getState();
 
@@ -520,7 +520,7 @@ struct LaneProcessor {
 
 	nt_private:
 		const ScriptLane* m_scriptLane;
-		std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
+		const std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
 
 		LaneState m_state = LaneState::STATE_IDLE;
 		int m_repeatCount = 0;
@@ -534,9 +534,9 @@ struct LaneProcessor {
 struct TimelineProcessor {
 	TimelineProcessor(
 		const ScriptTimeline* scriptTimeline,
-		std::vector<std::shared_ptr<LaneProcessor>> lanes,
-		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> startTriggers,
-		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> stopTriggers,
+		const std::vector<std::shared_ptr<LaneProcessor>>& lanes,
+		const std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>>& startTriggers,
+		const std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>>& stopTriggers,
 		TriggerHandler* triggerHandler
 	);
 
@@ -545,21 +545,21 @@ struct TimelineProcessor {
 
 	nt_private:
 		const ScriptTimeline* m_scriptTimeline;
-		std::vector<std::shared_ptr<LaneProcessor>> m_lanes;
+		const std::vector<std::shared_ptr<LaneProcessor>> m_lanes;
 
-		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_startTriggers;
-		std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_stopTriggers;
+		const std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_startTriggers;
+		const std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_stopTriggers;
 
 		TriggerHandler* m_triggerHandler;
 };
 
 struct TriggerProcessor {
-	TriggerProcessor(std::string id, int inputPort, int inputChannel, PortHandler* portHandler, TriggerHandler* triggerHandler);
+	TriggerProcessor(const std::string& id, int inputPort, int inputChannel, PortHandler* portHandler, TriggerHandler* triggerHandler);
 
 	void process();
 
 	nt_private:
-		std::string m_id;
+		const std::string m_id;
 		int m_inputPort;
 		int m_inputChannel;
 		PortHandler* m_portHandler;
@@ -569,19 +569,19 @@ struct TriggerProcessor {
 };
 
 struct Processor {
-	Processor(std::shared_ptr<Script> script, std::vector<std::shared_ptr<TimelineProcessor>> timelines, std::vector<std::shared_ptr<TriggerProcessor>> triggers, std::vector<std::shared_ptr<ActionProcessor>> startActions);
+	Processor(const std::shared_ptr<Script>& script, const std::vector<std::shared_ptr<TimelineProcessor>>& timelines, const std::vector<std::shared_ptr<TriggerProcessor>>& triggers, const std::vector<std::shared_ptr<ActionProcessor>>& startActions);
 
 	virtual void reset();
 	virtual void process();
 
 	nt_private:
-		std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
-		std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
-		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
+		const std::vector<std::shared_ptr<TimelineProcessor>> m_timelines;
+		const std::vector<std::shared_ptr<TriggerProcessor>> m_triggers;
+		const std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
 
 		// The script objects are used throughout the processor hierarchy,
 		// keep a reference so it doesn't get deleted on script switch
-		std::shared_ptr<Script> m_script;
+		const std::shared_ptr<Script> m_script;
 };
 
 }

@@ -19,7 +19,7 @@ struct JsonScriptParseContext {
 };
 
 struct JsonScriptParser {
-	std::shared_ptr<Script> parseScript(const nlohmann::json& scriptJson);
+	const std::shared_ptr<Script> parseScript(const nlohmann::json& scriptJson);
 
 	const std::vector<ValidationError>& getValidationErrors();
 
@@ -39,19 +39,19 @@ struct JsonScriptParser {
 		ScriptMoveSequence parseMoveSequence(const nlohmann::json& moveSequenceJson);
 		ScriptAddToSequence parseAddToSequence(const nlohmann::json& addToSequenceJson);
 		ScriptRemoveFromSequence parseRemoveFromSequence(const nlohmann::json& removeFromJson);
-		ScriptValue parseValue(const nlohmann::json& valueJson, bool allowRefs, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
+		ScriptValue parseValue(const nlohmann::json& valueJson, bool allowRefs, const std::string& subLocation, ValidationErrorCode validationErrorCode, const std::string& validationErrorMessage);
 		ScriptValue parseFullValue(const nlohmann::json& valueJson, bool allowRefs, bool fromShorthand);
-		ScriptOutput parseOutput(const nlohmann::json& outputJson, bool allowRefs, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
+		ScriptOutput parseOutput(const nlohmann::json& outputJson, bool allowRefs, const std::string& subLocation, ValidationErrorCode validationErrorCode, const std::string& validationErrorMessage);
 		ScriptOutput parseFullOutput(const nlohmann::json& outputJson, bool allowRefs, bool fromShorthand);
-		ScriptInput parseInput(const nlohmann::json& inputJson, bool allowRefs, std::string subLocation, ValidationErrorCode validationErrorCode, std::string validationErrorMessage);
+		ScriptInput parseInput(const nlohmann::json& inputJson, bool allowRefs, const std::string& subLocation, ValidationErrorCode validationErrorCode, const std::string& validationErrorMessage);
 		ScriptInput parseFullInput(const nlohmann::json& inputJson, bool allowRefs, bool fromShorthand);
 		ScriptRand parseRand(const nlohmann::json& randJson);
 		ScriptCalc parseCalc(const nlohmann::json& calcJson, bool allowRefs);
 		ScriptInputTrigger parseInputTrigger(const nlohmann::json& inputTriggerJson);
 		ScriptTuning parseTuning(const nlohmann::json& tuningJson, bool allowRefs);
 		ScriptIf parseIf(const nlohmann::json& ifJson, bool allowRefs);
-		std::pair<ScriptValue, ScriptValue> parseIfValues(std::string ifOperator, const nlohmann::json& valuesJson);
-		std::unique_ptr<std::vector<ScriptIf>> parseIfIfs(std::string ifOperator, const nlohmann::json& ifsJson);
+		std::pair<ScriptValue, ScriptValue> parseIfValues(const std::string& ifOperator, const nlohmann::json& valuesJson);
+		std::unique_ptr<std::vector<ScriptIf>> parseIfIfs(const std::string& ifOperator, const nlohmann::json& ifsJson);
 
 		ScriptSequenceValue parseSequenceValue(const nlohmann::json& sequenceJson, bool allowRefs);
 		ScriptSequence parseSequence(const nlohmann::json& sequenceJson);

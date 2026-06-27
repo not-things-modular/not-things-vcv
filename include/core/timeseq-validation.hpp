@@ -279,18 +279,9 @@ enum ValidationErrorCode {
 };
 
 
-std::string createValidationErrorMessage(ValidationErrorCode code, ...);
-std::string createValidationErrorLocation(std::vector<std::string> location);
-#define ADD_VALIDATION_ERROR(validationErrors, location, code, message...) \
-	if (validationErrors != nullptr) { \
-		string errorLocation = createValidationErrorLocation(location); \
-		string errorMessage = createValidationErrorMessage(code, message, ""); \
-		(validationErrors)->emplace_back(errorLocation, errorMessage); \
-	}
-
-
 struct ValidationError {
 	ValidationError(const std::string& location, const std::string& message) : location(location), message(message) {}
+	ValidationError(const ValidationError& validationError) : location(validationError.location), message(validationError.message) {}
 
 	std::string location;
 	std::string message;
@@ -298,6 +289,18 @@ struct ValidationError {
 	bool operator ==(const ValidationError& error) const {
 		return (error.location == location) && (error.message == message);
 	}
+};
+
+const std::string createValidationErrorMessage(ValidationErrorCode code, ...);
+const std::string createValidationErrorLocation(const std::vector<std::string>& location);
+
+template <typename... Args>
+void addValidationError(std::vector<ValidationError>* validationErrors, const std::vector<std::string>& location, ValidationErrorCode code, Args&&... args)
+{
+    if (!validationErrors)
+        return;
+
+    validationErrors->emplace_back(createValidationErrorLocation(location), createValidationErrorMessage(code, std::forward<Args>(args)..., ""));
 };
 
 }

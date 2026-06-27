@@ -18,14 +18,8 @@ void ProcessorScriptParseContext::popLocation() {
 }
 
 
-ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) {
-	m_portHandler = portHandler;
-	m_variableHandler = variableHandler;
-	m_triggerHandler = triggerHandler;
-	m_sampleRateReader = sampleRateReader;
-	m_eventListener = eventListener;
-	m_assertListener = assertListener;
-	m_randomValueGenerator = randomValueGenerator;
+ProcessorScriptParser::ProcessorScriptParser(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, const SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, const shared_ptr<RandValueGenerator> randomValueGenerator) :
+	m_portHandler(portHandler), m_variableHandler(variableHandler), m_triggerHandler(triggerHandler), m_sampleRateReader(sampleRateReader), m_eventListener(eventListener), m_assertListener(assertListener), m_randomValueGenerator(randomValueGenerator) {
 }
 
 shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> script, vector<ValidationError>& validationErrors) {
@@ -75,10 +69,10 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 			if (resolvedAction->timing == ScriptAction::ActionTiming::START) {
 				startActionProcessors.push_back(parseResolvedAction(resolvedAction));
 			} else {
-				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
+				addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionTiming, "'global-actions' actions can only have a 'start' timing.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
 		}
 		m_context.location.pop_back();
 		count++;
@@ -88,7 +82,7 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	return make_shared<Processor>(script, timelineProcessors, triggerProcessors, startActionProcessors);
 }
 
-shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(const ScriptTimeline* scriptTimeline) {
+const shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(const ScriptTimeline* scriptTimeline) {
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers;
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers;
 
@@ -122,11 +116,12 @@ shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(const ScriptT
 	return make_shared<TimelineProcessor>(scriptTimeline, laneProcessors, startTriggers, stopTriggers, m_triggerHandler);
 }
 
-shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(const ScriptLane* scriptLane, ScriptTimeScale* timeScale) {
+const shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(const ScriptLane* scriptLane, ScriptTimeScale* timeScale) {
 	unsigned int validationCount = m_context.validationErrors->size();
 
 	m_context.location.push_back("segments");
-	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(&scriptLane->segments, timeScale, vector<string>());
+	vector<string> stack;
+	vector<shared_ptr<SegmentProcessor>> segmentProcessors = parseSegments(&scriptLane->segments, timeScale, stack);
 	m_context.location.pop_back();
 
 	// Only return an actual processor if there were no validation errors during parsing. Otherwise there might be partially loaded children, and we can't reliably continue with this processor.
@@ -137,7 +132,7 @@ shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(const ScriptLane* scr
 	}
 }
 
-shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(const ScriptIf* scriptIf, vector<string> ifStack) {
+const shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(const ScriptIf* scriptIf, vector<string>& ifStack) {
 	if (scriptIf->ref.length() == 0) {
 		pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values;
 		vector<shared_ptr<IfProcessor>> ifs;
@@ -176,11 +171,13 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(const ScriptIf* scriptIf,
 		}
 
 		if (parseValues) {
+			vector<string> stack;
 			m_context.location.push_back("0");
-			values.first = parseValue(&scriptIf->values.get()->first, vector<string>());
+			values.first = parseValue(&scriptIf->values.get()->first, stack);
 			m_context.location.pop_back();
+			stack.clear();
 			m_context.location.push_back("1");
-			values.second = parseValue(&scriptIf->values.get()->second, vector<string>());
+			values.second = parseValue(&scriptIf->values.get()->second, stack);
 			m_context.location.pop_back();
 		}
 		if (parseIfs) {
@@ -213,9 +210,9 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(const ScriptIf* scriptIf,
 			}
 
 			// Couldn't find the referenced if...
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced if with id '", scriptIf->ref.c_str(), "' in the script ifs.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced if with id '", scriptIf->ref.c_str(), "' in the script ifs.");
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular if reference while processing the if with the id '", scriptIf->ref.c_str(), "'. Circular references can not be resolved.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular if reference while processing the if with the id '", scriptIf->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 	}
 
@@ -225,7 +222,8 @@ shared_ptr<IfProcessor> ProcessorScriptParser::parseIf(const ScriptIf* scriptIf,
 void ProcessorScriptParser::parseSequence(const ScriptSequence* scriptSequence) {
 	vector<shared_ptr<ValueProcessor>> values;
 	for (const ScriptValue& value : scriptSequence->values) {
-		values.push_back(parseValue(&value, vector<string>()));
+		vector<string> stack;
+		values.push_back(parseValue(&value, stack));
 	}
 	shared_ptr<SequenceProcessor> sequenceProcessor = make_shared<SequenceProcessor>(scriptSequence->id, values, scriptSequence->retrieveVoltageOnce);
 
@@ -236,7 +234,7 @@ void ProcessorScriptParser::parseSequence(const ScriptSequence* scriptSequence) 
 	}
 }
 
-const shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequence(string id) {
+const shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveSharedSequence(const string& id) const {
 	for (const shared_ptr<SequencePositionProcessor>& sequencePositionProcessor : m_context.sharedSequences) {
 		if (id == sequencePositionProcessor->getSequenceProcessor()->getId()) {
 			return sequencePositionProcessor;
@@ -246,7 +244,7 @@ const shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveShared
 	return shared_ptr<SequencePositionProcessor>();
 }
 
-bool ProcessorScriptParser::hasNonSharedSequence(string id) {
+bool ProcessorScriptParser::hasNonSharedSequence(const string& id) const {
 	for (const shared_ptr<SequenceProcessor>& sequenceProcessor : m_context.nonSharedSequences) {
 		if (id == sequenceProcessor.get()->getId()) {
 			return true;
@@ -256,7 +254,7 @@ bool ProcessorScriptParser::hasNonSharedSequence(string id) {
 	return false;
 }
 
-shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSequence(string id) {
+const shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSequence(const string& id) const {
 	for (const shared_ptr<SequenceProcessor>& sequenceProcessor : m_context.nonSharedSequences) {
 		if (id == sequenceProcessor->getId()) {
 			return make_shared<SequencePositionProcessor>(sequenceProcessor, m_randomValueGenerator);
@@ -266,13 +264,13 @@ shared_ptr<SequencePositionProcessor> ProcessorScriptParser::resolveNonSharedSeq
 	return nullptr;
 }
 
-ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_portHandler(portHandler), m_variableHandler(variableHandler), m_triggerHandler(triggerHandler), m_sampleRateReader(sampleRateReader), m_eventListener(eventListener), m_assertListener(assertListener), m_randomValueGenerator(make_shared<RandValueGenerator>()) {}
-ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, shared_ptr<RandValueGenerator> randomValueGenerator) : m_portHandler(portHandler), m_variableHandler(variableHandler), m_triggerHandler(triggerHandler), m_sampleRateReader(sampleRateReader), m_eventListener(eventListener), m_assertListener(assertListener), m_randomValueGenerator(randomValueGenerator) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, const SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) : m_portHandler(portHandler), m_variableHandler(variableHandler), m_triggerHandler(triggerHandler), m_sampleRateReader(sampleRateReader), m_eventListener(eventListener), m_assertListener(assertListener), m_randomValueGenerator(make_shared<RandValueGenerator>()) {}
+ProcessorLoader::ProcessorLoader(PortHandler* portHandler, VariableHandler* variableHandler, TriggerHandler* triggerHandler, const SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener, const shared_ptr<RandValueGenerator> randomValueGenerator) : m_portHandler(portHandler), m_variableHandler(variableHandler), m_triggerHandler(triggerHandler), m_sampleRateReader(sampleRateReader), m_eventListener(eventListener), m_assertListener(assertListener), m_randomValueGenerator(randomValueGenerator) {}
 
 ProcessorLoader::~ProcessorLoader() {
 }
 
-shared_ptr<Processor> ProcessorLoader::loadScript(shared_ptr<Script> script, vector<ValidationError>& validationErrors) {
+const shared_ptr<Processor> ProcessorLoader::loadScript(const shared_ptr<Script>& script, vector<ValidationError>& validationErrors) {
 	ProcessorScriptParser processorScriptParser(m_portHandler, m_variableHandler, m_triggerHandler, m_sampleRateReader, m_eventListener, m_assertListener, m_randomValueGenerator);
 	return processorScriptParser.parseScript(script, validationErrors);
 }

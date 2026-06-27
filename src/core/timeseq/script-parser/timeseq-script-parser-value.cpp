@@ -1,7 +1,7 @@
 #include "core/timeseq-script-parser-internal.hpp"
 #include "util/notes.hpp"
 
-ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, string subLocation, ValidationErrorCode validationErrorCode, string validationErrorMessage) {
+ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, const string& subLocation, ValidationErrorCode validationErrorCode, const string& validationErrorMessage) {
 	ScriptValue scriptValue;
 	m_context.location.push_back(subLocation);
 
@@ -14,7 +14,7 @@ ScriptValue JsonScriptParser::parseValue(const json& valueJson, bool allowRefs, 
 		json fullValueJson = { { "note", valueJson } };
 		scriptValue = parseFullValue(fullValueJson, allowRefs, true);
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, validationErrorCode, validationErrorMessage.c_str());
+		addValidationError(&m_context.validationErrors, m_context.location, validationErrorCode, validationErrorMessage.c_str());
 	}
 
 	m_context.location.pop_back();
@@ -31,7 +31,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 	populateRef(value, valueJson, allowRefs);
 	if (value.ref.length() > 0) {
 		if (hasOneOf(valueJson, cValueProperties)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_RefOrInstance, "A ref value can not be combined other non-ref value properties.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_RefOrInstance, "A ref value can not be combined other non-ref value properties.");
 		}
 	} else {
 		int valueTypes = 0;
@@ -42,7 +42,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (nolimit->is_boolean()) {
 				noLimitValue.reset(new bool(nolimit->get<bool>()));
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoLimitBoolean, "'no-limit' must be a boolean.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoLimitBoolean, "'no-limit' must be a boolean.");
 			}
 		}
 
@@ -53,14 +53,14 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 				value.voltage.reset(new float(voltage->get<float>()));
 				if ((!noLimitValue) || (!*noLimitValue.get())) {
 					if ((*value.voltage < -10) || (*value.voltage > 10)) {
-						ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VoltageRange, fromShorthand ? "A 'voltage' value must be a decimal number between -10 and 10." : "'voltage' must be a decimal number between -10 and 10.");
+						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VoltageRange, fromShorthand ? "A 'voltage' value must be a decimal number between -10 and 10." : "'voltage' must be a decimal number between -10 and 10.");
 					}
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VoltageFloat, "'voltage' must be a decimal number between -10 and 10.");
 			}
 		} else if (noLimitValue) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoLimitOnNonVoltage, "'no-limit' can only be used with a 'voltage' value.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoLimitOnNonVoltage, "'no-limit' can only be used with a 'voltage' value.");
 		}
 
 		json::const_iterator note = valueJson.find("note");
@@ -69,25 +69,25 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (note->is_string()) {
 				value.note.reset(new string(*note));
 				if ((value.note->size() < 2) || (value.note->size() > 3)) {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat)." : "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 				} else {
 					char n = toupper((*value.note)[0]);
 					if (n < 'A' || n > 'G') {
-						ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must start with a valid note name (A-G)." : "'note' must start with a valid note name (A-G).");
+						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must start with a valid note name (A-G)." : "'note' must start with a valid note name (A-G).");
 					}
 					char s = (*value.note)[1];
 					if (s < '0' || s > '9') {
-						ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must have a valid scale (0-9) as second character." : "'note' must have a valid scale (0-9) as second character.");
+						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "A 'note' value must have a valid scale (0-9) as second character." : "'note' must have a valid scale (0-9) as second character.");
 					}
 					if (value.note->size() == 3) {
 						char a = (*value.note)[2];
 						if (a != '+' && a != '-') {
-							ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "The third character of a 'note' value must be a valid accidental (+ for sharp, - for flat)." : "The third character of 'note' must be a valid accidental (+ for sharp, - for flat).");
+							addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteFormat, fromShorthand ? "The third character of a 'note' value must be a valid accidental (+ for sharp, - for flat)." : "The third character of 'note' must be a valid accidental (+ for sharp, - for flat).");
 						}
 					}
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteString, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoteString, "'note' must be a string with a note name (A-G), an octave (0-9) and optionally an accidental (+ for sharp, - for flat).");
 			}
 		}
 
@@ -97,10 +97,10 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (variable->is_string()) {
 				value.variable.reset(new string(*variable));
 				if (value.variable->length() == 0) {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VariableNonEmpty, "'variable' must be a non-empty string.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VariableNonEmpty, "'variable' must be a non-empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VariableString, "'variable' must be a non-empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_VariableString, "'variable' must be a non-empty string.");
 			}
 		}
 
@@ -127,7 +127,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 				value.rand.reset(scriptRand);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_RandObject, "'rand' must be an object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_RandObject, "'rand' must be an object.");
 			}
 		}
 
@@ -143,9 +143,9 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 		}
 
 		if (valueTypes == 0) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoActualValue, "One of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' must be set.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_NoActualValue, "One of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' must be set.");
 		} else if (valueTypes > 1) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_MultipleValues, "Only one of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' can be used.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_MultipleValues, "Only one of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' can be used.");
 		}
 
 		json::const_iterator calcs = valueJson.find("calc");
@@ -160,7 +160,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 					if (calc.is_object()) {
 						value.calc.push_back(parseCalc(calc, true));
 					} else {
-						ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_CalcObject, "'calc' elements must be objects.");
+						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_CalcObject, "'calc' elements must be objects.");
 					}
 					m_context.location.pop_back();
 					count++;
@@ -168,7 +168,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");
 			}
 		}
 
@@ -178,7 +178,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			if (quantize->is_boolean()) {
 				value.quantize = quantize->get<bool>();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_QuantizeBool, "'quantize' must be a boolean.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_QuantizeBool, "'quantize' must be a boolean.");
 			}
 		}
 	}
@@ -197,7 +197,7 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson) {
 		ScriptValue *scriptValue = new ScriptValue(parseValue(*lower, true, "lower", ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be an object."));
 		rand.lower.reset(scriptValue);
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be a value object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Rand_LowerObject, "'lower' is required and must be a value object.");
 	}
 
 	json::const_iterator upper = randJson.find("upper");
@@ -205,7 +205,7 @@ ScriptRand JsonScriptParser::parseRand(const json& randJson) {
 		ScriptValue *scriptValue = new ScriptValue(parseValue(*upper, true, "upper", ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be an object."));
 		rand.upper.reset(scriptValue);
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be a value object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Rand_UpperObject, "'upper' is required and must be a value object.");
 	}
 
 	return rand;
@@ -221,7 +221,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 	populateRef(calc, calcJson, allowRefs);
 	if (calc.ref.length() > 0) {
 		if (hasOneOf(calcJson, cCalcProperties)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_RefOrInstance, "A ref calc can not be combined other non-ref input properties.");
 		}
 	} else {
 		int count = 0;
@@ -291,7 +291,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::TRUNC;
 			if ((!trunc->is_boolean()) || (!trunc->get<bool>())) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_TruncBoolean, "'trunc' must be a boolean, with its value set to true.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_TruncBoolean, "'trunc' must be a boolean, with its value set to true.");
 			}
 		}
 
@@ -301,7 +301,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::FRAC;
 			if ((!frac->is_boolean()) || (!frac->get<bool>())) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_FracBoolean, "'frac' must be a boolean, with its value set to true.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_FracBoolean, "'frac' must be a boolean, with its value set to true.");
 			}
 		}
 
@@ -319,10 +319,10 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 				} else if (roundString == "near") {
 					calc.roundType.reset(new ScriptCalc::RoundType(ScriptCalc::RoundType::NEAR));
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_RoundEnum, "'round' must be a string set to either 'up', 'down' or 'near'.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_RoundEnum, "'round' must be a string set to either 'up', 'down' or 'near'.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_RoundString, "'round' must be a string set to either 'up', 'down' or 'near'.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_RoundString, "'round' must be a string set to either 'up', 'down' or 'near'.");
 			}
 		}
 
@@ -337,7 +337,7 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 				calc.tuning.reset(scriptTuning);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_QuantizeObject, "'quantize' must be a tuning object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_QuantizeObject, "'quantize' must be a tuning object.");
 			}
 		}
 
@@ -353,10 +353,10 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 				} else if (signString == "neg") {
 					calc.signType.reset(new ScriptCalc::SignType(ScriptCalc::SignType::NEG));
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_SignEnum, "'sign' must be a string set to either 'pos' or 'neg'.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_SignEnum, "'sign' must be a string set to either 'pos' or 'neg'.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_SignString, "'sign' must be a string set to either 'pos' or 'neg'.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_SignString, "'sign' must be a string set to either 'pos' or 'neg'.");
 			}
 		}
 
@@ -366,14 +366,14 @@ ScriptCalc JsonScriptParser::parseCalc(const json& calcJson, bool allowRefs) {
 			count++;
 			calc.operation = ScriptCalc::CalcOperation::VTOF;
 			if ((!vtof->is_boolean()) || (!vtof->get<bool>())) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_VtofBoolean, "'vtof' must be a boolean, with its value set to true.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_VtofBoolean, "'vtof' must be a boolean, with its value set to true.");
 			}
 		}
 
 		if (count == 0) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' must be set.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_NoOperation, "Either 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' must be set.");
 		} else if (count > 1) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_MultipleOperations, "At most one of 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' may be set.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_MultipleOperations, "At most one of 'add', 'sub', 'div', 'mult', 'max', 'min', 'remain', 'frac', 'round', 'quantize', 'sign' or 'vtof' may be set.");
 		}
 	}
 
@@ -390,7 +390,7 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 	populateRef(tuning, tuningJson, allowRefs);
 	if (tuning.ref.length() > 0) {
 		if (hasOneOf(tuningJson, cTuningProperties)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_RefOrInstance, "A ref tuning can not be combined other non-ref tuning properties.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_RefOrInstance, "A ref tuning can not be combined other non-ref tuning properties.");
 		}
 	} else {
 		json::const_iterator notes = tuningJson.find("notes");
@@ -412,12 +412,12 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 				} else if (noteElement.is_string()) {
 					string noteString = noteElement.get<string>();
 					if ((noteString.size() < 1) || (noteString.size() > 2)) {
-						ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFormat, "A note value must be a string with a note name (A-G) and optionally an accidental (+ for sharp, - for flat).");
+						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFormat, "A note value must be a string with a note name (A-G) and optionally an accidental (+ for sharp, - for flat).");
 					} else {
 						int noteIndex = 0;
 						char n = toupper((noteString)[0]);
 						if (n < 'A' || n > 'G') {
-							ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFormat, "A note value must start with a valid note name (A-G).");
+							addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFormat, "A note value must start with a valid note name (A-G).");
 						} else {
 							noteIndex = noteNameToIndex(n);
 						}
@@ -428,7 +428,7 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 							} else if (a == '-') {
 								noteIndex--;
 							} else {
-								ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
+								addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFormat, "The second character of a note value must be a valid accidental (+ for sharp, - for flat).");
 							}
 						}
 						if (noteIndex > 11) {
@@ -439,7 +439,7 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 						tuning.notes.push_back((float) noteIndex / 12);
 					}
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFloatOrString, "'notes' elements must be either 1V/Oct floats or note name strings.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NoteFloatOrString, "'notes' elements must be either 1V/Oct floats or note name strings.");
 				}
 				m_context.location.pop_back();
 				count++;
@@ -451,12 +451,12 @@ ScriptTuning JsonScriptParser::parseTuning(const json& tuningJson, bool allowRef
 			tuning.notes.erase(end, tuning.notes.end());
 
 			if (noteElements.size() == 0) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NotesArraySize, "'notes' must contain at least one element.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NotesArraySize, "'notes' must contain at least one element.");
 			}
 
 			m_context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NotesArray, "'notes' is required and must be an array.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Tuning_NotesArray, "'notes' is required and must be an array.");
 		}
 	}
 
@@ -475,7 +475,7 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 	if (sequenceJson.is_string()) {
 		scriptSequenceValue.id = sequenceJson.get<string>();
 		if (scriptSequenceValue.id.length() == 0) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_EmptyString, "'sequence' can not be an empty string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_EmptyString, "'sequence' can not be an empty string.");
 		}
 	} else if (sequenceJson.is_object()) {
 		json::const_iterator id = sequenceJson.find("id");
@@ -484,10 +484,10 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 			if (idValue.length() > 0) {
 				scriptSequenceValue.id = idValue;
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_IdLength, "'id' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_IdLength, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_IdString, "'id' is required and must be a string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_IdString, "'id' is required and must be a string.");
 		}
 
 		json::const_iterator moveBefore = sequenceJson.find("move-before");
@@ -505,11 +505,11 @@ ScriptSequenceValue JsonScriptParser::parseSequenceValue(const json& sequenceJso
 			if (wrap->is_boolean()) {
 				scriptSequenceValue.wrap = wrap->get<bool>();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_WrapBoolean, "'wrap' must be a boolean.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_WrapBoolean, "'wrap' must be a boolean.");
 			}
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_StringOrObject, "A 'sequence' value should either be a string or an object.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_StringOrObject, "A 'sequence' value should either be a string or an object.");
 	}
 
 	return scriptSequenceValue;

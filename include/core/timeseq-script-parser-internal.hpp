@@ -9,7 +9,7 @@ using namespace nlohmann;
 #define VERSION_1_2_0 120
 
 void verifyVersion(int expectedVersion, JsonScriptParseContext& context, const char* feature);
-bool verifyAllowedProperties(const json& json, vector<string> propertyNames, bool allowRef, JsonScriptParseContext& context);
+bool verifyAllowedProperties(const json& json, const vector<string>& propertyNames, bool allowRef, JsonScriptParseContext& context);
 ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDirectionJson, const char* property, ValidationErrorCode enumErrorCode, ValidationErrorCode stringErrorCode, JsonScriptParseContext& context);
 
 template<size_t N>

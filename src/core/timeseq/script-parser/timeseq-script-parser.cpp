@@ -8,11 +8,11 @@ void verifyVersion(int expectedVersion, JsonScriptParseContext& context, const c
 				{ VERSION_1_2_0, "1.2.0" }
 		};
 
-		ADD_VALIDATION_ERROR(&context.validationErrors, context.location, ValidationErrorCode::Feature_Not_In_Version, feature, " requires version ", versionMap[expectedVersion].c_str(), " but the script has its version set to ", versionMap[context.version].c_str(), ".");
+		addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Feature_Not_In_Version, feature, " requires version ", versionMap[expectedVersion].c_str(), " but the script has its version set to ", versionMap[context.version].c_str(), ".");
 	}
 }
 
-bool verifyAllowedProperties(const json& json, vector<string> propertyNames, bool allowRef, JsonScriptParseContext& context) {
+bool verifyAllowedProperties(const json& json, const vector<string>& propertyNames, bool allowRef, JsonScriptParseContext& context) {
 	uint64_t count = 0;
 	string unexpectedKeys;
 
@@ -32,9 +32,9 @@ bool verifyAllowedProperties(const json& json, vector<string> propertyNames, boo
 	}
 
 	if (count == 1) {
-		ADD_VALIDATION_ERROR(&context.validationErrors, context.location, ValidationErrorCode::Unknown_Property, "Unknown property encountered: ", unexpectedKeys.c_str(), ".");
+		addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Unknown_Property, "Unknown property encountered: ", unexpectedKeys.c_str(), ".");
 	} else if (count > 1) {
-		ADD_VALIDATION_ERROR(&context.validationErrors, context.location, ValidationErrorCode::Unknown_Property, "Unknown properties encountered: ", unexpectedKeys.c_str(), ".");
+		addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Unknown_Property, "Unknown properties encountered: ", unexpectedKeys.c_str(), ".");
 	}
 
 	return count > 0;
@@ -54,10 +54,10 @@ ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDir
 		} else if (moveDirectionString == "none") {
 			moveDirection = ScriptSequenceMoveDirection::NONE;
 		} else {
-			ADD_VALIDATION_ERROR(&context.validationErrors, context.location, enumErrorCode, "'", property, "' must be either 'forward', 'backward', 'random' or 'none'.");
+			addValidationError(&context.validationErrors, context.location, enumErrorCode, "'", property, "' must be either 'forward', 'backward', 'random' or 'none'.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&context.validationErrors, context.location, stringErrorCode, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
+		addValidationError(&context.validationErrors, context.location, stringErrorCode, "'", property, "' must be a string with either 'forward', 'backward', 'random' or 'none'.");
 	}
 
 	return moveDirection;
@@ -81,12 +81,12 @@ void parseChildArray(JsonScriptParseContext& context, const json& parent, std::s
 				if (element.is_object()) {
 					scriptArray.push_back(parseFunc(element));
 					if (find(ids.begin(), ids.end(), scriptArray.back().id) != ids.end()) {
-						ADD_VALIDATION_ERROR(&context.validationErrors, context.location, ValidationErrorCode::Id_Duplicate, "Id '", scriptArray.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
+						addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Id_Duplicate, "Id '", scriptArray.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
 					} else if (scriptArray.back().id.size() > 0) {
 						ids.push_back(scriptArray.back().id);
 					}
 				} else {
-					ADD_VALIDATION_ERROR(&context.validationErrors, context.location, objectErrorCode, "'", jsonTag.c_str(), "' elements must be objects.");
+					addValidationError(&context.validationErrors, context.location, objectErrorCode, "'", jsonTag.c_str(), "' elements must be objects.");
 				}
 				context.location.pop_back();
 				count++;
@@ -94,7 +94,7 @@ void parseChildArray(JsonScriptParseContext& context, const json& parent, std::s
 
 			context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&context.validationErrors, context.location, arrayErrorCode, "'", jsonTag.c_str(), "' must be an array.");
+			addValidationError(&context.validationErrors, context.location, arrayErrorCode, "'", jsonTag.c_str(), "' must be an array.");
 		}
 	}
 }
@@ -109,7 +109,7 @@ const std::vector<ValidationError>& JsonScriptParser::getValidationErrors() {
 	return m_context.validationErrors;
 }
 
-shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
+const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "sequences", "component-pool", "$schema" };
 	shared_ptr<Script> script = make_shared<Script>();
 	vector<string> ids;
@@ -119,18 +119,18 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 
 	json::const_iterator type = scriptJson.find("type");
 	if ((type == scriptJson.end()) || (!type->is_string())) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TypeMissing, "'type' is required and must be a string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TypeMissing, "'type' is required and must be a string.");
 	} else {
 		script->type = *type;
 		if (script->type != "not-things_timeseq_script") {
 			string typeValue = (*type);
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TypeUnsupported, "'type' '", typeValue.c_str(), "' is not supported.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TypeUnsupported, "'type' '", typeValue.c_str(), "' is not supported.");
 		}
 	}
 
 	json::const_iterator version = scriptJson.find("version");
 	if ((version == scriptJson.end()) || (!version->is_string())) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionMissing, "'version' is required and must be a string.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionMissing, "'version' is required and must be a string.");
 	}
 	else {
 		script->version = *version;
@@ -143,7 +143,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 		}
 		else {
 			string versionValue = (*version);
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0 and 1.2.0 are currently supported.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0 and 1.2.0 are currently supported.");
 		}
 	}
 
@@ -158,7 +158,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 			if (timeline.is_object()) {
 				script->timelines.push_back(parseTimeline(timeline));
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TimelineObject, "'timelines' elements must be objects.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TimelineObject, "'timelines' elements must be objects.");
 			}
 			m_context.location.pop_back();
 			count++;
@@ -166,7 +166,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 
 		m_context.location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TimelinesMissing, "'timelines' is required and must be an array.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TimelinesMissing, "'timelines' is required and must be an array.");
 	}
 
 	json::const_iterator globalActions = scriptJson.find("global-actions");
@@ -181,7 +181,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 				if (action.is_object()) {
 					script->globalActions.push_back(parseAction(action, true));
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionsObject, "'global-actions' elements must be action objects.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionsObject, "'global-actions' elements must be action objects.");
 				}
 				m_context.location.pop_back();
 				count++;
@@ -189,7 +189,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 
 			m_context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionsArray, "'global-actions' must be an array.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionsArray, "'global-actions' must be an array.");
 		}
 	}
 
@@ -205,7 +205,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 				if (inputTrigger.is_object()) {
 					script->inputTriggers.push_back(parseInputTrigger(inputTrigger));
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_InputTriggerObject, "'input-triggers' elements must be objects.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_InputTriggerObject, "'input-triggers' elements must be objects.");
 				}
 				m_context.location.pop_back();
 				count++;
@@ -213,7 +213,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 
 			m_context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
 		}
 	}
 
@@ -239,7 +239,7 @@ shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 
 			m_context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_ComponentPoolObject, "'component-pool' must be an object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_ComponentPoolObject, "'component-pool' must be an object.");
 		}
 	}
 
@@ -256,11 +256,10 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson) {
 	if (timeScale != timelineJson.end()) {
 		if (timeScale->is_object()) {
 			m_context.location.push_back("time-scale");
-			ScriptTimeScale *scriptTimeScale = new ScriptTimeScale(parseTimeScale(*timeScale));
-			timeline.timeScale.reset(scriptTimeScale);
+			timeline.timeScale.reset(new ScriptTimeScale(parseTimeScale(*timeScale)));
 			m_context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_TimeScaleObject, "'time-scale' must be an object.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_TimeScaleObject, "'time-scale' must be an object.");
 		}
 	}
 
@@ -275,7 +274,7 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson) {
 			if (lane.is_object()) {
 				timeline.lanes.push_back(parseLane(lane));
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LaneObject, "'lanes' elements must be objects.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LaneObject, "'lanes' elements must be objects.");
 			}
 			m_context.location.pop_back();
 			count++;
@@ -283,14 +282,14 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson) {
 
 		m_context.location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LanesMissing, "'lanes' is required and must be an array.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LanesMissing, "'lanes' is required and must be an array.");
 	}
 
 	timeline.loopLock = false;
 	json::const_iterator loopLock = timelineJson.find("loop-lock");
  	if (loopLock != timelineJson.end()) {
  		if (!loopLock->is_boolean()) {
- 			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LoopLockBoolean, "'loop-lock' must be a boolean.");
+ 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LoopLockBoolean, "'loop-lock' must be a boolean.");
  		} else {
  			timeline.loopLock = (*loopLock);
  		}
@@ -310,7 +309,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson) {
 		if ((sampleRate->is_number_unsigned()) && (sampleRate->get<int>() > 0)) {
 			timeScale.sampleRate.reset(new int(sampleRate->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_SampleRateNumber, "'sample-rate' must be a positive integer number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_SampleRateNumber, "'sample-rate' must be a positive integer number.");
 		}
 	}
 
@@ -319,7 +318,7 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson) {
 		if ((bpm->is_number_unsigned()) && (bpm->get<int>() > 0)) {
 			timeScale.bpm.reset(new int(bpm->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_BpmNumber, "'bpm' must be a positive integer number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_BpmNumber, "'bpm' must be a positive integer number.");
 		}
 	}
 
@@ -328,14 +327,14 @@ ScriptTimeScale JsonScriptParser::parseTimeScale(const json& timeScaleJson) {
 		if ((bpb->is_number_unsigned()) && (bpb->get<int>() > 0)) {
 			timeScale.bpb.reset(new int(bpb->get<int>()));
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_BpbNumber, "'bpb' must be a positive integer number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_BpbNumber, "'bpb' must be a positive integer number.");
 		}
 	}
 
 	if (!(timeScale.sampleRate) && !(timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_Empty, "One of 'sample-rate' or 'bpm' is required.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_Empty, "One of 'sample-rate' or 'bpm' is required.");
 	} else if ((timeScale.bpb) && !(timeScale.bpm)) {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_BpbRequiresBpm, "'bpm' must be set if 'bpb' is set.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::TimeScale_BpbRequiresBpm, "'bpm' must be set if 'bpb' is set.");
 	}
 
 	return timeScale;
@@ -353,7 +352,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 		if (autoStart->is_boolean()) {
 			lane.autoStart = autoStart->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_AutoStartBoolean, "'auto-start' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_AutoStartBoolean, "'auto-start' must be a boolean.");
 		}
 	}
 
@@ -363,7 +362,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 		if (loop->is_boolean()) {
 			lane.loop = loop->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_LoopBoolean, "'loop' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_LoopBoolean, "'loop' must be a boolean.");
 		}
 	}
 
@@ -373,7 +372,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 		if (repeat->is_number_unsigned()) {
 			lane.repeat = repeat->get<int>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_RepeatNumber, "'repeat' must be an unsigned number.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_RepeatNumber, "'repeat' must be an unsigned number.");
 		}
 	}
 
@@ -382,10 +381,10 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 		if (startTrigger->is_string()) {
 			lane.startTrigger = *startTrigger;
 			if (lane.startTrigger.length() == 0) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StartTriggerLength, "'start-trigger' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StartTriggerLength, "'start-trigger' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StartTriggerString, "'start-trigger' must be a string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StartTriggerString, "'start-trigger' must be a string.");
 		}
 	}
 
@@ -394,10 +393,10 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 		if (restartTrigger->is_string()) {
 			lane.restartTrigger = *restartTrigger;
 			if (lane.restartTrigger.length() == 0) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_RestartTriggerLength, "'restart-trigger' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_RestartTriggerLength, "'restart-trigger' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_RestartTriggerString, "'restart-trigger' must be a string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_RestartTriggerString, "'restart-trigger' must be a string.");
 		}
 	}
 
@@ -406,10 +405,10 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 		if (stopTrigger->is_string()) {
 			lane.stopTrigger = *stopTrigger;
 			if (lane.stopTrigger.length() == 0) {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StopTriggerLength, "'stop-trigger' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StopTriggerLength, "'stop-trigger' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StopTriggerString, "'stop-trigger' must be a string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_StopTriggerString, "'stop-trigger' must be a string.");
 		}
 	}
 
@@ -424,7 +423,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 			if (segment.is_object()) {
 				lane.segments.push_back(parseSegment(segment, true));
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_SegmentObject, "'segments' elements must be Segment objects.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_SegmentObject, "'segments' elements must be Segment objects.");
 			}
 			m_context.location.pop_back();
 			count++;
@@ -432,7 +431,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 
 		m_context.location.pop_back();
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_SegmentsMissing, "'segments' is required and must be an array.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_SegmentsMissing, "'segments' is required and must be an array.");
 	}
 
 	lane.disableUi = false;
@@ -441,7 +440,7 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 		if (disableUi->is_boolean()) {
 			lane.disableUi = disableUi->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_DisableUiBoolean, "'disable-ui' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_DisableUiBoolean, "'disable-ui' must be a boolean.");
 		}
 	}
 
@@ -462,7 +461,7 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson) {
 		if (shared->is_boolean()) {
 			sequence.shared = shared->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_SharedBoolean, "'shared' must be a boolean.");
 		}
 	}
 
@@ -472,7 +471,7 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson) {
 		if (retrieveVoltageOnce->is_boolean()) {
 			sequence.retrieveVoltageOnce = retrieveVoltageOnce->get<bool>();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "'retrieve-voltage-once' must be a boolean.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_RetrieveVoltageOnceBoolean, "'retrieve-voltage-once' must be a boolean.");
 		}
 	}
 
@@ -490,10 +489,10 @@ ScriptSequence JsonScriptParser::parseSequence(const json& sequenceJson) {
 
 			m_context.location.pop_back();
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_ValuesArray, "'values' must be an array.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_ValuesArray, "'values' must be an array.");
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_ValuesArray, "'values' is required and must be an array.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Sequence_ValuesArray, "'values' is required and must be an array.");
 	}
 
 	return sequence;
@@ -510,14 +509,14 @@ void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJs
 				if (refValue.length() > 0) {
 					refObject.ref = refValue;
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_Length, "'ref' can not be an empty string.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_Length, "'ref' can not be an empty string.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_String, "'ref' must be a string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_String, "'ref' must be a string.");
 			}
 		}
 		if (id != refJson.end()) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_NotAllowed, "'id' is not allowed here.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_NotAllowed, "'id' is not allowed here.");
 		}
 	} else {
 		if ((id != refJson.end()) && (id->is_string())) {
@@ -525,13 +524,13 @@ void JsonScriptParser::populateRef(ScriptRefObject &refObject, const json& refJs
 			if (idValue.length() > 0) {
 				refObject.id = idValue;
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_Length, "'id' can not be an empty string.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_Length, "'id' can not be an empty string.");
 			}
 		} else {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_String, "'id' is required and must be a string.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Id_String, "'id' is required and must be a string.");
 		}
 		if (ref != refJson.end()) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotAllowed, "'ref' is not allowed here.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotAllowed, "'ref' is not allowed here.");
 		}
 	}
 }

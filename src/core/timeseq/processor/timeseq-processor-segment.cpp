@@ -5,7 +5,7 @@
 using namespace std;
 using namespace timeseq;
 
-SegmentProcessor::SegmentProcessor(SegmentProcessor& segmentProcessor) :
+SegmentProcessor::SegmentProcessor(const SegmentProcessor& segmentProcessor) :
 	m_scriptSegment(segmentProcessor.m_scriptSegment),
 	m_duration(segmentProcessor.m_duration),
 	m_startActions(segmentProcessor.m_startActions),
@@ -16,18 +16,18 @@ SegmentProcessor::SegmentProcessor(SegmentProcessor& segmentProcessor) :
 
 SegmentProcessor::SegmentProcessor(
 	const ScriptSegment* scriptSegment,
-	shared_ptr<DurationProcessor> duration,
-	vector<shared_ptr<ActionProcessor>> startActions,
-	vector<shared_ptr<ActionProcessor>> endActions,
-	vector<shared_ptr<ActionOngoingProcessor>> ongoingActions,
+	const shared_ptr<DurationProcessor>& duration,
+	const vector<shared_ptr<ActionProcessor>>& startActions,
+	const vector<shared_ptr<ActionProcessor>>& endActions,
+	const vector<shared_ptr<ActionOngoingProcessor>>& ongoingActions,
 	EventListener* eventListener) :
 		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_ongoingActions(ongoingActions), m_eventListener(eventListener) {}
 
-void SegmentProcessor::pushStartActions(vector<shared_ptr<ActionProcessor>> startActions) {
+void SegmentProcessor::pushStartActions(const vector<shared_ptr<ActionProcessor>>& startActions) {
 	m_startActions.insert(m_startActions.begin(), startActions.begin(), startActions.end());
 }
 
-void SegmentProcessor::pushEndActions(vector<shared_ptr<ActionProcessor>> endActions) {
+void SegmentProcessor::pushEndActions(const vector<shared_ptr<ActionProcessor>>& endActions) {
 	m_endActions.insert(m_endActions.end(), endActions.begin(), endActions.end());
 }
 
@@ -152,7 +152,7 @@ DurationConstantProcessor::DurationConstantProcessor(uint64_t duration, double d
 void DurationConstantProcessor::prepareForStart() {}
 
 
-DurationVariableFactorProcessor::DurationVariableFactorProcessor(shared_ptr<ValueProcessor> value, double samplesFactor) : m_value(value), m_samplesFactor(samplesFactor) {}
+DurationVariableFactorProcessor::DurationVariableFactorProcessor(const shared_ptr<ValueProcessor>& value, double samplesFactor) : m_value(value), m_samplesFactor(samplesFactor) {}
 
 void DurationVariableFactorProcessor::prepareForStart() {
 	double value = m_value->process();
@@ -169,7 +169,7 @@ void DurationVariableFactorProcessor::prepareForStart() {
 }
 
 
-DurationVariableHzProcessor::DurationVariableHzProcessor(shared_ptr<ValueProcessor> value, double sampleRate) : m_value(value), m_sampleRate(sampleRate) {}
+DurationVariableHzProcessor::DurationVariableHzProcessor(const shared_ptr<ValueProcessor>& value, double sampleRate) : m_value(value), m_sampleRate(sampleRate) {}
 
 void DurationVariableHzProcessor::prepareForStart() {
 	double value = m_value->process();

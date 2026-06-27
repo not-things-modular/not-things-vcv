@@ -17,7 +17,7 @@ struct MockJsonLoader : JsonLoader {
 
 struct MockProcessorLoader : ProcessorLoader {
 	MockProcessorLoader() : ProcessorLoader(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) {}
-	MOCK_METHOD(std::shared_ptr<Processor>, loadScript, (std::shared_ptr<Script> script, std::vector<ValidationError>&), (override));
+	MOCK_METHOD(const std::shared_ptr<Processor>, loadScript, (const std::shared_ptr<Script>& script, std::vector<ValidationError>&), (override));
 };
 
 struct MockProcessor : Processor {

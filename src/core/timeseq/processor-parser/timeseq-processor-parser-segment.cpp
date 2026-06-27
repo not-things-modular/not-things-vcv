@@ -10,7 +10,7 @@ inline uint64_t uint64_max(uint64_t a, uint64_t b) {
 	return a > b ? a : b;
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(const vector<ScriptSegment>* scriptSegments, ScriptTimeScale* timeScale, vector<string> segmentStack) {
+const vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(const vector<ScriptSegment>* scriptSegments, const ScriptTimeScale* timeScale, vector<string>& segmentStack) {
 	int count = 0;
 	vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 
@@ -25,7 +25,7 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegments(const 
 	return segmentProcessors;
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(const ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
+const vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(const ScriptSegment* scriptSegment, const ScriptTimeScale* timeScale, vector<string>& segmentStack) {
 	// Check if it's a ref segment object or a full one
 	if (scriptSegment->ref.length() == 0) {
 		if (!scriptSegment->segmentBlock) {
@@ -58,15 +58,15 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegment(const S
 			}
 
 			// Couldn't find the referenced segment...
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment with id '", scriptSegment->ref.c_str(), "' in the script segments.");
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment with the id '", scriptSegment->ref.c_str(), "'. Circular references can not be resolved.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment with the id '", scriptSegment->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 		return {};
 	}
 }
 
-shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(const ScriptSegment* scriptSegment, ScriptTimeScale* timeScale, vector<string> segmentStack) {
+const shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(const ScriptSegment* scriptSegment, const ScriptTimeScale* timeScale, vector<string>& segmentStack) {
 	m_context.location.push_back("duration");
 	shared_ptr<DurationProcessor> durationProcessor = parseDuration(&scriptSegment->duration, timeScale);
 	m_context.location.pop_back();
@@ -96,7 +96,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(const S
 			}
 			m_context.popLocation();
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
 		}
 
 		m_context.location.pop_back();
@@ -107,7 +107,7 @@ shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(const S
 	return make_shared<SegmentProcessor>(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener);
 }
 
-vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(const ScriptSegmentBlock* scriptSegmentBlock, ScriptTimeScale* timeScale, const vector<ScriptAction>& actions, vector<string> actionsLocation, vector<string> segmentStack) {
+const vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(const ScriptSegmentBlock* scriptSegmentBlock, const ScriptTimeScale* timeScale, const vector<ScriptAction>& actions, vector<string>& actionsLocation, vector<string>& segmentStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptSegmentBlock->ref.length() == 0) {
 		m_context.location.push_back("segments");
@@ -146,11 +146,11 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(co
 					} else if (resolvedAction->timing == ScriptAction::ActionTiming::END) {
 						endActions.push_back(parseResolvedAction(resolvedAction));
 					} else {
-						ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Segment_SegmentBlockActionTimings, "The 'timing' of actions on a segment with a 'segment-block' reference can only be 'start' or 'end'.");
+						addValidationError(m_context.validationErrors, actionsLocation, ValidationErrorCode::Segment_SegmentBlockActionTimings, "The 'timing' of actions on a segment with a 'segment-block' reference can only be 'start' or 'end'.");
 					}
 					m_context.popLocation();
 				} else {
-					ADD_VALIDATION_ERROR(m_context.validationErrors, actionsLocation, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
+					addValidationError(m_context.validationErrors, actionsLocation, ValidationErrorCode::Ref_NotFound, "Could not find the referenced action with id '", action.ref.c_str(), "' in the script actions.");
 				}
 
 				actionsLocation.pop_back();
@@ -192,15 +192,15 @@ vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(co
 			}
 
 			// Couldn't find the referenced segment-block...
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced segment-block with id '", scriptSegmentBlock->ref.c_str(), "' in the script segment-blocks.");
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment-block with the id '", scriptSegmentBlock->ref.c_str(), "'. Circular references can not be resolved.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the segment-block with the id '", scriptSegmentBlock->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 		return vector<shared_ptr<SegmentProcessor>>();
 	}
 }
 
-shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const ScriptDuration* scriptDuration, ScriptTimeScale* timeScale) {
+const shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const ScriptDuration* scriptDuration, const ScriptTimeScale* timeScale) {
 	if (scriptDuration->samples || scriptDuration->millis || scriptDuration->beats || scriptDuration->hz) {
 		// Construct a constant duration processor
 		uint64_t duration = 0;
@@ -227,7 +227,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const ScriptD
 					if (timeScale->bpb) {
 						beats += ((*scriptDuration->bars.get()) * (*timeScale->bpb.get()));
 					} else {
-						ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
+						addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsButNoBpb, "The segment duration uses bars, but no bpb (beats per bar) is specified on the timeline.");
 						return shared_ptr<DurationProcessor>();
 					}
 				}
@@ -236,7 +236,7 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const ScriptD
 				duration = uint64_max(floor(refactoredDuration), 1);
 				drift = refactoredDuration - duration;
 			} else {
-				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
+				addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
 				return shared_ptr<DurationProcessor>();
 			}
 		} else if (scriptDuration->hz) {
@@ -248,7 +248,8 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const ScriptD
 		return make_shared<DurationConstantProcessor>(duration, drift);
 	} else if (scriptDuration->hzValue) {
 		// Construct a variable duration processor with a sample rate
-		shared_ptr<ValueProcessor> valueProcessor = parseValue(scriptDuration->hzValue.get(), vector<string>());
+		vector<string> stack;
+		shared_ptr<ValueProcessor> valueProcessor = parseValue(scriptDuration->hzValue.get(), stack);
 		return make_shared<DurationVariableHzProcessor>(valueProcessor, m_sampleRateReader->getSampleRate());
 	} else {
 		// Construct a variable duration processor with a factor
@@ -260,17 +261,20 @@ shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const ScriptD
 			if ((timeScale) && (timeScale->sampleRate) && (*timeScale->sampleRate.get() != activeSampleRate)) {
 				factor = activeSampleRate / (*timeScale->sampleRate.get());
 			}
-			valueProcessor = parseValue(scriptDuration->samplesValue.get(), vector<string>());
+			vector<string> stack;
+			valueProcessor = parseValue(scriptDuration->samplesValue.get(), stack);
 		} else if (scriptDuration->millisValue) {
 			factor = (double) m_sampleRateReader->getSampleRate() / 1000;
-			valueProcessor = parseValue(scriptDuration->millisValue.get(), vector<string>());
+			vector<string> stack;
+			valueProcessor = parseValue(scriptDuration->millisValue.get(), stack);
 		} else if (scriptDuration->beatsValue) {
 			if ((timeScale) && (timeScale->bpm)) {
 				int bpm = *timeScale->bpm.get();
 				factor = (double) m_sampleRateReader->getSampleRate() * 60 / bpm;
-				valueProcessor = parseValue(scriptDuration->beatsValue.get(), vector<string>());
+				vector<string> stack;
+				valueProcessor = parseValue(scriptDuration->beatsValue.get(), stack);
 			} else {
-				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
+				addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsButNoBmp, "The segment duration uses beats, but no bpm (beats per minute) is specified on the timeline.");
 				return shared_ptr<DurationProcessor>();
 			}
 		}

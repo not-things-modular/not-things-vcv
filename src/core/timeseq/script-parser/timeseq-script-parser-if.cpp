@@ -8,7 +8,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 	populateRef(scriptIf, ifJson, allowRefs);
 	if (scriptIf.ref.length() > 0) {
 		if (hasOneOf(ifJson, cIfProperties)) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_RefOrinstance, "A ref if can not be combined other non-ref if properties.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_RefOrinstance, "A ref if can not be combined other non-ref if properties.");
 		}
 	} else {
 		int operatorCount = 0;
@@ -24,7 +24,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("eq", *eqValue)));
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_EqArray, "'eq' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_EqArray, "'eq' must be an array.");
 			}
 		}
 
@@ -37,7 +37,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("ne", *neValue)));
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_NeArray, "'ne' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_NeArray, "'ne' must be an array.");
 			}
 		}
 
@@ -50,7 +50,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lt", *ltValue)));
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_LtArray, "'lt' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_LtArray, "'lt' must be an array.");
 			}
 		}
 
@@ -63,7 +63,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("lte", *lteValue)));
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_LteArray, "'lte' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_LteArray, "'lte' must be an array.");
 			}
 		}
 
@@ -76,7 +76,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gt", *gtValue)));
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_GtArray, "'gt' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_GtArray, "'gt' must be an array.");
 			}
 		}
 
@@ -89,7 +89,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.values.reset(new pair<ScriptValue, ScriptValue>(parseIfValues("gte", *gteValue)));
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_GteArray, "'gte' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_GteArray, "'gte' must be an array.");
 			}
 		}
 
@@ -102,7 +102,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.ifs = parseIfIfs("and", *andValue);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_AndArray, "'and' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_AndArray, "'and' must be an array.");
 			}
 		}
 
@@ -115,7 +115,7 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				scriptIf.ifs = parseIfIfs("or", *orValue);
 				m_context.location.pop_back();
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_OrArray, "'or' must be an array.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_OrArray, "'or' must be an array.");
 			}
 		}
 
@@ -125,24 +125,24 @@ ScriptIf JsonScriptParser::parseIf(const json& ifJson, bool allowRefs) {
 				if (toleranceValue->get<float>() >= 0.f) {
 					scriptIf.tolerance.reset(new float(toleranceValue->get<float>()));
 				} else {
-					ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
 				}
 			} else {
-				ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_ToleranceNumber, "'tolerance' must be a positive number.");
 			}
 		}
 
 		if (operatorCount == 0) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_NoOperation, "One of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is required.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_NoOperation, "One of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is required.");
 		} else if (operatorCount > 1) {
-			ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_MultipleOperations, "Only one of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is allowed.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_MultipleOperations, "Only one of 'eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'and' or 'or' is allowed.");
 		}
 	}
 
 	return scriptIf;
 }
 
-pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(string ifOperator, const json& valuesJson) {
+pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(const string& ifOperator, const json& valuesJson) {
 	pair<ScriptValue, ScriptValue> valuePair;
 
 	vector<json> valueElements = valuesJson.get<vector<json>>();
@@ -150,13 +150,13 @@ pair<ScriptValue, ScriptValue> JsonScriptParser::parseIfValues(string ifOperator
 		valuePair.first = parseValue(valueElements[0], true, "0", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
 		valuePair.second = parseValue(valueElements[1], true, "1", ValidationErrorCode::If_ValueObject, "'" + ifOperator + "' children must be value objects.");
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator.c_str(), "' array");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_TwoValues, "Exactly two value items are expected in the '", ifOperator.c_str(), "' array");
 	}
 
 	return valuePair;
 }
 
-unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, const json& ifsJson) {
+unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(const string& ifOperator, const json& ifsJson) {
 	unique_ptr<vector<ScriptIf>> ifs;
 
 	vector<json> ifElements = ifsJson.get<vector<json>>();
@@ -173,7 +173,7 @@ unique_ptr<vector<ScriptIf>> JsonScriptParser::parseIfIfs(string ifOperator, con
 			verifyVersion(VERSION_1_2_0, m_context, (ifOperator + " ifs with more then two conditions").c_str());
 		}
 	} else {
-		ADD_VALIDATION_ERROR(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_TwoValues, "At least two if items are expected in the '", ifOperator.c_str(), "' array");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::If_TwoValues, "At least two if items are expected in the '", ifOperator.c_str(), "' array");
 	}
 
 	return ifs;

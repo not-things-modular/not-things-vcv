@@ -6,7 +6,7 @@ using namespace std;
 using namespace timeseq;
 
 
-IfProcessor::IfProcessor(const ScriptIf* scriptIf, pair<shared_ptr<ValueProcessor>, shared_ptr<ValueProcessor>> values, vector<shared_ptr<IfProcessor>> ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
+IfProcessor::IfProcessor(const ScriptIf* scriptIf, const pair<const shared_ptr<ValueProcessor>, const shared_ptr<ValueProcessor>>& values, const vector<shared_ptr<IfProcessor>>& ifs) : m_scriptIf(scriptIf), m_values(values), m_ifs(ifs) {}
 
 bool IfProcessor::process(string* message) {
 	if (message == nullptr) {

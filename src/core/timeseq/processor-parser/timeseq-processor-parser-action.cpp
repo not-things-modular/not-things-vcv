@@ -21,13 +21,14 @@ inline SequencePositionProcessor::SequenceMoveDirection convertScriptSequenceMov
 	return SequencePositionProcessor::SequenceMoveDirection::NONE;
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(const ScriptAction* scriptAction) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(const ScriptAction* scriptAction) {
 	shared_ptr<ActionProcessor> actionProcessor;
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
 		m_context.location.push_back("if");
-		ifProcessor = parseIf(scriptAction->condition.get(), vector<string>());
+		vector<string> stack;
+		ifProcessor = parseIf(scriptAction->condition.get(), stack);
 		m_context.location.pop_back();
 	}
 
@@ -78,20 +79,23 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseResolvedAction(const Scr
 	return actionProcessor;
 }
 
-shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(const ScriptAction* scriptAction) {
+const shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction(const ScriptAction* scriptAction) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
 		m_context.location.push_back("if");
-		ifProcessor = parseIf(scriptAction->condition.get(), vector<string>());
+		vector<string> stack;
+		ifProcessor = parseIf(scriptAction->condition.get(), stack);
 		m_context.location.pop_back();
 	}
 
 	m_context.location.push_back("start-value");
-	shared_ptr<ValueProcessor> startValueProcessor = parseValue(&(*scriptAction->startValue.get()), vector<string>());
+	vector<string> stack;
+	shared_ptr<ValueProcessor> startValueProcessor = parseValue(&(*scriptAction->startValue.get()), stack);
 	m_context.location.pop_back();
+	stack.clear();
 	m_context.location.push_back("end-value");
-	shared_ptr<ValueProcessor> endValueProcessor = parseValue(&(*scriptAction->endValue.get()), vector<string>());
+	shared_ptr<ValueProcessor> endValueProcessor = parseValue(&(*scriptAction->endValue.get()), stack);
 	m_context.location.pop_back();
 
 	int outputPort = -1;
@@ -118,12 +122,13 @@ shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlideAction
 	return make_shared<ActionGlideProcessor>(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler);
 }
 
-shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(const ScriptAction* scriptAction) {
+const shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(const ScriptAction* scriptAction) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
 		m_context.location.push_back("if");
-		ifProcessor = parseIf(scriptAction->condition.get(), vector<string>());
+		vector<string> stack;
+		ifProcessor = parseIf(scriptAction->condition.get(), stack);
 		m_context.location.pop_back();
 	}
 
@@ -145,9 +150,10 @@ shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(c
 	return make_shared<ActionGateProcessor>(gateHighRatio, ifProcessor, outputPort, outputChannel, m_portHandler);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	m_context.location.push_back("value");
-	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setValue.get()->value, vector<string>());
+	vector<string> stack;
+	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setValue.get()->value, stack);
 	m_context.location.pop_back();
 
 	m_context.location.push_back("output");
@@ -157,47 +163,49 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(const Scr
 	return make_shared<ActionSetValueProcessor>(valueProcessor, output.first, output.second, m_portHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetVariableAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	m_context.location.push_back("value");
-	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setVariable.get()->value, vector<string>());
+	vector<string> stack;
+	shared_ptr<ValueProcessor> valueProcessor = parseValue(&scriptAction->setVariable.get()->value, stack);
 	m_context.location.pop_back();
 
 	return make_shared<ActionSetVariableProcessor>(valueProcessor, scriptAction->setVariable.get()->name, m_variableHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetPolyphonyAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	ScriptSetPolyphony* scriptSetPolyphony = scriptAction->setPolyphony.get();
 	return make_shared<ActionSetPolyphonyProcessor>(scriptSetPolyphony->index - 1, scriptSetPolyphony->channels, m_portHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetLabelAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	ScriptSetLabel* scriptSetLabel = scriptAction->setLabel.get();
 	return make_shared<ActionSetLabelProcessor>(scriptSetLabel->index - 1, scriptSetLabel->label, m_portHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseAssertAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	ScriptAssert* scriptAssert = scriptAction->assert.get();
 
 	m_context.location.push_back("expect");
-	shared_ptr<IfProcessor> expect = parseIf(&scriptAssert->expect, vector<string>());
+	vector<string> stack;
+	shared_ptr<IfProcessor> expect = parseIf(&scriptAssert->expect, stack);
 	m_context.location.pop_back();
 
 	return make_shared<ActionAssertProcessor>(scriptAssert->name, expect, scriptAssert->stopOnFail, m_assertListener, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseTriggerAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	return make_shared<ActionTriggerProcessor>(scriptAction->trigger, m_triggerHandler, ifProcessor);
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	ScriptMoveSequence* moveSequence = &(*scriptAction->moveSequence);
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(moveSequence->id);
 
 	if (!sequenceProcessor) {
 		if (hasNonSharedSequence(moveSequence->id)) {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_NonSharedSequence, "The sequence with id '", moveSequence->id.c_str(), "' is not a 'shared' sequence. Only shared sequences can be moved.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_NonSharedSequence, "The sequence with id '", moveSequence->id.c_str(), "' is not a 'shared' sequence. Only shared sequences can be moved.");
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", moveSequence->id.c_str(), "' could not be found.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::MoveSequence_SequenceNotFound, "The sequence with id '", moveSequence->id.c_str(), "' could not be found.");
 		}
 
 		return nullptr;
@@ -210,7 +218,7 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseMoveSequenceAction(const
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(scriptAction->clearSequence);
 	if (!sequenceProcessor) {
 		sequenceProcessor = resolveNonSharedSequence(scriptAction->clearSequence);
@@ -219,16 +227,17 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseClearSequenceAction(cons
 	if (sequenceProcessor) {
 		return make_shared<ActionClearSequenceProcessor>(sequenceProcessor, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::ClearSequence_SequenceNotFound, "The sequence with id '", scriptAction->clearSequence.c_str(), "' could not be found.");
+		addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::ClearSequence_SequenceNotFound, "The sequence with id '", scriptAction->clearSequence.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	ScriptAddToSequence* addToSequence = &(*scriptAction->addToSequence);
 
 	m_context.location.push_back("value");
-	shared_ptr<ValueProcessor> value = parseValue(&addToSequence->value, vector<string>());
+	vector<string> stack;
+	shared_ptr<ValueProcessor> value = parseValue(&addToSequence->value, stack);
 	m_context.location.pop_back();
 
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(addToSequence->id);
@@ -239,12 +248,12 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseAddToSequenceAction(cons
 	if (sequenceProcessor) {
 		return make_shared<ActionAddToSequenceSequenceProcessor>(sequenceProcessor, value, addToSequence->position, addToSequence->asConstantVoltage, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_SequenceNotFound, "The sequence with id '", addToSequence->id.c_str(), "' could not be found.");
+		addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::AddToSequence_SequenceNotFound, "The sequence with id '", addToSequence->id.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
 
-shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(const ScriptAction* scriptAction, shared_ptr<IfProcessor> ifProcessor) {
+const shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {
 	ScriptRemoveFromSequence* removeFromSequence = &(*scriptAction->removeFromSequence);
 	shared_ptr<SequencePositionProcessor> sequenceProcessor = resolveSharedSequence(removeFromSequence->id);
 	if (!sequenceProcessor) {
@@ -254,12 +263,12 @@ shared_ptr<ActionProcessor> ProcessorScriptParser::parseRemoveFromSequenceAction
 	if (sequenceProcessor) {
 		return make_shared<ActionRemoveFromSequenceProcessor>(sequenceProcessor, removeFromSequence->position, ifProcessor);
 	} else {
-		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_SequenceNotFound, "The sequence with id '", removeFromSequence->id.c_str(), "' could not be found.");
+		addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::RemoveFromSequence_SequenceNotFound, "The sequence with id '", removeFromSequence->id.c_str(), "' could not be found.");
 		return nullptr;
 	}
 }
 
-const ScriptAction* ProcessorScriptParser::resolveScriptAction(const ScriptAction* scriptAction, vector<string>& resolvedLocation) {
+const ScriptAction* ProcessorScriptParser::resolveScriptAction(const ScriptAction* scriptAction, vector<string>& resolvedLocation) const {
 	if (scriptAction->ref.length() == 0) {
 		resolvedLocation = m_context.location;
 		return scriptAction;

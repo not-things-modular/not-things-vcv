@@ -19,31 +19,31 @@ struct Script;
 struct Processor;
 
 struct PortHandler {
-	virtual float getInputPortVoltage(int index, int channel) = 0;
-	virtual float getOutputPortVoltage(int index, int channel) = 0;
+	virtual float getInputPortVoltage(int index, int channel) const = 0;
+	virtual float getOutputPortVoltage(int index, int channel) const = 0;
 
 	virtual void setOutputPortVoltage(int index, int channel, float voltage) = 0;
 	virtual void setOutputPortChannels(int index, int channels) = 0;
 
-	virtual void setOutputPortLabel(int index, std::string& label) = 0;
+	virtual void setOutputPortLabel(int index, const std::string& label) = 0;
 };
 
 struct VariableHandler {
-	virtual float getVariable(const std::string& name) = 0;
+	virtual float getVariable(const std::string& name) const = 0;
 	virtual void setVariable(const std::string& name, float value) = 0;
 };
 
 struct TriggerHandler {
-	const virtual std::vector<std::string>& getTriggers() = 0;
+	virtual const std::vector<std::string>& getTriggers() const = 0;
 	virtual void setTrigger(const std::string& name) = 0;
 };
 
 struct AssertListener {
-	virtual void assertFailed(std::string& name, std::string& message, bool stop) = 0;
+	virtual void assertFailed(const std::string& name, const std::string& message, bool stop) = 0;
 };
 
 struct SampleRateReader {
-	virtual float getSampleRate() = 0;
+	virtual float getSampleRate() const = 0;
 };
 
 struct EventListener {
@@ -56,15 +56,15 @@ struct EventListener {
 struct TimeSeqCore : VariableHandler, TriggerHandler {
 	enum Status { EMPTY, LOADING, RUNNING, PAUSED };
 
-	TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
-	TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, SampleRateReader* sampleRateReader, EventListener* eventListener);
+	TimeSeqCore(PortHandler* portHandler, const SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener);
+	TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, const SampleRateReader* sampleRateReader, EventListener* eventListener);
 	virtual ~TimeSeqCore();
 
-	std::vector<timeseq::ValidationError> loadScript(std::string& scriptData);
+	const std::vector<timeseq::ValidationError> loadScript(const std::string& scriptData);
 	void reloadScript();
 	void clearScript();
 
-	Status getStatus();
+	Status getStatus() const;
 
 	void start(int sampleDelay);
 	void pause();
@@ -72,14 +72,14 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 
 	void process(int rate);
 
-	float getVariable(const std::string& name) override;
+	float getVariable(const std::string& name) const override;
 	void setVariable(const std::string& name, float value) override;
 
-	const std::vector<std::string>& getTriggers() override;
+	const std::vector<std::string>& getTriggers() const override;
 	void setTrigger(const std::string& name) override;
 
-	uint32_t getCurrentSampleRate();
-	uint32_t getElapsedSamples();
+	uint32_t getCurrentSampleRate() const;
+	uint32_t getElapsedSamples() const;
 	void resetElapsedSamples();
 
 	nt_private:
@@ -104,7 +104,7 @@ struct TimeSeqCore : VariableHandler, TriggerHandler {
 		bool m_triggerIdx = false;
 
 		EventListener* m_eventListener;
-		SampleRateReader* m_sampleRateReader;
+		const SampleRateReader* m_sampleRateReader;
 
 		void processReset();
 };

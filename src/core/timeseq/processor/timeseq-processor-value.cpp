@@ -5,7 +5,7 @@
 using namespace std;
 using namespace timeseq;
 
-CalcValueProcessor::CalcValueProcessor(const ScriptCalc *scriptCalc, shared_ptr<ValueProcessor> value) : m_value(value) {
+CalcValueProcessor::CalcValueProcessor(const ScriptCalc *scriptCalc, const shared_ptr<ValueProcessor>& value) : m_value(value) {
 	switch (scriptCalc->operation) {
 		case ScriptCalc::ADD:
 			m_operation = ValueCalcOperation::ADD;
@@ -154,7 +154,7 @@ double CalcVtoFProcessor::calc(double value) {
 	return pow(2, value) * 261.6256f;
 }
 
-ValueProcessor::ValueProcessor(vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : m_calcProcessors(calcProcessors), m_quantize(quantize) {}
+ValueProcessor::ValueProcessor(const vector<shared_ptr<CalcProcessor>>& calcProcessors, bool quantize) : m_calcProcessors(calcProcessors), m_quantize(quantize) {}
 
 double ValueProcessor::process() {
 	double value = processValue();
@@ -208,25 +208,25 @@ double ValueProcessor::quantize(double value) {
 	return octave + note;
 }
 
-StaticValueProcessor::StaticValueProcessor(float value, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_value(value) {}
+StaticValueProcessor::StaticValueProcessor(float value, const vector<shared_ptr<CalcProcessor>>& calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_value(value) {}
 
 double StaticValueProcessor::processValue() {
 	return m_value;
 }
 
-VariableValueProcessor::VariableValueProcessor(string name, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize, VariableHandler* variableHandler) : ValueProcessor(calcProcessors, quantize), m_name(name), m_variableHandler(variableHandler) {}
+VariableValueProcessor::VariableValueProcessor(const string& name, const vector<shared_ptr<CalcProcessor>>& calcProcessors, bool quantize, VariableHandler* variableHandler) : ValueProcessor(calcProcessors, quantize), m_name(name), m_variableHandler(variableHandler) {}
 
 double VariableValueProcessor::processValue() {
 	return m_variableHandler->getVariable(m_name);
 }
 
-InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler) : ValueProcessor(calcProcessors, quantize), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler) {}
+InputValueProcessor::InputValueProcessor(int inputPort, int inputChannel, const vector<shared_ptr<CalcProcessor>>& calcProcessors, bool quantize, PortHandler* portHandler) : ValueProcessor(calcProcessors, quantize), m_inputPort(inputPort), m_inputChannel(inputChannel), m_portHandler(portHandler) {}
 
 double InputValueProcessor::processValue() {
 	return m_portHandler->getInputPortVoltage(m_inputPort, m_inputChannel);
 }
 
-OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize, PortHandler* portHandler) : ValueProcessor(calcProcessors, quantize), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
+OutputValueProcessor::OutputValueProcessor(int outputPort, int outputChannel, const vector<shared_ptr<CalcProcessor>>& calcProcessors, bool quantize, PortHandler* portHandler) : ValueProcessor(calcProcessors, quantize), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
 
 double OutputValueProcessor::processValue() {
 	return m_portHandler->getOutputPortVoltage(m_outputPort, m_outputChannel);
@@ -248,7 +248,7 @@ float RandValueGenerator::generate(float lower, float upper) {
 	}
 }
 
-RandValueProcessor::RandValueProcessor(shared_ptr<ValueProcessor> lowerValue, shared_ptr<ValueProcessor> upperValue, shared_ptr<RandValueGenerator> randValueGenerator, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_lowerValue(lowerValue), m_upperValue(upperValue), m_randValueGenerator(randValueGenerator) {}
+RandValueProcessor::RandValueProcessor(const shared_ptr<ValueProcessor>& lowerValue, const shared_ptr<ValueProcessor>& upperValue, const shared_ptr<RandValueGenerator>& randValueGenerator, const vector<shared_ptr<CalcProcessor>>& calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_lowerValue(lowerValue), m_upperValue(upperValue), m_randValueGenerator(randValueGenerator) {}
 
 double RandValueProcessor::processValue() {
 	float lower = m_lowerValue->process();
@@ -257,7 +257,7 @@ double RandValueProcessor::processValue() {
 	return m_randValueGenerator->generate(lower, upper);
 }
 
-SequenceValueProcessor::SequenceValueProcessor(shared_ptr<SequencePositionProcessor> sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection moveBefore, SequencePositionProcessor::SequenceMoveDirection moveAfter, bool wrap, vector<shared_ptr<CalcProcessor>> calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_sequencePositionProcessor(sequencePositionProcessor), m_moveBefore(moveBefore), m_moveAfter(moveAfter), m_wrap(wrap) {}
+SequenceValueProcessor::SequenceValueProcessor(const shared_ptr<SequencePositionProcessor>& sequencePositionProcessor, SequencePositionProcessor::SequenceMoveDirection moveBefore, SequencePositionProcessor::SequenceMoveDirection moveAfter, bool wrap, const vector<shared_ptr<CalcProcessor>>& calcProcessors, bool quantize) : ValueProcessor(calcProcessors, quantize), m_sequencePositionProcessor(sequencePositionProcessor), m_moveBefore(moveBefore), m_moveAfter(moveAfter), m_wrap(wrap) {}
 
 double SequenceValueProcessor::processValue() {
 	if (m_moveBefore != SequencePositionProcessor::SequenceMoveDirection::NONE) {

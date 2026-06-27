@@ -22,7 +22,7 @@ inline SequencePositionProcessor::SequenceMoveDirection convertScriptSequenceMov
 	return SequencePositionProcessor::SequenceMoveDirection::NONE;
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(const ScriptValue* scriptValue, vector<string> valueStack) {
+const shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(const ScriptValue* scriptValue, vector<string>& valueStack) {
 	// Check if it's a ref segment block object or a full one
 	if (scriptValue->ref.length() == 0) {
 		int count = 0;
@@ -67,16 +67,16 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseValue(const ScriptValue* 
 			}
 
 			// Couldn't find the referenced value...
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced value with id '", scriptValue->ref.c_str(), "' in the script values.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced value with id '", scriptValue->ref.c_str(), "' in the script values.");
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the value with the id '", scriptValue->ref.c_str(), "'. Circular references can not be resolved.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the value with the id '", scriptValue->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 	}
 
 	return shared_ptr<ValueProcessor>();
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+const shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(const ScriptValue* scriptValue, const vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	float value = 0.f;
 	if (scriptValue->voltage) {
 		value = *scriptValue->voltage.get();
@@ -95,11 +95,11 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseStaticValue(const ScriptV
 	return make_shared<StaticValueProcessor>(value, calcProcessors, scriptValue->quantize);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+const shared_ptr<ValueProcessor> ProcessorScriptParser::parseVariableValue(const ScriptValue* scriptValue, const vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	return make_shared<VariableValueProcessor>(*scriptValue->variable.get(), calcProcessors, scriptValue->quantize, m_variableHandler);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+const shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(const ScriptValue* scriptValue, const vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	m_context.location.push_back("input");
 	pair<int, int> input = parseInput(scriptValue->input.get());
 	m_context.location.pop_back();
@@ -107,7 +107,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseInputValue(const ScriptVa
 	return make_shared<InputValueProcessor>(input.first, input.second, calcProcessors, scriptValue->quantize, m_portHandler);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors) {
+const shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(const ScriptValue* scriptValue, const vector<shared_ptr<CalcProcessor>>& calcProcessors) {
 	m_context.location.push_back("output");
 	pair<int, int> output = parseOutput(scriptValue->output.get());
 	m_context.location.pop_back();
@@ -115,7 +115,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseOutputValue(const ScriptV
 	return make_shared<OutputValueProcessor>(output.first, output.second, calcProcessors, scriptValue->quantize, m_portHandler);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
+const shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(const ScriptValue* scriptValue, const vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& valueStack) {
 	m_context.location.push_back("rand");
 
 	m_context.location.push_back("lower");
@@ -131,7 +131,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseRandValue(const ScriptVal
 	return make_shared<RandValueProcessor>(lowerValueProcessor, upperValueProcessor, m_randomValueGenerator, calcProcessors, scriptValue->quantize);
 }
 
-shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(const ScriptValue* scriptValue, vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string> valueStack) {
+const shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(const ScriptValue* scriptValue, const vector<shared_ptr<CalcProcessor>>& calcProcessors, vector<string>& valueStack) {
 	m_context.location.push_back("sequence");
 
 	shared_ptr<ValueProcessor> processor = nullptr;
@@ -145,7 +145,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(const Scrip
 	if (sequenceProcessor) {
 		return make_shared<SequenceValueProcessor>(sequenceProcessor, convertScriptSequenceMoveDirection(sequence->moveBefore), convertScriptSequenceMoveDirection(sequence->moveAfter), sequence->wrap, calcProcessors, scriptValue->quantize);
 	} else {
-		ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_SequenceNotFound, "The sequence with id '", sequence->id.c_str(), "' could not be found.");
+		addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::SequenceValue_SequenceNotFound, "The sequence with id '", sequence->id.c_str(), "' could not be found.");
 	}
 
 	m_context.location.pop_back();
@@ -153,7 +153,7 @@ shared_ptr<ValueProcessor> ProcessorScriptParser::parseSequenceValue(const Scrip
 	return processor;
 }
 
-shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(const ScriptCalc* scriptCalc, vector<string> valueStack) {
+const shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(const ScriptCalc* scriptCalc, vector<string>& valueStack) {
 	if (scriptCalc->ref.length() == 0) {
 		bool valueProcessor = false;
 		bool truncProcessor = false;
@@ -245,7 +245,7 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(const ScriptCalc* scr
 			if (scriptTuning != nullptr) {
 				calcProcessor = make_shared<CalcQuantizeProcessor>(scriptTuning);
 			} else {
-				ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_QuantizeTuningNotFound, "Could not find the referenced tuning with id '", scriptCalc->tuning->ref.c_str(), "' in the script tunings.");
+				addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Calc_QuantizeTuningNotFound, "Could not find the referenced tuning with id '", scriptCalc->tuning->ref.c_str(), "' in the script tunings.");
 			}
 		} else if (signProcessor) {
 			calcProcessor = make_shared<CalcSignProcessor>(scriptCalc);
@@ -273,9 +273,9 @@ shared_ptr<CalcProcessor> ProcessorScriptParser::parseCalc(const ScriptCalc* scr
 			}
 
 			// Couldn't find the referenced calc...
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced calc with id '", scriptCalc->ref.c_str(), "' in the script calcs.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_NotFound, "Could not find the referenced calc with id '", scriptCalc->ref.c_str(), "' in the script calcs.");
 		} else {
-			ADD_VALIDATION_ERROR(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the calc with the id '", scriptCalc->ref.c_str(), "'. Circular references can not be resolved.");
+			addValidationError(m_context.validationErrors, m_context.location, ValidationErrorCode::Ref_CircularFound, "Encountered a circular value reference while processing the calc with the id '", scriptCalc->ref.c_str(), "'. Circular references can not be resolved.");
 		}
 	}
 
