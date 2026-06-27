@@ -23,7 +23,7 @@ TEST(TimeSeqProcessorAssertAction, AssertActionWithNoStopOnFailShouldStopOnFail)
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -64,7 +64,7 @@ TEST(TimeSeqProcessorAssertAction, AssertActionShouldUseRefIf) {
 		})}
 	};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -105,7 +105,7 @@ TEST(TimeSeqProcessorAssertAction, AssertActionShouldFailOnUnknownIfRef) {
 		})}
 	};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/assert/expect");
 	EXPECT_NE(validationErrors[0].message.find("'assert-if'"), std::string::npos);
@@ -142,7 +142,7 @@ TEST(TimeSeqProcessorAssertAction, AssertActionShouldFailOnCircularIfRef) {
 		})}
 	};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/ifs/0/and/1");
 	EXPECT_NE(validationErrors[0].message.find("'assert-if'"), std::string::npos);
@@ -171,7 +171,7 @@ TEST(TimeSeqProcessorAssertAction, AssertActionWithStopOnFailShouldStopOnFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -207,7 +207,7 @@ TEST(TimeSeqProcessorAssertAction, AssertActionWithStopOnFailFalseShouldNotStopO
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
 
 	vector<string> emptyTriggers = {};

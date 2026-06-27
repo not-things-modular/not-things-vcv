@@ -6,7 +6,7 @@
 using namespace timeseq;
 using namespace std;
 
-string timeseq::createValidationErrorMessage(ValidationErrorCode code, ...) {
+const string timeseq::createValidationErrorMessage(ValidationErrorCode code, ...) {
 	ostringstream errorMessage;
 
 	va_list args;
@@ -23,7 +23,7 @@ string timeseq::createValidationErrorMessage(ValidationErrorCode code, ...) {
 	return errorMessage.str();
 }
 
-string timeseq::createValidationErrorLocation(vector<string> location) {
+const string timeseq::createValidationErrorLocation(const vector<string>& location) {
 	ostringstream errorLocation;
 	for (const string& entry : location) {
 		errorLocation << "/";

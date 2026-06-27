@@ -15,7 +15,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionRefButNoComponentPoolShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0");
 }
@@ -36,7 +36,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionRefButNoActionPoolShouldFail) {
 	});
 	json["component-pool"] = json::object();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0");
 }
@@ -58,7 +58,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionRefToUnknownActionShouldFail) {
 	json["component-pool"] = json::object();
 	json["component-pool"]["actions"] = json::array({});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0");
 }
@@ -82,7 +82,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionRefToInvalidActionShouldFail) {
 		{ { "id", "action-id" }, { "timing", "buh" }, { "trigger", "trigger-1" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_TimingEnum, "/component-pool/actions/0");
 }
@@ -106,7 +106,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionRefShouldUseAction) {
 		{ { "id", "action-id" }, { "timing", "end" }, { "trigger", "trigger-1" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -135,7 +135,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionWithoutConditionShouldWork) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -172,7 +172,7 @@ TEST(TimeSeqProcessorAction, ScriptWithActionWithConditionShouldCheckCondition) 
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};

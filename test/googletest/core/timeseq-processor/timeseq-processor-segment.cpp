@@ -14,7 +14,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithoutComponentPoolAndRefToUnknownSegmentSh
 	});
 	json["component-pool"] = json::object();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0");
 }
@@ -33,7 +33,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithoutSegmentPoolAndRefToUnknownSegmentShou
 	});
 	json["component-pool"] = json::object();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0");
 }
@@ -59,7 +59,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithSegmentPoolAndRefToUnknownSegmentShouldF
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0");
 }
@@ -85,7 +85,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithRefSegmentShouldLoadRefScript) {
 		}
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -121,7 +121,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithInlineSegmentShouldLoadSegmentScript) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 0u) << validationErrors[0].location << " " << validationErrors[0].message;
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -163,7 +163,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithShouldLoadStartEndAndGlideSegmentActions
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -222,7 +222,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithRefActionButNoPooldActionsShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0");
 	EXPECT_NE(validationErrors[0].message.find("'unknown-ref'"), std::string::npos);
@@ -252,7 +252,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithRefActionButActionNotInPoolShouldFail) {
 		{ { "id", "an-action" }, { "timing", "start" }, { "trigger", "start-1" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0");
 	EXPECT_NE(validationErrors[0].message.find("'unknown-ref'"), std::string::npos);
@@ -285,7 +285,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithCircularSegmentReferenceInSegmentBlockTh
 		{ { "id", "segment-block-2" }, { "segments", json::array({ { { "ref", "segment-1" } }, { { "ref", "segment-2" } } })} },
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/segment-blocks/1/segments/1");
 	EXPECT_NE(validationErrors[0].message.find("'segment-2'"), std::string::npos);
@@ -319,7 +319,7 @@ TEST(TimeSeqProcessorSegment, ScriptWithCircularSegmentReferenceInSegmentBlockTh
 		{ { "id", "segment-block-3" }, { "segments", json::array({ { { "ref", "segment-1" } }, { { "ref", "segment-2" } } })} },
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/segment-blocks/2/segments/1");
 	EXPECT_NE(validationErrors[0].message.find("'segment-2'"), std::string::npos);

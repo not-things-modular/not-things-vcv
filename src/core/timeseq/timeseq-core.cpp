@@ -10,27 +10,24 @@
 using namespace timeseq;
 
 
-TimeSeqCore::TimeSeqCore(PortHandler* portHandler, SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) :
-		TimeSeqCore(std::shared_ptr<JsonLoader>(new JsonLoader()), std::shared_ptr<ProcessorLoader>(new ProcessorLoader(portHandler, this, this, sampleRateReader, eventListener, assertListener)), sampleRateReader, eventListener) {
+TimeSeqCore::TimeSeqCore(PortHandler* portHandler, const SampleRateReader* sampleRateReader, EventListener* eventListener, AssertListener* assertListener) :
+		TimeSeqCore(std::make_shared<JsonLoader>(), std::make_shared<ProcessorLoader>(portHandler, this, this, sampleRateReader, eventListener, assertListener), sampleRateReader, eventListener) {
 }
 
-TimeSeqCore::TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, SampleRateReader* sampleRateReader, EventListener* eventListener) {
-	m_jsonLoader = jsonLoader;
-	m_processorLoader = processorLoader;
-	m_eventListener = eventListener;
-	m_sampleRateReader = sampleRateReader;
+TimeSeqCore::TimeSeqCore(std::shared_ptr<JsonLoader> jsonLoader, std::shared_ptr<ProcessorLoader> processorLoader, const SampleRateReader* sampleRateReader, EventListener* eventListener) :
+	m_jsonLoader(jsonLoader), m_processorLoader(processorLoader), m_eventListener(eventListener), m_sampleRateReader(sampleRateReader) {
 }
 
 TimeSeqCore::~TimeSeqCore() {
 }
 
-std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
+const std::vector<ValidationError> TimeSeqCore::loadScript(const std::string& scriptData) {
 	std::istringstream scriptStream(scriptData);
 	std::vector<ValidationError> validationErrors;
 
-	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, &validationErrors);
+	std::shared_ptr<Script> script = m_jsonLoader->loadScript(scriptStream, validationErrors);
 	if ((validationErrors.size() == 0) && (script)) {
-		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, &validationErrors);
+		std::shared_ptr<Processor> processor = m_processorLoader->loadScript(script, validationErrors);
 
 		if ((validationErrors.size() == 0) && (processor)) {
 			m_sampleRate = m_sampleRateReader->getSampleRate();
@@ -49,8 +46,9 @@ std::vector<ValidationError> TimeSeqCore::loadScript(std::string& scriptData) {
 
 void TimeSeqCore::reloadScript() {
 	if (m_script) {
+		std::vector<ValidationError> validationErrors;
 		m_danglingProcessors.push_back(m_processor);
-		m_processor = m_processorLoader->loadScript(m_script, nullptr);
+		m_processor = m_processorLoader->loadScript(m_script, validationErrors);
 		m_sampleRate = m_sampleRateReader->getSampleRate();
 		m_reset = true;
 
@@ -69,7 +67,7 @@ void TimeSeqCore::clearScript() {
 	m_script.reset();
 }
 
-TimeSeqCore::Status TimeSeqCore::getStatus() {
+TimeSeqCore::Status TimeSeqCore::getStatus() const {
 	return m_status;
 }
 
@@ -132,8 +130,8 @@ void TimeSeqCore::process(int rate) {
 	}
 }
 
-float TimeSeqCore::getVariable(const std::string& name) {
-	std::unordered_map<std::string, float>::iterator it = m_variables.find(name);
+float TimeSeqCore::getVariable(const std::string& name) const {
+	std::unordered_map<std::string, float>::const_iterator it = m_variables.find(name);
 	if (it != m_variables.end()) {
 		return it->second;
 	} else {
@@ -152,7 +150,7 @@ void TimeSeqCore::setVariable(const std::string& name, float value) {
 	}
 }
 
-const std::vector<std::string>& TimeSeqCore::getTriggers() {
+const std::vector<std::string>& TimeSeqCore::getTriggers() const {
 	return m_triggers[m_triggerIdx];
 }
 
@@ -161,11 +159,11 @@ void TimeSeqCore::setTrigger(const std::string& name) {
 	m_eventListener->triggerTriggered();
 }
 
-uint32_t TimeSeqCore::getCurrentSampleRate() {
+uint32_t TimeSeqCore::getCurrentSampleRate() const {
 	return m_sampleRate;
 }
 
-uint32_t TimeSeqCore::getElapsedSamples() {
+uint32_t TimeSeqCore::getElapsedSamples() const {
 	return m_elapsedSamples;
 }
 

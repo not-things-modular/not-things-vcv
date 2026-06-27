@@ -197,15 +197,15 @@ void TimeSeqModule::onRemove(const RemoveEvent& e) {
 	m_ledDisplay = nullptr;
 }
 
-float TimeSeqModule::getInputPortVoltage(int index, int channel) {
-	return inputs[InputId::IN_INPUTS + index].getVoltage(channel);
+float TimeSeqModule::getInputPortVoltage(int index, int channel) const {
+	return const_cast<Input&>(inputs[InputId::IN_INPUTS + index]).getVoltage(channel);
 }
 
-float TimeSeqModule::getOutputPortVoltage(int index, int channel) {
+float TimeSeqModule::getOutputPortVoltage(int index, int channel) const {
 	return m_outputVoltages[index][channel];
 }
 
-float TimeSeqModule::getSampleRate() {
+float TimeSeqModule::getSampleRate() const {
 	return APP->engine->getSampleRate();
 }
 
@@ -228,7 +228,7 @@ void TimeSeqModule::setOutputPortChannels(int index, int channels) {
 	}
 }
 
-void TimeSeqModule::setOutputPortLabel(int index, std::string& label) {
+void TimeSeqModule::setOutputPortLabel(int index, const std::string& label) {
 	configOutput(OUT_OUTPUTS + index, label);
 }
 
@@ -248,7 +248,7 @@ void TimeSeqModule::scriptReset() {
 	resetUi();
 }
 
-void TimeSeqModule::assertFailed(std::string& name, std::string& message, bool stop) {
+void TimeSeqModule::assertFailed(const std::string& name, const std::string& message, bool stop) {
 	// Update the display (if needed)
 	if (m_timeSeqDisplay != nullptr) {
 		m_timeSeqDisplay->setAssert(true);
@@ -270,7 +270,7 @@ std::shared_ptr<std::string> TimeSeqModule::getScript() {
 }
 
 std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
-	std::vector<timeseq::ValidationError> errors = m_timeSeqCore->loadScript(*script);
+	const std::vector<timeseq::ValidationError> errors = m_timeSeqCore->loadScript(*script);
 
 	m_lastScriptLoadErrors.clear();
 	if (errors.size() == 0) {

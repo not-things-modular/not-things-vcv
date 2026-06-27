@@ -5,7 +5,7 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithNoInputTriggersShouldSucceed) {
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script.second->m_triggers.size(), 0u);
 }
@@ -112,7 +112,7 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithNonExistingPooled
 		{ { "id", "input-3" }, { "index", 5 }, { "channel", 2 } }
 	})}};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/input-triggers/1/input");
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/input-triggers/3/input");
@@ -130,7 +130,7 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithInlineInputsShoul
 		{ { "id", "trigger-2" }, { "input", { { "index", 5 }, { "channel", 2 } } } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_triggers.size(), 2u);
 
@@ -152,7 +152,7 @@ TEST(TimeSeqProcessorInputTriggers, ScriptWithInputTriggersWithPooledInputsShoul
 		{ { "id", "input-2" }, { "index", 5 }, { "channel", 2 } }
 	})}};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_triggers.size(), 2u);
 

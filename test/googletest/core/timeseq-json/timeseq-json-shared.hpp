@@ -15,7 +15,7 @@ using namespace std;
 #define SCRIPT_VERSION_1_2_0 "1.2.0"
 
 
-shared_ptr<Script> loadScript(JsonLoader& jsonLoader, nlohmann::json& json, vector<ValidationError> *validationErrors);
+shared_ptr<Script> loadScript(JsonLoader& jsonLoader, nlohmann::json& json, vector<ValidationError>& validationErrors);
 nlohmann::json getMinimalJson();
 nlohmann::json getMinimalJson(const char* scriptVersion);
 void expectError(vector<ValidationError>& validationErrors, int errorCode, string errorLocation);

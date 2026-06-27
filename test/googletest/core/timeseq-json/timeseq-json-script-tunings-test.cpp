@@ -5,7 +5,7 @@ TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTuningsVersion100) {
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_0_0);
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->tunings.size(), 0u);
 }
@@ -15,7 +15,7 @@ TEST(TimeSeqJsonScriptTuning, ParseShouldSucceedWithoutTuningsVersion110) {
 	JsonLoader jsonLoader;
 	json json = getMinimalJson(SCRIPT_VERSION_1_1_0);
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script->tunings.size(), 0u);
 }
@@ -28,7 +28,7 @@ TEST(TimeSeqJsonScriptTuning, ParseShouldFailWithTuningsPre110Version) {
 		{ "tunings", json::array() }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool");
 }
@@ -41,7 +41,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningsShouldFailOnNonArrayTunings) {
 		{ "tunings", "not-an-array" }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_TuningsArray, "/component-pool");
 }
@@ -58,7 +58,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonObjectTuning) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Script_TuningObject, "/component-pool/tunings/1");
 }
@@ -75,7 +75,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnDuplicateId) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Id_Duplicate, "/component-pool/tunings/2");
 }
@@ -93,7 +93,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingId) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 3u);
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/tunings/1");
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/component-pool/tunings/2");
@@ -112,7 +112,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnMissingNotes) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Tuning_NotesArray, "/component-pool/tunings/2");
 }
@@ -129,7 +129,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonArrayNotes) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Tuning_NotesArray, "/component-pool/tunings/1");
 }
@@ -146,7 +146,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnNonUnknownTuningProperty) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Unknown_Property, "/component-pool/tunings/1");
 }
@@ -163,7 +163,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnEmptyNotes) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Tuning_NotesArraySize, "/component-pool/tunings/0/notes");
 }
@@ -180,7 +180,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInvalidFormatNotes) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Tuning_NoteFloatOrString, "/component-pool/tunings/1/notes/0");
 }
@@ -195,7 +195,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInvalidNoteFormat) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 4u);
 	expectError(validationErrors, ValidationErrorCode::Tuning_NoteFormat, "/component-pool/tunings/0/notes/1");
 	expectError(validationErrors, ValidationErrorCode::Tuning_NoteFormat, "/component-pool/tunings/0/notes/3");
@@ -214,9 +214,9 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapFloatNotesToSingleOctaveAndSor
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
-	
+
 	ASSERT_EQ(script->tunings.size(), 2u);
 	EXPECT_EQ(script->tunings[0].id, "tuning-1");
 	ASSERT_EQ(script->tunings[0].notes.size(), 9u);
@@ -244,9 +244,9 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapFloatNotesToSingleOctaveAndFil
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
-	
+
 	ASSERT_EQ(script->tunings.size(), 1u);
 	EXPECT_EQ(script->tunings[0].id, "tuning-1");
 	ASSERT_EQ(script->tunings[0].notes.size(), 4u);
@@ -268,9 +268,9 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMapNoteStringToCorrespondingVolta
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
-	
+
 	ASSERT_EQ(script->tunings.size(), 3u);
 
 	EXPECT_EQ(script->tunings[0].id, "tuning-1");
@@ -316,9 +316,9 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldMixNotesAndVoltagesAndFilterDupli
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
-	
+
 	ASSERT_EQ(script->tunings.size(), 2u);
 
 	EXPECT_EQ(script->tunings[0].id, "tuning-1");
@@ -346,9 +346,9 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningWorkWithInlineRefCalcTuning) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
-	
+
 	ASSERT_EQ(script->calcs.size(), 1u);
 	EXPECT_EQ(script->calcs[0].operation, ScriptCalc::CalcOperation::QUANTIZE);
 	ASSERT_TRUE(script->calcs[0].tuning);
@@ -365,7 +365,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningWorkFailWithInlineRefCalcTuningWithAddi
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Tuning_RefOrInstance, "/component-pool/calcs/0/quantize");
 }
@@ -380,9 +380,9 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningWorkWithInlineFullTuning) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	expectNoErrors(validationErrors);
-	
+
 	ASSERT_EQ(script->calcs.size(), 1u);
 	EXPECT_EQ(script->calcs[0].operation, ScriptCalc::CalcOperation::QUANTIZE);
 	ASSERT_TRUE(script->calcs[0].tuning);
@@ -401,7 +401,7 @@ TEST(TimeSeqJsonScriptTuning, ParseTuningShouldFailOnInlineTuningWithId) {
 		}) }
 	};
 
-	shared_ptr<Script> script = loadScript(jsonLoader, json, &validationErrors);
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	EXPECT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Id_NotAllowed, "/component-pool/calcs/0/quantize");
 }
