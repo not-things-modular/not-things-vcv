@@ -12,12 +12,12 @@ std::string var3 = "var3";
 std::string var4 = "var4";
 
 struct MockJsonLoader : JsonLoader {
-	MOCK_METHOD(std::shared_ptr<Script>, loadScript, (std::istream&, std::vector<ValidationError>*), (override));
+	MOCK_METHOD(std::shared_ptr<Script>, loadScript, (std::istream&, std::vector<ValidationError>&), (override));
 };
 
 struct MockProcessorLoader : ProcessorLoader {
 	MockProcessorLoader() : ProcessorLoader(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) {}
-	MOCK_METHOD(std::shared_ptr<Processor>, loadScript, (std::shared_ptr<Script> script, std::vector<ValidationError>*), (override));
+	MOCK_METHOD(const std::shared_ptr<Processor>, loadScript, (const std::shared_ptr<Script>& script, std::vector<ValidationError>&), (override));
 };
 
 struct MockProcessor : Processor {
@@ -28,14 +28,14 @@ struct MockProcessor : Processor {
 };
 
 ACTION_P(AddValidationErrorAndReturnEmptyScript, validationError) {
-	std::vector<ValidationError>* validationErrors = arg1;
-	validationErrors->push_back(validationError);
+	std::vector<ValidationError>& validationErrors = arg1;
+	validationErrors.push_back(validationError);
 	return std::shared_ptr<Script>();
 }
 
 ACTION_P(AddValidationErrorAndReturnEmptyProcessor, validationError) {
-	std::vector<ValidationError>* validationErrors = arg1;
-	validationErrors->push_back(validationError);
+	std::vector<ValidationError>& validationErrors = arg1;
+	validationErrors.push_back(validationError);
 	return std::shared_ptr<Processor>();
 }
 
@@ -268,7 +268,7 @@ TEST(TimeSeqCore, LoadScriptShouldNotReplaceExistingScriptIfNewScriptFailsToLoad
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor1);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
-	
+
 	// Check failure scenario (2)
 	resultValidationErrors = timeSeqCore.loadScript(scriptData);
 	EXPECT_EQ(resultValidationErrors.size(), 0u);
@@ -501,7 +501,7 @@ TEST(TimeSeqCore, StartScriptShouldRestartScriptButKeepTriggersVariablesAndProgr
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
-	
+
 	// Check that the variables and triggers are still there
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 1.f);
 	EXPECT_EQ(timeSeqCore.getVariable(var2), 2.f);
@@ -576,7 +576,7 @@ TEST(TimeSeqCore, ResetScriptShouldRestartScriptAndClearTriggersVariablesAndProg
 	// The next process call will do the actual reset
 	timeSeqCore.process(1);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
-	
+
 	// Check that the variables and triggers are cleared
 	EXPECT_EQ(timeSeqCore.getVariable(var1), 0.f);
 	EXPECT_EQ(timeSeqCore.getVariable(var2), 0.f);
@@ -781,7 +781,7 @@ TEST(TimeSeqCore, StartScriptShouldCauseImmediateProcessingOnZeroDelay) {
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
-	
+
 	// Start the core
 	timeSeqCore.start(0);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
@@ -820,7 +820,7 @@ TEST(TimeSeqCore, StartScriptShouldDelayProcessingWhenStartedWithDelay) {
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
-	
+
 	// Start the core
 	timeSeqCore.start(10);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);
@@ -865,7 +865,7 @@ TEST(TimeSeqCore, StartScriptShouldDelayProcessingWhenStartedWithDelayAndProcess
 	EXPECT_EQ(timeSeqCore.m_script, script1);
 	EXPECT_EQ(timeSeqCore.m_processor, processor);
 	EXPECT_EQ(timeSeqCore.getCurrentSampleRate(), 420u);
-	
+
 	// Start the core
 	timeSeqCore.start(10);
 	EXPECT_EQ(timeSeqCore.getStatus(), TimeSeqCore::Status::RUNNING);

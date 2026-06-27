@@ -27,7 +27,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithNoSampleScaleRateShouldUsePr
 		}
 	}) } };
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -79,7 +79,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithTimeScaleWithoutSampleRateSh
 
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(48000));
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -131,7 +131,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateSameAsRealSam
 
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(48000));
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -183,7 +183,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaleSampleRateDoubleOfRealS
 
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(24000));
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -235,7 +235,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldLimitD
 
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(1000));
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -296,7 +296,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithScaledSampleRateShouldHandle
 
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(480));
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -330,7 +330,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithVariableSamplesNoRateMapping
 		}
 	}) } };
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -386,7 +386,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithVariableSamplesNoRateMapping
 		}
 	}) } };
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -444,7 +444,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithVariableSamplesRateMappingAn
 
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(24000)); // The real sample rate is half that of the target, so all sample durations should be halved
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -502,7 +502,7 @@ TEST(TimeSeqProcessorDuration, DurationInVariableSamplesShouldNotGoBelowOneSampl
 
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(48));
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
@@ -543,7 +543,7 @@ TEST(TimeSeqProcessorDuration, DurationInSamplesWithVariableSamplesShouldQueryDu
 	ON_CALL(mockSampleRateReader, getSampleRate()).WillByDefault(testing::Return(3));
 
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);

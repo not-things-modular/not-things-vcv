@@ -21,7 +21,7 @@ TEST(TimeSeqProcessorIf, ActionWithIfShouldFailOnUnknownValueRef) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/if/eq/1");
 }
@@ -51,7 +51,7 @@ TEST(TimeSeqProcessorIf, ActionWithIfShouldFailOnInvalidValues) {
 		{ { "id", "invalid-value-ref" }, { "note", "h4" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/timelines/0/lanes/0/segments/0/actions/0/if/eq/0");
 	expectError(validationErrors, ValidationErrorCode::Value_NoteFormat, "/component-pool/values/0");
@@ -83,7 +83,7 @@ TEST(TimeSeqProcessorIf, ActionWithIfShouldDetectCircularRefInValues) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" }, { "calc", json::array({ { { "add", { { "ref", "variable-value-id" } } } } }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/values/0/calc/0/add");
 	EXPECT_NE(validationErrors[0].message.find("'variable-value-id'"), std::string::npos);
@@ -118,7 +118,7 @@ TEST(TimeSeqProcessorIf, ActionWithUnknownIfRefShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/if");
 	EXPECT_NE(validationErrors[0].message.find("'an-unknown-id'"), std::string::npos);
@@ -156,7 +156,7 @@ TEST(TimeSeqProcessorIf, ActionWithCircularIfRefShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/ifs/0/and/1");
 	EXPECT_NE(validationErrors[0].message.find("'if-id-1'"), std::string::npos);
@@ -188,7 +188,7 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResult) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -239,7 +239,7 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckRefIfResult) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -287,7 +287,7 @@ TEST(TimeSeqProcessorIf, ActionWithEqIfShouldCheckIfResultWithTolerance) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -335,7 +335,7 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResultWithTolerance) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -383,7 +383,7 @@ TEST(TimeSeqProcessorIf, ActionWithNeIfShouldCheckIfResult) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -431,7 +431,7 @@ TEST(TimeSeqProcessorIf, ActionWithGtShouldCheckIfResult) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -479,7 +479,7 @@ TEST(TimeSeqProcessorIf, ActionWithGteShouldCheckIfResult) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -527,7 +527,7 @@ TEST(TimeSeqProcessorIf, ActionWithLtShouldCheckIfResult) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -575,7 +575,7 @@ TEST(TimeSeqProcessorIf, ActionWithLteShouldCheckIfResult) {
 		{ { "id", "variable-value-id" }, { "variable", "input-variable" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -630,7 +630,7 @@ TEST(TimeSeqProcessorIf, ActionWithAndShouldCheckIfResult) {
 		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u) << json.dump();
 	EXPECT_NO_ERRORS(validationErrors);
 
@@ -689,7 +689,7 @@ TEST(TimeSeqProcessorIf, ActionWithOrShouldCheckIfResult) {
 		{ { "id", "variable-value-id-2" }, { "variable", "input-variable-2" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u) << json.dump();
 	EXPECT_NO_ERRORS(validationErrors);
 
@@ -758,7 +758,7 @@ TEST(TimeSeqProcessorIf, ActionWithAndShouldAllowMoreThenTwoConditions) {
 		{ { "id", "variable-value-id-4" }, { "variable", "input-variable-4" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u) << json.dump();
 	EXPECT_NO_ERRORS(validationErrors);
 
@@ -832,7 +832,7 @@ TEST(TimeSeqProcessorIf, ActionWithOrShouldAllowMoreThenTwoConditions) {
 		{ { "id", "variable-value-id-4" }, { "variable", "input-variable-4" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_EQ(validationErrors.size(), 0u) << json.dump();
 	EXPECT_NO_ERRORS(validationErrors);
 

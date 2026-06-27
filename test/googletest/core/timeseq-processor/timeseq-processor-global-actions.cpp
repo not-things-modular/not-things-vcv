@@ -7,7 +7,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithNoGlobalActionsShouldSucceed) {
 	vector<ValidationError> validationErrors;
 	json json = getMinimalJson();
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	EXPECT_EQ(script.second->m_startActions.size(), 0u);
 }
@@ -21,7 +21,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithNonStartGlobalActionsShouldFail) {
 		{ { "timing", "glide" }, { "start-value", { { "voltage", 5 } } }, { "end-value", { { "voltage", 5 } } }, { "output", { { "index", 1 } } } }
 	});
 
-	loadProcessor(processorLoader, json, &validationErrors);
+	loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionTiming, "/global-actions/0");
 	expectError(validationErrors, ValidationErrorCode::Script_GlobalActionTiming, "/global-actions/1");
@@ -40,7 +40,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithInlineStartActionsShouldLoad) {
 		{ { "timing", "start" }, { "trigger", "trigger-name" } },
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_startActions.size(), 3u);
 
@@ -92,7 +92,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldLoad) {
 		{ { "ref", "action-2" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_startActions.size(), 2u);
 
@@ -132,7 +132,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithPooledStartActionsShouldFailOnInva
 		{ { "ref", "action-1" } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Action_TimingEnum, "/component-pool/actions/0");
 }
@@ -155,7 +155,7 @@ TEST(TimeSeqProcessorGlobalActions, ScriptWithUnknownPooledStartActionsShouldFai
 		{ { "ref", "action-2" } }
 	});
 
-	loadProcessor(processorLoader, json, &validationErrors);
+	loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/global-actions/1");
 }

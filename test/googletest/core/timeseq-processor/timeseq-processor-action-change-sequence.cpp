@@ -22,7 +22,7 @@ TEST(TimeSeqProcessorChangeSequence, AddToSequenceShouldFailOnUnknownSequence) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::AddToSequence_SequenceNotFound, "/timelines/0/lanes/0/segments/0/actions/0/add-to-sequence");
 }
@@ -44,7 +44,7 @@ TEST(TimeSeqProcessorChangeSequence, RemoveFromSequenceShouldFailOnUnknownSequen
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::RemoveFromSequence_SequenceNotFound, "/timelines/0/lanes/0/segments/0/actions/0/remove-from-sequence");
 }
@@ -66,7 +66,7 @@ TEST(TimeSeqProcessorChangeSequence, ClearSequenceShouldFailOnUnknownSequence) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::ClearSequence_SequenceNotFound, "/timelines/0/lanes/0/segments/0/actions/0/clear-sequence");
 }
@@ -133,7 +133,7 @@ TEST(TimeSeqProcessorChangeSequence, ClearSequenceActionShouldClearSequence) {
 		{ { "id", "set-non-shared-seq-value-4" }, { "set-value", { { "output", 8 }, { "value", { { "sequence", "simple-non-shared-sequence" } } } } } },
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -247,7 +247,7 @@ TEST(TimeSeqProcessorChangeSequence, RemoveAddAndClearActionsShouldWork) {
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -355,7 +355,7 @@ TEST(TimeSeqProcessorChangeSequence, AddToSequenceAsConstantVoltageShouldRetriev
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -422,7 +422,7 @@ TEST(TimeSeqProcessorChangeSequence, AddToSequenceAsNonConstantVoltageShouldRetr
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	float variable = 0.f;
@@ -494,7 +494,7 @@ TEST(TimeSeqProcessorChangeSequence, OutOfBoundsPositionAfterRemoveFromSequenceS
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({ 9, 8, 7, 6, 5 }) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -568,7 +568,7 @@ TEST(TimeSeqProcessorChangeSequence, RemoveFromSequenceShouldDoNothingOnOutOfBou
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -618,7 +618,7 @@ TEST(TimeSeqProcessorChangeSequence, RemoveFromSequenceShouldHandleRemoveFromEnd
 		{ { "id", "a-shared-sequence" }, { "shared", true }, { "values", json::array({}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};

@@ -6,7 +6,7 @@ This page provides a collection of script examples/tutorials and VCV Rack patche
 
 Each of the samples will contain a description of how the script is constructed, and include a link to the full JSON script and a VCV Rack patch that uses that script in a TimeSeq module. When loading one of the VCV Rack patches, remember to select your audio device on the Audio Output module.
 
-While each of the samples demonstrates separate pieces of functionality, the fact that a TimeSeq script can contain multiple *timeline*s with multiple *lane*s and has 8 polyphonic input and and output ports means that several types of functionality can be combined into one script as needed, and be executed by a single TimeSeq module instance.
+While each of the samples demonstrates separate pieces of functionality, the fact that a TimeSeq script can contain multiple *timeline*s with multiple *lane*s and has 8 polyphonic input and output ports means that several types of functionality can be combined into one script as needed, and be executed by a single TimeSeq module instance.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ While each of the samples demonstrates separate pieces of functionality, the fac
 
 The [chord progression and note melody](samples/CHORDS-AND-NOTES.md) scripts start with a simple sequence of notes and gradually builds this into a full chord progression with eight and triplet notes and some chance control. This script demonstrates:
 
-* Building a simple simple chord progression
+* Building a simple chord progression
 * Using multiple lanes with lanes running in parallel
 * Using segment blocks
 * Using eight- and triplet timings
