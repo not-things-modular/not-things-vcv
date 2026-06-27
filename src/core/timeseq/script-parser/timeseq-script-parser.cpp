@@ -64,7 +64,7 @@ ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDir
 }
 
 template<class ScriptType>
-void parseChildArray(JsonScriptParseContext& context, const json& parent, std::string& jsonTag, int version, vector<ScriptType>& scriptArray, const std::function<ScriptType(const json&)> parseFunc, ValidationErrorCode objectErrorCode, ValidationErrorCode arrayErrorCode) {
+void parseChildArray(JsonScriptParseContext& context, const json& parent, const std::string jsonTag, int version, vector<ScriptType>& scriptArray, const std::function<ScriptType(const json&)> parseFunc, ValidationErrorCode objectErrorCode, ValidationErrorCode arrayErrorCode) {
 	json::const_iterator items = parent.find(jsonTag);
 	if (items != parent.end()) {
 		if (version > 0) {
@@ -152,7 +152,8 @@ const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 		m_context.location.push_back("timelines");
 
 		int count = 0;
-		for (const json& timeline : (*timelines)) {
+		vector<json> timelineElements = (*timelines);
+		for (const json& timeline : timelineElements) {
 			m_context.location.push_back(to_string(count));
 			if (timeline.is_object()) {
 				script->timelines.push_back(parseTimeline(timeline));
