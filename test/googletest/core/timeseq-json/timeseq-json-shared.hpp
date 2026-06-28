@@ -3,8 +3,10 @@
 #include <gtest/gtest.h>
 #include <istream>
 
-#include "core/timeseq-json.hpp"
+#include "core/timeseq-script-parser.hpp"
+#include "core/timeseq-processor-parser.hpp"
 
+using namespace nlohmann;
 using namespace timeseq;
 using namespace std;
 
@@ -13,9 +15,9 @@ using namespace std;
 #define SCRIPT_VERSION_1_2_0 "1.2.0"
 
 
-shared_ptr<Script> loadScript(JsonLoader& jsonLoader, json& json, vector<ValidationError> *validationErrors);
-json getMinimalJson();
-json getMinimalJson(const char* scriptVersion);
+shared_ptr<Script> loadScript(JsonLoader& jsonLoader, nlohmann::json& json, vector<ValidationError>& validationErrors);
+nlohmann::json getMinimalJson();
+nlohmann::json getMinimalJson(const char* scriptVersion);
 void expectError(vector<ValidationError>& validationErrors, int errorCode, string errorLocation);
 void expectNoErrors(vector<ValidationError>& validationErrors);
 

@@ -11,12 +11,12 @@ TEST(TimeSeqProcessorSetLabel, SetLabelActionShouldUpdateOutputLabel) {
 	json["timelines"] = json::array({
 		{ { "lanes", json::array({
 			{ { "loop", true }, { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
-				{ { "set-label", { { "index", 3 }, { "label", "this-is-a-label" } } } } 
+				{ { "set-label", { { "index", 3 }, { "label", "this-is-a-label" } } } }
 			}) } } }) } },
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};

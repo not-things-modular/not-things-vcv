@@ -8,25 +8,25 @@
 #include <gmock/gmock.h>
 
 struct MockPortHandler : PortHandler {
-	MOCK_METHOD(float, getInputPortVoltage, (int, int), (override));
-	MOCK_METHOD(float, getOutputPortVoltage, (int, int), (override));
+	MOCK_METHOD(float, getInputPortVoltage, (int, int), (const, override));
+	MOCK_METHOD(float, getOutputPortVoltage, (int, int), (const, override));
 	MOCK_METHOD(void, setOutputPortVoltage, (int, int, float), (override));
 	MOCK_METHOD(void, setOutputPortChannels, (int, int), (override));
-	MOCK_METHOD(void, setOutputPortLabel, (int, std::string&), (override));
+	MOCK_METHOD(void, setOutputPortLabel, (int, const std::string&), (override));
 };
 
 struct MockVariableHandler : VariableHandler {
-	MOCK_METHOD(float, getVariable, (std::string&), (override));
-	MOCK_METHOD(void, setVariable, (std::string&, float), (override));
+	MOCK_METHOD(float, getVariable, (const std::string&), (const, override));
+	MOCK_METHOD(void, setVariable, (const std::string&, float), (override));
 };
 
 struct MockTriggerHandler : TriggerHandler {
-	MOCK_METHOD(std::vector<std::string>&, getTriggers, (), (override));
-	MOCK_METHOD(void, setTrigger, (std::string&), (override));
+	MOCK_METHOD(const std::vector<std::string>&, getTriggers, (), (const, override));
+	MOCK_METHOD(void, setTrigger, (const std::string&), (override));
 };
 
 struct MockSampleRateReader : SampleRateReader {
-	MOCK_METHOD(float, getSampleRate, (), (override));
+	MOCK_METHOD(float, getSampleRate, (), (const, override));
 };
 
 struct MockEventListener : EventListener {
@@ -37,7 +37,7 @@ struct MockEventListener : EventListener {
 };
 
 struct MockAssertListener : AssertListener {
-	MOCK_METHOD(void, assertFailed, (std::string&, std::string&, bool), (override));
+	MOCK_METHOD(void, assertFailed, (const std::string&, const std::string&, bool), (override));
 };
 
 struct MockRandValueGenerator : RandValueGenerator {
@@ -49,7 +49,7 @@ static std::vector<std::string> mockDefaultTriggerHandlerEmptyTriggers;
 	ON_CALL(mockTriggerHandler, getTriggers).WillByDefault(testing::ReturnRef(mockDefaultTriggerHandlerEmptyTriggers));
 
 
-pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, json& json, vector<ValidationError> *validationErrors);
+pair<shared_ptr<Script>, shared_ptr<Processor>> loadProcessor(ProcessorLoader& processorLoader, nlohmann::json& json, vector<ValidationError>& validationErrors);
 
 static std::string inputVariableName = "input-variable";
 static std::string outputVariableName = "output-variable";

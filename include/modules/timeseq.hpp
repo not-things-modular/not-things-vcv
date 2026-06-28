@@ -55,19 +55,19 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) override;
 	void onRemove(const RemoveEvent& e) override;
 
-	float getInputPortVoltage(int index, int channel) override;
-	float getOutputPortVoltage(int index, int channel) override;
-	float getSampleRate() override;
+	float getInputPortVoltage(int index, int channel) const override;
+	float getOutputPortVoltage(int index, int channel) const override;
+	float getSampleRate() const override;
 	void setOutputPortVoltage(int index, int channel, float voltage) override;
 	void setOutputPortChannels(int index, int channels) override;
-	void setOutputPortLabel(int index, std::string& label) override;
+	void setOutputPortLabel(int index, const std::string& label) override;
 
 	void laneLooped() override;
 	void segmentStarted() override;
 	void triggerTriggered() override;
 	void scriptReset() override;
 
-	void assertFailed(std::string& name, std::string& message, bool stop) override;
+	void assertFailed(const std::string& name, const std::string& message, bool stop) override;
 
 
 	std::shared_ptr<std::string> getScript();

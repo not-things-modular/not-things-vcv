@@ -22,7 +22,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionShouldFailOnUnknownSequence
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::MoveSequence_SequenceNotFound, "/timelines/0/lanes/0/segments/0/actions/0/move-sequence");
 }
@@ -47,7 +47,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionShouldFailOnNonSharedSequen
 		{ { "id", "non-shared-sequence" }, { "shared", false }, { "values", json::array() } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::MoveSequence_NonSharedSequence, "/timelines/0/lanes/0/segments/0/actions/0/move-sequence");
 }
@@ -99,7 +99,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithNoMoveOrPositionShouldM
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -209,7 +209,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithForwardMoveShouldMoveFo
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -319,7 +319,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithBackwardMoveShouldMoveB
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -429,7 +429,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithNoneMoveShouldNotMove) 
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -531,7 +531,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithRandMoveShouldMoveRando
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -633,7 +633,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithRandMoveOutOfBoundsShou
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	// Always return a position out of bounds.
@@ -704,7 +704,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithPositionShouldMoveToPos
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -809,7 +809,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithPositionOutOfBoundsShou
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -914,7 +914,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithNoWrapShouldStopOnBound
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -1029,7 +1029,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithMixShouldMoveMixed) {
 		{ { "id", "simple-implicitly-shared-sequence" }, { "values", sequence2 } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	int sequence1idx = 0;
@@ -1132,7 +1132,7 @@ TEST(TimeSeqProcessorMoveSequence, MoveSequenceActionWithEmptySequenceShouldWork
 		{ { "id", "an-empty-sequence" }, { "values", json::array({}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	EXPECT_CALL(*mockRandValueGenerator.get(), generate(0.f, 5.f)).WillRepeatedly(testing::Return(2));

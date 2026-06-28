@@ -19,7 +19,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcRefToUnknownCalcShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/calc/0");
 }
@@ -41,7 +41,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcWithRefToUnknownValueShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/calc/0/add");
 }
@@ -63,7 +63,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcInvalidValueShouldFail) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Value_VoltageFloat, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/calc/0/add");
 }
@@ -86,7 +86,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldAddValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -118,7 +118,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldSubtractValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -150,7 +150,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldMultiplyValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -182,7 +182,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldDivideValueByNonZero) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -214,7 +214,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldDivideValueByZero) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -255,7 +255,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcsShouldExecuteCalcsInOrder) {
 		{ { "id", "calc-id-2" }, { "mult", { { "voltage", -1.3f } } } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -293,7 +293,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCircularCalcRefShouldFail) {
 		{ { "id", "calc-id-1" }, { "sub", { { "voltage", 3.1f }, { "calc", json::array({ { { "ref", "calc-id-1" } } }) } } } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/calcs/0/sub/calc/0");
 	EXPECT_NE(validationErrors[0].message.find("'calc-id-1'"), std::string::npos);
@@ -324,7 +324,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCircularValueRefShouldFail) {
 		{ { "id", "calc-id-2" }, { "sub", { { "ref", "value-1" } } } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Ref_CircularFound, "/component-pool/calcs/1/sub");
 	EXPECT_NE(validationErrors[0].message.find("'value-1'"), std::string::npos);
@@ -352,7 +352,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldDetermineMaxAndMinValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	string minVariableName = "min-variable";
@@ -450,7 +450,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldDetermineRemainderValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	string minVariableName = "min-variable";
@@ -509,7 +509,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldTruncValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -571,7 +571,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldFracValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -639,7 +639,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldRoundValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	string upVariableName = "up-variable";
@@ -723,7 +723,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldSignValue) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	string posVariableName = "pos-variable";
@@ -801,7 +801,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldFailForUnknownQuantizeTuning)
 		})}
 	};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Calc_QuantizeTuningNotFound, "/timelines/0/lanes/0/segments/0/actions/0/set-variable/value/calc/0/quantize");
 }
@@ -833,7 +833,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValueToSingleNoteTuni
 		})}
 	};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -934,7 +934,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValuesToDifferentTuni
 		})}
 	};
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -1016,7 +1016,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldQuantizeValuesToInlineTuning)
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	vector<string> emptyTriggers = {};
@@ -1083,7 +1083,7 @@ TEST(TimeSeqProcessorValueCalc, ValueWithCalcShouldConvertVoltageToFrequency) {
 		}) } }
 	});
 
-	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, &validationErrors);
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 
 	array<array<float, 2u>, 4u> vtofPairs = {{
