@@ -34,9 +34,21 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 		m_context.popLocation();
 	}
 
+	// Both clocks and timelines will be added to the timelineProcessors vector
+	vector<shared_ptr<TimelineProcessor>> timelineProcessors;
+
+	count = 0;
+	m_context.location.push_back("clocks");
+	for (const ScriptClock& clock : script->clocks) {
+		m_context.location.push_back(to_string(count));
+		timelineProcessors.push_back(parseClock(&clock));
+		m_context.location.pop_back();
+		count++;
+	}
+	m_context.location.pop_back();
+
 	count = 0;
 	m_context.location.push_back("timelines");
-	vector<shared_ptr<TimelineProcessor>> timelineProcessors;
 	for (const ScriptTimeline& timeline : script->timelines) {
 		m_context.location.push_back(to_string(count));
 		timelineProcessors.push_back(parseTimeline(&timeline));
@@ -82,6 +94,40 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	return make_shared<Processor>(script, timelineProcessors, triggerProcessors, startActionProcessors);
 }
 
+const shared_ptr<TimelineProcessor> ProcessorScriptParser::parseClock(const ScriptClock* scriptClock) {
+	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers;
+	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers;
+
+	int count = 0;
+	m_context.location.push_back("lanes");
+	vector<shared_ptr<LaneProcessor>> laneProcessors;
+	for (const ScriptClockLane& lane : scriptClock->lanes) {
+		shared_ptr<LaneProcessor> laneProcessor;
+		m_context.location.push_back(to_string(count));
+		laneProcessor = parseClockLane(&lane, scriptClock->timeScale.get());
+		laneProcessors.push_back(laneProcessor);
+		m_context.location.pop_back();
+		count++;
+
+		if (lane.startTrigger.length() > 0) {
+			if (startTriggers.find(lane.startTrigger) == startTriggers.end()) {
+				startTriggers[lane.startTrigger] = vector<shared_ptr<LaneProcessor>>();
+			}
+			startTriggers[lane.startTrigger].push_back(laneProcessor);
+		}
+
+		if (lane.stopTrigger.length() > 0) {
+			if (stopTriggers.find(lane.stopTrigger) == stopTriggers.end()) {
+				stopTriggers[lane.stopTrigger] = vector<shared_ptr<LaneProcessor>>();
+			}
+			stopTriggers[lane.stopTrigger].push_back(laneProcessor);
+		}
+	}
+	m_context.location.pop_back();
+
+	return make_shared<TimelineProcessor>(false, laneProcessors, startTriggers, stopTriggers, m_triggerHandler);
+}
+
 const shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(const ScriptTimeline* scriptTimeline) {
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> startTriggers;
 	unordered_map<string, vector<shared_ptr<LaneProcessor>>> stopTriggers;
@@ -113,7 +159,46 @@ const shared_ptr<TimelineProcessor> ProcessorScriptParser::parseTimeline(const S
 	}
 	m_context.location.pop_back();
 
-	return make_shared<TimelineProcessor>(scriptTimeline, laneProcessors, startTriggers, stopTriggers, m_triggerHandler);
+	return make_shared<TimelineProcessor>(scriptTimeline->loopLock, laneProcessors, startTriggers, stopTriggers, m_triggerHandler);
+}
+
+const shared_ptr<LaneProcessor> ProcessorScriptParser::parseClockLane(const ScriptClockLane* scriptClockLane, ScriptTimeScale* timeScale) {
+	unsigned int validationCount = m_context.validationErrors->size();
+
+	m_context.location.push_back("output");
+	pair<int, int> output = parseOutput(&scriptClockLane->output);
+	m_context.location.pop_back();
+	int outputPort = output.first;
+	int outputChannel = output.second;
+
+
+	int count = 0;
+	m_context.location.push_back("durations");
+	vector<shared_ptr<SegmentProcessor>> segmentProcessors;
+	for (const ScriptDuration& scriptDuration : scriptClockLane->durations) {
+		m_context.location.push_back(to_string(count));
+
+		vector<shared_ptr<ActionProcessor>> startActions;
+		vector<shared_ptr<ActionProcessor>> endActions;
+		vector<shared_ptr<ActionOngoingProcessor>> ongoingActions;
+
+		shared_ptr<DurationProcessor> durationProcessor = parseDuration(&scriptDuration, timeScale);
+		ongoingActions.push_back(make_shared<ActionGateProcessor>(scriptClockLane->gateHighRatio, shared_ptr<IfProcessor>(), outputPort, outputChannel, m_portHandler));
+		segmentProcessors.push_back(make_shared<SegmentProcessor>(durationProcessor, startActions, endActions, ongoingActions, false, m_eventListener));
+
+		m_context.location.pop_back();
+		count++;
+
+
+	}
+	m_context.location.pop_back();
+
+	// Only return an actual processor if there were no validation errors during parsing. Otherwise there might be partially loaded children, and we can't reliably continue with this processor.
+	if (validationCount == m_context.validationErrors->size()) {
+		return make_shared<LaneProcessor>(scriptClockLane, segmentProcessors, m_eventListener);
+	} else {
+		return shared_ptr<LaneProcessor>();
+	}
 }
 
 const shared_ptr<LaneProcessor> ProcessorScriptParser::parseLane(const ScriptLane* scriptLane, ScriptTimeScale* timeScale) {

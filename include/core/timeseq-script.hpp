@@ -276,6 +276,25 @@ struct ScriptTimeline {
 	std::vector<ScriptLane> lanes;
 };
 
+struct ScriptClockLane {
+	bool autoStart;
+	
+	std::string startTrigger;
+	std::string restartTrigger;
+	std::string stopTrigger;
+
+	std::vector<ScriptDuration> durations;
+	float gateHighRatio;
+	ScriptOutput output;
+
+	bool disableUi;
+};
+
+struct ScriptClock {
+	std::unique_ptr<ScriptTimeScale> timeScale;
+	std::vector<ScriptClockLane> lanes;
+};
+
 struct ScriptInputTrigger {
 	std::string id;
 	ScriptInput input;
@@ -285,6 +304,7 @@ struct Script {
 	std::string type;
 	std::string version;
 
+	std::vector<ScriptClock> clocks;
 	std::vector<ScriptTimeline> timelines;
 	std::vector<ScriptAction> globalActions;
 	std::vector<ScriptInputTrigger> inputTriggers;

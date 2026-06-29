@@ -98,7 +98,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndNoLoopLockSh
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
@@ -197,7 +197,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockFals
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
@@ -282,7 +282,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
@@ -408,7 +408,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesAndLoopLockTrue
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 4u);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
@@ -528,7 +528,7 @@ TEST(TimeSeqProcessorTimelines, ScriptWithSingleTimelineWithLanesWithStartAndSto
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_loop, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 5u);
 
 	// Nothing should happen since no start triggers were activated yet
@@ -768,21 +768,21 @@ TEST(TimeSeqProcessorTimelines, ScriptWithMutlipleTimelinesWithLanesAndLoopLockM
 	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
 	EXPECT_NO_ERRORS(validationErrors);
 	ASSERT_EQ(script.second->m_timelines.size(), 3u);
-	ASSERT_EQ(script.second->m_timelines[0]->m_scriptTimeline->loopLock, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_loopLock, true);
 	ASSERT_EQ(script.second->m_timelines[0]->m_lanes.size(), 3u);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[1]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[2]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[1]->m_scriptTimeline->loopLock, false);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[1]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[0]->m_lanes[2]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[1]->m_loopLock, false);
 	ASSERT_EQ(script.second->m_timelines[1]->m_lanes.size(), 3u);
-	ASSERT_EQ(script.second->m_timelines[1]->m_lanes[0]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[1]->m_lanes[1]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[1]->m_lanes[2]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[2]->m_scriptTimeline->loopLock, true);
+	ASSERT_EQ(script.second->m_timelines[1]->m_lanes[0]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[1]->m_lanes[1]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[1]->m_lanes[2]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[2]->m_loopLock, true);
 	ASSERT_EQ(script.second->m_timelines[2]->m_lanes.size(), 3u);
-	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[0]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[1]->m_scriptLane->loop, true);
-	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[2]->m_scriptLane->loop, true);
+	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[0]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[1]->m_loop, true);
+	ASSERT_EQ(script.second->m_timelines[2]->m_lanes[2]->m_loop, true);
 
 	std::string trigger11 = "trigger-1.1";
 	std::string trigger12 = "trigger-1.2";

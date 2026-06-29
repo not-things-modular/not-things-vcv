@@ -19,8 +19,10 @@ namespace timeseq {
 
 
 struct Script;
+struct ScriptClock;
 struct ScriptTimeline;
 struct ScriptInputTrigger;
+struct ScriptClockLane;
 struct ScriptLane;
 struct ScriptTimeScale;
 struct ScriptSegment;
@@ -79,8 +81,10 @@ struct ProcessorScriptParser {
 	std::shared_ptr<Processor> parseScript(const std::shared_ptr<Script> script, std::vector<ValidationError>& validationErrors);
 
 	nt_private:
+		const std::shared_ptr<TimelineProcessor> parseClock(const ScriptClock* scriptClock);
 		const std::shared_ptr<TimelineProcessor> parseTimeline(const ScriptTimeline* scriptTimeline);
 		const std::shared_ptr<TriggerProcessor> parseInputTrigger(const ScriptInputTrigger* ScriptInputTrigger);
+		const std::shared_ptr<LaneProcessor> parseClockLane(const ScriptClockLane* scriptClockLane, ScriptTimeScale* timeScale);
 		const std::shared_ptr<LaneProcessor> parseLane(const ScriptLane* scriptLane, ScriptTimeScale* timeScale);
 		const std::vector<std::shared_ptr<SegmentProcessor>> parseSegments(const std::vector<ScriptSegment>* scriptSegments, const ScriptTimeScale* timeScale, std::vector<std::string>& segmentStack);
 		const std::vector<std::shared_ptr<SegmentProcessor>> parseSegment(const ScriptSegment* scriptSegment, const ScriptTimeScale* timeScale, std::vector<std::string>& segmentStack);
