@@ -277,11 +277,14 @@ struct ScriptTimeline {
 };
 
 struct ScriptClockLane {
+	bool autoStart;
+	
 	std::string startTrigger;
 	std::string restartTrigger;
 	std::string stopTrigger;
 
 	std::vector<ScriptDuration> durations;
+	float gateHighRatio;
 	ScriptOutput output;
 
 	bool disableUi;

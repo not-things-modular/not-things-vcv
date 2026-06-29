@@ -131,7 +131,7 @@ const std::vector<ValidationError>& JsonScriptParser::getValidationErrors() {
 }
 
 const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
-	static const vector<string> scriptProperties = { "type", "version", "timelines", "global-actions", "input-triggers", "sequences", "component-pool", "$schema" };
+	static const vector<string> scriptProperties = { "type", "version", "clocks", "timelines", "global-actions", "input-triggers", "sequences", "component-pool", "$schema" };
 	shared_ptr<Script> script = make_shared<Script>();
 	vector<string> ids;
 
@@ -171,7 +171,7 @@ const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 	}
 
 	parseChildArray<ScriptClock, false>(m_context, scriptJson, "clocks", VERSION_1_3_0, script->clocks, [this](const json& clock) { return parseClock(clock); }, ValidationErrorCode::Script_ClockObject, ValidationErrorCode::Script_ClocksArray, ValidationErrorCode::NoError);
-	parseChildArray<ScriptTimeline, false>(m_context, scriptJson, "timelines", 0, script->timelines, [this](const json& timeline) { return parseTimeline(timeline); }, ValidationErrorCode::Script_TimelineObject, ValidationErrorCode::Script_TimelinesMissing, ValidationErrorCode::Script_TimelinesMissing);
+	parseChildArray<ScriptTimeline, false>(m_context, scriptJson, "timelines", 0, script->timelines, [this](const json& timeline) { return parseTimeline(timeline); }, ValidationErrorCode::Script_TimelineObject, ValidationErrorCode::Script_TimelinesArray, ValidationErrorCode::NoError);
 	parseChildArray<ScriptAction, false>(m_context, scriptJson, "global-actions", 0, script->globalActions, [this](const json& action) { return parseAction(action, true); }, ValidationErrorCode::Script_GlobalActionsObject, ValidationErrorCode::Script_GlobalActionsArray, ValidationErrorCode::NoError);
 	parseChildArray<ScriptInputTrigger, false>(m_context, scriptJson, "input-triggers", 0, script->inputTriggers, [this](const json& inputTrigger) { return parseInputTrigger(inputTrigger); }, ValidationErrorCode::Script_InputTriggerObject, ValidationErrorCode::Script_InputTriggersArray, ValidationErrorCode::NoError);
 	parseChildArray<ScriptSequence, true>(m_context, scriptJson, "sequences", VERSION_1_1_0, script->sequences, [this](const json& sequence) { return parseSequence(sequence); }, ValidationErrorCode::Script_SequenceObject, ValidationErrorCode::Script_SequencesArray, ValidationErrorCode::NoError);
@@ -200,6 +200,12 @@ const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 		}
 	}
 
+	json::const_iterator timelines = scriptJson.find("timelines");
+	json::const_iterator clocks = scriptJson.find("clocks");
+	if (timelines == scriptJson.end() && clocks == scriptJson.end()) {
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_EitherTimelinesOrClocks, "Either 'timelines' or 'clocks' must be present.");
+	}
+
 	return script;
 }
 
@@ -226,10 +232,33 @@ ScriptClock JsonScriptParser::parseClock(const json& clockJson) {
 }
 
 ScriptClockLane JsonScriptParser::parseClockLane(const json& clockLaneJson) {
-	static const vector<string> laneProperties = { "durations", "output", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" };
+	static const vector<string> laneProperties = { "auto-start", "gate-high-ratio", "durations", "output", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" };
 	ScriptClockLane clockLane;
 
 	verifyAllowedProperties(clockLaneJson, laneProperties, false, m_context);
+
+	json::const_iterator autoStart = clockLaneJson.find("auto-start");
+	clockLane.autoStart = true;
+	if (autoStart != clockLaneJson.end()) {
+		if (autoStart->is_boolean()) {
+			clockLane.autoStart = autoStart->get<bool>();
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_AutoStartBoolean, "'auto-start' must be a boolean.");
+		}
+	}
+
+	clockLane.gateHighRatio = .5f;
+	json::const_iterator gateHighRatio = clockLaneJson.find("gate-high-ratio");
+	if (gateHighRatio != clockLaneJson.end()) {
+		if (gateHighRatio->is_number()) {
+			clockLane.gateHighRatio = gateHighRatio->get<float>();
+			if ((clockLane.gateHighRatio < 0.f) || (clockLane.gateHighRatio > 1.f)) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_GateHighRatioRange, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+			}
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_GateHighRatioFloat, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+		}
+	}
 
 	json::const_iterator output = clockLaneJson.find("output");
 	if (output != clockLaneJson.end()) {

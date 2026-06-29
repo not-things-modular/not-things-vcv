@@ -6,22 +6,22 @@ using namespace std;
 using namespace timeseq;
 
 SegmentProcessor::SegmentProcessor(const SegmentProcessor& segmentProcessor) :
-	m_scriptSegment(segmentProcessor.m_scriptSegment),
 	m_duration(segmentProcessor.m_duration),
 	m_startActions(segmentProcessor.m_startActions),
 	m_endActions(segmentProcessor.m_endActions),
 	m_ongoingActions(segmentProcessor.m_ongoingActions),
+	m_disableUi(segmentProcessor.m_disableUi),
 	m_eventListener(segmentProcessor.m_eventListener) {
 }
 
 SegmentProcessor::SegmentProcessor(
-	const ScriptSegment* scriptSegment,
 	const shared_ptr<DurationProcessor>& duration,
 	const vector<shared_ptr<ActionProcessor>>& startActions,
 	const vector<shared_ptr<ActionProcessor>>& endActions,
 	const vector<shared_ptr<ActionOngoingProcessor>>& ongoingActions,
+	bool disableUi,
 	EventListener* eventListener) :
-		m_scriptSegment(scriptSegment), m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_ongoingActions(ongoingActions), m_eventListener(eventListener) {}
+		m_duration(duration), m_startActions(startActions), m_endActions(endActions), m_ongoingActions(ongoingActions), m_disableUi(disableUi), m_eventListener(eventListener) {}
 
 void SegmentProcessor::pushStartActions(const vector<shared_ptr<ActionProcessor>>& startActions) {
 	m_startActions.insert(m_startActions.begin(), startActions.begin(), startActions.end());
@@ -40,7 +40,7 @@ double SegmentProcessor::process(double drift) {
 
 	// Trigger the start actions if we're at the start of the segment
 	if (m_duration->getState() == DurationProcessor::DurationState::STATE_START) {
-		if (!m_scriptSegment->disableUi) {
+		if (!m_disableUi) {
 			m_eventListener->segmentStarted();
 		}
 		processStartActions();

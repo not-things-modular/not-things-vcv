@@ -174,9 +174,18 @@ const shared_ptr<LaneProcessor> ProcessorScriptParser::parseClockLane(const Scri
 
 	int count = 0;
 	m_context.location.push_back("durations");
+	vector<shared_ptr<SegmentProcessor>> segmentProcessors;
 	for (const ScriptDuration& scriptDuration : scriptClockLane->durations) {
 		m_context.location.push_back(to_string(count));
-		shared_ptr<DurationProcessor> durationProcessor = parseDuration(&scriptSegment->duration, timeScale);
+
+		vector<shared_ptr<ActionProcessor>> startActions;
+		vector<shared_ptr<ActionProcessor>> endActions;
+		vector<shared_ptr<ActionOngoingProcessor>> ongoingActions;
+
+		shared_ptr<DurationProcessor> durationProcessor = parseDuration(&scriptDuration, timeScale);
+		ongoingActions.push_back(make_shared<ActionGateProcessor>(scriptClockLane->gateHighRatio, shared_ptr<IfProcessor>(), outputPort, outputChannel, m_portHandler));
+		segmentProcessors.push_back(make_shared<SegmentProcessor>(durationProcessor, startActions, endActions, ongoingActions, false, m_eventListener));
+
 		m_context.location.pop_back();
 		count++;
 
@@ -186,7 +195,7 @@ const shared_ptr<LaneProcessor> ProcessorScriptParser::parseClockLane(const Scri
 
 	// Only return an actual processor if there were no validation errors during parsing. Otherwise there might be partially loaded children, and we can't reliably continue with this processor.
 	if (validationCount == m_context.validationErrors->size()) {
-		return make_shared<LaneProcessor>(scriptLane, segmentProcessors, m_eventListener);
+		return make_shared<LaneProcessor>(scriptClockLane, segmentProcessors, m_eventListener);
 	} else {
 		return shared_ptr<LaneProcessor>();
 	}

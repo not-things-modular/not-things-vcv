@@ -19,8 +19,10 @@ namespace timeseq {
 
 
 struct Script;
+struct ScriptClock;
 struct ScriptTimeline;
 struct ScriptInputTrigger;
+struct ScriptClockLane;
 struct ScriptLane;
 struct ScriptTimeScale;
 struct ScriptSegment;

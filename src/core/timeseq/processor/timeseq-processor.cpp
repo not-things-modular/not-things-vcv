@@ -10,7 +10,11 @@ using namespace std;
 using namespace timeseq;
 
 
-LaneProcessor::LaneProcessor(const ScriptLane* scriptLane, const vector<shared_ptr<SegmentProcessor>>& segments, EventListener* eventListener) : m_scriptLane(scriptLane), m_segments(segments), m_eventListener(eventListener) {
+LaneProcessor::LaneProcessor(const ScriptLane* scriptLane, const vector<shared_ptr<SegmentProcessor>>& segments, EventListener* eventListener) : m_autoStart(scriptLane->autoStart), m_loop(scriptLane->loop), m_repeat(scriptLane->repeat), m_startTrigger(scriptLane->startTrigger), m_stopTrigger(scriptLane->stopTrigger), m_restartTrigger(scriptLane->restartTrigger), m_disableUi(scriptLane->disableUi), m_segments(segments), m_eventListener(eventListener) {
+	reset();
+}
+
+LaneProcessor::LaneProcessor(const ScriptClockLane* scriptClockLane, const vector<shared_ptr<SegmentProcessor>>& segments, EventListener* eventListener) : m_autoStart(scriptClockLane->autoStart), m_loop(true), m_repeat(0), m_startTrigger(scriptClockLane->startTrigger), m_stopTrigger(scriptClockLane->stopTrigger), m_restartTrigger(scriptClockLane->restartTrigger), m_disableUi(scriptClockLane->disableUi), m_segments(segments), m_eventListener(eventListener) {
 	reset();
 }
 
@@ -58,7 +62,7 @@ bool LaneProcessor::process() {
 void LaneProcessor::loop() {
 	if (m_state == LaneState::STATE_PENDING_LOOP) {
 		// Check if we need to loop or repeat
-		if ((m_scriptLane->loop) || (m_scriptLane->repeat > 1 && m_repeatCount < m_scriptLane->repeat - 1)) {
+		if ((m_loop) || (m_repeat > 1 && m_repeatCount < m_repeat - 1)) {
 			m_repeatCount++;
 			m_activeSegment = 0;
 			m_state = LaneState::STATE_PROCESSING;
@@ -68,7 +72,7 @@ void LaneProcessor::loop() {
 				m_segments[0]->reset();
 			}
 
-			if (!m_scriptLane->disableUi) {
+			if (!m_disableUi) {
 				m_eventListener->laneLooped();
 			}
 
@@ -87,7 +91,7 @@ void LaneProcessor::reset() {
 		m_segments[0]->reset();
 	}
 
-	if ((git->autoStart) && (m_segments.size() > 0)) {
+	if ((m_autoStart) && (m_segments.size() > 0)) {
 		m_state = LaneState::STATE_PROCESSING;
 	} else {
 		m_state = LaneState::STATE_IDLE;
@@ -98,19 +102,19 @@ void LaneProcessor::processTriggers(const vector<string>& triggers) {
 	// No use in starting if we have no segments...
 	if (m_segments.size() > 0) {
 		// Restarts must be done no matter the current state
-		if ((m_scriptLane->restartTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->restartTrigger) != triggers.end())) {
+		if ((m_restartTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_restartTrigger) != triggers.end())) {
 			reset();
 			m_state = LaneState::STATE_PROCESSING;
 		} else if (m_state != LaneState::STATE_PROCESSING) {
 			// Starts must only be done if we're not already running
-			if ((m_scriptLane->startTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->startTrigger) != triggers.end())) {
+			if ((m_startTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_startTrigger) != triggers.end())) {
 				reset();
 				m_state = LaneState::STATE_PROCESSING;
 			}
 		}
 	}
 
-	if ((m_state != LaneState::STATE_IDLE) && (m_scriptLane->stopTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_scriptLane->stopTrigger) != triggers.end())) {
+	if ((m_state != LaneState::STATE_IDLE) && (m_stopTrigger.length() > 0) && (find(triggers.begin(), triggers.end(), m_stopTrigger) != triggers.end())) {
 		m_state = LaneState::STATE_IDLE;
 	}
 

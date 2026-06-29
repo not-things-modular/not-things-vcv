@@ -20,6 +20,7 @@ namespace timeseq {
 
 struct ScriptIf;
 struct ScriptTimeline;
+struct ScriptClockLane;
 struct ScriptLane;
 struct ScriptSegment;
 struct ScriptCalc;
@@ -474,11 +475,11 @@ struct DurationVariableHzProcessor : DurationProcessor {
 struct SegmentProcessor {
 	SegmentProcessor(const SegmentProcessor& segmentProcessor);
 	SegmentProcessor(
-		const ScriptSegment* scriptSegment,
 		const std::shared_ptr<DurationProcessor>& durationProcessor,
 		const std::vector<std::shared_ptr<ActionProcessor>>& startActions,
 		const std::vector<std::shared_ptr<ActionProcessor>>& endActions,
 		const std::vector<std::shared_ptr<ActionOngoingProcessor>>& ongoingActions,
+		bool disableUi,
 		EventListener* eventListener
 	);
 
@@ -491,12 +492,13 @@ struct SegmentProcessor {
 	void reset();
 
 	nt_private:
-		const ScriptSegment* m_scriptSegment;
 		const std::shared_ptr<DurationProcessor> m_duration;
 
 		std::vector<std::shared_ptr<ActionProcessor>> m_startActions;
 		std::vector<std::shared_ptr<ActionProcessor>> m_endActions;
 		const std::vector<std::shared_ptr<ActionOngoingProcessor>> m_ongoingActions;
+
+		bool m_disableUi;
 
 		EventListener* m_eventListener;
 
@@ -509,6 +511,7 @@ struct LaneProcessor {
 	enum LaneState { STATE_IDLE, STATE_PROCESSING, STATE_PENDING_LOOP };
 
 	LaneProcessor(const ScriptLane* scriptLane, const std::vector<std::shared_ptr<SegmentProcessor>>& segments, EventListener* eventListener);
+	LaneProcessor(const ScriptClockLane* scriptClockLane, const std::vector<std::shared_ptr<SegmentProcessor>>& segments, EventListener* eventListener);
 
 	LaneState getState();
 
@@ -519,7 +522,15 @@ struct LaneProcessor {
 	void processTriggers(const std::vector<std::string>& triggers);
 
 	nt_private:
-		const ScriptLane* m_scriptLane;
+		bool m_autoStart;
+		bool m_loop;
+		int m_repeat;
+
+		std::string m_startTrigger;
+		std::string m_stopTrigger;
+		std::string m_restartTrigger;
+
+		bool m_disableUi;
 		const std::vector<std::shared_ptr<SegmentProcessor>> m_segments;
 
 		LaneState m_state = LaneState::STATE_IDLE;
