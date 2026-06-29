@@ -533,7 +533,7 @@ struct LaneProcessor {
 
 struct TimelineProcessor {
 	TimelineProcessor(
-		const ScriptTimeline* scriptTimeline,
+		bool loopLock,
 		const std::vector<std::shared_ptr<LaneProcessor>>& lanes,
 		const std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>>& startTriggers,
 		const std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>>& stopTriggers,
@@ -544,7 +544,7 @@ struct TimelineProcessor {
 	void reset();
 
 	nt_private:
-		const ScriptTimeline* m_scriptTimeline;
+		bool m_loopLock;
 		const std::vector<std::shared_ptr<LaneProcessor>> m_lanes;
 
 		const std::unordered_map<std::string, std::vector<std::shared_ptr<LaneProcessor>>> m_startTriggers;

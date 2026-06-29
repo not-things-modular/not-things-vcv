@@ -24,6 +24,8 @@ struct JsonScriptParser {
 	const std::vector<ValidationError>& getValidationErrors();
 
 	private:
+		ScriptClock parseClock(const nlohmann::json& clock);
+		ScriptClockLane parseClockLane(const nlohmann::json& laneJson);
 		ScriptTimeline parseTimeline(const nlohmann::json& timelineJson);
 		ScriptTimeScale parseTimeScale(const nlohmann::json& timeScaleJson);
 		ScriptLane parseLane(const nlohmann::json& laneJson);

@@ -5,7 +5,8 @@ void verifyVersion(int expectedVersion, JsonScriptParseContext& context, const c
 		map<int, string> versionMap = {
 				{ VERSION_1_0_0, "1.0.0" },
 				{ VERSION_1_1_0, "1.1.0" },
-				{ VERSION_1_2_0, "1.2.0" }
+				{ VERSION_1_2_0, "1.2.0" },
+				{ VERSION_1_3_0, "1.3.0" }
 		};
 
 		addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Feature_Not_In_Version, feature, " requires version ", versionMap[expectedVersion].c_str(), " but the script has its version set to ", versionMap[context.version].c_str(), ".");
@@ -63,8 +64,30 @@ ScriptSequenceMoveDirection parseScriptSequenceMoveDirection(const json& moveDir
 	return moveDirection;
 }
 
+
+template<class ScriptType, bool HasUniqueId>
+struct UniqueIdChecker;
+
 template<class ScriptType>
-void parseChildArray(JsonScriptParseContext& context, const json& parent, const std::string jsonTag, int version, vector<ScriptType>& scriptArray, const std::function<ScriptType(const json&)> parseFunc, ValidationErrorCode objectErrorCode, ValidationErrorCode arrayErrorCode) {
+struct UniqueIdChecker<ScriptType, false> {
+	static void checkUniqueId(JsonScriptParseContext& context, vector<string>& ids, const ScriptType& item) {
+		// Nothing to do if there is no id
+	}
+};
+
+template<class ScriptType>
+struct UniqueIdChecker<ScriptType, true> {
+	static void checkUniqueId(JsonScriptParseContext& context, vector<string>& ids, const ScriptType& item) {
+		if (find(ids.begin(), ids.end(), item.id) != ids.end()) {
+			addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Id_Duplicate, "Id '", item.id.c_str(), "' has already been used. Ids must be unique within the object type.");
+		} else if (item.id.size() > 0) {
+			ids.push_back(item.id);
+		}
+	}
+};
+
+template<class ScriptType, bool hasUniqueId>
+void parseChildArray(JsonScriptParseContext& context, const json& parent, const std::string jsonTag, int version, vector<ScriptType>& scriptArray, const std::function<ScriptType(const json&)> parseFunc, ValidationErrorCode objectErrorCode, ValidationErrorCode arrayErrorCode, ValidationErrorCode requiredErrorCode) {
 	json::const_iterator items = parent.find(jsonTag);
 	if (items != parent.end()) {
 		if (version > 0) {
@@ -80,11 +103,7 @@ void parseChildArray(JsonScriptParseContext& context, const json& parent, const 
 				context.location.push_back(to_string(count));
 				if (element.is_object()) {
 					scriptArray.push_back(parseFunc(element));
-					if (find(ids.begin(), ids.end(), scriptArray.back().id) != ids.end()) {
-						addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Id_Duplicate, "Id '", scriptArray.back().id.c_str(), "' has already been used. Ids must be unique within the object type.");
-					} else if (scriptArray.back().id.size() > 0) {
-						ids.push_back(scriptArray.back().id);
-					}
+					UniqueIdChecker<ScriptType, hasUniqueId>::checkUniqueId(context, ids, scriptArray.back());
 				} else {
 					addValidationError(&context.validationErrors, context.location, objectErrorCode, "'", jsonTag.c_str(), "' elements must be objects.");
 				}
@@ -96,6 +115,8 @@ void parseChildArray(JsonScriptParseContext& context, const json& parent, const 
 		} else {
 			addValidationError(&context.validationErrors, context.location, arrayErrorCode, "'", jsonTag.c_str(), "' must be an array.");
 		}
+	} else if (requiredErrorCode != ValidationErrorCode::NoError) {
+		addValidationError(&context.validationErrors, context.location, requiredErrorCode, "'", jsonTag.c_str(), "' is required and must be an array.");
 	}
 }
 
@@ -140,84 +161,20 @@ const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 			m_context.version = 110;
 		} else if (script->version == "1.2.0") {
 			m_context.version = 120;
+		} else if (script->version == "1.3.0") {
+			m_context.version = 130;
 		}
 		else {
 			string versionValue = (*version);
-			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0 and 1.2.0 are currently supported.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0, 1.2.0 and 1.3.0 are currently supported.");
 		}
 	}
 
-	json::const_iterator timelines = scriptJson.find("timelines");
-	if ((timelines != scriptJson.end()) && (timelines->is_array())) {
-		m_context.location.push_back("timelines");
-
-		int count = 0;
-		vector<json> timelineElements = (*timelines);
-		for (const json& timeline : timelineElements) {
-			m_context.location.push_back(to_string(count));
-			if (timeline.is_object()) {
-				script->timelines.push_back(parseTimeline(timeline));
-			} else {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TimelineObject, "'timelines' elements must be objects.");
-			}
-			m_context.location.pop_back();
-			count++;
-		}
-
-		m_context.location.pop_back();
-	} else {
-		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_TimelinesMissing, "'timelines' is required and must be an array.");
-	}
-
-	json::const_iterator globalActions = scriptJson.find("global-actions");
-	if (globalActions != scriptJson.end()) {
-		if (globalActions->is_array()) {
-			m_context.location.push_back("global-actions");
-
-			int count = 0;
-			vector<json> actionElements = (*globalActions);
-			for (const json& action : actionElements) {
-				m_context.location.push_back(to_string(count));
-				if (action.is_object()) {
-					script->globalActions.push_back(parseAction(action, true));
-				} else {
-					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionsObject, "'global-actions' elements must be action objects.");
-				}
-				m_context.location.pop_back();
-				count++;
-			}
-
-			m_context.location.pop_back();
-		} else {
-			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_GlobalActionsArray, "'global-actions' must be an array.");
-		}
-	}
-
-	json::const_iterator inputTriggers = scriptJson.find("input-triggers");
-	if (inputTriggers != scriptJson.end()) {
-		if (inputTriggers->is_array()) {
-			m_context.location.push_back("input-triggers");
-
-			int count = 0;
-			vector<json> inputTriggerElements = (*inputTriggers);
-			for (const json& inputTrigger : inputTriggerElements) {
-				m_context.location.push_back(to_string(count));
-				if (inputTrigger.is_object()) {
-					script->inputTriggers.push_back(parseInputTrigger(inputTrigger));
-				} else {
-					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_InputTriggerObject, "'input-triggers' elements must be objects.");
-				}
-				m_context.location.pop_back();
-				count++;
-			}
-
-			m_context.location.pop_back();
-		} else {
-			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_InputTriggersArray, "'input-triggers' must be an array.");
-		}
-	}
-
-	parseChildArray<ScriptSequence>(m_context, scriptJson, "sequences", VERSION_1_1_0, script->sequences, [this](const json& sequence) { return parseSequence(sequence); }, ValidationErrorCode::Script_SequenceObject, ValidationErrorCode::Script_SequencesArray);
+	parseChildArray<ScriptClock, false>(m_context, scriptJson, "clocks", VERSION_1_3_0, script->clocks, [this](const json& clock) { return parseClock(clock); }, ValidationErrorCode::Script_ClockObject, ValidationErrorCode::Script_ClocksArray, ValidationErrorCode::NoError);
+	parseChildArray<ScriptTimeline, false>(m_context, scriptJson, "timelines", 0, script->timelines, [this](const json& timeline) { return parseTimeline(timeline); }, ValidationErrorCode::Script_TimelineObject, ValidationErrorCode::Script_TimelinesMissing, ValidationErrorCode::Script_TimelinesMissing);
+	parseChildArray<ScriptAction, false>(m_context, scriptJson, "global-actions", 0, script->globalActions, [this](const json& action) { return parseAction(action, true); }, ValidationErrorCode::Script_GlobalActionsObject, ValidationErrorCode::Script_GlobalActionsArray, ValidationErrorCode::NoError);
+	parseChildArray<ScriptInputTrigger, false>(m_context, scriptJson, "input-triggers", 0, script->inputTriggers, [this](const json& inputTrigger) { return parseInputTrigger(inputTrigger); }, ValidationErrorCode::Script_InputTriggerObject, ValidationErrorCode::Script_InputTriggersArray, ValidationErrorCode::NoError);
+	parseChildArray<ScriptSequence, true>(m_context, scriptJson, "sequences", VERSION_1_1_0, script->sequences, [this](const json& sequence) { return parseSequence(sequence); }, ValidationErrorCode::Script_SequenceObject, ValidationErrorCode::Script_SequencesArray, ValidationErrorCode::NoError);
 
 	json::const_iterator componentPool = scriptJson.find("component-pool");
 	if (componentPool != scriptJson.end()) {
@@ -227,15 +184,15 @@ const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 
 			verifyAllowedProperties(*componentPool, componentPoolProperties, false, m_context);
 
-			parseChildArray<ScriptSegmentBlock>(m_context, *componentPool, "segment-blocks", 0, script->segmentBlocks, [this](const json& segmentBlock) { return parseSegmentBlock(segmentBlock); }, ValidationErrorCode::Script_SegmentBlockObject, ValidationErrorCode::Script_SegmentBlocksArray);
-			parseChildArray<ScriptSegment>(m_context, *componentPool, "segments", 0, script->segments, [this](const json& segment) { return parseSegment(segment, false); }, ValidationErrorCode::Script_SegmentObject, ValidationErrorCode::Script_SegmentsArray);
-			parseChildArray<ScriptInput>(m_context, *componentPool, "inputs", 0, script->inputs, [this](const json& input) { return parseFullInput(input, false, false); }, ValidationErrorCode::Script_InputObject, ValidationErrorCode::Script_InputsArray);
-			parseChildArray<ScriptOutput>(m_context, *componentPool, "outputs", 0, script->outputs, [this](const json& output) { return parseFullOutput(output, false, false); }, ValidationErrorCode::Script_OutputObject, ValidationErrorCode::Script_OutputsArray);
-			parseChildArray<ScriptCalc>(m_context, *componentPool, "calcs", 0, script->calcs, [this](const json& calc) { return parseCalc(calc, false); }, ValidationErrorCode::Script_CalcObject, ValidationErrorCode::Script_CalcsArray);
-			parseChildArray<ScriptValue>(m_context, *componentPool, "values", 0, script->values, [this](const json& value) { return parseFullValue(value, false, false); }, ValidationErrorCode::Script_ValueObject, ValidationErrorCode::Script_ValuesArray);
-			parseChildArray<ScriptAction>(m_context, *componentPool, "actions", 0, script->actions, [this](const json& action) { return parseAction(action, false); }, ValidationErrorCode::Script_ActionObject, ValidationErrorCode::Script_ActionsArray);
-			parseChildArray<ScriptIf>(m_context, *componentPool, "ifs", 0, script->ifs, [this](const json& ifObj) { return parseIf(ifObj, false); }, ValidationErrorCode::Script_IfObject, ValidationErrorCode::Script_IfsArray);
-			parseChildArray<ScriptTuning>(m_context, *componentPool, "tunings", VERSION_1_1_0, script->tunings, [this](const json& tuning) { return parseTuning(tuning, false); }, ValidationErrorCode::Script_TuningObject, ValidationErrorCode::Script_TuningsArray);
+			parseChildArray<ScriptSegmentBlock, true>(m_context, *componentPool, "segment-blocks", 0, script->segmentBlocks, [this](const json& segmentBlock) { return parseSegmentBlock(segmentBlock); }, ValidationErrorCode::Script_SegmentBlockObject, ValidationErrorCode::Script_SegmentBlocksArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptSegment, true>(m_context, *componentPool, "segments", 0, script->segments, [this](const json& segment) { return parseSegment(segment, false); }, ValidationErrorCode::Script_SegmentObject, ValidationErrorCode::Script_SegmentsArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptInput, true>(m_context, *componentPool, "inputs", 0, script->inputs, [this](const json& input) { return parseFullInput(input, false, false); }, ValidationErrorCode::Script_InputObject, ValidationErrorCode::Script_InputsArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptOutput, true>(m_context, *componentPool, "outputs", 0, script->outputs, [this](const json& output) { return parseFullOutput(output, false, false); }, ValidationErrorCode::Script_OutputObject, ValidationErrorCode::Script_OutputsArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptCalc, true>(m_context, *componentPool, "calcs", 0, script->calcs, [this](const json& calc) { return parseCalc(calc, false); }, ValidationErrorCode::Script_CalcObject, ValidationErrorCode::Script_CalcsArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptValue, true>(m_context, *componentPool, "values", 0, script->values, [this](const json& value) { return parseFullValue(value, false, false); }, ValidationErrorCode::Script_ValueObject, ValidationErrorCode::Script_ValuesArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptAction, true>(m_context, *componentPool, "actions", 0, script->actions, [this](const json& action) { return parseAction(action, false); }, ValidationErrorCode::Script_ActionObject, ValidationErrorCode::Script_ActionsArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptIf, true>(m_context, *componentPool, "ifs", 0, script->ifs, [this](const json& ifObj) { return parseIf(ifObj, false); }, ValidationErrorCode::Script_IfObject, ValidationErrorCode::Script_IfsArray, ValidationErrorCode::NoError);
+			parseChildArray<ScriptTuning, true>(m_context, *componentPool, "tunings", VERSION_1_1_0, script->tunings, [this](const json& tuning) { return parseTuning(tuning, false); }, ValidationErrorCode::Script_TuningObject, ValidationErrorCode::Script_TuningsArray, ValidationErrorCode::NoError);
 
 			m_context.location.pop_back();
 		} else {
@@ -244,6 +201,92 @@ const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 	}
 
 	return script;
+}
+
+ScriptClock JsonScriptParser::parseClock(const json& clockJson) {
+	static const vector<string> clockProperties = { "time-scale", "lanes" };
+	ScriptClock clock;
+
+	verifyAllowedProperties(clockJson, clockProperties, false, m_context);
+
+	json::const_iterator timeScale = clockJson.find("time-scale");
+	if (timeScale != clockJson.end()) {
+		if (timeScale->is_object()) {
+			m_context.location.push_back("time-scale");
+			clock.timeScale.reset(new ScriptTimeScale(parseTimeScale(*timeScale)));
+			m_context.location.pop_back();
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Clock_TimeScaleObject, "'time-scale' must be an object.");
+		}
+	}
+
+	parseChildArray<ScriptClockLane, false>(m_context, clockJson, "lanes", 0, clock.lanes, [this](const json& clockLane) { return parseClockLane(clockLane); }, ValidationErrorCode::Clock_LaneObject, ValidationErrorCode::Clock_LanesMissing, ValidationErrorCode::Clock_LanesMissing);
+
+	return clock;
+}
+
+ScriptClockLane JsonScriptParser::parseClockLane(const json& clockLaneJson) {
+	static const vector<string> laneProperties = { "durations", "output", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" };
+	ScriptClockLane clockLane;
+
+	verifyAllowedProperties(clockLaneJson, laneProperties, false, m_context);
+
+	json::const_iterator output = clockLaneJson.find("output");
+	if (output != clockLaneJson.end()) {
+		clockLane.output = parseOutput(*output, true, "output", ValidationErrorCode::ClockLane_OutputObject, "'output' is required and must be an object.");
+	} else {
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_OutputObject, "'output' is required and must be a output object.");
+	}
+
+	parseChildArray<ScriptDuration, false>(m_context, clockLaneJson, "durations", 0, clockLane.durations, [this](const json& duration) { return parseDuration(duration); }, ValidationErrorCode::ClockLane_DurationObject, ValidationErrorCode::ClockLane_DurationsMissing, ValidationErrorCode::ClockLane_DurationsMissing);
+
+	json::const_iterator startTrigger = clockLaneJson.find("start-trigger");
+	if (startTrigger != clockLaneJson.end()) {
+		if (startTrigger->is_string()) {
+			clockLane.startTrigger = *startTrigger;
+			if (clockLane.startTrigger.length() == 0) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_StartTriggerLength, "'start-trigger' can not be an empty string.");
+			}
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_StartTriggerString, "'start-trigger' must be a string.");
+		}
+	}
+
+	json::const_iterator restartTrigger = clockLaneJson.find("restart-trigger");
+	if (restartTrigger != clockLaneJson.end()) {
+		if (restartTrigger->is_string()) {
+			clockLane.restartTrigger = *restartTrigger;
+			if (clockLane.restartTrigger.length() == 0) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_RestartTriggerLength, "'restart-trigger' can not be an empty string.");
+			}
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_RestartTriggerString, "'restart-trigger' must be a string.");
+		}
+	}
+
+	json::const_iterator stopTrigger = clockLaneJson.find("stop-trigger");
+	if (stopTrigger != clockLaneJson.end()) {
+		if (stopTrigger->is_string()) {
+			clockLane.stopTrigger = *stopTrigger;
+			if (clockLane.stopTrigger.length() == 0) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_StopTriggerLength, "'stop-trigger' can not be an empty string.");
+			}
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_StopTriggerString, "'stop-trigger' must be a string.");
+		}
+	}
+
+	clockLane.disableUi = false;
+	json::const_iterator disableUi = clockLaneJson.find("disable-ui");
+	if (disableUi != clockLaneJson.end()) {
+		if (disableUi->is_boolean()) {
+			clockLane.disableUi = disableUi->get<bool>();
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_DisableUiBoolean, "'disable-ui' must be a boolean.");
+		}
+	}
+
+	return clockLane;
 }
 
 ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson) {
@@ -263,27 +306,7 @@ ScriptTimeline JsonScriptParser::parseTimeline(const json& timelineJson) {
 		}
 	}
 
-	json::const_iterator lanes = timelineJson.find("lanes");
-	if ((lanes != timelineJson.end()) && (lanes->is_array())) {
-		m_context.location.push_back("lanes");
-
-		int count = 0;
-		vector<json> laneElements = (*lanes);
-		for (const json& lane : laneElements) {
-			m_context.location.push_back(to_string(count));
-			if (lane.is_object()) {
-				timeline.lanes.push_back(parseLane(lane));
-			} else {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LaneObject, "'lanes' elements must be objects.");
-			}
-			m_context.location.pop_back();
-			count++;
-		}
-
-		m_context.location.pop_back();
-	} else {
-		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Timeline_LanesMissing, "'lanes' is required and must be an array.");
-	}
+	parseChildArray<ScriptLane, false>(m_context, timelineJson, "lanes", 0, timeline.lanes, [this](const json& lane) { return parseLane(lane); }, ValidationErrorCode::Timeline_LaneObject, ValidationErrorCode::Timeline_LanesMissing, ValidationErrorCode::Timeline_LanesMissing);
 
 	timeline.loopLock = false;
 	json::const_iterator loopLock = timelineJson.find("loop-lock");

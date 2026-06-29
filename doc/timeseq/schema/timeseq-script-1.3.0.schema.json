@@ -260,6 +260,7 @@
 			"type": "object",
 			"properties": {
 				"durations": {
+					"description": "The durations of the clock segments that will be in this lane.",
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/duration"
@@ -282,6 +283,11 @@
 					"description": "The id of the internal trigger that will cause this lane to stop if it is currently running.",
 					"type": "string",
 					"minLength": 1
+				},
+				"disable-ui": {
+					"description": "Specifies if the S LED on the UI should light up when a clock signal is triggered in this lane.",
+					"type": "boolean",
+					"default": false
 				}
 			},
 			"required": [ "durations", "output" ],

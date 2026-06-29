@@ -87,7 +87,7 @@ void LaneProcessor::reset() {
 		m_segments[0]->reset();
 	}
 
-	if ((m_scriptLane->autoStart) && (m_segments.size() > 0)) {
+	if ((git->autoStart) && (m_segments.size() > 0)) {
 		m_state = LaneState::STATE_PROCESSING;
 	} else {
 		m_state = LaneState::STATE_IDLE;
@@ -117,12 +117,12 @@ void LaneProcessor::processTriggers(const vector<string>& triggers) {
 }
 
 TimelineProcessor::TimelineProcessor(
-	const ScriptTimeline* scriptTimeline,
+	bool loopLock,
 	const vector<shared_ptr<LaneProcessor>>& lanes,
 	const unordered_map<string, vector<shared_ptr<LaneProcessor>>>& startTriggers,
 	const unordered_map<string, vector<shared_ptr<LaneProcessor>>>& stopTriggers,
 	TriggerHandler* triggerHandler) :
-		m_scriptTimeline(scriptTimeline), m_lanes(lanes), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers), m_triggerHandler(triggerHandler) {}
+		m_loopLock(loopLock), m_lanes(lanes), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers), m_triggerHandler(triggerHandler) {}
 
 void TimelineProcessor::process() {
 	bool checkLoop = false;
@@ -139,7 +139,7 @@ void TimelineProcessor::process() {
 	for (const shared_ptr<LaneProcessor>& lane : m_lanes) {
 		bool stopped = lane->process();
 		if (stopped) {
-			if (m_scriptTimeline->loopLock) {
+			if (m_loopLock) {
 				// There is a loop-lock, so check looping for all lanes after we processed them all
 				checkLoop = true;
 			} else {
