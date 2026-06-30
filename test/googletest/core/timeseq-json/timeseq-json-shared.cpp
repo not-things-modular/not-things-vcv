@@ -39,3 +39,11 @@ void expectNoErrors(vector<ValidationError>& validationErrors) {
 		ASSERT_EQ("", errorMessage);
 	}
 }
+
+std::ostream& operator<<(std::ostream& os, const ValidationErrorsPrinter& printer)
+{
+    for (const ValidationError& e : printer.errors)
+        os << e.message << '(' << e.location << "); ";
+
+    return os;
+}
