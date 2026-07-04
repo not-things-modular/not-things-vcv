@@ -45,7 +45,7 @@ TEST(TimeSeqProcessorLane, LaneWithNoDisableUiShouldTriggerLaneLoop) {
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
-	EXPECT_FALSE(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->disableUi);
+	EXPECT_FALSE(script.second->m_timelines[0]->m_lanes[0]->m_disableUi);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(2);
@@ -74,7 +74,7 @@ TEST(TimeSeqProcessorLane, LaneWithDisableUiFalseShouldTriggerLaneLoop) {
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
-	EXPECT_FALSE(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->disableUi);
+	EXPECT_FALSE(script.second->m_timelines[0]->m_lanes[0]->m_disableUi);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(2);
@@ -103,7 +103,7 @@ TEST(TimeSeqProcessorLane, LaneWithDisableUiTrueShouldNotTriggerLaneLoop) {
 	ASSERT_EQ(script.second->m_timelines.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes.size(), 1u);
 	EXPECT_EQ(script.second->m_timelines[0]->m_lanes[0]->m_segments.size(), 1u);
-	EXPECT_TRUE(script.second->m_timelines[0]->m_lanes[0]->m_scriptLane->disableUi);
+	EXPECT_TRUE(script.second->m_timelines[0]->m_lanes[0]->m_disableUi);
 
 	MOCK_DEFAULT_TRIGGER_HANDLER(mockTriggerHandler);
 	EXPECT_CALL(mockEventListener, segmentStarted()).Times(2);

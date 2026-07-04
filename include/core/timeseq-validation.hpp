@@ -22,7 +22,8 @@ enum ValidationErrorCode {
 	Script_TypeUnsupported = 102,
 	Script_VersionMissing = 103,
 	Script_VersionUnsupported = 104,
-	Script_TimelinesMissing = 105,
+	Script_TimelinesMissing = 105, // No longer applies since 1.3.0
+	Script_TimelinesArray = 105, // Since 1.3.0
 	Script_TimelineObject = 106,
 	Script_SegmentBlocksArray = 107,
 	Script_SegmentBlockObject = 108,
@@ -50,6 +51,9 @@ enum ValidationErrorCode {
 	Script_TuningObject = 130, // Since 1.1.0
 	Script_SequencesArray = 131, // Since 1.2.0
 	Script_SequenceObject = 132, // Since 1.2.0
+	Script_ClocksArray = 133, // Since 1.3.0
+	Script_ClockObject = 134, // Since 1.3.0
+	Script_EitherTimelinesOrClocks = 135, // Since 1.3.0
 
 	Timeline_TimeScaleObject = 200,
 	Timeline_LanesMissing = 201,
@@ -276,6 +280,26 @@ enum ValidationErrorCode {
 	RemoveFromSequence_SequenceNotFound = 2603, // Since 1.2.0
 
 	ClearSequence_SequenceNotFound = 2700, // Since 1.2.0
+
+	Clock_TimeScaleObject = 2800, // Since 1.3.0
+	Clock_LanesMissing = 2801, // Since 1.3.0
+	Clock_LaneObject = 2802, // Since 1.3.0
+
+	ClockLane_AutoStartBoolean = 2900,
+	ClockLane_DurationsMissing = 2901, // Since 1.3.0
+	ClockLane_DurationObject = 2902, // Since 1.3.0
+	ClockLane_OutputObject = 2903, // Since 1.3.0
+	ClockLane_StartTriggerString = 2904, // Since 1.3.0
+	ClockLane_StartTriggerLength = 2905, // Since 1.3.0
+	ClockLane_RestartTriggerString = 2906, // Since 1.3.0
+	ClockLane_RestartTriggerLength = 2907, // Since 1.3.0
+	ClockLane_StopTriggerString = 2908, // Since 1.3.0
+	ClockLane_StopTriggerLength = 2909, // Since 1.3.0
+	ClockLane_DisableUiBoolean = 2910, // Since 1.3.0
+	ClockLane_GateHighRatioFloat = 2911, // Since 1.3.0
+	ClockLane_GateHighRatioRange = 2912, // Since 1.3.0
+
+	NoError = 0,
 };
 
 

@@ -1,6 +1,6 @@
 #include "timeseq-json-shared.hpp"
 
-TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithoutTimelines) {
+TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithoutTimelinesAndClocks) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = {
@@ -10,7 +10,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithoutTimelines) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Script_TimelinesMissing, "/");
+	expectError(validationErrors, ValidationErrorCode::Script_EitherTimelinesOrClocks, "/");
 }
 
 TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithNonArrayTimelines) {
@@ -21,7 +21,7 @@ TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithNonArrayTimelines) {
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Script_TimelinesMissing, "/");
+	expectError(validationErrors, ValidationErrorCode::Script_TimelinesArray, "/");
 }
 
 TEST(TimeSeqJsonScriptTimeLine, ParseScriptShouldFailWithMixOfTimelinesAndNonObjectTimelineEntries) {

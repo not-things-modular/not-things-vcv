@@ -104,7 +104,7 @@ const shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(c
 	}
 	m_context.location.pop_back();
 
-	return make_shared<SegmentProcessor>(scriptSegment, durationProcessor, startActions, endActions, ongoingActions, m_eventListener);
+	return make_shared<SegmentProcessor>(durationProcessor, startActions, endActions, ongoingActions, scriptSegment->disableUi, m_eventListener);
 }
 
 const vector<shared_ptr<SegmentProcessor>> ProcessorScriptParser::parseSegmentBlock(const ScriptSegmentBlock* scriptSegmentBlock, const ScriptTimeScale* timeScale, const vector<ScriptAction>& actions, vector<string>& actionsLocation, vector<string>& segmentStack) {

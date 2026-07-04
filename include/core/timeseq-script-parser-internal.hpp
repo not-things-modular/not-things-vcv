@@ -7,6 +7,7 @@ using namespace nlohmann;
 #define VERSION_1_0_0 100
 #define VERSION_1_1_0 110
 #define VERSION_1_2_0 120
+#define VERSION_1_3_0 130
 
 void verifyVersion(int expectedVersion, JsonScriptParseContext& context, const char* feature);
 bool verifyAllowedProperties(const json& json, const vector<string>& propertyNames, bool allowRef, JsonScriptParseContext& context);
