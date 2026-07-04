@@ -435,3 +435,62 @@ TEST(TimeSeqProcessorClocks, ParseScriptShouldApplyClockDisableUiToLanesAndSegme
 	EXPECT_EQ(processor->m_timelines[0]->m_lanes[2]->m_segments[1]->m_disableUi, false);
 	EXPECT_EQ(processor->m_timelines[0]->m_lanes[2]->m_segments[2]->m_disableUi, false);
 }
+
+TEST(TimeSeqProcessorClocks, ParseScriptShouldApplyGateHighRatioToActions) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+    json json = R"({
+            "type": "not-things_timeseq_script",
+            "version": ")" SCRIPT_VERSION_1_3_0 R"(",
+            "clocks": [
+				{ "lanes": [
+					{ "durations": [ { "samples": 3 },{ "samples": 2 }, { "samples": 1 } ], "output": 1 },
+					{ "durations": [ { "samples": 3 },{ "samples": 2 }, { "samples": 1 } ], "output": 2, "gate-high-ratio": 0.25 },
+					{ "durations": [ { "samples": 3 },{ "samples": 2 }, { "samples": 1 } ], "output": 3, "gate-high-ratio": 0.75 }
+				] }
+			]
+        })"_json;
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+
+	shared_ptr<Processor> processor = script.second;
+	ASSERT_EQ(processor->m_timelines.size(), 1u);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes.size(), 3u);
+
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[0]->m_segments.size(), 3u);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[0]->m_segments[0]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[0]->m_segments[0]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[0]->m_segments[0]->m_ongoingActions[0].get())->m_gateHighRatio, 0.5);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[0]->m_segments[1]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[0]->m_segments[1]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[0]->m_segments[1]->m_ongoingActions[0].get())->m_gateHighRatio, 0.5);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[0]->m_segments[2]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[0]->m_segments[2]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[0]->m_segments[2]->m_ongoingActions[0].get())->m_gateHighRatio, 0.5);
+
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[1]->m_segments.size(), 3u);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[1]->m_segments[0]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[1]->m_segments[0]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[1]->m_segments[0]->m_ongoingActions[0].get())->m_gateHighRatio, 0.25);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[1]->m_segments[1]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[1]->m_segments[1]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[1]->m_segments[1]->m_ongoingActions[0].get())->m_gateHighRatio, 0.25);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[1]->m_segments[2]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[1]->m_segments[2]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[1]->m_segments[2]->m_ongoingActions[0].get())->m_gateHighRatio, 0.25);
+
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[2]->m_segments.size(), 3u);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[2]->m_segments[0]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[2]->m_segments[0]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[2]->m_segments[0]->m_ongoingActions[0].get())->m_gateHighRatio, 0.75);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[2]->m_segments[1]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[2]->m_segments[1]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[2]->m_segments[1]->m_ongoingActions[0].get())->m_gateHighRatio, 0.75);
+	ASSERT_EQ(processor->m_timelines[0]->m_lanes[2]->m_segments[2]->m_ongoingActions.size(), 1u);
+	EXPECT_NE(nullptr, dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[2]->m_segments[2]->m_ongoingActions[0].get()));
+	EXPECT_EQ(dynamic_cast<ActionGateProcessor*>(processor->m_timelines[0]->m_lanes[2]->m_segments[2]->m_ongoingActions[0].get())->m_gateHighRatio, 0.75);
+}
