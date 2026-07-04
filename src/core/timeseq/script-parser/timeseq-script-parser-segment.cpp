@@ -53,29 +53,7 @@ ScriptSegment JsonScriptParser::parseSegment(const json& segmentJson, bool allow
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_BlockOrSegment, "A segment must either be a single segment with a 'duration' and 'actions', or a segment block with a 'segment-block' reference and optional 'actions', but not both.");
 		}
 
-		json::const_iterator actions = segmentJson.find("actions");
-		if (actions != segmentJson.end()) {
-			if (actions->is_array()) {
-				m_context.location.push_back("actions");
-
-				int count = 0;
-				vector<json> actionElements = (*actions);
-				for (const json& action : actionElements) {
-					m_context.location.push_back(to_string(count));
-					if (action.is_object()) {
-						segment.actions.push_back(parseAction(action, true));
-					} else {
-						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_ActionObject, "'actions' elements must be objects.");
-					}
-					m_context.location.pop_back();
-					count++;
-				}
-
-				m_context.location.pop_back();
-			} else {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Segment_ActionsArray, "'actions' must be an array.");
-			}
-		}
+		parseChildArray<ScriptAction, false>(m_context, segmentJson, "actions", 0, segment.actions, [this](const json& action) { return parseAction(action, true); }, ValidationErrorCode::Segment_ActionObject, ValidationErrorCode::Segment_ActionsArray, ValidationErrorCode::NoError);
 	}
 
 	return segment;
@@ -97,27 +75,8 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_RepeatNumber, "'repeat' must be a positive number.");
 		}
 	}
-	json::const_iterator segments = segmentBlockJson.find("segments");
-	if ((segments != segmentBlockJson.end()) && (segments->is_array())) {
-		m_context.location.push_back("segments");
 
-		int count = 0;
-		vector<json> segmentElements = (*segments);
-		for (const json& segment : segmentElements) {
-			m_context.location.push_back(to_string(count));
-			if (segment.is_object()) {
-				segmentBlock.segments.push_back(parseSegment(segment, true));
-			} else {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_SegmentObject, "'segments' elements must be Segment objects.");
-			}
-			m_context.location.pop_back();
-			count++;
-		}
-
-		m_context.location.pop_back();
-	} else {
-		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SegmentBlock_SegmentsArray, "'segments' is required and must be an array.");
-	}
+	parseChildArray<ScriptSegment, false>(m_context, segmentBlockJson, "segments", 0, segmentBlock.segments, [this](const json& segment) { return parseSegment(segment, true); }, ValidationErrorCode::SegmentBlock_SegmentObject, ValidationErrorCode::SegmentBlock_SegmentsArray, ValidationErrorCode::SegmentBlock_SegmentsArray);
 
 	return segmentBlock;
 }

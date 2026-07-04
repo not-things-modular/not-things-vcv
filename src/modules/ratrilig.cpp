@@ -1,4 +1,5 @@
 #include "modules/ratrilig.hpp"
+#include "components/ntknob.hpp"
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
 #include "components/ratrilig-progress.hpp"
@@ -316,6 +317,8 @@ RatriligExpanderModule* RatriligModule::getRatriligExpander() {
 	return nullptr;
 }
 
+extern Plugin* pluginInstance;
+
 RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ratrilig") {
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 47.f), module, RatriligModule::IN_GATE));
 
@@ -324,22 +327,22 @@ RatriligWidget::RatriligWidget(RatriligModule* module): NTModuleWidget(dynamic_c
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 127.f), module, RatriligModule::IN_RESET));
 	addParam(createParamCentered<VCVButton>(Vec(32.5f, 167.f), module, RatriligModule::PARAM_RESET));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(32.5f, 227.f + 5.f), module, RatriligModule::PARAM_DENSITY));
+	addParam(createParamCentered<NTKnob32>(Vec(32.5f, 227.f + 5.f), module, RatriligModule::PARAM_DENSITY));
 	addInput(createInputCentered<NTPort>(Vec(32.5f, 267.f + 5.f), module, RatriligModule::IN_DENSITY));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 55.f), module, RatriligModule::PARAM_CLUSTER_SIZE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 97.5f), module, RatriligModule::PARAM_CLUSTER_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(102.5f, 140.f), module, RatriligModule::PARAM_CLUSTER_DENSITY_MODIFIER));
+	addParam(createParamCentered<NTKnob32>(Vec(102.5f, 55.f), module, RatriligModule::PARAM_CLUSTER_SIZE));
+	addParam(createParamCentered<NTKnob32>(Vec(102.5f, 97.5f), module, RatriligModule::PARAM_CLUSTER_CHANCE));
+	addParam(createParamCentered<NTKnob32>(Vec(102.5f, 140.f), module, RatriligModule::PARAM_CLUSTER_DENSITY_MODIFIER));
 	addInput(createInputCentered<NTPort>(Vec(102.5f, 180.f), module, RatriligModule::IN_CLUSTER_DENSITY));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 55.f), module, RatriligModule::PARAM_PHRASE_SIZE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 97.5f), module, RatriligModule::PARAM_PHRASE_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(142.5f, 140.f), module, RatriligModule::PARAM_PHRASE_DENSITY_MODIFIER));
+	addParam(createParamCentered<NTKnob32>(Vec(142.5f, 55.f), module, RatriligModule::PARAM_PHRASE_SIZE));
+	addParam(createParamCentered<NTKnob32>(Vec(142.5f, 97.5f), module, RatriligModule::PARAM_PHRASE_CHANCE));
+	addParam(createParamCentered<NTKnob32>(Vec(142.5f, 140.f), module, RatriligModule::PARAM_PHRASE_DENSITY_MODIFIER));
 	addInput(createInputCentered<NTPort>(Vec(142.5f, 180.f), module, RatriligModule::IN_PHRASE_DENSITY));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 55.f), module, RatriligModule::PARAM_CYCLE_SIZE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 97.5f), module, RatriligModule::PARAM_CYCLE_CHANCE));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(182.5f, 140.f), module, RatriligModule::PARAM_CYCLE_DENSITY_MODIFIER));
+	addParam(createParamCentered<NTKnob32>(Vec(182.5f, 55.f), module, RatriligModule::PARAM_CYCLE_SIZE));
+	addParam(createParamCentered<NTKnob32>(Vec(182.5f, 97.5f), module, RatriligModule::PARAM_CYCLE_CHANCE));
+	addParam(createParamCentered<NTKnob32>(Vec(182.5f, 140.f), module, RatriligModule::PARAM_CYCLE_DENSITY_MODIFIER));
 	addInput(createInputCentered<NTPort>(Vec(182.5f, 180.f), module, RatriligModule::IN_CYCLE_DENSITY));
 
 	addParam(createParamCentered<Trimpot>(Vec(95.5f, 267.f), module, RatriligModule::PARAM_CLUSTER_BIAS_AMOUNT));

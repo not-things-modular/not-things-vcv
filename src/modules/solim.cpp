@@ -1,5 +1,6 @@
 #include "modules/solim.hpp"
 #include "components/ntport.hpp"
+#include "components/ntknob.hpp"
 #include "components/lights.hpp"
 #include "modules/solim-input.hpp"
 #include "modules/solim-input-octaver.hpp"
@@ -423,10 +424,10 @@ SolimWidget::SolimWidget(SolimModule* module): NTModuleWidget(dynamic_cast<NTMod
 		y += yDelta;
 	}
 
-	addParam(createParamCentered<Rogan2PWhite>(Vec(75, 83), module, SolimModule::PARAM_LOWER_LIMIT));
+	addParam(createParamCentered<NTKnob32>(Vec(75, 83), module, SolimModule::PARAM_LOWER_LIMIT));
 	addInput(createInputCentered<NTPort>(Vec(75, 121.5), module, SolimModule::IN_LOWER_LIMIT));
 
-	addParam(createParamCentered<Rogan2PWhite>(Vec(75, 203), module, SolimModule::PARAM_UPPER_LIMIT));
+	addParam(createParamCentered<NTKnob32>(Vec(75, 203), module, SolimModule::PARAM_UPPER_LIMIT));
 	addInput(createInputCentered<NTPort>(Vec(75, 241.5), module, SolimModule::IN_UPPER_LIMIT));
 
 	addParam(createParamCentered<CKSSThree>(Vec(57.5, 296), module, SolimModule::PARAM_SORT));
