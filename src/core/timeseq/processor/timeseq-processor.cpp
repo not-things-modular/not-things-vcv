@@ -120,13 +120,7 @@ void LaneProcessor::processTriggers(const vector<string>& triggers) {
 
 }
 
-TimelineProcessor::TimelineProcessor(
-	bool loopLock,
-	const vector<shared_ptr<LaneProcessor>>& lanes,
-	const unordered_map<string, vector<shared_ptr<LaneProcessor>>>& startTriggers,
-	const unordered_map<string, vector<shared_ptr<LaneProcessor>>>& stopTriggers,
-	TriggerHandler* triggerHandler) :
-		m_loopLock(loopLock), m_lanes(lanes), m_startTriggers(startTriggers), m_stopTriggers(stopTriggers), m_triggerHandler(triggerHandler) {}
+TimelineProcessor::TimelineProcessor(bool loopLock, const vector<shared_ptr<LaneProcessor>>& lanes, TriggerHandler* triggerHandler) : m_loopLock(loopLock), m_lanes(lanes), m_triggerHandler(triggerHandler) {}
 
 void TimelineProcessor::process() {
 	bool checkLoop = false;
