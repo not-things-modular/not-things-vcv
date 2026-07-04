@@ -2,7 +2,10 @@
 
 ## 2.0.8 (TBD)
 
-*
+* **TimeSeq**
+  * Added `clocks`
+  * Updated JSON Schema definition to v1.3.0 for new clock functionality JSON syntax
+* **Global**: Updated medium-sized dials to custom design with separate light and dark versions (impacts Ramelig, Ratrilig and Solim)
 
 ## 2.0.7 (2026-06-22)
 
