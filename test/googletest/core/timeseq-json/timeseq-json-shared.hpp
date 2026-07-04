@@ -27,9 +27,6 @@ void expectNoErrors(vector<ValidationError>& validationErrors);
 	expectNoErrors(validationErrors); \
 	if (::testing::Test::HasFailure()) return;
 
-#define PRINT_VALIDATION_ERRORS(validationErrors) \
-	for
-
 struct ValidationErrorsPrinter
 {
     const std::vector<ValidationError>& errors;

@@ -492,7 +492,7 @@ TEST(TimeSeqJsonScriptLane, ParseScriptShouldFailWithNonBooleanDisableUi) {
 	expectError(validationErrors, ValidationErrorCode::Lane_DisableUiBoolean, "/timelines/0/lanes/0");
 }
 
-TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultDisableUiToTrue) {
+TEST(TimeSeqJsonScriptLane, ParseScriptShouldDefaultDisableUiToFalse) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();

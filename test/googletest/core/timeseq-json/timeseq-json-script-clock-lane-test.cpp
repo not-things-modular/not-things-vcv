@@ -324,7 +324,7 @@ TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldFailWithNonBooleanDisableUi) {
 	expectError(validationErrors, ValidationErrorCode::ClockLane_DisableUiBoolean, "/clocks/0/lanes/0");
 }
 
-TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldDefaultDisableUiToTrue) {
+TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldDefaultDisableUiToFalse) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
     json json = R"({
