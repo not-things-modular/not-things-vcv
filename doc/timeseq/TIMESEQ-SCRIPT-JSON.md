@@ -37,6 +37,8 @@ Since the TimeSeq JSON schema uses a nested object structure, following hierarch
           * [add-to-sequence](#add-to-sequence) - Adds a value to a sequence
           * [remove-from-sequence](#remove-from-sequence) - Removes a value from a sequence
           * `clear-sequence` - Clears all values from a sequence
+  * [clock](#clock) - Container for grouping *clock lanes* that use the same *time-scale*
+    * [clock lane](#clock-lane) - The sequencing object that allows simple or complex clocks to be set up
   * [input-triggers](#input-trigger) - Fire internal triggers based on external trigger signals
   * global-[action](#action) - *Action*s to perform during script start
   * [sequences](#sequence) - Sequences of values
@@ -80,12 +82,13 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 | property | required | type | since | description |
 | --- | --- | --- | --- | --- |
 | `type` | yes | string | | Must be set to `not-things_timeseq_script` |
-| `version` | yes | string | | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0`, `1.1.0` and `1.2.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
+| `version` | yes | string | | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0`, `1.1.0`, `1.2.0` and `1.3.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
 | `$schema` | no | uri string | | Allows JSON schema validation to be performed by schema-aware JSON editors. See the [script version](TIMESEQ-SCRIPT-VERSION.md) page for the schema URIs that can be used. The value given to this property will not influence TimeSeq parsing or processing itself. |
 | `timelines` | no | [timeline](#timeline) list | | A list of *timeline*s that will drive the sequencer. |
+| `clocks` | no | [clock](#clock) list | *1.3.0* | A list of *clock*s that will output clock trigger/gate signals. |
 | `global-actions` | no | [action](#action) list | | A list of *action*s that will be executed when the script loaded or is reset. Only *action*s which have their `timing` set to `start` are allowed in this list. |
 | `input-triggers` | no | [input-trigger](#input-trigger) list | | A list of input trigger definitions, allowing gate/trigger signals on input ports to be translated into internal TimeSeq [triggers](TIMESEQ-SCRIPT.md#triggers). |
-| `sequences` | no | [sequence](#sequence) list |*1.2.0* | A list of *sequence*s that can be used in [sequence values](#sequence-value) |
+| `sequences` | no | [sequence](#sequence) list | *1.2.0* | A list of *sequence*s that can be used in [sequence values](#sequence-value) |
 | `component-pool` | no | [component-pool](#component-pool) | | A pool of reusable TimeSeq object definitions that can be referenced from elsewhere in the TimeSeq script. |
 
 ### Example
@@ -95,6 +98,10 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
     "type": "not-things_timeseq_script",
     "version": "1.0.0",
     "timelines": [
+        { ... },
+        { ... }
+    ],
+    "clocks": [
         { ... },
         { ... }
     ],
@@ -221,6 +228,90 @@ The running state of a lane can be controlled using triggers:
     ]
 }
 ```
+
+## clock
+
+A clock is a container for the definitions of one or more clock signals. It groups together one or more [clock lanes](#clock-lane). Clocks were added in script version 1.3.0 (TimeSeq v2.0.8)
+
+A clock is a simplified version of a [timeline](#timeline) to provide a more convenient way to define a clock signal. Instead of defining a *timeline* with *lanes* that contain *segments* with [gate actions](#gate-actions), a *clock lane* specifies the [durations](#duration) in the clock signal, and TimeSeq will convert this into the correct components to generate that clock signal or sequence.
+
+Just like in a *timeline*, an optional time-scale property controls the timing calculations that will be performed for all lanes (and thus the duration of their segments)
+
+When running the script, each processing cycle will first run through each of the *clock lanes* in the order that they appear in the `lanes` list, and then run through each of the timeline `lanes` in the order that they appear. As such, any clock signal that is triggered as part of a processing cycle will be fired before any timeline processing is done within that cycle.
+
+### Properties
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `time-scale` | no | [time-scale](#time-scale) | The time scale that should be used when calculating durations of *lane*s in this clock. |
+| `lanes` | yes | [clock lane](#clock-lane) list | The *clock lane*s that contain the durations of the clock signals in this clock. |
+
+### Example
+
+```json
+{
+    "time-scale": {
+        "bpm": 120
+    },
+    "lanes": [
+        { "durations": [ { "beats": 0.5 } ], "output": 1 },
+        { "durations": [ { "beats": 4 } ], "output": 2 },
+        { "durations": [ { "beats": 0.25 }, { "beats": 0.5 } ], "output": 3 }
+    ]
+}
+```
+
+This clock object sets up three different clock signals, all running at 120 beats per minute. THe first clock signal triggers every eight note (i.e. twice per beat) and is sent to output 1. The second triggers every four beats and is sent to output 2. The third clock is a composite clock: it first outputs a signal that lasts for a quarter of a beat, and then one that lasts for half a beat. These two durations are then looped.
+
+## clock lane
+
+A clock lane defines a single clock signal that is to be generated. The clock signal will be generated by running through the `durations` of the lane in the order that they appear in the list. Each of the *duration* instances will generate a gate signal on the `output` that is specified on the lane. Unless stopped by a *trigger*, clocks will keep running by looping through the defined durations. A duration will use the `time-scale` of the parent [clock](#clock) object when needed to calculate the correct value for the duration.
+
+The pulse width of the output gate (how long it stays high vs low) can be controlled using the `gate-high-ratio`.
+
+By default, a clock lane will automatically start when a script is loaded. This can be overwritten using the `auto-start` property. Just like a *timeline lane*, the state of a *clock lane* can be controlled using a `start-trigger`, a `restart-trigger` and a `stop-trigger` (see [lane](#lane) for more details).
+
+| property | required | type | description |
+| --- | --- | --- | --- |
+| `durations` | yes | [duration](#duration) list | The sequence of *duration*s that will be executed in order and then looped for this lane to generate clock on the *output* |
+| `output` | yes | [output](#output) | The output port to which the generated clock will be sent. |
+| `gate-high-ratio` | no | float | How long a single gate output remains high. Must be a value between 0 and 1, with smaller values resulting in a shorter gate-high duration. Defaults to `0.5` |
+| `auto-start` | no | boolean | If set to `true`, the lane will start automatically when the script is loaded. If set to `false` the lane will remain stopped when the script is loaded. Defaults to `true` |
+| `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
+| `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty. |
+| `stop-trigger` | no | string | The id of the internal trigger that will cause this lane to stop running. A stop trigger on an an inactive lane has no impact on the state of that lane. Defaults to empty. |
+| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops and the *S* LED on the TimeSeq panel will light up each time a clock signal starts. If set to `false`, no LEDs on the TimeSeq panel will light up for this lane. Defaults to `true`. |
+
+### Examples
+
+```json
+{
+    "durations": [ { "beats": 0.5 } ],
+    "output": 1
+}
+```
+
+A clock lane that generates a simple half-beat looping clock which gets sent to the first TimeSeq output port.
+
+```json
+{
+    "durations": [ { "millis": 1000 } ],
+    "gate-high-ratio": 0.75,
+    "output": { "index": 5, "channel": 3 }
+}
+```
+
+A clock lane that generates a clock signal every second, with the gate remaining high for a quarter of the clock duration. The gate signal is sent to the 3rd channel of the 5th output port.
+
+```json
+{
+    "durations": [ { "beats": 0.25 }, { "beats": 0.5 }, { "millis": 250 } ],
+    "output": 3,
+    "stop-trigger": "stop-mixed-beat"
+}
+```
+
+A clock lane that generates a more complex clock signal by looping through three durations. The first clock signal lasts a quarter of a beat, the second lasts half a beat, and the third lasts 250 milliseconds (i.e. is not linked directly to the bpm). This pattern will keep looping until a `stop-mixed-beat` trigger is received.
 
 ## input-trigger
 
