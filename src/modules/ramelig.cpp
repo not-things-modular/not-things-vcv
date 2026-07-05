@@ -1,5 +1,6 @@
 #include "modules/ramelig.hpp"
 #include "modules/ramelig-expander.hpp"
+#include "components/ntknob.hpp"
 #include "components/ntport.hpp"
 #include "components/lights.hpp"
 #include "components/ramelig-distribution.hpp"
@@ -391,17 +392,17 @@ RameligExpanderModule* RameligModule::getRameligExpander() {
 }
 
 RameligWidget::RameligWidget(RameligModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "ramelig") {
-	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 232.5f), module, RameligModule::PARAM_LOWER_LIMIT));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 232.5f), module, RameligModule::PARAM_UPPER_LIMIT));
+	addParam(createParamCentered<NTKnob32>(Vec(137.5f, 232.5f), module, RameligModule::PARAM_LOWER_LIMIT));
+	addParam(createParamCentered<NTKnob32>(Vec(177.5f, 232.5f), module, RameligModule::PARAM_UPPER_LIMIT));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(32.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_JUMP));
+	addParam(createParamCentered<NTKnob32>(Vec(32.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_JUMP));
 	addParam(createParamCentered<VCVButton>(Vec(32.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_JUMP));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(72.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_SHIFT));
+	addParam(createParamCentered<NTKnob32>(Vec(72.5f, 232.5f), module, RameligModule::PARAM_CHANCE_RANDOM_SHIFT));
 	addParam(createParamCentered<VCVButton>(Vec(72.5f, 310.5f), module, RameligModule::PARAM_TRIG_RANDOM_SHIFT));
 
-	addParam(createParamCentered<Rogan1PWhite>(Vec(137.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_UP));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(177.5f, 47.f), module, RameligModule::PARAM_CHANCE_STAY));
-	addParam(createParamCentered<Rogan1PWhite>(Vec(97.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_DOWN));
+	addParam(createParamCentered<NTKnob32>(Vec(137.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_UP));
+	addParam(createParamCentered<NTKnob32>(Vec(177.5f, 47.f), module, RameligModule::PARAM_CHANCE_STAY));
+	addParam(createParamCentered<NTKnob32>(Vec(97.5f, 47.f), module, RameligModule::PARAM_CHANCE_MOVE_DOWN));
 	addParam(createParamCentered<Trimpot>(Vec(117.5f, 127.5f), module, RameligModule::PARAM_FACTOR_MOVE_TWO));
 	addParam(createParamCentered<Trimpot>(Vec(177.5f, 127.f), module, RameligModule::PARAM_FACTOR_STAY_REPEAT));
 

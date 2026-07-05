@@ -148,29 +148,7 @@ ScriptValue JsonScriptParser::parseFullValue(const json& valueJson, bool allowRe
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_MultipleValues, "Only one of 'voltage', 'note', 'variable', 'input', 'output' or 'rand' can be used.");
 		}
 
-		json::const_iterator calcs = valueJson.find("calc");
-		if (calcs != valueJson.end()) {
-			if (calcs->is_array()) {
-				m_context.location.push_back("calc");
-
-				int count = 0;
-				vector<json> calcElements = (*calcs);
-				for (const json& calc : calcElements) {
-					m_context.location.push_back(to_string(count));
-					if (calc.is_object()) {
-						value.calc.push_back(parseCalc(calc, true));
-					} else {
-						addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_CalcObject, "'calc' elements must be objects.");
-					}
-					m_context.location.pop_back();
-					count++;
-				}
-
-				m_context.location.pop_back();
-			} else {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Value_CalcArray, "'calc' must be an array.");
-			}
-		}
+		parseChildArray<ScriptCalc, false>(m_context, valueJson, "calc", 0, value.calc, [this](const json& calc) { return parseCalc(calc, true); }, ValidationErrorCode::Value_CalcObject, ValidationErrorCode::Value_CalcArray, ValidationErrorCode::NoError);
 
 		value.quantize = false;
 		json::const_iterator quantize = valueJson.find("quantize");
