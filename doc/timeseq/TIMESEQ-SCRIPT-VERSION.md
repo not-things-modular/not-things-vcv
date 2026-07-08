@@ -11,7 +11,7 @@
 
 ## Version 1.3.0
 
-**Supported from**: Timeseq v2.0.8, **Release date**: TBD
+**Supported from**: TimeSeq v2.0.8, **Release date**: TBD
 
 ### Changes
 

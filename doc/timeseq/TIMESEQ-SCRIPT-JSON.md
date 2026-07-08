@@ -77,6 +77,8 @@ The `sequences` property can contain sequences of values that can be iterated ov
 
 In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *value*s, ...) can be defined that can then be referenced from elsewhere in the script. This allows a single object definition to be re-used in multiple parts of the script, and can allow better structuring of complex scripts through the usage of clear/descriptive IDs. See the [referencing](TIMESEQ-SCRIPT.md#referencing) section of the main TimeSeq script documentation file for more details.
 
+At least one of `timelines` or a `clocks` is required in a script (or both).
+
 ### Properties
 
 | property | required | type | since | description |
@@ -96,7 +98,7 @@ In the `component-pool`, TimeSeq objects (*segment*s, *input*s, *output*s, *valu
 ```js
 {
     "type": "not-things_timeseq_script",
-    "version": "1.0.0",
+    "version": "1.3.0",
     "timelines": [
         { ... },
         { ... }
@@ -213,7 +215,7 @@ The running state of a lane can be controlled using triggers:
 | `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
 | `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty. |
 | `stop-trigger` | no | string | The id of the internal trigger that will cause this lane to stop running. A stop trigger on an an inactive lane has no impact on the state of that lane. Defaults to empty. |
-| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `false`, a loop of this lane will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `true`. |
+| `disable-ui` | no | boolean | If set to `false`, the *L* LED on the TimeSeq panel will light up when this lane loops. If set to `true`, a loop of this lane will not cause the *L* LED on the TimeSeq panel to light up. Defaults to `false`. |
 
 ### Example
 
@@ -231,11 +233,13 @@ The running state of a lane can be controlled using triggers:
 
 ## clock
 
-A clock is a container for the definitions of one or more clock signals. It groups together one or more [clock lanes](#clock-lane). Clocks were added in script version 1.3.0 (TimeSeq v2.0.8)
+A clock is a container for the definitions of one or more clock signals. It groups together one or more [clock lanes](#clock-lane). Combined, they generate looping trigger/gate signals on an output port.
+
+Clocks were added in script version 1.3.0 (TimeSeq v2.0.8)
 
 A clock is a simplified version of a [timeline](#timeline) to provide a more convenient way to define a clock signal. Instead of defining a *timeline* with *lanes* that contain *segments* with [gate actions](#gate-actions), a *clock lane* specifies the [durations](#duration) in the clock signal, and TimeSeq will convert this into the correct components to generate that clock signal or sequence.
 
-Just like in a *timeline*, an optional time-scale property controls the timing calculations that will be performed for all lanes (and thus the duration of their segments)
+Just like in a *timeline*, an optional time-scale property controls the timing calculations that will be performed for all lanes (and thus the durations that they contain).
 
 When running the script, each processing cycle will first run through each of the *clock lanes* in the order that they appear in the `lanes` list, and then run through each of the timeline `lanes` in the order that they appear. As such, any clock signal that is triggered as part of a processing cycle will be fired before any timeline processing is done within that cycle.
 
@@ -261,15 +265,17 @@ When running the script, each processing cycle will first run through each of th
 }
 ```
 
-This clock object sets up three different clock signals, all running at 120 beats per minute. THe first clock signal triggers every eight note (i.e. twice per beat) and is sent to output 1. The second triggers every four beats and is sent to output 2. The third clock is a composite clock: it first outputs a signal that lasts for a quarter of a beat, and then one that lasts for half a beat. These two durations are then looped.
+This clock object sets up three different clock signals, all running at 120 beats per minute. The first clock signal triggers every eighth note (i.e. twice per beat) and is sent to output 1. The second triggers every four beats and is sent to output 2. The third clock is a composite clock: it first outputs a signal that lasts for a quarter of a beat, and then one that lasts for half a beat. This pattern will then be looped. This allows a single composite clock to be created, giving access to such things as swing or groove patterns, or even more complex sequences.
 
 ## clock lane
 
-A clock lane defines a single clock signal that is to be generated. The clock signal will be generated by running through the `durations` of the lane in the order that they appear in the list. Each of the *duration* instances will generate a gate signal on the `output` that is specified on the lane. Unless stopped by a *trigger*, clocks will keep running by looping through the defined durations. A duration will use the `time-scale` of the parent [clock](#clock) object when needed to calculate the correct value for the duration.
+A clock lane defines a single clock signal that is to be generated. The `durations` list of the clock lane specifies how many gates there will be within one loop of the clock, and how long each will last. Each of the *duration* in the list will be handled in the order that they appear, and will generate a gate signal on the `output` of the lane, one after the other in series. Unless stopped by a *trigger*, clocks will keep running by looping through the defined durations. A duration will use the `time-scale` of the parent [clock](#clock) object when needed to calculate the correct value for the duration.
 
-The pulse width of the output gate (how long it stays high vs low) can be controlled using the `gate-high-ratio`.
+The pulse width of the output gate (how long it stays high, i.e. 10V vs low, i.e. 0V) can be controlled using the `gate-high-ratio`.
 
 By default, a clock lane will automatically start when a script is loaded. This can be overwritten using the `auto-start` property. Just like a *timeline lane*, the state of a *clock lane* can be controlled using a `start-trigger`, a `restart-trigger` and a `stop-trigger` (see [lane](#lane) for more details).
+
+### Properties
 
 | property | required | type | description |
 | --- | --- | --- | --- |
@@ -280,7 +286,7 @@ By default, a clock lane will automatically start when a script is loaded. This 
 | `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
 | `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty. |
 | `stop-trigger` | no | string | The id of the internal trigger that will cause this lane to stop running. A stop trigger on an an inactive lane has no impact on the state of that lane. Defaults to empty. |
-| `disable-ui` | no | boolean | If set to `true`, the *L* LED on the TimeSeq panel will light up when this lane loops and the *S* LED on the TimeSeq panel will light up each time a clock signal starts. If set to `false`, no LEDs on the TimeSeq panel will light up for this lane. Defaults to `true`. |
+| `disable-ui` | no | boolean | If set to `false`, the *L* LED on the TimeSeq panel will light up when this lane loops and the *S* LED on the TimeSeq panel will light up each time a clock signal starts. If set to `true`, no LEDs on the TimeSeq panel will light up for this lane. Defaults to `false`. |
 
 ### Examples
 
@@ -406,7 +412,7 @@ The `actions` property can still be used together with the `segment-block` prope
 | --- | --- | --- | --- |
 | `duration` | yes | [duration](#duration) | Defines how long this segment will take to complete. |
 | `actions` | no | [action](#action) list | The actions that will be executed as part of this segment. See the description above for details about the timings of actions. |
-| `disable-ui` | no | boolean | If set to `true`, the *S* LED on the TimeSeq panel will light up when this *segment* starts. If set to `false`, a start of this *segment* will not cause the *S* LED on the TimeSeq panel to light up. Defaults to `true`. |
+| `disable-ui` | no | boolean | If set to `false`, the *S* LED on the TimeSeq panel will light up when this *segment* starts. If set to `true`, a start of this *segment* will not cause the *S* LED on the TimeSeq panel to light up. Defaults to `false`. |
 | `segment-block` | no | string | The ID of a [segment-block](#segment-block) in the [component-pool](#component-pool) that will take the place of this segment. Can not be combined with the `duration`, and `disable-ui` properties. |
 
 ### Example

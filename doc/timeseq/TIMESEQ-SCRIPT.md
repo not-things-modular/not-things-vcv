@@ -35,7 +35,7 @@ The schema can be associated with a script file by adding following property at 
 
 ```js
 {
-    "$schema": "https://not-things.com/schemas/timeseq-script-1.2.0.schema.json"
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.3.0.schema.json"
     ...
 }
 ```
@@ -248,7 +248,7 @@ If a *segment* is used by `id` reference in multiple *timeline*s, the duration o
 
 ## Clocks
 
-Starting with script version v1.0.3 (TimeSeq v2.0.8), clocks are available to more conveniently generate simple or semi-complex clock signals. While clocks created through the main [timeline](TIMESEQ-SCRIPT-JSON.md#timeline)s of TimeSeq requires a `timeline` with a `lane` that contains one or more `segments` that execute a `gate action`, the same can be written by defining a [clock](TIMESEQ-SCRIPT-JSON.md#clock) that has a [clock lane](TIMESEQ-SCRIPT-JSON.md#lane) with one or more [durations](TIMESEQ-SCRIPT-JSON.md#duration):
+Starting with script version v1.3.0 (TimeSeq v2.0.8), clocks are available to more conveniently generate simple or semi-complex clock signals. While clocks can also be created through the main [timeline](TIMESEQ-SCRIPT-JSON.md#timeline)s of TimeSeq, this requires a `timeline` with a `lane` that contains one or more `segments` that execute a `gate action`. The clocks feature allows the same to be shortened by defining a [clock](TIMESEQ-SCRIPT-JSON.md#clock) that has a [clock lane](TIMESEQ-SCRIPT-JSON.md#clock-lane) with one or more [durations](TIMESEQ-SCRIPT-JSON.md#duration):
 
 The following illustrates a number of clock possibilities:
 

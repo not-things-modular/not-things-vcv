@@ -1,10 +1,13 @@
-# TimeSeq CLOCK sample script
+# TimeSeq CLOCK sample script (using timelines)
 
 *A Sample script for the not-things [TimeSeq](../../TIMESEQ.md) module.*
 
 A clock signal in VCV Rack can be created using a consistent gate signal. And since [segment](../TIMESEQ-SCRIPT-JSON.md#segment)s in TimeSeq can be looped and can have [gate](../TIMESEQ-SCRIPT-JSON.md#gate-actions) actions, a basic clock signal can be created easily. But because TimeSeq supports multiple [timeline](../TIMESEQ-SCRIPT-JSON.md#timeline)s that can have different [time-scale](../TIMESEQ-SCRIPT-JSON.md#time-scale)s and one or more looping [lane](../TIMESEQ-SCRIPT-JSON.md#lane)s, it's also possible to set up a complex combination of clock signals in a TimeSeq script.
 
-This page will give an example of simple script setup using a couple of *bpm*s and beat subdivisions. It will output the different clock signals using different channels of the same polyphonic output port. While this is not really needed here since there are only a couple of clock signals, it is likely that in real-life scenarios, the script will also contain other output signals outside of the clock signals. Combining the clock signals into one output port frees up the other outputs for other usages in the script.
+This page will give an example of simple script setup using a couple of *bpm*s and beat subdivisions using `timeline`s and `lane`s. It will output the different clock signals using different channels of the same polyphonic output port. While this is not really needed here since there are only a couple of clock signals, it is likely that in real-life scenarios, the script will also contain other output signals outside of the clock signals. Combining the clock signals into one output port frees up the other outputs for other usages in the script.
+
+> **NOTE:** Starting with script version v1.3.0 (TimeSeq v2.0.8), a [clocks](../TIMESEQ-SCRIPT-JSON.md#clock) feature has been added to the TimeSeq script that simplifies the setup of simple and semi-complex looping clock signals. This feature reduces the amount of setup to be done for creating dedicated clock outputs. While this does make this pre-v1.3.0 sample a bit outdated, it still provides a useful demonstration of other features of the TimeSeq script that can be used for different purposes, so this sample is kept as-is. For the updated approach to achieve the same result using the new *clocks* feature, see [Creating Clock Signals using Clocks](./CLOCK-USING-CLOCKS.md).
+
 
 ## Table of Contents
 
@@ -14,10 +17,11 @@ This page will give an example of simple script setup using a couple of *bpm*s a
   * [Clock Signal with Partial Beat](#clock-signal-with-partial-beat)
   * [A Slow Clock Signal](#a-slow-clock-signal)
 * [A 90 BPM Timeline](#a-90-bpm-timeline)
+* [A 70 BPM Timeline](#a-70-bpm-timeline)
 
 ## Set Up Polyphonic Output
 
-Since we want to send the clock outputs as polyphonic channels on the first output port, we'll have to set up this polyphony first. We'll do this using using the `global-actions` property of the TimeSeq [script](../TIMESEQ-SCRIPT-JSON.md#script). Actions in the `global-actions` list are executed when a script is loaded or reset, so setting up the polyphony here will initialize that port and make polyphony on it available throughout the rest of the script:
+Since we want to send the clock outputs as polyphonic channels on the first output port, we'll have to set up this polyphony first. We'll do this using the `global-actions` property of the TimeSeq [script](../TIMESEQ-SCRIPT-JSON.md#script). Actions in the `global-actions` list are executed when a script is loaded or reset, so setting up the polyphony here will initialize that port and make polyphony on it available throughout the rest of the script:
 
 ```json
 "global-actions": [
@@ -92,7 +96,7 @@ The `beat` property of the *segment* *duration* can also be set to decimal numbe
 
 This *lane* will create a clock beat that lasts one and three quarters of the 120 bpm that is specified on the *timeline* (so slower then the previous *lane*, but not quite double as long). The clock signal will be sent to the second channel of the first output port.
 
-The `gate-high-ratio` property will control how long the clock signal will remain high (as a value between `0` and `1`). The `0.66` value used here will cause it to remain high for 66% of the segment duration, and low for 44% of the segment duration. This can be useful in certain scenarios, like when the clock signal is used for generating an ADSR envelope, and the sustain section of the envelope should be longer or shorter.
+The `gate-high-ratio` property will control how long the clock signal will remain high (as a value between `0` and `1`). The `0.66` value used here will cause it to remain high for 66% of the segment duration, and low for 34% of the segment duration. This can be useful in certain scenarios, like when the clock signal is used for generating an ADSR envelope, and the sustain section of the envelope should be longer or shorter.
 
 ### A Slow Clock Signal
 
@@ -146,7 +150,7 @@ Because a script can have multiple *timeline*s, the clock signals in a script do
 
 Since the *segment* in this *timeline* doesn't use a `bars` time unit, we don't specify a `bpb` on the *timeline* *time-scale*.
 
-## A 75 BPM Timeline
+## A 70 BPM Timeline
 
 The third timeline will be a bit more off-beat compared to the other timelines: the others were a multiple of 30, while this final *timeline* will use a `bpm` of 70. It will again trigger on every beat of these 70 Beats per Minute, and send that clock signal to the fourth channel of the first output port.
 
@@ -174,8 +178,8 @@ The third timeline will be a bit more off-beat compared to the other timelines: 
 
 ## Full Script and VCV Rack Patch
 
-The full clock script can be found in [clock.json](clock/clock.json).
+The full clock script can be found in [clock.json](clock-using-timelines/clock.json).
 
-The [clock.vcv](clock/clock.vcv) patch will split up the five clock signals from the polyphonic output port and use each of the clock signals to generate a separate ADSR Envelope. This Envelope will be used to control the volume of five VCOs (each playing a different note).
+The [clock.vcv](clock-using-timelines/clock.vcv) patch will split up the five clock signals from the polyphonic output port and use each of the clock signals to generate a separate ADSR Envelope. This Envelope will be used to control the volume of five VCOs (each playing a different note).
 
 The clock signals themselves will also be shown on oscilloscopes: the four shorter clocks are combined on the Count Modula Oscilloscope, and the slow clock on a VCV Scope.
