@@ -128,7 +128,7 @@ The third clock will be a bit more off-beat compared to the other clocks: the ot
 }
 ```
 
-## Full Simple clocks Script and VCV Rack Patch
+## Full Simple Clocks Script and VCV Rack Patch
 
 The full clock script can be found in [clock.json](clock-using-clocks/clock.json).
 
