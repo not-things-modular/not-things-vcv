@@ -12,11 +12,11 @@ To use the schema for validating a TimeSeq JSON script, include following at the
 
 ```json
 {
-    "$schema": "https://not-things.com/schemas/timeseq-script-1.2.0.schema.json",
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.3.0.schema.json",
 }
 ```
 
-This would validate the JSON script against version `1.2.0` of the TimeSeq JSON script. Update the schema URI to the desired version when a different JSON script version is desired.
+This would validate the JSON script against version `1.3.0` of the TimeSeq JSON script. Update the schema URI to the desired version when a different JSON script version is desired.
 
 ## Validating the schema
 

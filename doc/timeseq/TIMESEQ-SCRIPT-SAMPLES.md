@@ -12,7 +12,8 @@ While each of the samples demonstrates separate pieces of functionality, the fac
 
 * [Building a Chord Progression and Note Melody](#building-a-chord-progression-and-note-melody)
 * [Building a Chord Progression and Note Melody using Sequences](#building-a-chord-progression-and-note-melody-using-sequences)
-* [Creating Clock Signals](#creating-clock-signals)
+* [Creating Clock Signals using Timelines](#creating-clock-signals-using-timelines)
+* [Creating Clock Signals using Clocks](#creating-clock-signals-using-clocks)
 * [Sample and Hold](#sample-and-hold)
 * [A Bernoulli Gate](#a-bernoulli-gate)
 * [Oscillator](#oscillator)
@@ -42,14 +43,24 @@ The [chord progression and note melody using sequences](samples/CHORDS-AND-NOTES
 * Using variables and random values
 * Using a sequence with random positioning to generate a random melody
 
-## Creating Clock Signals
+## Creating Clock Signals using Timelines
 
-The [clock](samples/CLOCK.md) script demonstrates the usage of TimeSeq as a clock source. This script demonstrates:
+The [clock using timelines](samples/CLOCK-USING-TIMELINES.md) script demonstrates the usage of TimeSeq timelines, lanes, segments and actions as a clock source. This script demonstrates:
 
 * Using multiple timelines with different time-scales
 * Using gate actions as clock signal sources
 * Using beats and bars to specify clock durations
 * Controlling the length that a clock (i.e. gate) signal remains high
+
+## Creating Clock Signals using Clocks
+
+The [clock using clocks](samples/CLOCK-USING-CLOCKS.md) script recreates the previous *clock using timelines* sample, but uses the clocks feature that was introduced in TimeSeq v2.0.8 instead. This results in a simpler version, using TimeSeq clocks, lanes and durations to build a clock source. Additionally, it demonstrates how clocks can be used to make more complex trigger sequences. This script demonstrates:
+
+* Using multiple clocks with different time-scales
+* Using lanes with durations as clock signal sources
+* Using beats and bars as clock durations
+* Controlling the length that a clock (i.e. gate) signal remains high
+* Using multiple lane durations to create more complex trigger/gate sequences
 
 ## Sample and Hold
 

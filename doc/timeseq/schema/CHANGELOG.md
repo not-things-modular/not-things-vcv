@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.3.0 (TBD)
+
+* Added clocks and clock-lanes.
+
 ## 1.2.0 (2026-03-13)
 
 * Added sequences, sequence values and move-sequence, clear-sequence, add-to-sequence and remove-from-sequence actions.

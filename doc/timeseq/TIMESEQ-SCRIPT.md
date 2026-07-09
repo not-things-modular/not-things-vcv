@@ -19,6 +19,7 @@
   * [Example](#example)
   * [Circular References](#circular-references)
   * [Segment References and Duration](#segment-references-and-duration)
+* [Clocks](#clocks)
 * [Script Errors](#script-errors)
 * [Documenting Scripts](#documenting-scripts)
 
@@ -34,7 +35,7 @@ The schema can be associated with a script file by adding following property at 
 
 ```js
 {
-    "$schema": "https://not-things.com/schemas/timeseq-script-1.2.0.schema.json"
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.3.0.schema.json"
     ...
 }
 ```
@@ -244,6 +245,55 @@ the *value* with id `my-first-value` takes the current voltage of *input* port 2
 ### Segment References and Duration
 
 If a *segment* is used by `id` reference in multiple *timeline*s, the duration of that segment can be different in each *timeline* dependent on the *time-scale* of the *timeline*. E.g. if one *timeline* specifies a `bpm` of 120 in its *time-scale*, and the other a `bpm` of 90, then a *segment* that has a duration of 4 `beats` will have a different duration (in corresponding milliseconds) when placed in those two *timeline*s.
+
+## Clocks
+
+Starting with script version v1.3.0 (TimeSeq v2.0.8), clocks are available to more conveniently generate simple or semi-complex clock signals. While clocks can also be created through the main [timeline](TIMESEQ-SCRIPT-JSON.md#timeline)s of TimeSeq, this requires a `timeline` with a `lane` that contains one or more `segments` that execute a `gate action`. The clocks feature allows the same to be shortened by defining a [clock](TIMESEQ-SCRIPT-JSON.md#clock) that has a [clock lane](TIMESEQ-SCRIPT-JSON.md#clock-lane) with one or more [durations](TIMESEQ-SCRIPT-JSON.md#duration):
+
+The following illustrates a number of clock possibilities:
+
+```json
+{
+    "clocks": [
+        {
+            "lanes": [ { "durations": [ { "millis": 500 } ], "output": 1 } ]
+        },
+        {
+            "time-scale": {
+                "bpm": 120
+            },
+            "lanes": [
+                { "durations": [ { "beats": 0.25 } ], "output": 2 },
+                { "durations": [ { "beats": 0.5 } ], "output": 3 },
+                { "durations": [ { "beats": 1 } ], "output": 4 },
+                { "durations": [ { "beats": 4 } ], "output": 5 }
+            ]
+        },
+        {
+            "lanes": [
+                {
+                    "durations": [
+                        { "millis": 250 },
+                        { "millis": 125 },
+                        { "millis": 125 },
+                        { "millis": 250 },
+                        { "millis": 500 },
+                        { "millis": 250 },
+                        { "millis": 500 }
+                    ],
+                    "output": 6
+                }
+            ]
+        }
+    ]
+}
+```
+
+In this sample, the first clock defines a simple 500-millisecond clock signal that is sent to output port 1.
+
+The second clock defines a `time-scale` that is used for all the `clock lane`s in it. The lanes then define four separate clocks: quarter beat on the 2nd output, half beat on the third output, every beat on the fourth output, and every 4 beats on the 5th output.
+
+The third clock uses a more complex trigger pattern by looping a list of millisecond durations on output 6.
 
 ## Script Errors
 

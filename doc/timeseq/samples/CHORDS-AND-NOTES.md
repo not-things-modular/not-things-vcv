@@ -5,7 +5,7 @@
 One of the basic functionalities of TimeSeq is to create repeating chord progressions and note sequences. On this page, we'll start with a simple set of notes and gradually transform this into a chord progression that can drive a bass voice, and an arpeggiated notes voice.
 
 
-> **NOTE:** Starting with script version v1.2.0 (TimeSeq v2.0.6), a [sequences](../TIMESEQ-SCRIPT-JSON.md#sequence) feature has been added to the TimeSeq script that simplifies the execution of repeated actions with a sequence of values/notes. This feature simplifies the creation of scripts with chord sequences. While this does make this pre-v1.2.0 sample a bit outdated, it still provides a usefull demonstration of other features of the TimeSeq script that can be used for different purposes, so this sample is kept as-is. For the updated approach to achieve the same result using the new *sequences* feature, see [Chord Progression and Note Melody using Sequences](./CHORDS-AND-NOTES-USING-SEQUENCES.md).
+> **NOTE:** Starting with script version v1.2.0 (TimeSeq v2.0.6), a [sequences](../TIMESEQ-SCRIPT-JSON.md#sequence) feature has been added to the TimeSeq script that simplifies the execution of repeated actions with a sequence of values/notes. This feature simplifies the creation of scripts with chord sequences. While this does make this pre-v1.2.0 sample a bit outdated, it still provides a useful demonstration of other features of the TimeSeq script that can be used for different purposes, so this sample is kept as-is. For the updated approach to achieve the same result using the new *sequences* feature, see [Chord Progression and Note Melody using Sequences](./CHORDS-AND-NOTES-USING-SEQUENCES.md).
 
 ## Table of Contents
 
@@ -202,7 +202,7 @@ A script version with gate actions added to all the arpeggiated chord notes can 
 
 ## Using Triplets
 
-When there are multiple looping *lanes* in a *timeline* that are expected to stay in sync, unless the `loop-lock` is activated on the *timeline*, it's important to make sure that all the *lane*s have the same duration. This can be demonstrated by making the *segment-block* play half-note triplets instead of eight notes. A triplet *segment* can be written as:
+When there are multiple looping *lanes* in a *timeline* that are expected to stay in sync, unless the `loop-lock` is activated on the *timeline*, it's important to make sure that all the *lane*s have the same duration. This can be demonstrated by making the *segment-block* play half-note triplets instead of eighth notes. A triplet *segment* can be written as:
 
 ```json
 {
