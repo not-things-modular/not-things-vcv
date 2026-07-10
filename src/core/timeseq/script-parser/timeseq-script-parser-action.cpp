@@ -1,7 +1,7 @@
 #include "core/timeseq-script-parser-internal.hpp"
 
 ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRefs) {
-	static const char* cActionProperties[] = { "timing", "set-value", "set-variable", "set-polyphony", "set-label", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio" };
+	static const char* cActionProperties[] = { "timing", "set-value", "set-variable", "set-polyphony", "set-label", "assert", "trigger", "move-sequence", "clear-sequence", "add-to-sequence", "remove-from-sequence", "start-value", "end-value", "ease-factor", "ease-algorithm", "output", "variable", "if", "gate-high-ratio", "gate-high-duration" };
 	static const vector<string> vActionProperties(begin(cActionProperties), end(cActionProperties));
 	ScriptAction action;
 
@@ -217,6 +217,18 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			}
 		}
 
+		json::const_iterator gateHighDuration = actionJson.find("gate-high-duration");
+		if (gateHighDuration != actionJson.end()) {
+			verifyVersion(VERSION_1_3_0, m_context, "'gate-high-duration'");
+			if (gateHighDuration->is_object()) {
+				m_context.location.push_back("gate-high-duration");
+				action.gateHighDuration.reset(new ScriptDuration(parseDuration(*gateHighDuration)));
+				m_context.location.pop_back();
+			} else {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighDurationObject, "'gate-high-duration' must be a duration object.");
+			}
+		}
+
 		json::const_iterator output = actionJson.find("output");
 		if (output != actionJson.end()) {
 			ScriptOutput *scriptOutput = new ScriptOutput(parseOutput(*output, true, "output", ValidationErrorCode::Action_OutputObject, "'output' must be an object."));
@@ -248,8 +260,8 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 		}
 
 		if (action.timing == ScriptAction::ActionTiming::GLIDE) {
-			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.moveSequence) || (action.clearSequence.length() > 0) || (action.addToSequence) || (action.removeFromSequence) || (action.gateHighRatio)) {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence' and 'gate-high-ratio' can not be used in combination with 'GLIDE' timing.");
+			if ((action.setValue) || (action.setVariable) || (action.setPolyphony) || (action.setLabel) || (action.assert) || (action.trigger.size() > 0) || (action.moveSequence) || (action.clearSequence.length() > 0) || (action.addToSequence) || (action.removeFromSequence) || (action.gateHighRatio) || (action.gateHighDuration)) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGlideProperties, "'set-value', 'set-variable', 'set-polyphony', 'set-label', 'assert', 'trigger', 'move-sequence', 'clear-sequence', 'add-to-sequence', 'remove-from-sequence', 'gate-high-ratio' and 'gate-high-duration' can not be used in combination with 'GLIDE' timing.");
 			}
 			if ((!action.startValue) || (!action.endValue)) {
 				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_MissingGlideValues, "'start-value' and 'end-value' must be present when 'GLIDE' timing is used.");
@@ -270,9 +282,12 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (action.variable.length() > 0) {
 				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_NonGateProperties, "'variable' can only be used in combination with 'GLIDE' timing.");
 			}
+			if ((action.gateHighRatio) && (action.gateHighDuration)) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighRatioOrGateHighDuration, "'gate-high-ratio' and 'gate-high-duration' can not be used together.");
+			}
 		} else {
-			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm) || (action.gateHighRatio)) {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' 'ease-algorithm' and 'gate-high-ratio' can only be used in combination with 'GLIDE' timing.");
+			if ((action.startValue) || (action.endValue) || (action.easeFactor) || (action.easeAlgorithm) || (action.gateHighRatio) || (action.gateHighDuration)) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'start-value', 'end-value', 'ease-factory' 'ease-algorithm', 'gate-high-ratio' and 'gate-high-duration' can only be used in combination with 'GLIDE' timing.");
 			}
 			if ((action.output) || (action.variable.length() > 0)) {
 				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "'output' and 'variable' can only be used in combination with 'GLIDE' timing.");

@@ -182,15 +182,38 @@ double ActionGlideProcessor::calculateSigEase(float ease) {
 }
 
 
-ActionGateProcessor::ActionGateProcessor(float gateHighRatio, const shared_ptr<IfProcessor>& ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler) :
-	ActionOngoingProcessor(ifProcessor), m_portHandler(portHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_gateHighRatio(gateHighRatio) {}
+ActionGateProcessor::ActionGateProcessor(float gateHighRatio, const shared_ptr<DurationProcessor> gateHighDuration, const shared_ptr<IfProcessor>& ifProcessor, int outputPort, int outputChannel, float sampleRate, PortHandler* portHandler) :
+	ActionOngoingProcessor(ifProcessor), m_portHandler(portHandler), m_outputPort(outputPort), m_outputChannel(outputChannel), m_gateHighRatio(gateHighRatio), m_gateHighDuration(gateHighDuration), m_samplesIn2Ms(sampleRate / 500) {}
 
 void ActionGateProcessor::start(uint64_t glideLength) {
 	ActionOngoingProcessor::start(glideLength);
 
 	if (shouldProcess()) {
-		// There should be at least one high sample in the gate
-		m_gateLowPosition = fmax(ceil(m_gateHighRatio * glideLength), 1.f);
+		// If the glideLength is less than 2 ms, divide the high and low durations equally
+		if (glideLength < m_samplesIn2Ms) {
+			m_gateLowPosition = fmax(ceil(glideLength / 2), 1.f);
+		} else {
+			float position;
+
+			if (m_gateHighDuration) {
+				// Prepare the duration processor, and use its duration
+				m_gateHighDuration->prepareForStart();
+				position = m_gateHighDuration->getDuration();
+
+			} else {
+				// There is no gate high duration, so use the ratio instead.
+				position = m_gateHighRatio * glideLength;
+			}
+
+			// There are at least two milliseconds, so we can can make sure there is at least one millisecond high, and one low (to allow for correct gate detection further down the patch chain)
+			if (position < m_samplesIn2Ms / 2) {
+				m_gateLowPosition = fmax(ceil(m_samplesIn2Ms / 2), 1.f);
+			} else if (glideLength - position < m_samplesIn2Ms / 2) {
+				m_gateLowPosition = fmax(ceil(glideLength - (m_samplesIn2Ms / 2)), 1.f);
+			} else {
+				m_gateLowPosition = fmax(ceil(position), 1.f);
+			}
+		}
 
 		m_gateHigh = true;
 		m_portHandler->setOutputPortVoltage(m_outputPort, m_outputChannel, 10.f);

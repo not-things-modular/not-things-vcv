@@ -92,7 +92,7 @@ const shared_ptr<SegmentProcessor> ProcessorScriptParser::parseResolvedSegment(c
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::GLIDE) {
 				ongoingActions.push_back(parseResolvedGlideAction(resolvedAction));
 			} else if (resolvedAction->timing == ScriptAction::ActionTiming::GATE) {
-				ongoingActions.push_back(parseResolvedGateAction(resolvedAction));
+				ongoingActions.push_back(parseResolvedGateAction(resolvedAction, timeScale));
 			}
 			m_context.popLocation();
 		} else {

@@ -272,6 +272,9 @@
 					"maximum": 1,
 					"default": 0.5
 				},
+				"gate-high-duration": {
+					"$ref": "#/definitions/duration"
+				},
 				"output": {
 					"$ref": "#/definitions/output"
 				},
@@ -302,6 +305,10 @@
 				}
 			},
 			"required": [ "durations", "output" ],
+			"not": {
+				"properties": { "gate-high-ratio": {}, "gate-high-duration": {} },
+				"required": [ "gate-high-ratio", "gate-high-duration" ]
+			},
 			"patternProperties": { "^x-": true },
 			"additionalProperties": false
 		},
@@ -840,6 +847,25 @@
 							"minimum": 0,
 							"maximum": 1,
 							"default": 0.5
+						},
+						"if": {
+							"$ref": "#/definitions/if"
+						}
+					},
+					"required": [ "timing", "output" ],
+					"patternProperties": { "^x-|^id$": true },
+					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"timing": {
+							"const": "gate"
+						},
+						"output": {
+							"$ref": "#/definitions/output"
+						},
+						"gate-high-duration": {
+							"$ref": "#/definitions/duration"
 						},
 						"if": {
 							"$ref": "#/definitions/if"

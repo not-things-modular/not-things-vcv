@@ -176,7 +176,7 @@ ScriptClock JsonScriptParser::parseClock(const json& clockJson) {
 }
 
 ScriptClockLane JsonScriptParser::parseClockLane(const json& clockLaneJson) {
-	static const vector<string> laneProperties = { "auto-start", "gate-high-ratio", "durations", "output", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" };
+	static const vector<string> laneProperties = { "auto-start", "gate-high-ratio", "gate-high-duration", "durations", "output", "start-trigger", "restart-trigger", "stop-trigger", "disable-ui" };
 	ScriptClockLane clockLane;
 
 	verifyAllowedProperties(clockLaneJson, laneProperties, false, m_context);
@@ -191,16 +191,26 @@ ScriptClockLane JsonScriptParser::parseClockLane(const json& clockLaneJson) {
 		}
 	}
 
-	clockLane.gateHighRatio = .5f;
 	json::const_iterator gateHighRatio = clockLaneJson.find("gate-high-ratio");
 	if (gateHighRatio != clockLaneJson.end()) {
 		if (gateHighRatio->is_number()) {
-			clockLane.gateHighRatio = gateHighRatio->get<float>();
-			if ((clockLane.gateHighRatio < 0.f) || (clockLane.gateHighRatio > 1.f)) {
+			clockLane.gateHighRatio.reset(new float(gateHighRatio->get<float>()));
+			if ((*clockLane.gateHighRatio.get() < 0.f) || (*clockLane.gateHighRatio.get() > 1.f)) {
 				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_GateHighRatioRange, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
 			}
 		} else {
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_GateHighRatioFloat, "'gate-high-ratio' must be a number between 0.0 and 1.0.");
+		}
+	}
+
+	json::const_iterator gateHighDuration = clockLaneJson.find("gate-high-duration");
+	if (gateHighDuration != clockLaneJson.end()) {
+		if (gateHighDuration->is_object()) {
+			m_context.location.push_back("gate-high-duration");
+			clockLane.gateHighDuration.reset(new ScriptDuration(parseDuration(*gateHighDuration)));
+			m_context.location.pop_back();
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_GateHighDurationObject, "'gate-high-duration' must be a duration object.");
 		}
 	}
 
@@ -257,6 +267,10 @@ ScriptClockLane JsonScriptParser::parseClockLane(const json& clockLaneJson) {
 		} else {
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_DisableUiBoolean, "'disable-ui' must be a boolean.");
 		}
+	}
+
+	if ((clockLane.gateHighRatio) && (clockLane.gateHighDuration)) {
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::ClockLane_GateHighRatioOrGateHighDuration, "'gate-high-ratio' and 'gate-high-duration' can't be used together.");
 	}
 
 	return clockLane;
