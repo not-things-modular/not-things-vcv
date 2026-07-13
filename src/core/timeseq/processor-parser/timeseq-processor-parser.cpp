@@ -29,7 +29,7 @@ shared_ptr<Processor> ProcessorScriptParser::parseScript(shared_ptr<Script> scri
 	int count = 0;
 	for (const ScriptSequence& sequence : script->sequences) {
 		m_context.stashLocation();
-		m_context.location = { "component-pool",  "sequences", to_string(count) };
+		m_context.location = { "sequences", to_string(count) };
 		parseSequence(&sequence);
 		m_context.popLocation();
 	}
