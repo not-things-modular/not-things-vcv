@@ -424,28 +424,6 @@ ScriptLane JsonScriptParser::parseLane(const json& laneJson) {
 
 	parseChildArray<ScriptSegment, false>(m_context, laneJson, "segments", 0, lane.segments, [this](const json& segment) { return parseSegment(segment, true); }, ValidationErrorCode::Lane_SegmentObject, ValidationErrorCode::Lane_SegmentsMissing, ValidationErrorCode::Lane_SegmentsMissing);
 
-	// json::const_iterator segments = laneJson.find("segments");
-	// if ((segments != laneJson.end()) && (segments->is_array())) {
-	// 	m_context.location.push_back("segments");
-
-	// 	int count = 0;
-	// 	vector<json> segmentElements = (*segments);
-	// 	for (const json& segment : segmentElements) {
-	// 		m_context.location.push_back(to_string(count));
-	// 		if (segment.is_object()) {
-	// 			lane.segments.push_back(parseSegment(segment, true));
-	// 		} else {
-	// 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_SegmentObject, "'segments' elements must be Segment objects.");
-	// 		}
-	// 		m_context.location.pop_back();
-	// 		count++;
-	// 	}
-
-	// 	m_context.location.pop_back();
-	// } else {
-	// 	addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Lane_SegmentsMissing, "'segments' is required and must be an array.");
-	// }
-
 	lane.disableUi = false;
 	json::const_iterator disableUi = laneJson.find("disable-ui");
 	if (disableUi != laneJson.end()) {

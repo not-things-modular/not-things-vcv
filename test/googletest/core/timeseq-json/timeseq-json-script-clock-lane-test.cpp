@@ -420,6 +420,7 @@ TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldHaveEmtpyGateHighRatioIfNotSet
 	ASSERT_EQ(script->clocks.size(), 1u);
 	ASSERT_EQ(script->clocks[0].lanes.size(), 1u);
 	ASSERT_FALSE(script->clocks[0].lanes[0].gateHighRatio);
+	ASSERT_FALSE(script->clocks[0].lanes[0].gateHighDuration);
 }
 
 TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldParseValidFloatGateHighRatio) {
@@ -441,6 +442,7 @@ TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldParseValidFloatGateHighRatio) 
 	ASSERT_EQ(script->clocks[0].lanes.size(), 1u);
 	ASSERT_TRUE(script->clocks[0].lanes[0].gateHighRatio);
 	ASSERT_EQ(*script->clocks[0].lanes[0].gateHighRatio, .69f);
+	ASSERT_FALSE(script->clocks[0].lanes[0].gateHighDuration);
 }
 
 TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldParseValidIntegerGateHighRatio) {
@@ -462,6 +464,7 @@ TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldParseValidIntegerGateHighRatio
 	ASSERT_EQ(script->clocks[0].lanes.size(), 1u);
 	ASSERT_TRUE(script->clocks[0].lanes[0].gateHighRatio);
 	ASSERT_EQ(*script->clocks[0].lanes[0].gateHighRatio, 1.f);
+	ASSERT_FALSE(script->clocks[0].lanes[0].gateHighDuration);
 }
 
 TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldAcceptZeroGateHighRatio) {
@@ -483,6 +486,7 @@ TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldAcceptZeroGateHighRatio) {
 	ASSERT_EQ(script->clocks[0].lanes.size(), 1u);
 	ASSERT_TRUE(script->clocks[0].lanes[0].gateHighRatio);
 	ASSERT_EQ(*script->clocks[0].lanes[0].gateHighRatio, .0f);
+	ASSERT_FALSE(script->clocks[0].lanes[0].gateHighDuration);
 }
 
 TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldFailWithNegativeGateHighRatio) {
@@ -519,6 +523,74 @@ TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldFailWitGateHighRatioAboveOne) 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::ClockLane_GateHighRatioRange, "/clocks/0/lanes/0");
+}
+
+TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldFailWithNonObjectGateHighDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+            "type": "not-things_timeseq_script",
+            "version": ")" SCRIPT_VERSION_1_3_0 R"(",
+            "clocks": [
+				{ "lanes": [
+					{ "gate-high-duration": "not-an-object", "durations": [], "output": 1 }
+				] }
+			]
+        })"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::ClockLane_GateHighDurationObject, "/clocks/0/lanes/0");
+}
+
+TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldFailWithBothGateHighRatioAndGateHighDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+            "type": "not-things_timeseq_script",
+            "version": ")" SCRIPT_VERSION_1_3_0 R"(",
+            "clocks": [
+				{ "lanes": [
+					{
+						"gate-high-ratio": 0.5,
+						"gate-high-duration": { "samples": 1 },
+						"durations": [],
+						"output": 1
+					}
+				] }
+			]
+        })"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::ClockLane_GateHighRatioOrGateHighDuration, "/clocks/0/lanes/0");
+}
+
+TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldParseGateHighDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+            "type": "not-things_timeseq_script",
+            "version": ")" SCRIPT_VERSION_1_3_0 R"(",
+            "clocks": [
+				{ "lanes": [
+					{
+						"gate-high-duration": { "samples": 123 },
+						"durations": [],
+						"output": 1
+					}
+				] }
+			]
+        })"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->clocks.size(), 1u);
+	ASSERT_EQ(script->clocks[0].lanes.size(), 1u);
+	ASSERT_TRUE(script->clocks[0].lanes[0].gateHighDuration);
+	ASSERT_TRUE(script->clocks[0].lanes[0].gateHighDuration->samples);
+	EXPECT_EQ(*script->clocks[0].lanes[0].gateHighDuration->samples, 123u);
+	ASSERT_FALSE(script->clocks[0].lanes[0].gateHighRatio);
 }
 
 TEST(TimeSeqJsonScriptClockLane, ParseScriptShouldFailOnMissingOutput) {

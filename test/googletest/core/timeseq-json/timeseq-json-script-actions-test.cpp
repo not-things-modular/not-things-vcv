@@ -1418,14 +1418,15 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonGlideActionsCombinedWit
 			{ { "id", "action-4" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "assert", { { "dummy", "value" } } } },
 			{ { "id", "action-5" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "trigger", "trigger-name" } },
 			{ { "id", "action-6" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "gate-high-ratio", 0.1f } },
-			{ { "id", "action-7" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "move-sequence", { { "id", "seq" } } } },
-			{ { "id", "action-8" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "clear-sequence", "seq" } },
-			{ { "id", "action-9" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "add-to-sequence", { { "id", "seq" }, { "value", 1 } } } },
+			{ { "id", "action-7" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "gate-high-duration", { { "samples", 1 } } } },
+			{ { "id", "action-8" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "move-sequence", { { "id", "seq" } } } },
+			{ { "id", "action-9" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "clear-sequence", "seq" } },
+			{ { "id", "action-10" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "variable", "variable-name" }, { "add-to-sequence", { { "id", "seq" }, { "value", 1 } } } },
 		} ) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
-	ASSERT_GT(validationErrors.size(), 9u);
+	ASSERT_GT(validationErrors.size(), 10u);
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/1");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/2");
@@ -1435,6 +1436,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonGlideActionsCombinedWit
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/6");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/7");
 	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/8");
+	expectError(validationErrors, ValidationErrorCode::Action_NonGlideProperties, "/component-pool/actions/9");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonGateActionsCombinedWithGateTiming) {
@@ -1793,7 +1795,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnTooManyActions) {
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnGlidePropertiesOnNonGlideAction) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
-	json json = getMinimalJson();
+	json json = getMinimalJson(SCRIPT_VERSION_1_3_0);
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "trigger", "trigger-name" }, { "output", { { "ref", "output-ref" } } } },
@@ -1803,11 +1805,12 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnGlidePropertiesOnNonGlideA
 			{ { "id", "action-5" }, { "trigger", "trigger-name" }, { "ease-factor", 1 } },
 			{ { "id", "action-6" }, { "trigger", "trigger-name" }, { "ease-algorithm", "pow" } },
 			{ { "id", "action-7" }, { "trigger", "trigger-name" }, { "gate-high-ratio", 0.2f } },
+			{ { "id", "action-8" }, { "trigger", "trigger-name" }, { "gate-high-duration", { { "samples", 1 } } } },
 		} ) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
-	ASSERT_EQ(validationErrors.size(), 7u);
+	ASSERT_EQ(validationErrors.size(), 8u) << printValidationErrors(validationErrors);
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/1");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/2");
@@ -1815,6 +1818,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnGlidePropertiesOnNonGlideA
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/4");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/5");
 	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/6");
+	expectError(validationErrors, ValidationErrorCode::Action_GlidePropertiesOnNonGlideAction, "/component-pool/actions/7");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProperties) {
@@ -1836,6 +1840,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 		{ { "ref", "action-ref" }, { "assert", { { "dummy", "value" } } } },
 		{ { "ref", "action-ref" }, { "trigger", "trigger-name" } },
 		{ { "ref", "action-ref" }, { "gate-high-ratio", 0.1f } },
+		{ { "ref", "action-ref" }, { "gate-high-duration", { { "samples", 1} } } },
 		{ { "ref", "action-ref" }, { "move-sequence", "sequence-id" } },
 		{ { "ref", "action-ref" }, { "clear-sequence", "sequence-id" } },
 		{ { "ref", "action-ref" }, { "add-to-sequence", { { "id", "sequence-id" }, { "value", 1.f } } } },
@@ -1843,7 +1848,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 	});
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
-	ASSERT_GT(validationErrors.size(), 11u);
+	ASSERT_GT(validationErrors.size(), 12u);
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/0");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/1");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/2");
@@ -1860,6 +1865,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnRefCombinedWithOtherProper
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/14");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/15");
 	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/16");
+	expectError(validationErrors, ValidationErrorCode::Action_RefOrInstance, "/global-actions/17");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGateActionWithNoGateHighRatio) {
@@ -1899,8 +1905,77 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGateActionWithGateHighRatio
 	EXPECT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::GATE);
 	ASSERT_TRUE(script->actions[0].gateHighRatio);
 	EXPECT_EQ(*script->actions[0].gateHighRatio, .69f);
+	EXPECT_FALSE(script->actions[0].gateHighDuration);
 	ASSERT_TRUE(script->actions[0].output);
 	EXPECT_EQ(script->actions[0].output->ref, "ref-output");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnGateHighDurationPreVersion130) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "output", { { "ref", "ref-output" } } }, { "gate-high-duration", { { "samples", 123 } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseGateActionWithGateHighDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_3_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "output", { { "ref", "ref-output" } } }, { "gate-high-duration", { { "samples", 123 } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->actions.size(), 1u);
+	ASSERT_EQ(script->actions[0].id, "action-1");
+	EXPECT_EQ(script->actions[0].timing, ScriptAction::ActionTiming::GATE);
+	EXPECT_FALSE(script->actions[0].gateHighRatio);
+	ASSERT_TRUE(script->actions[0].gateHighDuration);
+	ASSERT_TRUE(script->actions[0].gateHighDuration->samples);
+	ASSERT_EQ(*script->actions[0].gateHighDuration->samples, 123u);
+	ASSERT_TRUE(script->actions[0].output);
+	EXPECT_EQ(script->actions[0].output->ref, "ref-output");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWhenCombiningGateHighRatioAndDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_3_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "output", { { "ref", "ref-output" } } }, { "gate-high-ratio", 0.75 }, { "gate-high-duration", { { "samples", 123 } } } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_GateHighRatioOrGateHighDuration, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonObjectGateHighDuration) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_3_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "gate" }, { "output", { { "ref", "ref-output" } } }, { "gate-high-duration", "not-an-object" } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Action_GateHighDurationObject, "/component-pool/actions/0");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionWithUnknownPropertyShouldFail) {
