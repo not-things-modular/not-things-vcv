@@ -271,7 +271,8 @@ This clock object sets up three different clock signals, all running at 120 beat
 
 A clock lane defines a single clock signal that is to be generated. The `durations` list of the clock lane specifies how many gates there will be within one loop of the clock, and how long each will last. Each of the *duration* in the list will be handled in the order that they appear, and will generate a gate signal on the `output` of the lane, one after the other in series. Unless stopped by a *trigger*, clocks will keep running by looping through the defined durations. A duration will use the `time-scale` of the parent [clock](#clock) object when needed to calculate the correct value for the duration.
 
-The pulse width of the output gate (how long it stays high, i.e. 10V vs low, i.e. 0V) can be controlled using the `gate-high-ratio`.
+The pulse width of the output gate (how long it stays high, i.e. 10V vs low, i.e. 0V) can be controlled using either the `gate-high-ratio` or `gate-high-duration` properties. The `gate-high-ratio` property expresses the length of the high state relative to the total gate duration using a value between 0 and 1. Lower values mean a shorter gate high duration, higher values result in a longer gate high duration. The `gate-high-duration` property expresses the length of the high state as an absolute duration. The gate signal will remain high for the specified time, and be low for the remainer of the gate. To make sure that a reliable gate signal is generated for downstream modules in the patch, gate signals with a `gate-high-duration` specified will always start with at least 1 millisecond of high signal, and end with at least one milliseconds of low signal. If the specified duration pushes these 1 millisecond boundaries, the duration will be modufied to instead reamin inside them.
+`gate-high-ratio` and `gate-high-duration` can can not be used together, only one (or none) can be specified on a sinle lane.
 
 By default, a clock lane will automatically start when a script is loaded. This can be overwritten using the `auto-start` property. Just like a *timeline lane*, the state of a *clock lane* can be controlled using a `start-trigger`, a `restart-trigger` and a `stop-trigger` (see [lane](#lane) for more details).
 
@@ -281,7 +282,8 @@ By default, a clock lane will automatically start when a script is loaded. This 
 | --- | --- | --- | --- |
 | `durations` | yes | [duration](#duration) list | The sequence of *duration*s that will be executed in order and then looped for this lane to generate clock on the *output* |
 | `output` | yes | [output](#output) | The output port to which the generated clock will be sent. |
-| `gate-high-ratio` | no | float | How long a single gate output remains high. Must be a value between 0 and 1, with smaller values resulting in a shorter gate-high duration. Defaults to `0.5` |
+| `gate-high-ratio` | no | float | How long a single gate output remains high. Must be a value between 0 and 1, with smaller values resulting in a shorter gate-high duration. Defaults to `0.5`. Can not be used together with `gate-high-duration` |
+| `gate-high-duration` | no | (#duration) | How long a single gate output remains high. Each gate output will remain high for the specified duration. Can not be used together with `gate-high-ratio` |
 | `auto-start` | no | boolean | If set to `true`, the lane will start automatically when the script is loaded. If set to `false` the lane will remain stopped when the script is loaded. Defaults to `true` |
 | `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
 | `restart-trigger` | no | string | The id of the internal trigger that will cause this lane to restart. A restart trigger on an inactive lane will cause it to start running. A restart trigger on a running lane will cause it to restart from the first *segment*. Defaults to empty. |
@@ -318,6 +320,16 @@ A clock lane that generates a clock signal every second, with the gate remaining
 ```
 
 A clock lane that generates a more complex clock signal by looping through three durations. The first clock signal lasts a quarter of a beat, the second lasts half a beat, and the third lasts 250 milliseconds (i.e. is not linked directly to the bpm). This pattern will keep looping until a `stop-mixed-beat` trigger is received.
+
+```json
+{
+    "durations": [ { "millis": 250 }, { "beats": 500 }, { "millis": 125 } ],
+    "output": 2,
+    "gate-high-duration": { "millis": 50}
+}
+```
+
+A clock lane that generates a clock signal that consists of three durations (250, 500 and 125 milliseconds), with each of these clock signals having a gate that remains high for 50 milliseconds, and goes low for the remainder of the gate duration.
 
 ## input-trigger
 
@@ -702,7 +714,11 @@ A glide action has two possible targets to send its generated voltages to: eithe
 
 ### Gate actions
 
-An action with the `gate` timing can be used to generate a gate signal on one of the output ports: it will set the output port voltage to 10v when the action starts, and will change it to 0v as the action progresses. By default, the change to 0v will be done when the *segment* that contains the action has completed half of its *duration*. The `gate-high-ratio` property can be used to change this position, with `0` moving it to the start of the *segment*, `1` moving it to the end of the *segment* and `0.5` matching the halfway point of the *segment* *duration*.
+An action with the `gate` timing can be used to generate a gate signal on one of the output ports: it will set the output port voltage to 10v when the action starts, and will change it to 0v as the action progresses.
+
+By default, the change to 0v will be done when the *segment* that contains the action has completed half of its *duration*. The `gate-high-ratio` and `gate-high-duration` properties can be used to change this position. With the `gate-high-ratio`, `0` moves it to the start of the *segment*, while `1` moves it to the end of the *segment* and `0.5` matches the halfway point of the *segment* *duration*.
+The `gate-high-duration` property expresses the length of the high state as an absolute duration. The gate signal will remain high for the specified time, and be low for the remainer of the gate. To make sure that a reliable gate signal is generated for downstream modules in the patch, gate signals with a `gate-high-duration` specified will always start with at least 1 millisecond of high signal, and end with at least one milliseconds of low signal. If the specified duration pushes these 1 millisecond boundaries, the duration will be modufied to instead reamin inside them.
+`gate-high-ratio` and `gate-high-duration` can can not be used together, only one (or none) can be specified on a sinle lane.
 
 The voltage of a gate action must always be sent to an *output* port.
 
@@ -713,10 +729,11 @@ Just like the other action types, a gate action can be made conditional using an
 | property | required | type | description |
 | --- | --- | --- | --- |
 | `output` | yes | [output](#output) | The output port that will receive the gate signal |
-| `gate-high-ratio` | no | unsigned float | The position when the gate signal should go from high to low. Must be a value between `0` and `1`, with `0.5` aligning with half of the *segment* duration. Defaults to `0.5` |
+| `gate-high-ratio` | no | unsigned float | The position when the gate signal should go from high to low. Must be a value between `0` and `1`, with `0.5` aligning with half of the *segment* duration. Defaults to `0.5`. Can not be used together with `gate-high-duration` |
+| `gate-high-duration` | no | (#duration) | How long a single gate output remains high. Each gate output will remain high for the specified duration. Can not be used together with `gate-high-ratio` |
 | `if` | no | [if](#if) | A condition that must be met in order for the action to be executed. |
 
-#### Example
+#### Examples
 
 ```json
 {
@@ -726,6 +743,13 @@ Just like the other action types, a gate action can be made conditional using an
         { "voltage": 0 },
         { "variable": "gate-condition" }
     ] }
+}
+```
+
+```json
+{
+    "timing": "gate",
+    "gate-high-duration": { "samples": 42000 }
 }
 ```
 
