@@ -108,6 +108,29 @@ TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToSequenceWithoutIdShouldFai
 	expectError(validationErrors, ValidationErrorCode::Id_String, "/sequences/0");
 }
 
+TEST(TimeSeqProcessorSequence, ScriptWithSequenceRefToSequenceWithInvalidRefElementShouldFail) {
+	MockEventListener mockEventListener;
+	MockTriggerHandler mockTriggerHandler;
+	MockSampleRateReader mockSampleRateReader;
+	ProcessorLoader processorLoader(nullptr, nullptr, &mockTriggerHandler, &mockSampleRateReader, &mockEventListener, nullptr);
+	vector<ValidationError> validationErrors;
+	json json = getMinimalJson(SCRIPT_VERSION_1_2_0);
+	json["timelines"] = json::array({
+		{ { "lanes", json::array({
+			{ { "segments", json::array({ { { "duration", { { "samples", 1 } } }, { "actions", json::array({
+				{ { "set-value", { { "output", 1 }, { "value", { { "sequence", "a-sequence" } } } } } }
+			}) } } }) } },
+		}) } }
+	});
+	json["sequences"] = json::array({
+		{ { "id", "a-sequence" }, { "values", json::array({ 0, 1, 2, { { "ref", "not-existing" } }, 4, 5 }) } }
+	});
+
+	pair<shared_ptr<Script>, shared_ptr<Processor>> script = loadProcessor(processorLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u) << printValidationErrors(validationErrors);
+	expectError(validationErrors, ValidationErrorCode::Ref_NotFound, "/sequences/0");
+}
+
 TEST(TimeSeqProcessorSequence, ScriptWithShorthandSequenceRefShouldUseSequence) {
 	MockEventListener mockEventListener;
 	MockPortHandler mockPortHandler;
