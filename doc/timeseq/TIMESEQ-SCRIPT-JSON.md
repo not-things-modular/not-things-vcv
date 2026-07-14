@@ -725,10 +725,6 @@ A glide action has two possible targets to send its generated voltages to: eithe
 
 An action with the `gate` timing can be used to generate a gate signal on one of the output ports: it will set the output port voltage to 10v when the action starts, and will change it to 0v as the action progresses.
 
-By default, the change to 0v will be done when the *segment* that contains the action has completed half of its *duration*. The `gate-high-ratio` and `gate-high-duration` properties can be used to change this position. With the `gate-high-ratio`, `0` moves it to the start of the *segment*, while `1` moves it to the end of the *segment* and `0.5` matches the halfway point of the *segment* *duration*.
-The `gate-high-duration` property expresses the length of the high state as an absolute duration. The gate signal will remain high for the specified time, and be low for the remainder of the gate. To make sure that a reliable gate signal is generated for downstream modules in the patch, gate signals with a `gate-high-ratio` or `gate-high-duration` specified will always start with at least 1 millisecond of high signal, and end with at least one milliseconds of low signal. If the specified duration pushes these 1 millisecond boundaries, the duration will be modified to instead remain within those boundaries.
-`gate-high-ratio` and `gate-high-duration` can not be used at the same time.
-
 The voltage of a gate action must always be sent to an *output* port.
 
 Just like the other action types, a gate action can be made conditional using an [if](#if) property.

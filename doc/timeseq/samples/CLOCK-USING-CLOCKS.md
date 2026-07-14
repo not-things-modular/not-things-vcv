@@ -226,6 +226,6 @@ With the setting of the `gate-high-duration` to a fixed 75 milliseconds, all gen
 
 ## Constant Gate High Duration Script and VCV Rack Patch
 
-The full script with the variable gate duration can be found in the [gate-high-duration.json](clock-using-clocks/gate-high-duration.json) script.
+The full script with the constant gate high duration can be found in the [gate-high-duration.json](clock-using-clocks/gate-high-duration.json) script.
 
 The updated patch can be found at [gate-high-duration.vcv](clock-using-clocks/gate-high-duration.vcv).
