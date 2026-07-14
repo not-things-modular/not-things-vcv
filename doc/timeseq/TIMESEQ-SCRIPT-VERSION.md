@@ -16,6 +16,7 @@
 ### Changes
 
 * Added [clocks](TIMESEQ-SCRIPT-JSON.md#clock) with [clock lanes](TIMESEQ-SCRIPT-JSON.md#clock-lane)
+* Added `gate-high-duration` property on [gate actions](TIMESEQ-SCRIPT-JSON.md#gate-actions) as a constant-length alternative for the existing relative `gate-high-duration` property.
 
 ### JSON Schema
 

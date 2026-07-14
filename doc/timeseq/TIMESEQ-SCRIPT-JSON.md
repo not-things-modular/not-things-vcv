@@ -50,7 +50,7 @@ As new features are added, the `version` of the script is updated. The [script v
 
 ## JSON Schema
 
-To facilitate easier editing of a TimeSeq JSON script, a JSON Schema definition is available for it. see the [Script JSON Reference](TIMESEQ-SCRIPT-JSON.md) page for the schema definition links for the different script versions.
+To facilitate easier editing of a TimeSeq JSON script, a JSON Schema definition is available for it. see the [script versions](TIMESEQ-SCRIPT-VERSION.md) page for the schema definition links for the different script versions.
 
 ## JSON Property types
 
@@ -164,7 +164,7 @@ Using samples is the most fine-grained scale to specify timing within TimeSeq. H
 
 Note that sample rate recalculation can not make a segment shorter then one sample. If the sample duration recalculation of a *segment* goes below one sample, it will instead last one sample.
 
-## Beats per Minute and Beats per Bar
+### Beats per Minute and Beats per Bar
 
 In order to facilitate the definition of musical sequences, the *time-scale* allows the Beats per Minute and Beats per Bar to be defined for all *segment*s in this *timeline* through the `bpm` and `bpb` properties. When a `bpm` value is set, all *segment*s in this *timeline* can specify their duration using the `beats` property. If the number of beats in a bar has also been specified through the `bpb` property, *segment*s can also specify a duration in `bars`.
 
@@ -291,7 +291,7 @@ Instead of specifying a relative length, the `gate-high-duration` property lets 
 | --- | --- | --- | --- |
 | `durations` | yes | [duration](#duration) list | The sequence of *duration*s that will be executed in order and then looped for this lane to generate clock on the *output* |
 | `output` | yes | [output](#output) | The output port to which the generated clock will be sent. |
-| `gate-high-ratio` | no | float | How long a single gate output remains high. Must be a value between 0 and 1, with smaller values resulting in a shorter gate-high duration. Defaults to `0.5`. Can not be used together with `gate-high-duration` |
+| `gate-high-ratio` | no | unsigned float | How long a single gate output remains high. Must be a value between 0 and 1, with smaller values resulting in a shorter gate-high duration. Defaults to `0.5`. Can not be used together with `gate-high-duration` |
 | `gate-high-duration` | no | [duration](#duration) | How long a single gate output remains high. Each gate output will remain high for the specified duration. Can not be used together with `gate-high-ratio` |
 | `auto-start` | no | boolean | If set to `true`, the lane will start automatically when the script is loaded. If set to `false` the lane will remain stopped when the script is loaded. Defaults to `true` |
 | `start-trigger` | no | string | The id of the internal trigger that will cause this lane to start running from its first segment. A start trigger on an already running lane has no impact on the state of that lane. Defaults to empty. |
@@ -445,7 +445,7 @@ The `actions` property can still be used together with the `segment-block` prope
     "duration": { "beats": 2 },
     "actions": [
         { "timing": "start", "set-variable": { "name": "next-note", "value": { "voltage": 1.333 } } },
-        { "timing": "end", "set-output": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
+        { "timing": "end", "set-value": { "output": { "index": 1 }, "value": { "voltage": 1.333 } } }
     ]
 }
 ```

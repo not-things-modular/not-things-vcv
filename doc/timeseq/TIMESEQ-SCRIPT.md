@@ -107,7 +107,7 @@ Also like one-time actions, glide actions can set the voltage of either a variab
 
 ### Gate Actions
 
-A gate action allows a gate signal to be generated on an *output* port. It will change the *output* port voltage to 10v at the start of a *segment*, and change it to 0v as the *segment* progresses. By default, the change to 0v will occur halfway through the duration of the *segment*, but it is possible to change this position using the `gate-high-ratio`, moving it more towards the start or the end of the *segment*.
+A gate action allows a gate signal to be generated on an *output* port. It will change the *output* port voltage to 10v at the start of a *segment*, and change it to 0v as the *segment* progresses. By default, the change to 0v will occur halfway through the duration of the *segment*, but it is possible to change this position using a relative `gate-high-ratio` property or an absolute `gate-high-duration`property, moving the gate transition more towards the start or the end of the *segment*.
 
 ## Quantizing
 

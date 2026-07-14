@@ -61,6 +61,7 @@ The [clock using clocks](samples/CLOCK-USING-CLOCKS.md) script recreates the pre
 * Using beats and bars as clock durations
 * Controlling the length that a clock (i.e. gate) signal remains high
 * Using multiple lane durations to create more complex trigger/gate sequences
+* Controlling the clock (gate) high length using `gate-high-duration`
 
 ## Sample and Hold
 
