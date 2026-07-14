@@ -17,8 +17,8 @@ struct NTKnobDark16 : app::SvgKnob, ThemeChangeListener {
 		bool m_oldPreferDark = false;
 };
 
-struct NTKnob32 : app::SvgKnob, ThemeChangeListener {
-	NTKnob32();
+struct NTKnob : app::SvgKnob, ThemeChangeListener {
+	NTKnob(std::string lightBackroundSvg, std::string lightForegroundSvg, std::string darkBackgroundSvg, std::string darkForegroundSvg);
 
 	void themeChanged(const ThemeId& theme) override;
 	void step() override;
@@ -32,4 +32,12 @@ struct NTKnob32 : app::SvgKnob, ThemeChangeListener {
 		widget::SvgWidget* bg;
 		ThemeId m_themeId;
 		bool m_oldPreferDark = false;
+};
+
+struct NTKnob32 : NTKnob {
+	NTKnob32();
+};
+
+struct NTKnob35 : NTKnob {
+	NTKnob35();
 };
