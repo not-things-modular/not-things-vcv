@@ -198,6 +198,18 @@ struct ScriptRemoveFromSequence {
 	int position;
 };
 
+struct ScriptDuration {
+	std::unique_ptr<uint64_t> samples;
+	std::unique_ptr<ScriptValue> samplesValue;
+	std::unique_ptr<float> millis;
+	std::unique_ptr<ScriptValue> millisValue;
+	std::unique_ptr<uint64_t> bars;
+	std::unique_ptr<float> beats;
+	std::unique_ptr<ScriptValue> beatsValue;
+	std::unique_ptr<float> hz;
+	std::unique_ptr<ScriptValue> hzValue;
+};
+
 struct ScriptAction : ScriptRefObject {
 	enum ActionTiming { START, END, GLIDE, GATE };
 	enum EaseAlgorithm { POW, SIG };
@@ -225,18 +237,7 @@ struct ScriptAction : ScriptRefObject {
 	std::string variable;
 
 	std::unique_ptr<float> gateHighRatio;
-};
-
-struct ScriptDuration {
-	std::unique_ptr<uint64_t> samples;
-	std::unique_ptr<ScriptValue> samplesValue;
-	std::unique_ptr<float> millis;
-	std::unique_ptr<ScriptValue> millisValue;
-	std::unique_ptr<uint64_t> bars;
-	std::unique_ptr<float> beats;
-	std::unique_ptr<ScriptValue> beatsValue;
-	std::unique_ptr<float> hz;
-	std::unique_ptr<ScriptValue> hzValue;
+	std::unique_ptr<ScriptDuration> gateHighDuration;
 };
 
 struct ScriptSegment : ScriptRefObject {
@@ -278,13 +279,14 @@ struct ScriptTimeline {
 
 struct ScriptClockLane {
 	bool autoStart;
-	
+
 	std::string startTrigger;
 	std::string restartTrigger;
 	std::string stopTrigger;
 
 	std::vector<ScriptDuration> durations;
-	float gateHighRatio;
+	std::unique_ptr<float> gateHighRatio;
+	std::unique_ptr<ScriptDuration> gateHighDuration;
 	ScriptOutput output;
 
 	bool disableUi;

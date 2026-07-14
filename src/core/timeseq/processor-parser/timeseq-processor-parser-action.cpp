@@ -122,7 +122,7 @@ const shared_ptr<ActionGlideProcessor> ProcessorScriptParser::parseResolvedGlide
 	return make_shared<ActionGlideProcessor>(easeFactor, easePow, startValueProcessor, endValueProcessor, ifProcessor, outputPort, outputChannel, scriptAction->variable, m_portHandler, m_variableHandler);
 }
 
-const shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(const ScriptAction* scriptAction) {
+const shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAction(const ScriptAction* scriptAction, const ScriptTimeScale* timeScale) {
 	shared_ptr<IfProcessor> ifProcessor;
 
 	if (scriptAction->condition) {
@@ -147,7 +147,14 @@ const shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAc
 		gateHighRatio = *scriptAction->gateHighRatio.get();
 	}
 
-	return make_shared<ActionGateProcessor>(gateHighRatio, ifProcessor, outputPort, outputChannel, m_portHandler);
+	shared_ptr<DurationProcessor> gateHighDurationProcessor;
+	if (scriptAction->gateHighDuration) {
+		m_context.location.push_back("gate-high-duration");
+		gateHighDurationProcessor = parseDuration(scriptAction->gateHighDuration.get(), timeScale);
+		m_context.location.pop_back();
+	}
+
+	return make_shared<ActionGateProcessor>(gateHighRatio, gateHighDurationProcessor, ifProcessor, outputPort, outputChannel, m_sampleRateReader->getSampleRate(), m_portHandler);
 }
 
 const shared_ptr<ActionProcessor> ProcessorScriptParser::parseSetValueAction(const ScriptAction* scriptAction, const shared_ptr<IfProcessor>& ifProcessor) {

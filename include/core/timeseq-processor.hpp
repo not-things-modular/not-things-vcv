@@ -406,24 +406,6 @@ struct ActionGlideProcessor : ActionOngoingProcessor {
 		double calculateSigEase(float ease);
 };
 
-struct ActionGateProcessor : ActionOngoingProcessor {
-	ActionGateProcessor(float gateHighRatio, const std::shared_ptr<IfProcessor>& ifProcessor, int outputPort, int outputChannel, PortHandler* portHandler);
-
-	void start(uint64_t glideLength) override;
-	void process(uint64_t glidePosition) override;
-	void end() override;
-
-	nt_private:
-		PortHandler* m_portHandler;
-
-		int m_outputPort;
-		int m_outputChannel;
-		float m_gateHighRatio;
-
-		bool m_gateHigh;
-		uint64_t m_gateLowPosition;
-};
-
 struct DurationProcessor {
 	enum DurationState { STATE_START, STATE_PROGRESS, STATE_END };
 
@@ -470,6 +452,27 @@ struct DurationVariableHzProcessor : DurationProcessor {
 	nt_private:
 		const std::shared_ptr<ValueProcessor> m_value;
 		double m_sampleRate;
+};
+
+struct ActionGateProcessor : ActionOngoingProcessor {
+	ActionGateProcessor(float gateHighRatio, const std::shared_ptr<DurationProcessor> gateHighDuration, const std::shared_ptr<IfProcessor>& ifProcessor, int outputPort, int outputChannel, float sampleRate, PortHandler* portHandler);
+
+	void start(uint64_t glideLength) override;
+	void process(uint64_t glidePosition) override;
+	void end() override;
+
+	nt_private:
+		PortHandler* m_portHandler;
+
+		int m_outputPort;
+		int m_outputChannel;
+		float m_gateHighRatio;
+		std::shared_ptr<DurationProcessor> m_gateHighDuration;
+
+		bool m_gateHigh;
+		uint64_t m_gateLowPosition;
+
+		double m_samplesIn2Ms;
 };
 
 struct SegmentProcessor {

@@ -93,7 +93,7 @@ struct ProcessorScriptParser {
 		const std::shared_ptr<DurationProcessor> parseDuration(const ScriptDuration* scriptDuration, const ScriptTimeScale* timeScale);
 		const std::shared_ptr<ActionProcessor> parseResolvedAction(const ScriptAction* scriptAction);
 		const std::shared_ptr<ActionGlideProcessor> parseResolvedGlideAction(const ScriptAction* scriptAction);
-		const std::shared_ptr<ActionGateProcessor> parseResolvedGateAction(const ScriptAction* scriptAction);
+		const std::shared_ptr<ActionGateProcessor> parseResolvedGateAction(const ScriptAction* scriptAction, const ScriptTimeScale* timeScale);
 		const std::shared_ptr<ActionProcessor> parseSetValueAction(const ScriptAction* scriptAction, const std::shared_ptr<IfProcessor>& ifProcessor);
 		const std::shared_ptr<ActionProcessor> parseSetVariableAction(const ScriptAction* scriptAction, const std::shared_ptr<IfProcessor>& ifProcessor);
 		const std::shared_ptr<ActionProcessor> parseSetPolyphonyAction(const ScriptAction* scriptAction, const std::shared_ptr<IfProcessor>& ifProcessor);

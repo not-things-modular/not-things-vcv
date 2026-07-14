@@ -149,7 +149,14 @@ const shared_ptr<LaneProcessor> ProcessorScriptParser::parseClockLane(const Scri
 		vector<shared_ptr<ActionOngoingProcessor>> ongoingActions;
 
 		shared_ptr<DurationProcessor> durationProcessor = parseDuration(&scriptDuration, timeScale);
-		ongoingActions.push_back(make_shared<ActionGateProcessor>(scriptClockLane->gateHighRatio, shared_ptr<IfProcessor>(), outputPort, outputChannel, m_portHandler));
+		float gateHighRatio = scriptClockLane->gateHighRatio ? *scriptClockLane->gateHighRatio.get() : 0.5f;
+		shared_ptr<DurationProcessor> gateHighDurationProcessor;
+		if (scriptClockLane->gateHighDuration) {
+			m_context.location.push_back("gate-high-duration");
+			gateHighDurationProcessor = parseDuration(scriptClockLane->gateHighDuration.get(), timeScale);
+			m_context.location.pop_back();
+		}
+		ongoingActions.push_back(make_shared<ActionGateProcessor>(gateHighRatio, gateHighDurationProcessor, shared_ptr<IfProcessor>(), outputPort, outputChannel, m_sampleRateReader->getSampleRate(), m_portHandler));
 		segmentProcessors.push_back(make_shared<SegmentProcessor>(durationProcessor, startActions, endActions, ongoingActions, scriptClockLane->disableUi, m_eventListener));
 
 		m_context.location.pop_back();

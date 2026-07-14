@@ -155,6 +155,8 @@ enum ValidationErrorCode {
 	Action_ClearSequenceLength = 931, // Since 1.2.0
 	Action_AddToSequenceObject = 932, // Since 1.2.0
 	Action_RemoveFromSequenceObject = 933, // Since 1.2.0
+	Action_GateHighDurationObject = 934, // Since 1.3.0
+	Action_GateHighRatioOrGateHighDuration = 935, // Since 1.3.0
 
 	SetValue_OutputObject = 1000,
 	SetValue_ValueObject = 1001,
@@ -298,6 +300,8 @@ enum ValidationErrorCode {
 	ClockLane_DisableUiBoolean = 2910, // Since 1.3.0
 	ClockLane_GateHighRatioFloat = 2911, // Since 1.3.0
 	ClockLane_GateHighRatioRange = 2912, // Since 1.3.0
+	ClockLane_GateHighDurationObject = 2913, // Since 1.3.0
+	ClockLane_GateHighRatioOrGateHighDuration = 2914, // Since 1.3.0
 
 	NoError = 0,
 };
