@@ -1,10 +1,11 @@
 # CHANGELOG
 
-## 2.0.8 (TBD)
+## 2.0.8 (2026-07-14)
 
 * **TimeSeq**
   * Added `clocks`
-  * Updated JSON Schema definition to v1.3.0 for new clock functionality JSON syntax
+  * Add additional absolute `gate-high-duration` option on `gate actions` as an alternative to the relative `gate-high-ratio`.
+  * Updated JSON Schema definition to v1.3.0 for new clock functionality JSON syntax and new `gate-high-duration` property
 * **Global**: Updated medium-sized dials to custom design with separate light and dark versions (impacts Ramelig, Ratrilig and Solim)
 
 ## 2.0.7 (2026-06-22)

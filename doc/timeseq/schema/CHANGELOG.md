@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 1.3.0 (TBD)
+## 1.3.0 (2026-07-14)
 
 * Added clocks and clock-lanes.
 

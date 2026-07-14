@@ -54,7 +54,7 @@ The [clock using timelines](samples/CLOCK-USING-TIMELINES.md) script demonstrate
 
 ## Creating Clock Signals using Clocks
 
-The [clock using clocks](samples/CLOCK-USING-CLOCKS.md) script recreates the previous *clock using timelines* sample, but uses the clocks feature that was introduced in TimeSeq v2.0.8 instead. This results in a simpler version, using TimeSeq clocks, lanes and durations to build a clock source. Additionally, it demonstrates how clocks can be used to make more complex trigger sequences. This script demonstrates:
+The [clock using clocks](samples/CLOCK-USING-CLOCKS.md) script recreates the previous *clock using timelines* sample, but instead uses the clocks feature that was introduced in TimeSeq v2.0.8. This results in a simpler version, using TimeSeq clocks, lanes and durations to build a clock source. Additionally, it demonstrates how clocks can be used to make more complex trigger sequences. This script demonstrates:
 
 * Using multiple clocks with different time-scales
 * Using lanes with durations as clock signal sources
