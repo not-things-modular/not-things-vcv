@@ -151,6 +151,7 @@ const shared_ptr<ActionGateProcessor> ProcessorScriptParser::parseResolvedGateAc
 	if (scriptAction->gateHighDuration) {
 		m_context.location.push_back("gate-high-duration");
 		gateHighDurationProcessor = parseDuration(scriptAction->gateHighDuration.get(), timeScale);
+		m_context.location.pop_back();
 	}
 
 	return make_shared<ActionGateProcessor>(gateHighRatio, gateHighDurationProcessor, ifProcessor, outputPort, outputChannel, m_sampleRateReader->getSampleRate(), m_portHandler);

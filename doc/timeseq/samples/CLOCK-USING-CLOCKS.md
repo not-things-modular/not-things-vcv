@@ -15,7 +15,7 @@ With the introduction of [clocks](../TIMESEQ-SCRIPT-JSON.md#clock) in script ver
 * [A 70 BPM Clock](#a-70-bpm-clock)
 * [A Complex Clock Sequence](#a-complex-clock-sequence)
 * [Variable Duration](#variable-duration)
-* [Gate High Duraiton](#gate-high-duration)
+* [Gate High Duration](#gate-high-duration)
 
 ## Set Up Polyphonic Output
 
