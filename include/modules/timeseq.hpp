@@ -7,6 +7,33 @@
 struct TimeSeqDisplay;
 struct LEDDisplay;
 
+struct TimeSeqOutputManager {
+	TimeSeqOutputManager(Module* mainModule);
+	void updateExpanders();
+
+	bool setLabel(int index, std::string label);
+	bool setPolyphony(int index, int channels);
+
+	float getVoltage(int index, int channel) const;
+	const std::array<std::array<float, 16>, 96>& getVoltages() const;
+	bool setVoltage(int index, int channel, float voltage);
+
+	void reset();
+	void updateOutputs();
+
+	void setDirty();
+
+	private:
+		Module** m_modules = new Module*[12];
+		std::array<std::array<float, 16>, 96> m_voltages;
+		std::array<int, 96> m_channelCounts;
+		std::array<std::string, 96> m_labels;
+
+		Output* getOutput(int index);
+
+		bool m_dirty = false;
+};
+
 struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::SampleRateReader, timeseq::EventListener, timeseq::AssertListener {
 	enum ParamId {
 		PARAM_RUN,
@@ -55,6 +82,8 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) override;
 	void onRemove(const RemoveEvent& e) override;
 
+	void setOutputsDirty();
+
 	float getInputPortVoltage(int index, int channel) const override;
 	float getOutputPortVoltage(int index, int channel) const override;
 	float getSampleRate() const override;
@@ -68,7 +97,6 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 	void scriptReset() override;
 
 	void assertFailed(const std::string& name, const std::string& message, bool stop) override;
-
 
 	std::shared_ptr<std::string> getScript();
 	std::string loadScript(std::shared_ptr<std::string> script);
@@ -84,6 +112,8 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		TimeSeqDisplay* m_timeSeqDisplay = nullptr;
 		LEDDisplay* m_ledDisplay = nullptr;
 
+		TimeSeqOutputManager m_outputManager;
+
 		timeseq::TimeSeqCore *m_timeSeqCore;
 		std::shared_ptr<std::string> m_script;
 		std::list<std::string> m_lastScriptLoadErrors;
@@ -93,8 +123,7 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		dsp::PulseGenerator m_runPulse;
 		dsp::PulseGenerator m_resetPulse;
 
-		std::array<std::array<float, 16>, 8> m_outputVoltages;
-		std::array<int, 8> m_outputChannels;
+		bool m_portsDirty = false;
 
 		bool m_laneLooped = false;
 		bool m_segmentStarted = false;
@@ -111,8 +140,6 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		bool m_scriptError = false;
 
 		void resetUi();
-		void resetOutputs();
-		void updateOutputs();
 		void setDisplayScriptError(bool error);
 
 		int getRate();

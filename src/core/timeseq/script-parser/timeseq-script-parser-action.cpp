@@ -364,11 +364,11 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 	json::const_iterator index = setPolyphonyJson.find("index");
 	if ((index != setPolyphonyJson.end()) && (index->is_number_unsigned())) {
 		setPolyphony.index = index->get<int>();
-		if ((setPolyphony.index < 1) || (setPolyphony.index > 8)) {
-			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 8.");
+		if ((setPolyphony.index < 1) || (setPolyphony.index > 96)) {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 96.");
 		}
 	} else {
-		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexNumber, "'index' is required and must be a number between 1 and 96.");
 	}
 
 	json::const_iterator channels = setPolyphonyJson.find("channels");

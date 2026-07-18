@@ -33,11 +33,11 @@ ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allo
 		json::const_iterator index = outputJson.find("index");
 		if ((index != outputJson.end()) && (index->is_number_unsigned())) {
 			output.index = index->get<int>();
-			if ((output.index < 1) || (output.index > 8)) {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Output_IndexRange, fromShorthand ? "The output 'index' must be a number between 1 and 8." : "'index' must be a number between 1 and 8.");
+			if ((output.index < 1) || (output.index > 96)) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Output_IndexRange, fromShorthand ? "The output 'index' must be a number between 1 and 96." : "'index' must be a number between 1 and 96.");
 			}
 		} else {
-			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Output_IndexNumber, fromShorthand ? "The output 'index' is required and must be a (non-decimal) number between 1 and 8." : "'index' is required and must be a (non-decimal) number between 1 and 8.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Output_IndexNumber, fromShorthand ? "The output 'index' is required and must be a (non-decimal) number between 1 and 96." : "'index' is required and must be a (non-decimal) number between 1 and 96.");
 		}
 
 		json::const_iterator channel = outputJson.find("channel");

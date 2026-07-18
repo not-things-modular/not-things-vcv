@@ -4,11 +4,136 @@
 #include "components/leddisplay.hpp"
 #include "components/lights.hpp"
 #include <osdialog.h>
+#include "modules/timeseq-output.hpp"
+
+extern Model* modelTimeSeqOutputExpander;
 
 #define TO_CHANNEL_PORT_IDENTIFIER(channel, port) ((channel << 5) + port)
 
 
-TimeSeqModule::TimeSeqModule() {
+TimeSeqOutputManager::TimeSeqOutputManager(Module* mainModule) {
+	m_modules[0] = mainModule;
+	for (int i = 1; i < 12; i++) {
+		m_modules[i] = nullptr;
+	}
+}
+
+void TimeSeqOutputManager::updateExpanders() {
+	Module::Expander* expander = &m_modules[0]->getRightExpander();
+	for (int i = 1; i < 12; i++) {
+		if (expander->module != nullptr && expander->module->getModel() == modelTimeSeqOutputExpander) {
+			if (m_modules[i] != expander->module) {
+				m_dirty = true; // Something changed in the expanders
+			}
+			m_modules[i] = expander->module;
+			expander = &expander->module->getRightExpander();
+		} else {
+			if (m_modules[i] != nullptr) {
+				m_dirty = true; // Something changed in the expanders
+			}
+			m_modules[i] = nullptr;
+		}
+	}
+
+	if (m_dirty) {
+		updateOutputs();
+	}
+}
+
+bool TimeSeqOutputManager::setLabel(int index, std::string label) {
+	m_labels[index] = label;
+
+	int expanderIndex = index / 8;
+	if (m_modules[expanderIndex] != nullptr) {
+		m_modules[expanderIndex]->configOutput(TimeSeqModule::OUT_OUTPUTS + index - (expanderIndex * 8), label);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool TimeSeqOutputManager::setPolyphony(int index, int channels) {
+	m_channelCounts[index] = channels;
+
+	Output* output = getOutput(index);
+	if (output != nullptr) {
+		output->setChannels(channels);
+
+		for (int i = 0; i < m_channelCounts[index]; i++) {
+			output->setVoltage(m_voltages[index][i], i);
+		}
+
+		return true;
+	} else {
+		return false;
+	}
+}
+
+float TimeSeqOutputManager::getVoltage(int index, int channel) const {
+	return m_voltages[index][channel];
+}
+
+const std::array<std::array<float, 16>, 96>& TimeSeqOutputManager::getVoltages() const {
+	return m_voltages;
+}
+
+bool TimeSeqOutputManager::setVoltage(int index, int channel, float voltage) {
+	m_voltages[index][channel] = voltage;
+	
+	Output* output = getOutput(index);
+	if (output) {
+		output->setVoltage(voltage, channel);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void TimeSeqOutputManager::reset() {
+	for (std::array<std::array<float, 16>, 8>::iterator it = m_voltages.begin(); it != m_voltages.end(); it++) {
+		it->fill(0.f);
+	}
+	m_channelCounts.fill(1);
+	for (int i = 0; i < 96; i++) {
+		setLabel(i, string::f("Output %d", i + 1));
+	}
+}
+
+void TimeSeqOutputManager::updateOutputs() {
+	m_dirty = false;
+	
+	for (int i = 0; i < 96; i++) {
+		Output* output = getOutput(i);
+		if (output != nullptr) {
+			setLabel(i, m_labels[i]);
+			output->setChannels(m_channelCounts[i]);
+			for (int j = 0; j < m_channelCounts[i]; j++) {
+				output->setVoltage(m_voltages[i][j], j);
+			}
+		} else {
+			// As soon as output becomes a nullptr, we've reached the last available expander, so there is no use in continuing
+			break;
+		}
+	}
+}
+
+void TimeSeqOutputManager::setDirty() {
+	m_dirty = true;
+}
+
+Output* TimeSeqOutputManager::getOutput(int index) {
+	Output* output = nullptr;
+
+	int expanderIndex = index / 8;
+	if (m_modules[expanderIndex] != nullptr) {
+		output = &m_modules[expanderIndex]->outputs[TimeSeqModule::OutputId::OUT_OUTPUTS + index - (expanderIndex * 8)];
+	}
+
+	return output;
+}
+
+
+TimeSeqModule::TimeSeqModule() : m_outputManager(this) { 
 	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this, this);
 
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -86,6 +211,8 @@ void TimeSeqModule::dataFromJson(json_t *rootJ) {
 }
 
 void TimeSeqModule::process(const ProcessArgs& args) {
+	m_outputManager.updateExpanders();
+
 	// Reset the timer if requested
 	if (m_buttonTrigger[TriggerId::TRIG_RESET_CLOCK].process(params[ParamId::PARAM_RESET_CLOCK].getValue())) {
 		m_timeSeqCore->resetElapsedSamples();
@@ -138,7 +265,7 @@ void TimeSeqModule::process(const ProcessArgs& args) {
 		if (m_timeSeqDisplay != nullptr) {
 			if (m_changedPortChannelVoltages.size() > 0) {
 				// If there are changed voltages since the last time we checked, apply them now.
-				m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputVoltages);
+				m_timeSeqDisplay->processChangedVoltages(m_changedPortChannelVoltages, m_outputManager.getVoltages());
 				m_changedPortChannelVoltages.clear();
 			} else {
 				// No port voltages have changed, so just age the existing voltages.
@@ -179,8 +306,8 @@ void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
 }
 
 void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
-	// If one of the output ports gets (dis)connected, re-apply the port polyphony and voltages in case they were reset.
-	updateOutputs();
+	// If one of the output ports gets (dis)connected, mark the ports as dirty.
+	m_outputManager.setDirty();
 }
 
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
@@ -197,12 +324,16 @@ void TimeSeqModule::onRemove(const RemoveEvent& e) {
 	m_ledDisplay = nullptr;
 }
 
+void TimeSeqModule::setOutputsDirty() {
+	m_outputManager.setDirty();
+}
+
 float TimeSeqModule::getInputPortVoltage(int index, int channel) const {
 	return const_cast<Input&>(inputs[InputId::IN_INPUTS + index]).getVoltage(channel);
 }
 
 float TimeSeqModule::getOutputPortVoltage(int index, int channel) const {
-	return m_outputVoltages[index][channel];
+	return m_outputManager.getVoltage(index, channel);
 }
 
 float TimeSeqModule::getSampleRate() const {
@@ -210,26 +341,24 @@ float TimeSeqModule::getSampleRate() const {
 }
 
 void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) {
-	m_outputVoltages[index][channel] = voltage;
-	outputs[OutputId::OUT_OUTPUTS + index].setVoltage(voltage, channel);
+	bool assigned = m_outputManager.setVoltage(index, channel, voltage);
 
 	int id = TO_CHANNEL_PORT_IDENTIFIER(index, channel);
 	if (std::find(m_changedPortChannelVoltages.begin(), m_changedPortChannelVoltages.end(), id) == m_changedPortChannelVoltages.end()) {
 		m_changedPortChannelVoltages.push_back(id);
 	}
-}
 
-void TimeSeqModule::setOutputPortChannels(int index, int channels) {
-	m_outputChannels[index] = channels;
-	outputs[OutputId::OUT_OUTPUTS + index].setChannels(channels);
-
-	for (int j = 0; j < m_outputChannels[index]; j++) {
-		outputs[OutputId::OUT_OUTPUTS + index].setVoltage(m_outputVoltages[index][j], j);
+	if (!assigned) {
+		// TODO: update "output not found" index
 	}
 }
 
+void TimeSeqModule::setOutputPortChannels(int index, int channels) {
+	m_outputManager.setPolyphony(index, channels);
+}
+
 void TimeSeqModule::setOutputPortLabel(int index, const std::string& label) {
-	configOutput(OUT_OUTPUTS + index, label);
+	m_outputManager.setLabel(index, label);
 }
 
 void TimeSeqModule::laneLooped() {
@@ -299,32 +428,11 @@ std::string TimeSeqModule::loadScript(std::shared_ptr<std::string> script) {
 }
 
 void TimeSeqModule::resetUi() {
-	resetOutputs();
+	m_outputManager.reset();
 	m_failedAsserts.clear();
 	if (m_timeSeqDisplay) {
 		m_timeSeqDisplay->reset();
 		m_timeSeqDisplay->setAssert(false);
-	}
-}
-
-void TimeSeqModule::resetOutputs() {
-	m_outputVoltages.fill({ 1.f });
-	for (std::array<std::array<float, 16>, 8>::iterator it = m_outputVoltages.begin(); it != m_outputVoltages.end(); it++) {
-		it->fill(0.f);
-	}
-	m_outputChannels.fill(1);
-	updateOutputs();
-	for (int i = 0; i < 8; i++) {
-		configOutput(OUT_OUTPUTS + i, string::f("Output %d", i + 1));
-	}
-}
-
-void TimeSeqModule::updateOutputs() {
-	for (int i = 0; i < 8; i++) {
-		outputs[OutputId::OUT_OUTPUTS + i].setChannels(m_outputChannels[i]);
-		for (int j = 0; j < m_outputChannels[i]; j++) {
-			outputs[OutputId::OUT_OUTPUTS + i].setVoltage(m_outputVoltages[i][j], j);
-		}
 	}
 }
 

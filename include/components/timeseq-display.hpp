@@ -30,7 +30,7 @@ struct TimeSeqDisplay : widget::Widget {
 
 	void onResize(const ResizeEvent& e) override;
 
-	void processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages);
+	void processChangedVoltages(const std::vector<int>& changedVoltages, const std::array<std::array<float, 16>, 96>& outputVoltages);
 	void ageVoltages();
 	void reset();
 

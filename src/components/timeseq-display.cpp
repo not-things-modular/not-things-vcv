@@ -140,7 +140,7 @@ void TimeSeqDisplay::onResize(const ResizeEvent& e) {
 	m_animCoords.m_offsetCircles[3][2] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta;
 }
 
-void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages) {
+void TimeSeqDisplay::processChangedVoltages(const std::vector<int>& changedVoltages, const std::array<std::array<float, 16>, 96>& outputVoltages) {
 	// Remove voltage points that haven't changed recently, and update & age those that are recent enough
 	for (int i = m_voltagePoints.size() - 1; i >= 0; i--) {
 		if (m_voltagePoints[i].age >= TIMESEQ_DISPLAY_WINDOW_SIZE * 2) {
@@ -152,7 +152,7 @@ void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, s
 	}
 
 	// Update/add the voltage points for the recently changed ports
-	for (std::vector<int>::iterator it = changedVoltages.begin(); it != changedVoltages.end(); it++) {
+	for (std::vector<int>::const_iterator it = changedVoltages.begin(); it != changedVoltages.end(); it++) {
 		bool found = false;
 		// See if the port&channel combination is already in the current list of voltage points
 		for (std::vector<TimeSeqVoltagePoints>::iterator vpIt = m_voltagePoints.begin(); vpIt != m_voltagePoints.end(); vpIt++) {
