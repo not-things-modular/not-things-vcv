@@ -12,10 +12,6 @@ struct TimeSeqOutputModule : NTModule, DrawListener {
 	enum InputId {
 		NUM_INPUTS
 	};
-	enum OutputId {
-		ENUMS(OUT_OUTPUTS, 8),
-		NUM_OUTPUTS
-	};
 	enum LightId {
 		NUM_LIGHTS
 	};

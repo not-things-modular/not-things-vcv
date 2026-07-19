@@ -221,13 +221,48 @@ TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithIndexAboveRange) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "outputs", json::array({
-			{ { "id", "output-1" }, { "index", 9 } },
+			{ { "id", "output-1" }, { "index", 97 } },
 		}) }
 	};
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
 	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/outputs/0");
+}
+
+TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithIndexAbove8PreVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 9 } },
+			{ { "id", "output-2" }, { "index", 96 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/outputs/0");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/outputs/1");
+}
+
+TEST(TimeSeqJsonScriptOutput, ParseOutputShouldParseExtendedRangeInVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_4_0);
+	json["component-pool"] = {
+		{ "outputs", json::array({
+			{ { "id", "output-1" }, { "index", 9 } },
+			{ { "id", "output-2" }, { "index", 96 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->outputs.size(), 2u);
+	EXPECT_EQ(script->outputs[0].index, 9);
+	EXPECT_EQ(script->outputs[1].index, 96);
 }
 
 TEST(TimeSeqJsonScriptOutput, ParseOutputShouldFailWithNonNumericChannel) {

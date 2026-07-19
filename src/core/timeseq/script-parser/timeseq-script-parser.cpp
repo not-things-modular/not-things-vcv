@@ -6,7 +6,8 @@ void verifyVersion(int expectedVersion, JsonScriptParseContext& context, const c
 				{ VERSION_1_0_0, "1.0.0" },
 				{ VERSION_1_1_0, "1.1.0" },
 				{ VERSION_1_2_0, "1.2.0" },
-				{ VERSION_1_3_0, "1.3.0" }
+				{ VERSION_1_3_0, "1.3.0" },
+				{ VERSION_1_4_0, "1.4.0" }
 		};
 
 		addValidationError(&context.validationErrors, context.location, ValidationErrorCode::Feature_Not_In_Version, feature, " requires version ", versionMap[expectedVersion].c_str(), " but the script has its version set to ", versionMap[context.version].c_str(), ".");
@@ -107,10 +108,12 @@ const shared_ptr<Script> JsonScriptParser::parseScript(const json& scriptJson) {
 			m_context.version = 120;
 		} else if (script->version == "1.3.0") {
 			m_context.version = 130;
+		} else if (script->version == "1.4.0") {
+			m_context.version = 140;
 		}
 		else {
 			string versionValue = (*version);
-			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0, 1.2.0 and 1.3.0 are currently supported.");
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Script_VersionUnsupported, "'version' '", versionValue.c_str(), "' is an unsupported version. Only versions 1.0.0, 1.1.0, 1.2.0, 1.3.0 and 1.4.0 are currently supported.");
 		}
 	}
 

@@ -8,9 +8,9 @@ extern Model* modelTimeSeq;
 extern Model* modelTimeSeqOutputExpander;
 
 TimeSeqOutputModule::TimeSeqOutputModule() {
-	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+	config(NUM_PARAMS, NUM_INPUTS, 8, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {
-		configOutput(OUT_OUTPUTS + i, string::f("Output %d", i + 1));
+		configOutput(TimeSeqModule::OUT_OUTPUTS + i, string::f("Output %d", i + 1));
 	}
 }
 
@@ -34,8 +34,8 @@ void TimeSeqOutputModule::draw(const widget::Widget::DrawArgs& args) {
 		m_lastOffset = -1;
 		for (int i = 0; i < 8; i++) {
 			m_ledDisplays[i]->setForegroundText("--");
-			outputs[OutputId::OUT_OUTPUTS + i].setChannels(1);
-			outputs[OutputId::OUT_OUTPUTS + i].setVoltage(0.f);
+			outputs[TimeSeqModule::OutputId::OUT_OUTPUTS + i].setChannels(1);
+			outputs[TimeSeqModule::OutputId::OUT_OUTPUTS + i].setVoltage(0.f);
 		}
 	}
 }
@@ -56,7 +56,7 @@ TimeSeqOutputWidget::TimeSeqOutputWidget(TimeSeqOutputModule* module): NTModuleW
 	float y = 41.5;
 	float yDelta = 40;
 	for (int i = 0; i < 8; i++) {
-		addOutput(createOutputCentered<NTPort>(Vec(xIn, y), module, TimeSeqOutputModule::OUT_OUTPUTS + i));
+		addOutput(createOutputCentered<NTPort>(Vec(xIn, y), module, TimeSeqModule::OUT_OUTPUTS + i));
 		y += yDelta;
 
 		LEDDisplay* pDisplay = new LEDDisplay(nvgRGB(0xFF, 0x60, 0x60), nvgRGB(0x40, 0x40, 0x40), "88", 10, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);

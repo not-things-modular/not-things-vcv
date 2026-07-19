@@ -35,6 +35,8 @@ ScriptOutput JsonScriptParser::parseFullOutput(const json& outputJson, bool allo
 			output.index = index->get<int>();
 			if ((output.index < 1) || (output.index > 96)) {
 				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Output_IndexRange, fromShorthand ? "The output 'index' must be a number between 1 and 96." : "'index' must be a number between 1 and 96.");
+			} else if ((output.index > 8) && (m_context.version < VERSION_1_4_0)) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Feature_Not_In_Version, "'index' above 8 requires script version 1.4.0 or higher.");
 			}
 		} else {
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Output_IndexNumber, fromShorthand ? "The output 'index' is required and must be a (non-decimal) number between 1 and 96." : "'index' is required and must be a (non-decimal) number between 1 and 96.");

@@ -366,6 +366,8 @@ ScriptSetPolyphony JsonScriptParser::parseSetPolyphony(const json& setPolyphonyJ
 		setPolyphony.index = index->get<int>();
 		if ((setPolyphony.index < 1) || (setPolyphony.index > 96)) {
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexRange, "'index' must be a number between 1 and 96.");
+		} else if ((setPolyphony.index > 8) && (m_context.version < VERSION_1_4_0)) {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Feature_Not_In_Version, "'index' above 8 requires script version 1.4.0 or higher.");
 		}
 	} else {
 		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetPolyphony_IndexNumber, "'index' is required and must be a number between 1 and 96.");
@@ -393,11 +395,13 @@ ScriptSetLabel JsonScriptParser::parseSetLabel(const json& setLabelJson) {
 	json::const_iterator index = setLabelJson.find("index");
 	if ((index != setLabelJson.end()) && (index->is_number_unsigned())) {
 		setLabel.index = index->get<int>();
-		if ((setLabel.index < 1) || (setLabel.index > 8)) {
-			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexRange, "'index' must be a number between 1 and 8.");
+		if ((setLabel.index < 1) || (setLabel.index > 96)) {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexRange, "'index' must be a number between 1 and 96.");
+		} else if ((setLabel.index > 8) && (m_context.version < VERSION_1_4_0)) {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Feature_Not_In_Version, "'index' above 8 requires script version 1.4.0 or higher.");
 		}
 	} else {
-		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexNumber, "'index' is required and must be a number between 1 and 8.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::SetLabel_IndexNumber, "'index' is required and must be a number between 1 and 96.");
 	}
 
 	json::const_iterator label = setLabelJson.find("label");

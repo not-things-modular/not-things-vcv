@@ -123,8 +123,6 @@ struct TimeSeqModule : NTModule, DrawListener, timeseq::PortHandler, timeseq::Sa
 		dsp::PulseGenerator m_runPulse;
 		dsp::PulseGenerator m_resetPulse;
 
-		bool m_portsDirty = false;
-
 		bool m_laneLooped = false;
 		bool m_segmentStarted = false;
 		bool m_triggerTriggered = false;
