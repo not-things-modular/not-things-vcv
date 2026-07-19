@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.4.0 (TBD)
+
+* Extended output port range from 8 to 96 to facilitate TimeSeq output expanders
+
 ## 1.3.0 (2026-07-14)
 
 * Added clocks and clock-lanes.

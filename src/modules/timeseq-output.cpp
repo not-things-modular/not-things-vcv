@@ -10,7 +10,7 @@ extern Model* modelTimeSeqOutputExpander;
 TimeSeqOutputModule::TimeSeqOutputModule() {
 	config(NUM_PARAMS, NUM_INPUTS, 8, NUM_LIGHTS);
 	for (int i = 0; i < 8; i++) {
-		configOutput(TimeSeqModule::OUT_OUTPUTS + i, string::f("Output %d", i + 1));
+		configOutput(TimeSeqModule::OUT_OUTPUTS + i, string::f("Output %d", i + 9));
 	}
 }
 
@@ -62,7 +62,7 @@ TimeSeqOutputWidget::TimeSeqOutputWidget(TimeSeqOutputModule* module): NTModuleW
 		LEDDisplay* pDisplay = new LEDDisplay(nvgRGB(0xFF, 0x60, 0x60), nvgRGB(0x40, 0x40, 0x40), "88", 10, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
 		pDisplay->box.pos = Vec(3.f + 15.5f - 1.5f, 52.f + (yDelta * i) + 2.5f);
 		pDisplay->box.size = Vec(13.f + 3.f, 12.5f);
-		pDisplay->setForegroundText("1");
+		pDisplay->setForegroundText("--");
 		addChild(pDisplay);
 
 		if (module) {
