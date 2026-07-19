@@ -90,7 +90,7 @@ bool TimeSeqOutputManager::setVoltage(int index, int channel, float voltage) {
 }
 
 void TimeSeqOutputManager::reset() {
-	for (std::array<std::array<float, 16>, 8>::iterator it = m_voltages.begin(); it != m_voltages.end(); it++) {
+	for (std::array<std::array<float, 16>, 96>::iterator it = m_voltages.begin(); it != m_voltages.end(); it++) {
 		it->fill(0.f);
 	}
 	m_channelCounts.fill(1);

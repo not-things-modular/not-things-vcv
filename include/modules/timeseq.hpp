@@ -24,7 +24,7 @@ struct TimeSeqOutputManager {
 	void setDirty();
 
 	private:
-		Module** m_modules = new Module*[12];
+		Module* m_modules[12];
 		std::array<std::array<float, 16>, 96> m_voltages;
 		std::array<int, 96> m_channelCounts;
 		std::array<std::string, 96> m_labels;
