@@ -118,6 +118,13 @@
       "description": "Ratrilig Expander",
       "manualUrl": "https://not-things-modular.github.io/not-things-vcv/doc/RATRILIG.html",
       "tags": [ "Expander", "Polyphonic", "Random", "Sequencer" ]
+    },
+    {
+      "slug": "wonky-clock",
+      "name": "Wonky Clock",
+      "description": "Wonky Clock with Wobble and Wander unstability controls",
+      "manualUrl": "",
+      "tags": [ "Clock" ]
     }
   ]
 }

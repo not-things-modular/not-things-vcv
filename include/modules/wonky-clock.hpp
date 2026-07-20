@@ -1,0 +1,40 @@
+#pragma once
+#include <array>
+#include "not-things.hpp"
+
+struct LEDDisplay;
+
+
+struct WonkyClockModule : NTModule, DrawListener {
+	enum ParamId {
+		PARAM_BPM,
+		PARAM_WOBBLE_AMOUNT,
+		PARAM_WOBBLE_PROBABILITY,
+		PARAM_WANDER_AMOUNT,
+		PARAM_WANDER_PROBABILITY,
+		PARAM_LINK,
+		PARAM_WEIGHT,
+		NUM_PARAMS
+	};
+	enum InputId {
+		ENUMS(IN_INPUTS, 8),
+		NUM_INPUTS
+	};
+	enum OutputId {
+		OUT_CLOCK,
+		NUM_OUTPUTS
+	};
+	enum LightId {
+		NUM_LIGHTS
+	};
+
+	LEDDisplay* m_bmpLed;
+
+	WonkyClockModule();
+
+	void draw(const widget::Widget::DrawArgs& args) override;
+};
+
+struct WonkyClockWidget : NTModuleWidget {
+	WonkyClockWidget(WonkyClockModule* module);
+};
