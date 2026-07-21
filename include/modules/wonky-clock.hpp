@@ -17,7 +17,11 @@ struct WonkyClockModule : NTModule, DrawListener {
 		NUM_PARAMS
 	};
 	enum InputId {
-		ENUMS(IN_INPUTS, 8),
+		IN_BPM,
+		IN_WOBBLE_AMOUNT,
+		IN_WOBBLE_PROBABILITY,
+		IN_WANDER_AMOUNT,
+		IN_WANDER_PROBABILITY,
 		NUM_INPUTS
 	};
 	enum OutputId {
@@ -33,6 +37,9 @@ struct WonkyClockModule : NTModule, DrawListener {
 	WonkyClockModule();
 
 	void draw(const widget::Widget::DrawArgs& args) override;
+
+	private:
+		int m_bpm;
 };
 
 struct WonkyClockWidget : NTModuleWidget {
