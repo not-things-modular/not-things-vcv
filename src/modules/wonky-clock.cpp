@@ -67,35 +67,33 @@ void WonkyClockModule::draw(const widget::Widget::DrawArgs& args) {
 }
 
 WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock") {
-	NTKnob50* bpmKnob = createParamCentered<NTKnob50>(Vec(30.f, 40.f), module, WonkyClockModule::PARAM_BPM);
+	NTKnob50* bpmKnob = createParamCentered<NTKnob50>(Vec(42.f, 66.f), module, WonkyClockModule::PARAM_BPM);
 	bpmKnob->setAngles(-.85 * M_PI, .85 * M_PI);
 	addParam(bpmKnob);
 
-	addParam(createParamCentered<NTKnob35>(Vec(30.f, 90.f), module, WonkyClockModule::PARAM_WOBBLE_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(70.f, 90.f), module, WonkyClockModule::PARAM_WOBBLE_PROBABILITY));
+	addParam(createParamCentered<NTKnob35>(Vec(113.5f, 166.f), module, WonkyClockModule::PARAM_WOBBLE_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(120.f, 210.f), module, WonkyClockModule::PARAM_WOBBLE_PROBABILITY));
 
-	addParam(createParamCentered<NTKnob35>(Vec(30.f, 140.f), module, WonkyClockModule::PARAM_WAVER_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(70.f, 140.f), module, WonkyClockModule::PARAM_WAVER_PROBABILITY));
+	addParam(createParamCentered<NTKnob35>(Vec(113.5f - 80.f, 166.f), module, WonkyClockModule::PARAM_WAVER_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(120.f - 80.f, 210.f), module, WonkyClockModule::PARAM_WAVER_PROBABILITY));
 
-	addParam(createParamCentered<NTKnob35>(Vec(30.f, 190.f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(70.f, 190.f), module, WonkyClockModule::PARAM_WANDER_RATE));
+	addParam(createParamCentered<NTKnob35>(Vec(113.5f, 166.f - 112.4f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(120.f, 210.f - 112.4f), module, WonkyClockModule::PARAM_WANDER_RATE));
 
-	addParam(createParamCentered<CKSS>(Vec(30.f, 250.f), module, WonkyClockModule::PARAM_LINK));
+	addParam(createParamCentered<CKSSThreeHorizontal>(Vec(80.5f, 252.f), module, WonkyClockModule::PARAM_LINK));
 
-	addParam(createParamCentered<Trimpot>(Vec(30.f, 290.f), module, WonkyClockModule::PARAM_WEIGHT));
+	addParam(createParamCentered<Trimpot>(Vec(118.f, 293.5f), module, WonkyClockModule::PARAM_WEIGHT));
 
-	addInput(createInputCentered<NTPort>(Vec(68.f+7.5f, 66.5f + 156.5f), module, WonkyClockModule::IN_RUN));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(68.f+7.5f, 113.f + 156.5f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));
-	addOutput(createOutputCentered<NTPort>(Vec(68.f+7.5f, 146.5f + 156.5f), module, WonkyClockModule::OUT_RUN));
-	addInput(createInputCentered<NTPort>(Vec(112.f+7.5f, 206.5f-140.f + 156.5f), module, WonkyClockModule::IN_RESET));
-	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(112.f+7.5f, 253.f-140.f + 156.5f), module, WonkyClockModule::PARAM_RESET, WonkyClockModule::LIGHT_RESET));
-	addOutput(createOutputCentered<NTPort>(Vec(112.f+7.5f, 286.5f-140.f + 156.5f), module, WonkyClockModule::OUT_RESET));
+	addInput(createInputCentered<NTPort>(Vec(28.f, 333.f), module, WonkyClockModule::IN_RUN));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(28.f, 285.f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));
+	addInput(createInputCentered<NTPort>(Vec(70.f, 333.f), module, WonkyClockModule::IN_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(70.f, 285.f), module, WonkyClockModule::PARAM_RESET, WonkyClockModule::LIGHT_RESET));
 
-	addOutput(createOutputCentered<NTPort>(Vec(112.f+7.5f, 286.5f-140.f), module, WonkyClockModule::OUT_CLOCK));
+	addOutput(createOutputCentered<NTPort>(Vec(136.f, 333.f), module, WonkyClockModule::OUT_CLOCK));
 
-	LEDDisplay* bmpLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 25, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
-	bmpLed->box.pos = Vec(64.f, 31.f);
-	bmpLed->box.size = Vec(65.f, 32.f);
+	LEDDisplay* bmpLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 20, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
+	bmpLed->box.pos = Vec(17.f, 93.f);
+	bmpLed->box.size = Vec(50.f, 25.f);
 	bmpLed->setForegroundText("120");
 	addChild(bmpLed);
 	if (module) {
