@@ -38,6 +38,7 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 	enum LightId {
 		LIGHT_RUN,
 		LIGHT_RESET,
+		LIGHT_CLOCK,
 		NUM_LIGHTS
 	};
 	enum TriggerId {

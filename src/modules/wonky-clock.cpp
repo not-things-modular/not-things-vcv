@@ -71,6 +71,7 @@ float WonkyClockModule::getSampleRate() const {
 
 void WonkyClockModule::clockGateChanged(bool high) {
 	outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
+	lights[LightId::LIGHT_CLOCK].setBrightness(high);
 }
 
 WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock") {
@@ -107,22 +108,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 		module->m_bmpLed = bmpLed;
 	}
 
-	// for (int i = 0; i < 8; i++) {
-	// 	// addInput(createInputCentered<NTPort>(Vec(xIn, y), module, PipoInputModule::IN_INPUTS + i));
-	// 	// y += yDelta;
-
-	// 	LEDDisplay* pDisplay = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "18", 10, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
-	// 	pDisplay->box.pos = Vec(3.f, 52.f + (yDelta * i));
-	// 	pDisplay->box.size = Vec(13.f, 12.5f);
-	// 	pDisplay->setForegroundText("1");
-	// 	addChild(pDisplay);
-
-	// 	if (module) {
-	// 		module->m_ledDisplays[i] = pDisplay;
-	// 	}
-	// }
-
-	// addChild(createLightCentered<TinyLight<DimmedLight<GreenRedLight>>>(Vec(40.f, 20.f), module, PipoInputModule::LIGHT_CONNECTED));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(148.5f, 320.5f), module, WonkyClockModule::LIGHT_CLOCK));
 }
 
 
