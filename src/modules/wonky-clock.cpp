@@ -11,7 +11,7 @@ using namespace wonky;
 WonkyClockModule::WonkyClockModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-	ParamQuantity* pq = configParam(PARAM_BPM, 20.f, 400.f, 120.f, "Clock Speed (Beats per Minute)");
+	ParamQuantity* pq = configParam(PARAM_BPM, 10.f, 400.f, 120.f, "Clock Speed (Beats per Minute)");
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
 
@@ -34,24 +34,42 @@ WonkyClockModule::WonkyClockModule() {
 	configParam(PARAM_WEIGHT, 0.f, 100.f, 10.f, "Distribution Weight");
 
 	configOutput(OUT_CLOCK, "Clock");
-	configOutput(OUT_RUN, "Run");
-	configOutput(OUT_RESET, "Reset");
 
 	m_displayedBpm = 120;
 
 	m_core.reset(new WonkyCore(this, this));
+
+	lights[LightId::LIGHT_RUN].setBrightness(m_running);
 }
 
 void WonkyClockModule::process(const ProcessArgs& args) {
 	WonkyInputData inputData;
 
 	bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
+	bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
+
 	if (resetTriggered) {
 		m_core->reset();
+		lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
+		lights[LightId::LIGHT_CLOCK].setBrightness(0.f);
 	}
 
-	inputData.bpm = params[PARAM_BPM].getValue();
-	m_core->process(inputData);
+	if (runTriggered) {
+		m_running = !m_running;
+		lights[LightId::LIGHT_RUN].setBrightness(m_running);
+	}
+
+	if (m_running) {
+		inputData.bpm = params[PARAM_BPM].getValue();
+		inputData.wobbleAmount = params[PARAM_WOBBLE_AMOUNT].getValue();
+		inputData.wobbleProbability = params[PARAM_WOBBLE_PROBABILITY].getValue();
+		inputData.waverAmount = params[PARAM_WAVER_AMOUNT].getValue();
+		inputData.waverProbability = params[PARAM_WAVER_PROBABILITY].getValue();
+		inputData.wanderAmount = params[PARAM_WANDER_AMOUNT].getValue();
+		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue();
+
+		m_core->process(inputData);
+	}
 }
 
 void WonkyClockModule::draw(const widget::Widget::DrawArgs& args) {
@@ -63,6 +81,8 @@ void WonkyClockModule::draw(const widget::Widget::DrawArgs& args) {
 			m_bmpLed->setForegroundText(string::f("%d", m_displayedBpm));
 		}
 	}
+
+	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f, 20.f);
 }
 
 float WonkyClockModule::getSampleRate() const {

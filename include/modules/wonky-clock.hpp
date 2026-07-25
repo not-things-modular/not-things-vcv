@@ -30,8 +30,6 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		NUM_INPUTS
 	};
 	enum OutputId {
-		OUT_RUN,
-		OUT_RESET,
 		OUT_CLOCK,
 		NUM_OUTPUTS
 	};
@@ -58,6 +56,7 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 	void clockGateChanged(bool high) override;
 
 	private:
+		bool m_running = true;
 		int m_displayedBpm;
 		std::unique_ptr<wonky::WonkyCore> m_core;
 
