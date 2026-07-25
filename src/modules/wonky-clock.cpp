@@ -4,6 +4,10 @@
 #include "components/ntknob.hpp"
 #include "components/ntport.hpp"
 
+#include "core/wonky-core.hpp"
+
+using namespace wonky;
+
 WonkyClockModule::WonkyClockModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
@@ -33,37 +37,40 @@ WonkyClockModule::WonkyClockModule() {
 	configOutput(OUT_RUN, "Run");
 	configOutput(OUT_RESET, "Reset");
 
-	m_bpm = 120;
+	m_displayedBpm = 120;
+
+	m_core.reset(new WonkyCore(this, this));
+}
+
+void WonkyClockModule::process(const ProcessArgs& args) {
+	WonkyInputData inputData;
+
+	bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
+	if (resetTriggered) {
+		m_core->reset();
+	}
+
+	inputData.bpm = params[PARAM_BPM].getValue();
+	m_core->process(inputData);
 }
 
 void WonkyClockModule::draw(const widget::Widget::DrawArgs& args) {
-	// // Look to the right to see if there is a Pipo Output module there (with possibility other Pipo Input modules in between)
-	// // If not, we need to turn off our connected LED
-	// Expander* expander = &getRightExpander();
-	// while ((expander->module != nullptr) && (expander->module->getModel() == modelPipoInput)) {
-	// 	expander = &expander->module->getRightExpander();
-	// }
-	// if ((expander->module != nullptr) && (expander->module->getModel() == modelPipoOutput)) {
-	// 	lights[LightId::LIGHT_CONNECTED].setBrightness(1.f);
-	// 	lights[LightId::LIGHT_NOT_CONNECTED].setBrightness(0.f);
-	// } else {
-	// 	lights[LightId::LIGHT_CONNECTED].setBrightness(0.f);
-	// 	lights[LightId::LIGHT_NOT_CONNECTED].setBrightness(1.f);
-	// }
+	int bpm = params[PARAM_BPM].getValue();
 
-	// for (int i = 0; i < 8; i++) {
-	// 	m_ledDisplays[i]->setForegroundText(string::f("%d", std::max(inputs[InputId::IN_INPUTS + i].getChannels(), 1)));
-	// }
-
-	int bpm = params[PARAM_BPM].getValue();;
-
-	if (bpm != m_bpm) {
-		m_bpm = bpm;
+	if (bpm != m_displayedBpm) {
+		m_displayedBpm = bpm;
 		if (m_bmpLed != nullptr) {
-			m_bmpLed->setForegroundText(string::f("%d", m_bpm));
+			m_bmpLed->setForegroundText(string::f("%d", m_displayedBpm));
 		}
 	}
+}
 
+float WonkyClockModule::getSampleRate() const {
+	return APP->engine->getSampleRate();
+}
+
+void WonkyClockModule::clockGateChanged(bool high) {
+	outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
 }
 
 WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock") {

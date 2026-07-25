@@ -12,8 +12,8 @@ void ActionProcessor::process() {
 		processAction();
 	}
 }
-
 ActionSetValueProcessor::ActionSetValueProcessor(const shared_ptr<ValueProcessor>& value, int outputPort, int outputChannel, PortHandler* portHandler, const shared_ptr<IfProcessor>& ifProcessor) : ActionProcessor(ifProcessor), m_value(value), m_outputPort(outputPort), m_outputChannel(outputChannel), m_portHandler(portHandler) {}
+
 
 void ActionSetValueProcessor::processAction() {
 	float value = m_value->process();

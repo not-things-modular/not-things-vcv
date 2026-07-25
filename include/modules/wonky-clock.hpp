@@ -1,11 +1,11 @@
 #pragma once
 #include <array>
 #include "not-things.hpp"
+#include "core/wonky-core.hpp"
 
 struct LEDDisplay;
 
-
-struct WonkyClockModule : NTModule, DrawListener {
+struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky::WonkyListener {
 	enum ParamId {
 		PARAM_BPM,
 		PARAM_RUN,
@@ -40,16 +40,29 @@ struct WonkyClockModule : NTModule, DrawListener {
 		LIGHT_RESET,
 		NUM_LIGHTS
 	};
+	enum TriggerId {
+		TRIG_RUN,
+		TRIG_RESET,
+		NUM_TRIGGERS
+	};
 
 	LEDDisplay* m_bmpLed;
 
 	WonkyClockModule();
 
+	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 
+	float getSampleRate() const override;
+	void clockGateChanged(bool high) override;
+
 	private:
-		int m_bpm;
-};
+		int m_displayedBpm;
+		std::unique_ptr<wonky::WonkyCore> m_core;
+
+		dsp::BooleanTrigger m_buttonTrigger[TriggerId::NUM_TRIGGERS];
+		dsp::TSchmittTrigger<float> m_trigTriggers[TriggerId::NUM_TRIGGERS];
+	};
 
 struct WonkyClockWidget : NTModuleWidget {
 	WonkyClockWidget(WonkyClockModule* module);
