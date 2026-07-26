@@ -8,6 +8,9 @@ struct SampleRateReader {
 
 struct WonkyListener {
 	virtual void clockGateChanged(bool high) = 0;
+	virtual void wanderChanged(float wander, float max) = 0;
+	virtual void waverChanged(float waver, float max) = 0;
+	virtual void wobbleChanged(float wobble, float max) = 0;
 };
 
 struct Randomizer {
@@ -94,6 +97,8 @@ struct WonkyCore {
 		WonkyInputData m_inputData;
 		Wonkiness m_wonkiness;
 		WonkyClockData m_clockData;
+
+		bool m_reset = false;
 
 		void updateBpm(int bpm);
 		void updateWonkiness();

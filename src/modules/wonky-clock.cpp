@@ -3,6 +3,7 @@
 #include "components/lights.hpp"
 #include "components/ntknob.hpp"
 #include "components/ntport.hpp"
+#include "components/wonkyclock-display.hpp"
 
 #include "core/wonky-core.hpp"
 
@@ -15,7 +16,6 @@ WonkyClockModule::WonkyClockModule() {
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
 
-	configInput(IN_BPM, "Bpm");
 	configInput(IN_RUN, "Run");
 	configInput(IN_RESET, "Reset");
 
@@ -77,8 +77,8 @@ void WonkyClockModule::draw(const widget::Widget::DrawArgs& args) {
 
 	if (bpm != m_displayedBpm) {
 		m_displayedBpm = bpm;
-		if (m_bmpLed != nullptr) {
-			m_bmpLed->setForegroundText(string::f("%d", m_displayedBpm));
+		if (m_bpmLed != nullptr) {
+			m_bpmLed->setForegroundText(string::f("%d", m_displayedBpm));
 		}
 	}
 
@@ -92,6 +92,24 @@ float WonkyClockModule::getSampleRate() const {
 void WonkyClockModule::clockGateChanged(bool high) {
 	outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
 	lights[LightId::LIGHT_CLOCK].setBrightness(high);
+}
+
+void WonkyClockModule::wanderChanged(float wander, float max) {
+	if (m_wanderDisplay != nullptr) {
+		m_wanderDisplay->setWonkiness(wander, max);
+	}
+}
+
+void WonkyClockModule::waverChanged(float waver, float max) {
+	if (m_waverDisplay != nullptr) {
+		m_waverDisplay->setWonkiness(waver, max);
+	}
+}
+
+void WonkyClockModule::wobbleChanged(float wobble, float max) {
+	if (m_wobbleDisplay != nullptr) {
+		m_wobbleDisplay->setWonkiness(wobble, max);
+	}
 }
 
 WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock") {
@@ -119,13 +137,37 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 
 	addOutput(createOutputCentered<NTPort>(Vec(136.f, 333.f), module, WonkyClockModule::OUT_CLOCK));
 
-	LEDDisplay* bmpLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 20, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
-	bmpLed->box.pos = Vec(17.f, 93.f);
-	bmpLed->box.size = Vec(50.f, 25.f);
-	bmpLed->setForegroundText("120");
-	addChild(bmpLed);
+	LEDDisplay* bpmLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 20, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
+	bpmLed->box.pos = Vec(17.f, 93.f);
+	bpmLed->box.size = Vec(50.f, 25.f);
+	bpmLed->setForegroundText("120");
+	addChild(bpmLed);
 	if (module) {
-		module->m_bmpLed = bmpLed;
+		module->m_bpmLed = bpmLed;
+	}
+
+	WonkyClockDisplay *pDisplay = new WonkyClockDisplay();
+	pDisplay->box.pos = Vec(141.91f, 36.61f);
+	pDisplay->box.size = Vec(5.f, 80.f);
+	addChild(pDisplay);
+	if (module) {
+		module->m_wanderDisplay = pDisplay;
+	}
+
+	pDisplay = new WonkyClockDisplay();
+	pDisplay->box.pos = Vec(61.91f, 149.11f);
+	pDisplay->box.size = Vec(5.f, 80.f);
+	addChild(pDisplay);
+	if (module) {
+		module->m_waverDisplay = pDisplay;
+	}
+
+	pDisplay = new WonkyClockDisplay();
+	pDisplay->box.pos = Vec(141.91f, 149.11f);
+	pDisplay->box.size = Vec(5.f, 80.f);
+	addChild(pDisplay);
+	if (module) {
+		module->m_wobbleDisplay = pDisplay;
 	}
 
 	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(148.5f, 320.5f), module, WonkyClockModule::LIGHT_CLOCK));

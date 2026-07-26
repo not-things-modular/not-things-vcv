@@ -4,6 +4,7 @@
 #include "core/wonky-core.hpp"
 
 struct LEDDisplay;
+struct WonkyClockDisplay;
 
 struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky::WonkyListener {
 	enum ParamId {
@@ -24,7 +25,6 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		NUM_PARAMS
 	};
 	enum InputId {
-		IN_BPM,
 		IN_RUN,
 		IN_RESET,
 		NUM_INPUTS
@@ -45,7 +45,10 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		NUM_TRIGGERS
 	};
 
-	LEDDisplay* m_bmpLed;
+	LEDDisplay* m_bpmLed = nullptr;
+	WonkyClockDisplay* m_wanderDisplay = nullptr;
+	WonkyClockDisplay* m_waverDisplay = nullptr;
+	WonkyClockDisplay* m_wobbleDisplay = nullptr;
 
 	WonkyClockModule();
 
@@ -54,6 +57,9 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 
 	float getSampleRate() const override;
 	void clockGateChanged(bool high) override;
+	void wanderChanged(float wander, float max) override;
+	void waverChanged(float waver, float max) override;
+	void wobbleChanged(float wobble, float max) override;
 
 	private:
 		bool m_running = true;

@@ -107,12 +107,9 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 	if (m_inputData != inputData) {
 		// If the BPM changed, re-calculate the clock parameters
 		if (m_inputData.bpm != inputData.bpm) {
-			// Update the clock calculation information if the bpm changed
-			if (m_inputData.bpm != inputData.bpm) {
-				updateBpm(inputData.bpm);
-				if (m_wonkiness.isWonky()) {
-					updateWonkiness();
-				}
+			updateBpm(inputData.bpm);
+			if (m_wonkiness.isWonky()) {
+				updateWonkiness();
 			}
 		}
 		// Store the input data for future reference
@@ -133,9 +130,10 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 	}
 
 	// If we passed over a clock boundary, complete this clock and start the next one
-	if (m_clockData.sampleProgress >= m_clockData.clockSampleDuration) {
+	if ((m_reset) || (m_clockData.sampleProgress >= m_clockData.clockSampleDuration)) {
 		// Reset the progress
 		m_clockData.sampleProgress = 0;
+		m_reset = false;
 
 		// If there is a positive wobble sample offset, we'll have to delay the gate signal
 		if (m_clockData.currentWobbleSampleOffset > 0) {
@@ -152,6 +150,9 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		
 		// Generate new wonkiness
 		m_wonkiness.determineWonkiness(m_inputData);
+		m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
+		m_listener->waverChanged(m_wonkiness.getWaverAmount(), m_inputData.waverAmount);
+		m_listener->wobbleChanged(m_wonkiness.getWobbleAmount(), m_inputData.wobbleAmount);
 
 		// Prepare the new clock data
 		m_clockData.clockSampleDuration = m_clockData.clockDuration;
@@ -163,8 +164,10 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		} else {
 			// No wonkyness means high-accuracy, so determine the drift.
 			m_clockData.wonkyDrift += m_clockData.clockDrift;
-			m_clockData.clockSampleDuration++;
-			m_clockData.wonkyDrift--;
+			if (m_clockData.wonkyDrift >= 1.f) {
+				m_clockData.clockSampleDuration++;
+				m_clockData.wonkyDrift--;
+			}
 
 			// Set all the other clock parameters to a simple clock with a half-duration gate
 			m_clockData.gateDuration = m_clockData.clockSampleDuration / 2;
@@ -179,7 +182,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 
 void WonkyCore::reset() {
 	// Make sure the clock will retrigger on the next progress
-	m_clockData.sampleProgress = std::numeric_limits<int>::max() - 1;
+	m_reset = true;
 	// Remove any collected drift
 	m_clockData.wonkyDrift = 0.;
 	// And reset the high gate if needed
