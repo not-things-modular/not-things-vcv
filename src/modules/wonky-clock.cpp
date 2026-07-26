@@ -66,7 +66,7 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.waverAmount = params[PARAM_WAVER_AMOUNT].getValue();
 		inputData.waverProbability = params[PARAM_WAVER_PROBABILITY].getValue();
 		inputData.wanderAmount = params[PARAM_WANDER_AMOUNT].getValue();
-		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue();
+		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue() / 100.f;
 
 		m_core->process(inputData);
 	}
