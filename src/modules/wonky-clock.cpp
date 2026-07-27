@@ -31,8 +31,6 @@ WonkyClockModule::WonkyClockModule() {
 
 	configSwitch(PARAM_LINK, 0.f, 1.f, 1.f, "Link", { "Unlinked", "Linked" });
 
-	configParam(PARAM_WEIGHT, 0.f, 100.f, 10.f, "Distribution Weight");
-
 	configOutput(OUT_CLOCK, "Clock");
 
 	m_displayedBpm = 120;
@@ -126,9 +124,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	addParam(createParamCentered<NTKnob35>(Vec(113.5f, 166.f - 112.4f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
 	addParam(createParamCentered<Trimpot>(Vec(120.f, 210.f - 112.4f), module, WonkyClockModule::PARAM_WANDER_RATE));
 
-	addParam(createParamCentered<CKSSThreeHorizontal>(Vec(80.5f, 252.f), module, WonkyClockModule::PARAM_LINK));
-
-	addParam(createParamCentered<Trimpot>(Vec(118.f, 293.5f), module, WonkyClockModule::PARAM_WEIGHT));
+	addParam(createParamCentered<CKSS>(Vec(135.35f, 262.48f), module, WonkyClockModule::PARAM_LINK));
 
 	addInput(createInputCentered<NTPort>(Vec(28.f, 333.f), module, WonkyClockModule::IN_RUN));
 	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(28.f, 285.f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));
@@ -148,7 +144,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 
 	WonkyClockDisplay *pDisplay = new WonkyClockDisplay();
 	pDisplay->box.pos = Vec(141.91f, 36.61f);
-	pDisplay->box.size = Vec(5.f, 80.f);
+	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
 		module->m_wanderDisplay = pDisplay;
@@ -156,7 +152,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 
 	pDisplay = new WonkyClockDisplay();
 	pDisplay->box.pos = Vec(61.91f, 149.11f);
-	pDisplay->box.size = Vec(5.f, 80.f);
+	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
 		module->m_waverDisplay = pDisplay;
@@ -164,7 +160,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 
 	pDisplay = new WonkyClockDisplay();
 	pDisplay->box.pos = Vec(141.91f, 149.11f);
-	pDisplay->box.size = Vec(5.f, 80.f);
+	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
 		module->m_wobbleDisplay = pDisplay;

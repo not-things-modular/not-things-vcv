@@ -12,4 +12,6 @@ struct WonkyClockDisplay : widget::Widget {
 	private:
 		float m_wonkiness = 0.f;
 		float m_max = 0;
+
+		float m_current = 0.f;
 };
