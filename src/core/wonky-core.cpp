@@ -42,7 +42,11 @@ void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
 	if ((inputData.wanderAmount > 0.f) && (inputData.wanderRate > 0.f)) {
 		const float theta = kMinTheta * std::pow(kMaxTheta / kMinTheta, inputData.wanderRate);
 		const float sigma = inputData.wanderAmount / kStdDevScale * std::sqrt(theta * (2.0f - theta));
-		const float newOffset = m_wanderAmount * (1.f - theta) + sigma * m_randomizer->randomizeGaussian(0.f, 1.f);
+
+		float t = std::abs(m_wanderAmount) / inputData.wanderAmount;
+		float strength = theta * t * t;
+		const float newOffset = m_wanderAmount + sigma * m_randomizer->randomizeGaussian(0.f, 1.f) - strength * m_wanderAmount;
+
 		m_wanderAmount  = std::min(std::max(newOffset, -inputData.wanderAmount), inputData.wanderAmount);
 	} else {
 		m_wanderAmount = 0.f;
@@ -147,7 +151,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 			m_clockData.gateHigh = true;
 			m_listener->clockGateChanged(true);
 		}
-		
+
 		// Generate new wonkiness
 		m_wonkiness.determineWonkiness(m_inputData);
 		m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
@@ -212,7 +216,7 @@ void WonkyCore::updateWonkiness() {
 	if (m_wonkiness.getWaverAmount() != 0.f) {
 		m_clockData.clockSampleDuration += (float) m_clockData.clockSampleDuration * m_wonkiness.getWaverAmount() / 100.f;
 	}
-	
+
 	// Then calculate how much wobble is to be applied
 	if (m_wonkiness.getWobbleAmount() != 0.f) {
 		m_clockData.currentWobbleSampleOffset = (float) m_clockData.clockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f;
