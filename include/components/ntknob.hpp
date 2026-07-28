@@ -44,6 +44,6 @@ struct NTKnob35 : NTKnob {
 	NTKnob35();
 };
 
-struct NTKnob50 : NTKnob {
-	NTKnob50();
+struct NTKnob40 : NTKnob {
+	NTKnob40();
 };
