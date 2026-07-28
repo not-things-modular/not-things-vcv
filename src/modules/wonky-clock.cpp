@@ -111,30 +111,30 @@ void WonkyClockModule::wobbleChanged(float wobble, float max) {
 }
 
 WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock") {
-	NTKnob50* bpmKnob = createParamCentered<NTKnob50>(Vec(42.f, 66.f), module, WonkyClockModule::PARAM_BPM);
+	NTKnob40* bpmKnob = createParamCentered<NTKnob40>(Vec(127.f, 107.f), module, WonkyClockModule::PARAM_BPM);
 	bpmKnob->setAngles(-.85 * M_PI, .85 * M_PI);
 	addParam(bpmKnob);
 
-	addParam(createParamCentered<NTKnob35>(Vec(113.5f, 166.f), module, WonkyClockModule::PARAM_WOBBLE_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(120.f, 210.f), module, WonkyClockModule::PARAM_WOBBLE_PROBABILITY));
+	addParam(createParamCentered<NTKnob35>(Vec(46.f, 163.5f), module, WonkyClockModule::PARAM_WOBBLE_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(54.57f, 208.f), module, WonkyClockModule::PARAM_WOBBLE_PROBABILITY));
 
-	addParam(createParamCentered<NTKnob35>(Vec(113.5f - 80.f, 166.f), module, WonkyClockModule::PARAM_WAVER_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(120.f - 80.f, 210.f), module, WonkyClockModule::PARAM_WAVER_PROBABILITY));
+	addParam(createParamCentered<NTKnob35>(Vec(132.55f, 225.5f), module, WonkyClockModule::PARAM_WAVER_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(141.7f, 270.f), module, WonkyClockModule::PARAM_WAVER_PROBABILITY));
 
-	addParam(createParamCentered<NTKnob35>(Vec(113.5f, 166.f - 112.4f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(120.f, 210.f - 112.4f), module, WonkyClockModule::PARAM_WANDER_RATE));
+	addParam(createParamCentered<NTKnob35>(Vec(46.f, 288.5f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(54.57f, 333.f), module, WonkyClockModule::PARAM_WANDER_RATE));
 
-	addParam(createParamCentered<CKSS>(Vec(135.35f, 262.48f), module, WonkyClockModule::PARAM_LINK));
+	addParam(createParamCentered<CKSS>(Vec(82.5f, 200.f), module, WonkyClockModule::PARAM_LINK));
 
-	addInput(createInputCentered<NTPort>(Vec(28.f, 333.f), module, WonkyClockModule::IN_RUN));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(28.f, 285.f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));
-	addInput(createInputCentered<NTPort>(Vec(70.f, 333.f), module, WonkyClockModule::IN_RESET));
-	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(70.f, 285.f), module, WonkyClockModule::PARAM_RESET, WonkyClockModule::LIGHT_RESET));
+	addInput(createInputCentered<NTPort>(Vec(25.f, 45.f), module, WonkyClockModule::IN_RUN));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(25.f, 91.5f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));
+	addInput(createInputCentered<NTPort>(Vec(68.f, 45.f), module, WonkyClockModule::IN_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(68.f, 91.5f), module, WonkyClockModule::PARAM_RESET, WonkyClockModule::LIGHT_RESET));
 
-	addOutput(createOutputCentered<NTPort>(Vec(136.f, 333.f), module, WonkyClockModule::OUT_CLOCK));
+	addOutput(createOutputCentered<NTPort>(Vec(123.75f, 332.f), module, WonkyClockModule::OUT_CLOCK));
 
 	LEDDisplay* bpmLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 20, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
-	bpmLed->box.pos = Vec(17.f, 93.f);
+	bpmLed->box.pos = Vec(101.5f, 27.f);
 	bpmLed->box.size = Vec(50.f, 25.f);
 	bpmLed->setForegroundText("120");
 	addChild(bpmLed);
@@ -143,7 +143,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	}
 
 	WonkyClockDisplay *pDisplay = new WonkyClockDisplay();
-	pDisplay->box.pos = Vec(141.91f, 36.61f);
+	pDisplay->box.pos = Vec(15.f, 146.f);
 	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
@@ -151,7 +151,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	}
 
 	pDisplay = new WonkyClockDisplay();
-	pDisplay->box.pos = Vec(61.91f, 149.11f);
+	pDisplay->box.pos = Vec(101.5f, 208.f);
 	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
@@ -159,14 +159,14 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	}
 
 	pDisplay = new WonkyClockDisplay();
-	pDisplay->box.pos = Vec(141.91f, 149.11f);
+	pDisplay->box.pos = Vec(15.f, 271.f);
 	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
 		module->m_wobbleDisplay = pDisplay;
 	}
 
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(148.5f, 320.5f), module, WonkyClockModule::LIGHT_CLOCK));
+	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(136.25f, 319.5f), module, WonkyClockModule::LIGHT_CLOCK));
 }
 
 

@@ -107,4 +107,4 @@ void NTKnob::step() {
 
 NTKnob32::NTKnob32() : NTKnob("res/knob-32-light-bg.svg", "res/knob-32-light.svg", "res/knob-32-dark-bg.svg", "res/knob-32-dark.svg") {}
 NTKnob35::NTKnob35() : NTKnob("res/knob-35-light-bg.svg", "res/knob-35-light.svg", "res/knob-35-dark-bg.svg", "res/knob-35-dark.svg") {}
-NTKnob50::NTKnob50() : NTKnob("res/knob-50-light-bg.svg", "res/knob-50-light.svg", "res/knob-50-dark-bg.svg", "res/knob-50-dark.svg") {}
+NTKnob40::NTKnob40() : NTKnob("res/knob-40-light-bg.svg", "res/knob-40-light.svg", "res/knob-40-dark-bg.svg", "res/knob-40-dark.svg") {}
