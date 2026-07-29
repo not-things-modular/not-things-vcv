@@ -23,7 +23,7 @@ bool WonkyInputData::operator!=(const WonkyInputData& other) const {
 Wonkiness::Wonkiness(Randomizer* randomizer) : m_randomizer(randomizer) {}
 
 float Wonkiness::getWanderAmount() const {
-		return m_wanderAmount;
+	return m_wanderAmount;
 }
 
 float Wonkiness::getWaverAmount() const {
@@ -88,7 +88,7 @@ void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
 		float strength = theta * t * t;
 		const float newOffset = m_wanderAmount + sigma * m_randomizer->randomizeGaussian(0.f, 1.f) - strength * m_wanderAmount;
 
-		m_wanderAmount  = std::min(std::max(newOffset, -inputData.wanderAmount), inputData.wanderAmount);
+		m_wanderAmount = std::min(std::max(newOffset, -inputData.wanderAmount), inputData.wanderAmount);
 	} else {
 		m_wanderAmount = 0.f;
 	}
@@ -211,7 +211,7 @@ void WonkyCore::reset() {
 void WonkyCore::updateBpm(int bpm) {
 	double samplesPerMinute = (double) m_sampleRateReader->getSampleRate() * 60;
 	m_clockData.clockDuration = samplesPerMinute / bpm;
-	m_clockData.clockSampleDuration = m_clockData.clockDuration;
+	m_clockData.clockSampleDuration = static_cast<int>(m_clockData.clockDuration);
 	m_clockData.clockDrift = m_clockData.clockDuration - m_clockData.clockSampleDuration;
 
 	// Reset the accumulated drift since the interal clock changed
