@@ -31,6 +31,8 @@ struct WonkyInputData {
 	float wanderAmount = 0.f;
 	float wanderRate = 0.f;
 
+	bool linked = false;
+
 	bool operator==(const WonkyInputData& other) const;
 	bool operator!=(const WonkyInputData& other) const;
 };

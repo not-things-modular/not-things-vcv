@@ -16,7 +16,8 @@ bool WonkyInputData::operator!=(const WonkyInputData& other) const {
 	return other.bpm != bpm ||
 		other.wobbleAmount != wobbleAmount || other.wobbleProbability != wobbleProbability ||
 		other.waverAmount != waverAmount || other.waverProbability != waverProbability ||
-		other.wanderAmount != wanderAmount || other.wanderRate != wanderRate;
+		other.wanderAmount != wanderAmount || other.wanderRate != wanderRate ||
+		other.linked != linked;
 }
 
 Wonkiness::Wonkiness(Randomizer* randomizer) : m_randomizer(randomizer) {}
@@ -38,7 +39,48 @@ bool Wonkiness::isWonky() const {
 }
 
 void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
+	// Determine the wobble amount
+	bool wobbled = false;
+	m_wobbleAmount = 0.f;
+	if ((inputData.wobbleAmount > 0.f) && (inputData.wobbleProbability > 0.f)) {
+		// Check if a wobble should occur (either because it is at 100% or because the randomizer said so)
+		if ((inputData.wobbleProbability == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wobbleProbability)) {
+			// Generate the wobble amount
+			m_wobbleAmount = m_randomizer->randomize(-inputData.wobbleAmount, inputData.wobbleAmount);
+			wobbled = true;
+		}
+	}
+
+	// Determine the waver amount
+	m_waverAmount = 0.f;
+	if ((inputData.waverProbability > 0.f) && (inputData.waverAmount > 0.f)) {
+		// Check if waver should be attempted based on the linked property
+		float minWaverAmount = -inputData.waverAmount;
+		float maxWaverAmount = inputData.waverAmount;
+		// Check if the linked property influences waver behaviour
+		if (inputData.linked) {
+			if (wobbled) {
+				// There was a wobble, so waver in the same direction
+				minWaverAmount = (m_wobbleAmount > 0.f) ? 0.f : -inputData.waverAmount;
+				maxWaverAmount = (m_wobbleAmount > 0.f) ? inputData.waverAmount : 0.f;
+			} else {
+				// There was no wobble, so don't waver
+				minWaverAmount = maxWaverAmount = 0.f;
+			}
+		}
+
+		// If there is a waverAmount set, use it now
+		if (minWaverAmount != 0.f || maxWaverAmount != 0.f) {
+			// Check if a waver should occur (either because it is at 100% or because the randomizer said so)
+			if ((inputData.waverProbability == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.waverProbability)) {
+				// Generate the waver amount
+				m_waverAmount = m_randomizer->randomize(minWaverAmount, maxWaverAmount);
+			}
+		}
+	}
+
 	// Determine the wander amount
+	m_wanderAmount = 0.f;
 	if ((inputData.wanderAmount > 0.f) && (inputData.wanderRate > 0.f)) {
 		const float theta = kMinTheta * std::pow(kMaxTheta / kMinTheta, inputData.wanderRate);
 		const float sigma = inputData.wanderAmount / kStdDevScale * std::sqrt(theta * (2.0f - theta));
@@ -48,34 +90,6 @@ void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
 		const float newOffset = m_wanderAmount + sigma * m_randomizer->randomizeGaussian(0.f, 1.f) - strength * m_wanderAmount;
 
 		m_wanderAmount  = std::min(std::max(newOffset, -inputData.wanderAmount), inputData.wanderAmount);
-	} else {
-		m_wanderAmount = 0.f;
-	}
-
-	// Determine the waver amount
-	if ((inputData.waverAmount > 0.f) && (inputData.waverProbability > 0.f)) {
-		// Check if a waver should occur (either because it is at 100% or because the randomizer said so)
-		if ((inputData.waverProbability == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.waverProbability)) {
-			// Generate the waver amount
-			m_waverAmount = m_randomizer->randomize(-inputData.waverAmount, inputData.waverAmount);
-		} else {
-			m_waverAmount = 0.f;
-		}
-	} else {
-		m_waverAmount = 0.f;
-	}
-
-	// Determine the wobble amount
-	if ((inputData.wobbleAmount > 0.f) && (inputData.wobbleProbability > 0.f)) {
-		// Check if a wobble should occur (either because it is at 100% or because the randomizer said so)
-		if ((inputData.wobbleProbability == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wobbleProbability)) {
-			// Generate the wobble amount
-			m_wobbleAmount = m_randomizer->randomize(-inputData.wobbleAmount, inputData.wobbleAmount);
-		} else {
-			m_wobbleAmount = 0.f;
-		}
-	} else {
-		m_wobbleAmount = 0.f;
 	}
 }
 
@@ -160,20 +174,17 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 
 		// Prepare the new clock data
 		m_clockData.clockSampleDuration = m_clockData.clockDuration;
+		// Determine drift to account for mismatches between sample rate and clock rate
+		m_clockData.wonkyDrift += m_clockData.clockDrift;
+		if (m_clockData.wonkyDrift >= 1.f) {
+			m_clockData.clockSampleDuration++;
+			m_clockData.wonkyDrift--;
+		}
 		if (m_wonkiness.isWonky()) {
 			// If there is wonkiness, apply it
 			updateWonkiness();
-			// If there is wonkiness, the clock is unstable anyway, so don't apply drift accuracy
-			m_clockData.wonkyDrift = 0.f;
 		} else {
-			// No wonkyness means high-accuracy, so determine the drift.
-			m_clockData.wonkyDrift += m_clockData.clockDrift;
-			if (m_clockData.wonkyDrift >= 1.f) {
-				m_clockData.clockSampleDuration++;
-				m_clockData.wonkyDrift--;
-			}
-
-			// Set all the other clock parameters to a simple clock with a half-duration gate
+			// No wonkiness, so set all the other clock parameters to a simple clock with a half-duration gate
 			m_clockData.gateDuration = m_clockData.clockSampleDuration / 2;
 			m_clockData.currentWobbleSampleOffset = 0;
 		}

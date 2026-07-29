@@ -29,7 +29,7 @@ WonkyClockModule::WonkyClockModule() {
 	configParam(PARAM_WANDER_AMOUNT, 0.f, 40.f, 5.f, "Wander Amount");
 	configParam(PARAM_WANDER_RATE, 0.f, 100.f, 25.f, "Wander Rate");
 
-	configSwitch(PARAM_LINK, 0.f, 1.f, 1.f, "Link", { "Unlinked", "Linked" });
+	configSwitch(PARAM_LINK, 0.f, 1.f, 1.f, "Link Wobble and Waver", { "Unlinked", "Linked" });
 
 	configOutput(OUT_CLOCK, "Clock");
 
@@ -65,6 +65,7 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.waverProbability = params[PARAM_WAVER_PROBABILITY].getValue();
 		inputData.wanderAmount = params[PARAM_WANDER_AMOUNT].getValue();
 		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue() / 100.f;
+		inputData.linked = params[PARAM_LINK].getValue() > 0.f;
 
 		m_core->process(inputData);
 	}
@@ -147,7 +148,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
-		module->m_wanderDisplay = pDisplay;
+		module->m_wobbleDisplay = pDisplay;
 	}
 
 	pDisplay = new WonkyClockDisplay();
@@ -163,7 +164,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
-		module->m_wobbleDisplay = pDisplay;
+		module->m_wanderDisplay = pDisplay;
 	}
 
 	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(136.25f, 319.5f), module, WonkyClockModule::LIGHT_CLOCK));

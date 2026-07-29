@@ -31,21 +31,23 @@ void WonkyClockDisplay::drawLayer(const DrawArgs& args, int layer) {
 	nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
 	nvgFill(args.vg);
 
-	float centre = box.getHeight() * 0.5f;
-	float maxHeight = centre - 4.f;
+	if (m_wonkiness != 0.f || std::abs(m_current) > 0.05f) {
+		float centre = box.getHeight() * 0.5f;
+		float maxHeight = centre - 4.f;
 
-	float offset, height;
-	if (m_current < 0.f) {
-		height = maxHeight * (-m_current) / m_max;
-		offset = centre + 3.f;
-	} else {
-		height = maxHeight * m_current / m_max;
-		offset = centre - 3.f - height;
+		float offset, height;
+		if (m_current < 0.f) {
+			height = maxHeight * (-m_current) / m_max;
+			offset = centre + 3.f;
+		} else {
+			height = maxHeight * m_current / m_max;
+			offset = centre - 3.f - height;
+		}
+		nvgBeginPath(args.vg);
+		nvgRect(args.vg, 1.f, offset, box.getWidth() - 2, height);
+		nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
+		nvgFill(args.vg);
 	}
-	nvgBeginPath(args.vg);
-	nvgRect(args.vg, 1.f, offset, box.getWidth() - 2, height);
-	nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
-	nvgFill(args.vg);
 
 	nvgResetScissor(args.vg);
 	nvgRestore(args.vg);
