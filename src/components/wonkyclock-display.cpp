@@ -14,6 +14,9 @@ void WonkyClockDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 	if (m_current != m_wonkiness) {
 		m_current = m_current + (m_wonkiness - m_current) / 2;
+		if (std::abs(m_current - m_wonkiness) < 0.05f) {
+			m_current = m_wonkiness;
+		}
 	}
 
 	nvgSave(args.vg);
@@ -25,7 +28,7 @@ void WonkyClockDisplay::drawLayer(const DrawArgs& args, int layer) {
 	nvgFillColor(args.vg, nvgRGBA(0xBB, 0x45, 0x45, 0xFF));
 	nvgFill(args.vg);
 
-	if (m_wonkiness != 0.f || std::abs(m_current) > 0.05f) {
+	if (m_max != 0.f && m_current != 0.f) {
 		float centre = box.getHeight() * 0.5f;
 		float maxHeight = centre - 4.f;
 
