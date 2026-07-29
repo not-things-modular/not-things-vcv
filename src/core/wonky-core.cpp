@@ -231,7 +231,7 @@ void WonkyCore::updateWonkiness() {
 
 	// Then calculate how much wobble is to be applied
 	if (m_wonkiness.getWobbleAmount() != 0.f) {
-		m_clockData.currentWobbleSampleOffset = (float) m_clockData.clockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f;
+		m_clockData.currentWobbleSampleOffset = static_cast<int>((float) m_clockData.clockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f);
 	}
 
 	// Now we can determine the amount of time the gate should remain high based on the impact of waver and wobble
