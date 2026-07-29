@@ -68,7 +68,7 @@ struct WonkyClockData {
 	int clockSampleDuration = 0;
 	// The impact of wobble on the start of the gate-high for the next clock beat, relative to the clockSampleDuration:
 	// - negative if the gate should go high before the (internal) clock
-	// - postitive if the gate should go high after the (internal) clock
+	// - positive if the gate should go high after the (internal) clock
 	int currentWobbleSampleOffset = 0;
 	// The number of samples that are still remaining from the wobble of the last clock signal since it was a positive offset,
 	// i.e. the gate-high signal must be delayed with this amount. Will be decreased each time a sample passes.

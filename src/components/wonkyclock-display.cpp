@@ -13,13 +13,7 @@ void WonkyClockDisplay::drawLayer(const DrawArgs& args, int layer) {
 	}
 
 	if (m_current != m_wonkiness) {
-		if (m_wonkiness > m_current) {
-			m_current = m_current + (m_wonkiness - m_current) / 2;
-			// m_current = std::min(m_wonkiness, m_current + 4);
-		} else {
-			m_current = m_current + (m_wonkiness - m_current) / 2;
-			// m_current = std::max(m_wonkiness, m_current - 4);
-		}
+		m_current = m_current + (m_wonkiness - m_current) / 2;
 	}
 
 	nvgSave(args.vg);
