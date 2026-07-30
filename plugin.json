@@ -122,9 +122,16 @@
     {
       "slug": "wonky-clock",
       "name": "Wonky Clock",
-      "description": "Wonky Clock with Wobble and Wander unstability controls",
+      "description": "Wonky Clock with Wobble, Waver and Wander unstability controls",
       "manualUrl": "",
       "tags": [ "Clock" ]
+    },
+    {
+      "slug": "wonky-clock-cv-expander",
+      "name": "Wonky Clock CV Expander",
+      "description": "Wonky Clock CV expander",
+      "manualUrl": "",
+      "tags": [ "Clock", "Expander" ]
     }
   ]
 }
