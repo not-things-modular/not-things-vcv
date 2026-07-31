@@ -132,6 +132,13 @@
       "description": "Wonky Clock CV expander",
       "manualUrl": "",
       "tags": [ "Clock", "Expander" ]
+    },
+    {
+      "slug": "wonky-clock-output-expander",
+      "name": "Wonky Clock Output Expander",
+      "description": "Wonky Clock Output expander",
+      "manualUrl": "",
+      "tags": [ "Clock", "Expander" ]
     }
   ]
 }

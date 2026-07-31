@@ -21,6 +21,7 @@ extern Model* modelRatriligExpander;
 
 extern Model* modelWonkyClock;
 extern Model* modelWonkyClockCVExpander;
+extern Model* modelWonkyClockOutputExpander;
 
 Plugin* pluginInstance;
 
@@ -43,4 +44,5 @@ void init(Plugin* p) {
 	p->addModel(modelRatriligExpander);
 	p->addModel(modelWonkyClock);
 	p->addModel(modelWonkyClockCVExpander);
+	p->addModel(modelWonkyClockOutputExpander);
 }

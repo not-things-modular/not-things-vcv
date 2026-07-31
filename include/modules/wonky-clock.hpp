@@ -44,7 +44,7 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		NUM_TRIGGERS
 	};
 
-	LEDDisplay* m_bpmLed = nullptr;
+	LEDDisplay* m_bpmLed;
 	WonkyClockDisplay* m_wanderDisplay = nullptr;
 	WonkyClockDisplay* m_waverDisplay = nullptr;
 	WonkyClockDisplay* m_wobbleDisplay = nullptr;

@@ -39,7 +39,7 @@ struct WonkyClockCVExpanderModule : NTModule, DrawListener {
 	private:
 		int m_displayedBpm;
 		int m_currentBpm;
-	};
+};
 
 struct WonkyClockCVExpanderWidget : NTModuleWidget {
 	WonkyClockCVExpanderWidget(WonkyClockCVExpanderModule* module);

@@ -47,7 +47,7 @@ void WonkyClockCVExpanderModule::draw(const widget::Widget::DrawArgs& args) {
 
 void WonkyClockCVExpanderModule::onExpanderChange(const ExpanderChangeEvent& changeEvent) {
 	Expander *expander = &getLeftExpander();
-	WonkyClockCVExpanderModule* expanderModule = nullptr;
+	Module* expanderModule = nullptr;
 	if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
 		// There is a main WonkyClock module to the left, so we're its expander
 		expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
@@ -55,7 +55,7 @@ void WonkyClockCVExpanderModule::onExpanderChange(const ExpanderChangeEvent& cha
 		expander = &getRightExpander();
 		if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
 			// There is a main WonkyClock module to the right
-			expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
+			expanderModule = expander->module;
 			// Check if that main module has another CV Expander instance to its right, because that will be the preferred expander.
 			expander = &expanderModule->getRightExpander();
 			if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
