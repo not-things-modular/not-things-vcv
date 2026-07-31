@@ -7,6 +7,9 @@
 
 using namespace wonky;
 
+extern Model* modelWonkyClock;
+extern Model* modelWonkyClockCVExpander;
+
 WonkyClockCVExpanderModule::WonkyClockCVExpanderModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
@@ -22,20 +25,48 @@ WonkyClockCVExpanderModule::WonkyClockCVExpanderModule() {
 	configOutput(OUT_RUN, "Run");
 	configOutput(OUT_RESET, "Reset");
 
-	m_displayedBpm = 120;
+	m_displayedBpm = -1;
+}
+
+void WonkyClockCVExpanderModule::setCurrentBpm(float currentBpm) {
+	m_currentBpm = static_cast<int>(currentBpm);
 }
 
 void WonkyClockCVExpanderModule::draw(const widget::Widget::DrawArgs& args) {
-	// int bpm = params[PARAM_BPM].getValue();
+	if (m_currentBpm != m_displayedBpm) {
+		m_displayedBpm = m_currentBpm;
+		if (m_bpmLed != nullptr) {
+			if (m_displayedBpm != -1) {
+				m_bpmLed->setForegroundText(string::f("%d", m_displayedBpm));
+			} else {
+				m_bpmLed->setForegroundText("---");
+			}
+		}
+	}
+}
 
-	// if (bpm != m_displayedBpm) {
-	// 	m_displayedBpm = bpm;
-	// 	if (m_bpmLed != nullptr) {
-	// 		m_bpmLed->setForegroundText(string::f("%d", m_displayedBpm));
-	// 	}
-	// }
+void WonkyClockCVExpanderModule::onExpanderChange(const ExpanderChangeEvent& changeEvent) {
+	Expander *expander = &getLeftExpander();
+	WonkyClockCVExpanderModule* expanderModule = nullptr;
+	if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
+		// There is a main WonkyClock module to the left, so we're its expander
+		expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
+	} else {
+		expander = &getRightExpander();
+		if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
+			// There is a main WonkyClock module to the right
+			expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
+			// Check if that main module has another CV Expander instance to its right, because that will be the preferred expander.
+			expander = &expanderModule->getRightExpander();
+			if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
+				expanderModule = nullptr;
+			}
+		}
+	}
 
-	// lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f, 20.f);
+	if (!expanderModule) {
+		m_currentBpm = -1;
+	}
 }
 
 WonkyClockCVExpanderWidget::WonkyClockCVExpanderWidget(WonkyClockCVExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock-cv-expander") {
@@ -53,7 +84,7 @@ WonkyClockCVExpanderWidget::WonkyClockCVExpanderWidget(WonkyClockCVExpanderModul
 	LEDDisplay* bpmLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 14, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
 	bpmLed->box.pos = Vec(59.5f, 96.f);
 	bpmLed->box.size = Vec(35.f, 20.f);
-	bpmLed->setForegroundText("120");
+	bpmLed->setForegroundText("---");
 	addChild(bpmLed);
 	if (module) {
 		module->m_bpmLed = bpmLed;

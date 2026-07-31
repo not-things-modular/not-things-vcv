@@ -31,10 +31,14 @@ struct WonkyClockCVExpanderModule : NTModule, DrawListener {
 
 	WonkyClockCVExpanderModule();
 
+	void setCurrentBpm(float currentBpm);
+
 	void draw(const widget::Widget::DrawArgs& args) override;
+	void onExpanderChange(const ExpanderChangeEvent& changeEvent) override;
 
 	private:
 		int m_displayedBpm;
+		int m_currentBpm;
 	};
 
 struct WonkyClockCVExpanderWidget : NTModuleWidget {

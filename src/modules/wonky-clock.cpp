@@ -1,4 +1,5 @@
 #include "modules/wonky-clock.hpp"
+#include "modules/wonky-clock-cv-expander.hpp"
 #include "components/leddisplay.hpp"
 #include "components/lights.hpp"
 #include "components/ntknob.hpp"
@@ -9,10 +10,29 @@
 
 using namespace wonky;
 
+extern Model* modelWonkyClockCVExpander;
+
+constexpr float minBpm = 10.f;
+constexpr float maxBpm = 400.f;
+constexpr float defaultBpm = 120.f;
+constexpr float maxAmount = 40.f;
+
+float determineCVImpact(float value, WonkyClockCVExpanderModule* expanderModule, WonkyClockCVExpanderModule::InputId inputId, float min, float max) {
+	float result = value;
+
+	float cv = expanderModule->getInput(inputId).getVoltage();
+	if (cv != 0.f) {
+		result += (max - min) * (cv / 5.f);
+		result = std::max(std::min(result, maxBpm), minBpm);
+	}
+
+	return result;
+}
+
 WonkyClockModule::WonkyClockModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-	ParamQuantity* pq = configParam(PARAM_BPM, 10.f, 400.f, 120.f, "Clock Speed (Beats per Minute)");
+	ParamQuantity* pq = configParam(PARAM_BPM, minBpm, maxBpm, defaultBpm, "Clock Speed (Beats per Minute)");
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
 
@@ -22,18 +42,18 @@ WonkyClockModule::WonkyClockModule() {
 	configButton(PARAM_RUN, "Run");
 	configButton(PARAM_RESET, "Reset");
 
-	configParam(PARAM_WOBBLE_AMOUNT, 0.f, 40.f, 9.f, "Wobble Amount");
+	configParam(PARAM_WOBBLE_AMOUNT, 0.f, maxAmount, 9.f, "Wobble Amount");
 	configParam(PARAM_WOBBLE_PROBABILITY, 0.f, 100.f, 50.f, "Wobble Probability");
-	configParam(PARAM_WAVER_AMOUNT, 0.f, 40.f, 5.f, "Waver Amount");
+	configParam(PARAM_WAVER_AMOUNT, 0.f, maxAmount, 5.f, "Waver Amount");
 	configParam(PARAM_WAVER_PROBABILITY, 0.f, 100.f, 25.f, "Waver Probability");
-	configParam(PARAM_WANDER_AMOUNT, 0.f, 40.f, 5.f, "Wander Amount");
+	configParam(PARAM_WANDER_AMOUNT, 0.f, maxAmount, 5.f, "Wander Amount");
 	configParam(PARAM_WANDER_RATE, 0.f, 100.f, 25.f, "Wander Rate");
 
 	configSwitch(PARAM_LINK, 0.f, 1.f, 1.f, "Link Wobble and Waver", { "Unlinked", "Linked" });
 
 	configOutput(OUT_CLOCK, "Clock");
 
-	m_displayedBpm = 120;
+	m_displayedBpm = defaultBpm;
 
 	m_core.reset(new WonkyCore(this, this));
 
@@ -66,6 +86,28 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.wanderAmount = params[PARAM_WANDER_AMOUNT].getValue();
 		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue() / 100.f;
 		inputData.linked = params[PARAM_LINK].getValue() > 0.f;
+
+		Expander *expander = &getRightExpander();
+		WonkyClockCVExpanderModule* expanderModule = nullptr;
+		if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
+			expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
+		} else {
+			expander = &getLeftExpander();
+			if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
+				expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
+			}
+		}
+		if (expanderModule != nullptr) {
+			inputData.bpm = determineCVImpact(inputData.bpm, expanderModule, WonkyClockCVExpanderModule::InputId::IN_BPM, minBpm, maxBpm);
+			inputData.wobbleAmount = determineCVImpact(inputData.wobbleAmount, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_AMOUNT, 0.f, maxAmount);
+			inputData.wobbleProbability = determineCVImpact(inputData.wobbleProbability, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_PROBABILITY, 0.f, 100.f);
+			inputData.waverAmount = determineCVImpact(inputData.waverAmount, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WAVER_AMOUNT, 0.f, maxAmount);
+			inputData.waverProbability = determineCVImpact(inputData.waverProbability, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WAVER_PROBABILITY, 0.f, 100.f);
+			inputData.wanderAmount = determineCVImpact(inputData.wanderAmount, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_AMOUNT, 0.f, maxAmount);
+			inputData.wanderRate = determineCVImpact(inputData.wanderRate, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_RATE, 0.f, 100.f);
+
+			expanderModule->setCurrentBpm(inputData.bpm);
+		}
 
 		m_core->process(inputData);
 	}
@@ -137,7 +179,7 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	LEDDisplay* bpmLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 20, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
 	bpmLed->box.pos = Vec(101.5f, 27.f);
 	bpmLed->box.size = Vec(50.f, 25.f);
-	bpmLed->setForegroundText("120");
+	bpmLed->setForegroundText(string::f("%d", static_cast<int>(defaultBpm)));
 	addChild(bpmLed);
 	if (module) {
 		module->m_bpmLed = bpmLed;

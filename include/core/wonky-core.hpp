@@ -20,7 +20,7 @@ struct Randomizer {
 };
 
 struct WonkyInputData {
-	int bpm = -1;
+	float bpm = -1.f;
 
 	float wobbleAmount = 0.f;
 	float wobbleProbability = 0.f;
