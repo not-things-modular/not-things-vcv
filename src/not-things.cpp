@@ -39,23 +39,21 @@ void NTModule::addThemeChangeListener(ThemeChangeListener* listener) {
 	listener->themeChanged(m_themeId);
 }
 
-std::vector<Module*> NTModule::getExpanders(std::vector<Model*> models, bool rightSide) {\
-	std::vector<Module*> result;
+void NTModule::getExpanders(const std::vector<Model*>& models, std::vector<Module*>& expanders, bool rightSide) {
 	Expander* expander;
 	Module* module = this;
 	bool found;
 
+	expanders.clear();
 	do {
 		found = false;
 		expander = rightSide ? &module->getRightExpander() : &module->getLeftExpander();
 		if ((expander->module != nullptr) && (std::find(models.begin(), models.end(), expander->module->getModel()) != models.end())) {
 			found = true;
-			result.push_back(expander->module);
+			expanders.push_back(expander->module);
 		}
 		module = expander->module;
 	} while (found);
-
-	return result;
 }
 
 NTModuleWidget::NTModuleWidget(Module* module, std::string slug) {

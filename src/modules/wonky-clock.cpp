@@ -1,5 +1,6 @@
 #include "modules/wonky-clock.hpp"
 #include "modules/wonky-clock-cv-expander.hpp"
+#include "modules/wonky-clock-output-expander.hpp"
 #include "components/leddisplay.hpp"
 #include "components/lights.hpp"
 #include "components/ntknob.hpp"
@@ -13,11 +14,14 @@ using namespace wonky;
 extern Model* modelWonkyClock;
 extern Model* modelWonkyClockCVExpander;
 extern Model* modelWonkyClockOutputExpander;
+const std::vector<Model*> expanderModels = { modelWonkyClockCVExpander, modelWonkyClockOutputExpander };
 
 constexpr float minBpm = 10.f;
 constexpr float maxBpm = 400.f;
 constexpr float defaultBpm = 120.f;
 constexpr float maxAmount = 40.f;
+
+constexpr ClockRatioData noOutputClock = ClockRatioData(ClockRatioId::NO_RATE, ClockRatioType::RATIO_DIVIDE, ClockRatioFamily::FAMILY_1, 1);
 
 float determineCVImpact(float value, WonkyClockCVExpanderModule* expanderModule, WonkyClockCVExpanderModule::InputId inputId, float min, float max) {
 	float result = value;
@@ -63,6 +67,7 @@ WonkyClockModule::WonkyClockModule() {
 }
 
 void WonkyClockModule::process(const ProcessArgs& args) {
+	std::vector<Module*> expanders;
 	WonkyInputData inputData;
 
 	bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
@@ -88,29 +93,53 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue() / 100.f;
 		inputData.linked = params[PARAM_LINK].getValue() > 0.f;
 
-		WonkyClockCVExpanderModule* expanderModule = nullptr;
+		WonkyClockCVExpanderModule* cvExpanderModule = nullptr;
+		std::vector<Module*> expanders;
 		for (int i = 0; i < 2; i++) {
-			std::vector<Module*> expanders = getExpanders({ modelWonkyClockCVExpander, modelWonkyClockOutputExpander }, (i == 0));
+			getExpanders(expanderModels, expanders, (i == 0));
 			if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
-				expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
+				cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
 				break;
 			} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
-				expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
+				cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
 				break;
 			}
 		}
-		if (expanderModule != nullptr) {
-			inputData.bpm = determineCVImpact(inputData.bpm, expanderModule, WonkyClockCVExpanderModule::InputId::IN_BPM, minBpm, maxBpm);
-			inputData.wobbleAmount = determineCVImpact(inputData.wobbleAmount, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_AMOUNT, 0.f, maxAmount);
-			inputData.wobbleProbability = determineCVImpact(inputData.wobbleProbability, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_PROBABILITY, 0.f, 100.f);
-			inputData.waverAmount = determineCVImpact(inputData.waverAmount, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WAVER_AMOUNT, 0.f, maxAmount);
-			inputData.waverProbability = determineCVImpact(inputData.waverProbability, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WAVER_PROBABILITY, 0.f, 100.f);
-			inputData.wanderAmount = determineCVImpact(inputData.wanderAmount, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_AMOUNT, 0.f, maxAmount);
-			inputData.wanderRate = determineCVImpact(inputData.wanderRate, expanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_RATE, 0.f, 100.f);
+		if (cvExpanderModule != nullptr) {
+			inputData.bpm = determineCVImpact(inputData.bpm, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_BPM, minBpm, maxBpm);
+			inputData.wobbleAmount = determineCVImpact(inputData.wobbleAmount, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_AMOUNT, 0.f, maxAmount);
+			inputData.wobbleProbability = determineCVImpact(inputData.wobbleProbability, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_PROBABILITY, 0.f, 100.f);
+			inputData.waverAmount = determineCVImpact(inputData.waverAmount, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WAVER_AMOUNT, 0.f, maxAmount);
+			inputData.waverProbability = determineCVImpact(inputData.waverProbability, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WAVER_PROBABILITY, 0.f, 100.f);
+			inputData.wanderAmount = determineCVImpact(inputData.wanderAmount, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_AMOUNT, 0.f, maxAmount);
+			inputData.wanderRate = determineCVImpact(inputData.wanderRate, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_RATE, 0.f, 100.f);
 
-			expanderModule->setCurrentBpm(inputData.bpm);
+			cvExpanderModule->setCurrentBpm(inputData.bpm);
 		}
 
+		WonkyClockOutputExpanderModule* outputExpanderModule = nullptr;
+		for (int i = 0; i < 2; i++) {
+			getExpanders(expanderModels, expanders, (i == 0));
+			if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
+				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[0]);
+				break;
+			} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
+				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[1]);
+				break;
+			}
+		}
+		if (outputExpanderModule != nullptr) {
+			for (int i = 0; i < 8; i++) {
+				int index = static_cast<int>(outputExpanderModule->params[WonkyClockOutputExpanderModule::PARAM_RATIOS + i].getValue());
+				if (index >= 0 && index < wonkyClockRatioCount) {
+					inputData.clockRates[i] = &wonkyClockRatios[index].data;
+				} else {
+					inputData.clockRates[i] = &noOutputClock;
+				}
+			}
+		} else {
+			inputData.clockRates.fill(&noOutputClock);
+		}
 		m_core->process(inputData);
 	}
 }
@@ -132,8 +161,10 @@ float WonkyClockModule::getSampleRate() const {
 	return APP->engine->getSampleRate();
 }
 
-void WonkyClockModule::clockGateChanged(bool high) {
-	outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
+void WonkyClockModule::clockGateChanged(int index, bool high) {
+	if (index == -1) {
+		outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
+	}
 }
 
 void WonkyClockModule::wanderChanged(float wander, float max) {

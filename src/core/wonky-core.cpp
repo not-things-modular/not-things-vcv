@@ -17,7 +17,8 @@ bool WonkyInputData::operator!=(const WonkyInputData& other) const {
 		other.wobbleAmount != wobbleAmount || other.wobbleProbability != wobbleProbability ||
 		other.waverAmount != waverAmount || other.waverProbability != waverProbability ||
 		other.wanderAmount != wanderAmount || other.wanderRate != wanderRate ||
-		other.linked != linked;
+		other.linked != linked ||
+		other.clockRates != clockRates;
 }
 
 Wonkiness::Wonkiness(Randomizer* randomizer) : m_randomizer(randomizer) {}
@@ -144,7 +145,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		if ((m_clockData.wobbleDelay == 0) && (!m_clockData.gateHigh)) {
 			// We completed the previous wobble, so the gate can go high now
 			m_clockData.gateHigh = true;
-			m_listener->clockGateChanged(true);
+			m_listener->clockGateChanged(-1, true);
 		}
 	}
 
@@ -164,7 +165,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		// If wobbleDelay is 0, the gate must go high now (unless it is already high)
 		if ((!m_clockData.gateHigh) && (m_clockData.wobbleDelay == 0)) {
 			m_clockData.gateHigh = true;
-			m_listener->clockGateChanged(true);
+			m_listener->clockGateChanged(-1, true);
 		}
 
 		// Generate new wonkiness
@@ -192,7 +193,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 	} else if ((m_clockData.gateHigh) && (m_clockData.sampleProgress >= m_clockData.gateDuration)) {
 		// We're past the halfway mark of the clock, so the gate goes low
 		m_clockData.gateHigh = false;
-		m_listener->clockGateChanged(false);
+		m_listener->clockGateChanged(-1, false);
 	}
 }
 
@@ -204,7 +205,7 @@ void WonkyCore::reset() {
 	// And reset the high gate if needed
 	if (m_clockData.gateHigh) {
 		m_clockData.gateHigh = false;
-		m_listener->clockGateChanged(false);
+		m_listener->clockGateChanged(-1, false);
 	}
 }
 

@@ -10,8 +10,8 @@ using namespace wonky;
 struct WonkyRatioParam : ParamQuantity {
 	float getDisplayValue() override {
 		int value = static_cast<int>(getValue());
-		float displayValue = wonkyClockRatios[value].ratio;
-		if ((wonkyClockRatios[value].ratio != 1) && (wonkyClockRatios[value].family == WonkyClockRatioFamily::FAMILY_1)) {
+		float displayValue = wonkyClockRatios[value].data.ratio;
+		if ((wonkyClockRatios[value].data.ratio != 1) && (wonkyClockRatios[value].data.family == ClockRatioFamily::FAMILY_1)) {
 			displayValue = -displayValue;
 		}
 		return displayValue;
@@ -22,8 +22,8 @@ struct WonkyRatioParam : ParamQuantity {
 		if (displayValue < 0.f) {
 			index = 0;
 			for (int i = wonkyClockRatioCount - 1; i >= 0; i--) {
-				if (wonkyClockRatios[i].family == WonkyClockRatioFamily::FAMILY_1 && wonkyClockRatios[i].ratio != 1.f) {
-					if (wonkyClockRatios[i].ratio <= displayValue) {
+				if (wonkyClockRatios[i].data.family == ClockRatioFamily::FAMILY_1 && wonkyClockRatios[i].data.ratio != 1.f) {
+					if (wonkyClockRatios[i].data.ratio <= displayValue) {
 						index = i;
 						break;
 					}
@@ -32,8 +32,8 @@ struct WonkyRatioParam : ParamQuantity {
 		} else {
 			index = wonkyClockRatioCount - 1;
 			for (int i = 0; i < wonkyClockRatioCount; i++) {
-				if (wonkyClockRatios[i].family != WonkyClockRatioFamily::FAMILY_1 || wonkyClockRatios[i].ratio == 1.f) {
-					if (wonkyClockRatios[i].ratio >= displayValue) {
+				if (wonkyClockRatios[i].data.family != ClockRatioFamily::FAMILY_1 || wonkyClockRatios[i].data.ratio == 1.f) {
+					if (wonkyClockRatios[i].data.ratio >= displayValue) {
 						index = i;
 						break;
 					}
@@ -45,7 +45,7 @@ struct WonkyRatioParam : ParamQuantity {
 
 	std::string getUnit() override {
 		int index = static_cast<int>(getValue());
-		if (wonkyClockRatios[index].family != WonkyClockRatioFamily::FAMILY_1 || wonkyClockRatios[index].ratio == 1.f) {
+		if (wonkyClockRatios[index].data.family != ClockRatioFamily::FAMILY_1 || wonkyClockRatios[index].data.ratio == 1.f) {
 			return std::string(" x");
 		} else {
 			return std::string(" ÷");

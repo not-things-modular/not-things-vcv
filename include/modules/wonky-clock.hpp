@@ -54,7 +54,7 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 	void draw(const widget::Widget::DrawArgs& args) override;
 
 	float getSampleRate() const override;
-	void clockGateChanged(bool high) override;
+	void clockGateChanged(int index, bool high) override;
 	void wanderChanged(float wander, float max) override;
 	void waverChanged(float waver, float max) override;
 	void wobbleChanged(float wobble, float max) override;

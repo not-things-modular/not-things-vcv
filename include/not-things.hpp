@@ -36,7 +36,7 @@ struct NTModule : Module {
 	void setTheme(ThemeId themeId);
 	void addThemeChangeListener(ThemeChangeListener* listener);
 
-	std::vector<Module*> getExpanders(std::vector<Model*> models, bool rightSide);
+	void getExpanders(const std::vector<Model*>& models, std::vector<Module*>& expanders, bool rightSide);
 
 	private:
 		ThemeId m_themeId = VCV;

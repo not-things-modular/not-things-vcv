@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 namespace wonky {
 
 struct SampleRateReader {
@@ -7,7 +9,7 @@ struct SampleRateReader {
 };
 
 struct WonkyListener {
-	virtual void clockGateChanged(bool high) = 0;
+	virtual void clockGateChanged(int index, bool high) = 0;
 	virtual void wanderChanged(float wander, float max) = 0;
 	virtual void waverChanged(float waver, float max) = 0;
 	virtual void wobbleChanged(float wobble, float max) = 0;
@@ -17,6 +19,60 @@ struct Randomizer {
 	virtual ~Randomizer() {};
 	virtual float randomize(float lower, float upper) = 0;
 	virtual float randomizeGaussian(float mean, float stddev) = 0;
+};
+
+enum ClockRatioFamily {
+	// Set the value of the enum to the number of main clock ticks in one tick of the family
+	// so that we can use it as a divisor during processing
+	FAMILY_0 = 0, // the main clock (i.e x1)
+	FAMILY_1 = 1, // all divider ratios
+	FAMILY_2 = 2, // x2, x4, x8 and x16
+	FAMILY_3 = 3, // x3, x6 and x12
+	FAMILY_5 = 5, // x5
+	FAMILY_7 = 7  // x7
+};
+
+enum ClockRatioType {
+	RATIO_DIVIDE, // The clock is slower then the main clock
+	RATIO_MULTIPLY, // The clock is faster then the main clock
+};
+
+enum ClockRatioId {
+	RATE_DIV_64,
+	RATE_DIV_32,
+	RATE_DIV_16,
+	RATE_DIV_12,
+	RATE_DIV_8,
+	RATE_DIV_7,
+	RATE_DIV_6,
+	RATE_DIV_5,
+	RATE_DIV_4,
+	RATE_DIV_3,
+	RATE_DIV_2,
+	RATE_DIV_1,
+	RATE_MULT_2,
+	RATE_MULT_3,
+	RATE_MULT_4,
+	RATE_MULT_5,
+	RATE_MULT_6,
+	RATE_MULT_7,
+	RATE_MULT_8,
+	RATE_MULT_12,
+	RATE_MULT_16,
+	
+	RATE_COUNT,
+	NO_RATE,
+};
+
+struct ClockRatioData {
+	constexpr ClockRatioData(ClockRatioId id, ClockRatioType type, ClockRatioFamily family, int ratio) : id(id), type(type), family(family), ratio(ratio), familyRatio(family / ratio) {};
+
+	ClockRatioId id;
+	ClockRatioType type;
+	ClockRatioFamily family;
+	
+	int ratio;
+	int familyRatio;
 };
 
 struct WonkyInputData {
@@ -32,6 +88,8 @@ struct WonkyInputData {
 	float wanderRate = 0.f;
 
 	bool linked = false;
+
+	std::array<const ClockRatioData*, 8> clockRates;
 
 	bool operator==(const WonkyInputData& other) const;
 	bool operator!=(const WonkyInputData& other) const;
