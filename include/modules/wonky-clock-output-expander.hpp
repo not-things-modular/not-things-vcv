@@ -69,7 +69,6 @@ struct WonkyClockOutputExpanderModule : NTModule, DrawListener {
 
 	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
-	void onExpanderChange(const ExpanderChangeEvent& changeEvent) override;
 
 	private:
 		int m_displayedRatios[8];

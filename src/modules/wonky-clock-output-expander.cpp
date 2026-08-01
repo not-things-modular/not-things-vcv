@@ -7,9 +7,6 @@
 
 using namespace wonky;
 
-extern Model* modelWonkyClock;
-extern Model* modelWonkyClockCVExpander;
-
 struct WonkyRatioParam : ParamQuantity {
 	float getDisplayValue() override {
 		int value = static_cast<int>(getValue());
@@ -88,30 +85,6 @@ void WonkyClockOutputExpanderModule::draw(const widget::Widget::DrawArgs& args) 
 			m_ratioLeds[i]->setForegroundText(wonkyClockRatios[ratio].display);
 		}
 	}
-}
-
-void WonkyClockOutputExpanderModule::onExpanderChange(const ExpanderChangeEvent& changeEvent) {
-	// Expander *expander = &getLeftExpander();
-	// WonkyClockCVExpanderModule* expanderModule = nullptr;
-	// if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
-	// 	// There is a main WonkyClock module to the left, so we're its expander
-	// 	expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
-	// } else {
-	// 	expander = &getRightExpander();
-	// 	if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
-	// 		// There is a main WonkyClock module to the right
-	// 		expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
-	// 		// Check if that main module has another CV Expander instance to its right, because that will be the preferred expander.
-	// 		expander = &expanderModule->getRightExpander();
-	// 		if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
-	// 			expanderModule = nullptr;
-	// 		}
-	// 	}
-	// }
-
-	// if (!expanderModule) {
-	// 	m_currentBpm = -1;
-	// }
 }
 
 WonkyClockOutputExpanderWidget::WonkyClockOutputExpanderWidget(WonkyClockOutputExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock-output-expander") {

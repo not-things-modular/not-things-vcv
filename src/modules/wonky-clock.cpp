@@ -10,7 +10,9 @@
 
 using namespace wonky;
 
+extern Model* modelWonkyClock;
 extern Model* modelWonkyClockCVExpander;
+extern Model* modelWonkyClockOutputExpander;
 
 constexpr float minBpm = 10.f;
 constexpr float maxBpm = 400.f;
@@ -87,14 +89,15 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue() / 100.f;
 		inputData.linked = params[PARAM_LINK].getValue() > 0.f;
 
-		Expander *expander = &getRightExpander();
 		WonkyClockCVExpanderModule* expanderModule = nullptr;
-		if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
-			expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
-		} else {
-			expander = &getLeftExpander();
-			if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
-				expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
+		for (int i = 0; i < 2; i++) {
+			std::vector<Module*> expanders = getExpanders({ modelWonkyClockCVExpander, modelWonkyClockOutputExpander }, (i == 0));
+			if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
+				expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
+				break;
+			} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
+				expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
+				break;
 			}
 		}
 		if (expanderModule != nullptr) {

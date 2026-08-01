@@ -7,9 +7,6 @@
 
 using namespace wonky;
 
-extern Model* modelWonkyClock;
-extern Model* modelWonkyClockCVExpander;
-
 WonkyClockCVExpanderModule::WonkyClockCVExpanderModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
@@ -26,6 +23,7 @@ WonkyClockCVExpanderModule::WonkyClockCVExpanderModule() {
 	configOutput(OUT_RESET, "Reset");
 
 	m_displayedBpm = -1;
+	m_currentBpm = -1;
 }
 
 void WonkyClockCVExpanderModule::setCurrentBpm(float currentBpm) {
@@ -42,30 +40,6 @@ void WonkyClockCVExpanderModule::draw(const widget::Widget::DrawArgs& args) {
 				m_bpmLed->setForegroundText("---");
 			}
 		}
-	}
-}
-
-void WonkyClockCVExpanderModule::onExpanderChange(const ExpanderChangeEvent& changeEvent) {
-	Expander *expander = &getLeftExpander();
-	Module* expanderModule = nullptr;
-	if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
-		// There is a main WonkyClock module to the left, so we're its expander
-		expanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expander->module);
-	} else {
-		expander = &getRightExpander();
-		if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClock)) {
-			// There is a main WonkyClock module to the right
-			expanderModule = expander->module;
-			// Check if that main module has another CV Expander instance to its right, because that will be the preferred expander.
-			expander = &expanderModule->getRightExpander();
-			if ((expander->module != nullptr) && (expander->module->getModel() == modelWonkyClockCVExpander)) {
-				expanderModule = nullptr;
-			}
-		}
-	}
-
-	if (!expanderModule) {
-		m_currentBpm = -1;
 	}
 }
 
