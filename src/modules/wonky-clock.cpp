@@ -71,7 +71,6 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 	if (resetTriggered) {
 		m_core->reset();
 		lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
-		lights[LightId::LIGHT_CLOCK].setBrightness(0.f);
 	}
 
 	if (runTriggered) {
@@ -135,7 +134,6 @@ float WonkyClockModule::getSampleRate() const {
 
 void WonkyClockModule::clockGateChanged(bool high) {
 	outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
-	lights[LightId::LIGHT_CLOCK].setBrightness(high);
 }
 
 void WonkyClockModule::wanderChanged(float wander, float max) {
@@ -211,8 +209,6 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	if (module) {
 		module->m_wanderDisplay = pDisplay;
 	}
-
-	addChild(createLightCentered<TinyLight<DimmedLight<GreenLight>>>(Vec(136.25f, 319.5f), module, WonkyClockModule::LIGHT_CLOCK));
 }
 
 
