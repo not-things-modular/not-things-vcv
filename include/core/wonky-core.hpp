@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 namespace wonky {
 
@@ -59,20 +60,22 @@ enum ClockRatioId {
 	RATE_MULT_8,
 	RATE_MULT_12,
 	RATE_MULT_16,
-	
+
 	RATE_COUNT,
 	NO_RATE,
 };
 
 struct ClockRatioData {
-	constexpr ClockRatioData(ClockRatioId id, ClockRatioType type, ClockRatioFamily family, int ratio) : id(id), type(type), family(family), ratio(ratio), familyRatio(family / ratio) {};
+	constexpr ClockRatioData(ClockRatioId id, ClockRatioType type, ClockRatioFamily family, int ratio) : id(id), type(type), family(family), ratio(ratio) {};
 
 	ClockRatioId id;
 	ClockRatioType type;
 	ClockRatioFamily family;
-	
+
 	int ratio;
-	int familyRatio;
+
+	bool operator==(const ClockRatioData& other) const;
+	bool operator!=(const ClockRatioData& other) const;
 };
 
 struct WonkyInputData {
@@ -113,7 +116,8 @@ struct Wonkiness {
 		float m_wobbleAmount = 0.f;
 };
 
-struct WonkyClockData {
+// The current processing state for the main clock
+struct WonkyClockState {
 	// The core clock duration
 	double clockDuration = 0;
 	// The amount of drift on the core clock due to the current sample rate
@@ -141,6 +145,32 @@ struct WonkyClockData {
 	double wonkyDrift = 0.;
 };
 
+// The current processing data of each of the additional output clock families
+struct WonkyFamilyState {
+	// The highest currently requested multiplication for this family
+	int highestMultiplication = 0;
+	// The offsets of the clock ticks to generate for this family (array filled with higestMultiplication number of items)
+	std::array<int, 16> offsets = { 0 }; // Sized to allow for the maximum possible multiplications in a sub clock (RATE_MULT_16)
+
+	// The currently active step within offsets, i.e. the next clock that is to be triggered
+	int currentStep = 0;
+	// The impact of wobble on the start of the gate-high for the next clock beat, relative to the clockSampleDuration:
+	// - negative if the gate should go high before the (internal) clock
+	// - positive if the gate should go high after the (internal) clock
+	int currentWobbleSampleOffset = 0;
+	// The number of samples that are still remaining from the wobble of the last clock signal since it was a positive offset,
+	// i.e. the gate-high signal must be delayed with this amount. Will be decreased each time a sample passes.
+	int wobbleDelay = 0;
+};
+
+// The data for one of the subdivisions of the main clock
+struct WonkySubClockData {
+	// The data of the clock that is being generated
+	const ClockRatioData* clockData = nullptr;
+	// How many ticks the WonkyFamilyData generates for each tick of this sub clock
+	int familyTicks = 0;
+};
+
 struct WonkyCore {
 	WonkyCore(const SampleRateReader* sampleRateReader, WonkyListener* listener);
 	WonkyCore(const SampleRateReader* sampleRateReader, Randomizer* randomizer, WonkyListener* listener);
@@ -156,12 +186,18 @@ struct WonkyCore {
 
 		WonkyInputData m_inputData;
 		Wonkiness m_wonkiness;
-		WonkyClockData m_clockData;
+		WonkyClockState m_clockState;
+
+		// The data for the four subclock families that can not be triggered based purely on the main clock
+		std::array<WonkyFamilyState, 4> m_families;
+		// the active sub clocks for each of the subclock families
+		std::array<std::vector<WonkySubClockData>, 4> m_subClocks;
 
 		bool m_reset = false;
 
 		void updateBpm(int bpm);
 		void updateWonkiness();
+		void updateSubClocks();
 };
 
 };
