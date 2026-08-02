@@ -191,7 +191,7 @@ struct WonkyCore {
 		// The data for the four subclock families that can not be triggered based purely on the main clock
 		std::array<WonkyFamilyState, 4> m_families;
 		// the active sub clocks for each of the subclock families
-		std::array<std::vector<WonkySubClockData>, 4> m_subClocks;
+		std::array<std::vector<WonkySubClockState>, 4> m_subClocks;
 
 		bool m_reset = false;
 
