@@ -1,6 +1,7 @@
 #include "core/wonky-core.hpp"
 #include <limits>
 #include <random>
+#include <algorithm>
 
 using namespace wonky;
 
@@ -8,7 +9,7 @@ constexpr float kMinTheta = 0.001f;
 constexpr float kMaxTheta = 0.35f;
 constexpr float kStdDevScale = 3.0f;
 
-constexpr int clockRatioFamilyToIndex(ClockRatioFamily family) {
+int clockRatioFamilyToIndex(ClockRatioFamily family) {
     switch (family) {
         case FAMILY_2: return 0;
         case FAMILY_3: return 1;
@@ -269,5 +270,29 @@ void WonkyCore::updateWonkiness() {
 }
 
 void WonkyCore::updateSubClocks() {
+	// Group the incoming clocks into their respective families (if they belong to a to-be-processed family),
+	// determine the max multiplication of each family and the overal max
+	std::array<std::vector<const ClockRatioData*>, 4> familyClockRatios{};
+	std::array<int, 4> highestFamilyMultiplications{};
+	int highestMultiplication = 0;
+	for (const ClockRatioData* clockRate : m_inputData.clockRates) {
+		// Check which index to use for the family (if it is part of a to-be-processed family)
+		int familyIndex = clockRatioFamilyToIndex(clockRate->family);
+		if (familyIndex != -1) {
+			// Check that the ratio isn't in that family group yet
+			if (std::find(familyClockRatios[familyIndex].begin(), familyClockRatios[familyIndex].end(), clockRate) == familyClockRatios[familyIndex].end()) {
+				familyClockRatios[familyIndex].push_back(clockRate);
+				if (clockRate->ratio > highestFamilyMultiplications[familyIndex]) {
+					highestFamilyMultiplications[familyIndex] = clockRate->ratio;
+				}
+				if (clockRate->ratio > highestMultiplication) {
+					highestMultiplication = clockRate->ratio;
+				}
+			}
+		}
+
+		// TODO: apply this data to WonkyFamilyState and WonkySubClockState instances...
+	}
+
 
 }

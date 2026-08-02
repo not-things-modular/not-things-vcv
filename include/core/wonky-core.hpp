@@ -163,8 +163,8 @@ struct WonkyFamilyState {
 	int wobbleDelay = 0;
 };
 
-// The data for one of the subdivisions of the main clock
-struct WonkySubClockData {
+// The current processing data for one of the subdivisions of the main clock
+struct WonkySubClockState {
 	// The data of the clock that is being generated
 	const ClockRatioData* clockData = nullptr;
 	// How many ticks the WonkyFamilyData generates for each tick of this sub clock
