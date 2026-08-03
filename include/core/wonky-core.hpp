@@ -143,6 +143,9 @@ struct WonkyClockState {
 
 	// If no wander, waver or wobble are applied, the number of drift that is introduced in the stable clock due the accuracy within the current sample rate
 	double wonkyDrift = 0.;
+
+	// How many ticks of a 64-divider clock have already passed (to allow re-calculation of changed output clock settings)
+	int dividedClockProgress = 0;
 };
 
 // The current processing data of each of the additional output clock families
@@ -165,10 +168,14 @@ struct WonkyFamilyState {
 
 // The current processing data for one of the subdivisions of the main clock
 struct WonkySubClockState {
+	WonkySubClockState(const ClockRatioData* clockData, int familyTickPerClockTick, int currentFamilyTick) : clockData(clockData), familyTickPerClockTick(familyTickPerClockTick), currentFamilyTick(currentFamilyTick) {}
+
 	// The data of the clock that is being generated
 	const ClockRatioData* clockData = nullptr;
 	// How many ticks the WonkyFamilyData generates for each tick of this sub clock
-	int familyTicks = 0;
+	int familyTickPerClockTick = 0;
+	// How far along we are in the family ticks towards our next sub clock tick
+	int currentFamilyTick = 0;
 };
 
 struct WonkyCore {
@@ -188,16 +195,20 @@ struct WonkyCore {
 		Wonkiness m_wonkiness;
 		WonkyClockState m_clockState;
 
-		// The data for the four subclock families that can not be triggered based purely on the main clock
-		std::array<WonkyFamilyState, 4> m_families;
-		// the active sub clocks for each of the subclock families
-		std::array<std::vector<WonkySubClockState>, 4> m_subClocks;
+		// The data for the four multiplied subclock families that can not be triggered based purely on the main clock
+		std::array<WonkyFamilyState, 4> m_multFamilies;
+		// The active sub clocks for each of the multiplied subclock families
+		std::array<std::vector<WonkySubClockState>, 4> m_multSubClocks;
+		// The active divided sub clocks
+		std::vector<WonkySubClockState> m_divSubClocks;
 
 		bool m_reset = false;
 
 		void updateBpm(int bpm);
 		void updateWonkiness();
-		void updateSubClocks();
+		void updateSubClocks(bool bpmChanged, bool clocksChanged);
+
+		void triggerMainClock();
 };
 
 };

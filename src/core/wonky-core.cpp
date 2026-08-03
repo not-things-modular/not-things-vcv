@@ -155,14 +155,14 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		}
 
 		// Check if the clock rates changed
-		bool clockRatesEqual = m_inputData.clockRates == inputData.clockRates;
+		bool clocksChanged = m_inputData.clockRates != inputData.clockRates;
 
 		// Store the input data for future reference
 		m_inputData = inputData;
 
 		// If the clock rates or the bpm changed, recalculate the subdivision clocks information
-		if (!clockRatesEqual || bpmChanged) {
-			updateSubClocks();
+		if (clocksChanged || bpmChanged) {
+			updateSubClocks(bpmChanged, clocksChanged);
 		}
 	}
 
@@ -174,8 +174,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		m_clockState.wobbleDelay--;
 		if ((m_clockState.wobbleDelay == 0) && (!m_clockState.gateHigh)) {
 			// We completed the previous wobble, so the gate can go high now
-			m_clockState.gateHigh = true;
-			m_listener->clockGateChanged(-1, true);
+			triggerMainClock();
 		}
 	}
 
@@ -194,8 +193,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 
 		// If wobbleDelay is 0, the gate must go high now (unless it is already high)
 		if ((!m_clockState.gateHigh) && (m_clockState.wobbleDelay == 0)) {
-			m_clockState.gateHigh = true;
-			m_listener->clockGateChanged(-1, true);
+			triggerMainClock();
 		}
 
 		// Generate new wonkiness
@@ -269,30 +267,79 @@ void WonkyCore::updateWonkiness() {
 	m_clockState.gateDuration = (m_clockState.clockSampleDuration + m_clockState.currentWobbleSampleOffset) / 2;
 }
 
-void WonkyCore::updateSubClocks() {
-	// Group the incoming clocks into their respective families (if they belong to a to-be-processed family),
-	// determine the max multiplication of each family and the overal max
-	std::array<std::vector<const ClockRatioData*>, 4> familyClockRatios{};
-	std::array<int, 4> highestFamilyMultiplications{};
-	int highestMultiplication = 0;
-	for (const ClockRatioData* clockRate : m_inputData.clockRates) {
-		// Check which index to use for the family (if it is part of a to-be-processed family)
-		int familyIndex = clockRatioFamilyToIndex(clockRate->family);
-		if (familyIndex != -1) {
-			// Check that the ratio isn't in that family group yet
-			if (std::find(familyClockRatios[familyIndex].begin(), familyClockRatios[familyIndex].end(), clockRate) == familyClockRatios[familyIndex].end()) {
-				familyClockRatios[familyIndex].push_back(clockRate);
-				if (clockRate->ratio > highestFamilyMultiplications[familyIndex]) {
-					highestFamilyMultiplications[familyIndex] = clockRate->ratio;
+void WonkyCore::updateSubClocks(bool bpmChanged, bool clocksChanged) {
+	// If the clocks themselves changed, re-group the clocks and determine the family and sub-clocks hierarchy
+	if (clocksChanged) {
+		// Group the incoming clocks into their respective families (if they belong to a to-be-processed family),
+		// determine the max multiplication of each family and the overal max
+		std::array<std::vector<const ClockRatioData*>, 4> familyClockRatios{};
+		std::array<int, 4> highestFamilyMultiplications{};
+		int highestMultiplication = 0;
+		m_divSubClocks.clear();
+		for (const ClockRatioData* clockRate : m_inputData.clockRates) {
+			// Check which index to use for the family (if it is part of a to-be-processed family)
+			int familyIndex = clockRatioFamilyToIndex(clockRate->family);
+			if (familyIndex != -1) {
+				// It's a multiplying clock, check that the ratio isn't in that family group yet
+				if (std::find(familyClockRatios[familyIndex].begin(), familyClockRatios[familyIndex].end(), clockRate) == familyClockRatios[familyIndex].end()) {
+					familyClockRatios[familyIndex].push_back(clockRate);
+					if (clockRate->ratio > highestFamilyMultiplications[familyIndex]) {
+						highestFamilyMultiplications[familyIndex] = clockRate->ratio;
+					}
+					if (clockRate->ratio > highestMultiplication) {
+						highestMultiplication = clockRate->ratio;
+					}
 				}
-				if (clockRate->ratio > highestMultiplication) {
-					highestMultiplication = clockRate->ratio;
+			} else {
+				// It's a dividing clock, so check that it isn't in the list of dividing clocks yet, and add if needed
+				if (std::find_if(m_divSubClocks.begin(), m_divSubClocks.end(), [clockRate](WonkySubClockState& state) { return state.clockData->ratio == clockRate->ratio; }) == m_divSubClocks.end()) {
+					m_divSubClocks.push_back(WonkySubClockState(clockRate, clockRate->ratio, m_clockState.dividedClockProgress % clockRate->ratio));
 				}
 			}
 		}
 
-		// TODO: apply this data to WonkyFamilyState and WonkySubClockState instances...
+		for (int i = 0; i < 4; i++) {
+			int multiplication = highestFamilyMultiplications[i];
+			m_multFamilies[i].highestMultiplication = multiplication;
+
+			if (multiplication > 0) {
+				// There are subclocks in this family, so update the family properties
+				m_multFamilies[i].currentStep = m_clockState.sampleProgress / multiplication;
+
+				// Update the sub-clock properties
+				m_multSubClocks[i].clear();
+				for (unsigned int j = 0; j < familyClockRatios[i].size(); j++) {
+					const ClockRatioData* clockData = familyClockRatios[i][j];
+					int familyTickPerClockTick = multiplication / clockData->ratio;
+					int currentFamilyTick = m_multFamilies[i].currentStep % familyTickPerClockTick;
+					m_multSubClocks[i].push_back(WonkySubClockState(clockData, familyTickPerClockTick, currentFamilyTick));
+				}
+			}
+		}
 	}
 
+	// If the BPM changed, update timing related properties
+	if (bpmChanged) {
+		for (int i = 0; i < 4; i++) {
+			int multiplication = m_multFamilies[i].highestMultiplication;
+			for (int j = 0; j < multiplication; j++) {
+				m_multFamilies[i].offsets[j] = static_cast<int>(m_clockState.clockSampleDuration / multiplication * (j + 1));
+			}
+		}
+	}
+}
 
+void WonkyCore::triggerMainClock() {
+	// Trigger the main clock
+	m_clockState.gateHigh = true;
+	m_clockState.dividedClockProgress = (m_clockState.dividedClockProgress + 1) % 64;
+	m_listener->clockGateChanged(-1, true);
+
+	// Run through the active divided clocks and progress them
+	for (WonkySubClockState& subClockState : m_divSubClocks) {
+		subClockState.currentFamilyTick++;
+		if (subClockState.currentFamilyTick >= subClockState.familyTickPerClockTick) {
+			// TODO: send out the gate and manage gate high/low (no wobble anymore?)
+		}
+	}
 }
