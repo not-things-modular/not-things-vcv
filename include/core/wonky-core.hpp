@@ -132,7 +132,7 @@ struct WonkyClockState {
 	// - negative if the gate should go high before the (internal) clock
 	// - positive if the gate should go high after the (internal) clock
 	int currentWobbleSampleOffset = 0;
-	// The number of samples that are still remaining from the wobble of the last clock signal since it was a positive offset,
+	// The number of samples that are still remaining from the wobble of the last clock signal since it had a positive offset,
 	// i.e. the gate-high signal must be delayed with this amount. Will be decreased each time a sample passes.
 	int wobbleDelay = 0;
 
@@ -148,34 +148,22 @@ struct WonkyClockState {
 	int dividedClockProgress = 0;
 };
 
-// The current processing data of each of the additional output clock families
-struct WonkyFamilyState {
-	// The highest currently requested multiplication for this family
-	int highestMultiplication = 0;
-	// The offsets of the clock ticks to generate for this family (array filled with higestMultiplication number of items)
-	std::array<int, 16> offsets = { 0 }; // Sized to allow for the maximum possible multiplications in a sub clock (RATE_MULT_16)
-
-	// The currently active step within offsets, i.e. the next clock that is to be triggered
-	int currentStep = 0;
-	// The impact of wobble on the start of the gate-high for the next clock beat, relative to the clockSampleDuration:
-	// - negative if the gate should go high before the (internal) clock
-	// - positive if the gate should go high after the (internal) clock
-	int currentWobbleSampleOffset = 0;
-	// The number of samples that are still remaining from the wobble of the last clock signal since it was a positive offset,
-	// i.e. the gate-high signal must be delayed with this amount. Will be decreased each time a sample passes.
+struct WonkySubClockTickState {
+	// The non-wobbled position of the end of this tick relative, to the start of the main clock beat
+	int tickEndPosition = 0;
+	// The impact of wobble on the start of the gate-high for the next clock tick, relative to the tickDuration (negative or positive)
+	int wobbleSampleOffset = 0;
+	// The number of samples that are still remaining from the wobble of the last clock tick since it had a ositive offset,
+	// i.e. the start of this clock tick gate should be delayed since the previous one didn't finish yet.
 	int wobbleDelay = 0;
-};
+	
+	// The position where the gate for this clock tick should go low, relative to the start of the main clock beat
+	int gateLowPosition = 0;
+	// Flag to indicate if the gate is currently high for this click or not.
+	bool gateHigh = false;
 
-// The current processing data for one of the subdivisions of the main clock
-struct WonkySubClockState {
-	WonkySubClockState(const ClockRatioData* clockData, int familyTickPerClockTick, int currentFamilyTick) : clockData(clockData), familyTickPerClockTick(familyTickPerClockTick), currentFamilyTick(currentFamilyTick) {}
-
-	// The data of the clock that is being generated
-	const ClockRatioData* clockData = nullptr;
-	// How many ticks the WonkyFamilyData generates for each tick of this sub clock
-	int familyTickPerClockTick = 0;
-	// How far along we are in the family ticks towards our next sub clock tick
-	int currentFamilyTick = 0;
+	// Initialize the state for processing using the supplied values
+	void initialize(int tickEndPosition, int wobbleSampleOffset, int gateLowPosition);
 };
 
 struct WonkyCore {
@@ -195,12 +183,10 @@ struct WonkyCore {
 		Wonkiness m_wonkiness;
 		WonkyClockState m_clockState;
 
-		// The data for the four multiplied subclock families that can not be triggered based purely on the main clock
-		std::array<WonkyFamilyState, 4> m_multFamilies;
-		// The active sub clocks for each of the multiplied subclock families
-		std::array<std::vector<WonkySubClockState>, 4> m_multSubClocks;
-		// The active divided sub clocks
-		std::vector<WonkySubClockState> m_divSubClocks;
+		// The sub clock tick states for each of the multiplying clock rates
+		std::array<std::vector<WonkySubClockTickState>, 4> m_subClockTickStates;
+		// Identify if the sub clock family has any actual active clocks (i.e. should be processed)
+		std::array<bool, 4> m_hasSubClock;
 
 		bool m_reset = false;
 

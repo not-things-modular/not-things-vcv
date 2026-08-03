@@ -9,12 +9,17 @@ constexpr float kMinTheta = 0.001f;
 constexpr float kMaxTheta = 0.35f;
 constexpr float kStdDevScale = 3.0f;
 
+constexpr int family2Index = 0;
+constexpr int family3Index = 1;
+constexpr int family5Index = 2;
+constexpr int family7Index = 3;
+
 int clockRatioFamilyToIndex(ClockRatioFamily family) {
     switch (family) {
-        case FAMILY_2: return 0;
-        case FAMILY_3: return 1;
-        case FAMILY_5: return 2;
-        case FAMILY_7: return 3;
+        case FAMILY_2: return family2Index;
+        case FAMILY_3: return family3Index;
+        case FAMILY_5: return family5Index;
+        case FAMILY_7: return family7Index;
         default: return -1; // FAMILY_0/FAMILY_1 don't need family data at all
     }
 }
@@ -134,9 +139,25 @@ struct WonkyRandomizer : Randomizer {
 		std::minstd_rand m_generator;
 };
 
+void WonkySubClockTickState::initialize(int tickEndPosition, int wobbleSampleOffset, int gateLowPosition) {
+	this->tickEndPosition = tickEndPosition;
+	this->wobbleSampleOffset = wobbleSampleOffset;
+	this->wobbleDelay = 0;
+	this->gateLowPosition = gateLowPosition;
+	this->gateHigh = false;
+}
+
 WonkyCore::WonkyCore(const SampleRateReader* sampleRateReader, WonkyListener* listener) : WonkyCore(sampleRateReader, new WonkyRandomizer(), listener) {}
 
-WonkyCore::WonkyCore(const SampleRateReader* sampleRateReader, Randomizer* randomizer, WonkyListener* listener) : m_sampleRateReader(sampleRateReader), m_listener(listener), m_randomizer(randomizer), m_wonkiness(randomizer) {}
+WonkyCore::WonkyCore(const SampleRateReader* sampleRateReader, Randomizer* randomizer, WonkyListener* listener) : m_sampleRateReader(sampleRateReader), m_listener(listener), m_randomizer(randomizer), m_wonkiness(randomizer) {
+	// Allocate the ticks for each of the ratio families
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_2)].resize(16); // 16 total ticks in the 2-family to allow triggering of the 16x clock
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_3)].resize(12); // 12 total ticks in the 3-family to allow triggering of the 12x clock
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_5)].resize(5); // 5 total ticks in the 5-family to allow triggering of the 5x clock
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_7)].resize(7); // 7 total ticks in the 7-family to allow triggering of the 7x clock
+	// By default, no clocks are present
+	m_hasSubClock.fill(false);
+}
 
 WonkyCore::~WonkyCore() {
 	delete m_randomizer;
@@ -270,62 +291,27 @@ void WonkyCore::updateWonkiness() {
 void WonkyCore::updateSubClocks(bool bpmChanged, bool clocksChanged) {
 	// If the clocks themselves changed, re-group the clocks and determine the family and sub-clocks hierarchy
 	if (clocksChanged) {
-		// Group the incoming clocks into their respective families (if they belong to a to-be-processed family),
-		// determine the max multiplication of each family and the overal max
-		std::array<std::vector<const ClockRatioData*>, 4> familyClockRatios{};
+		// Check which multiplier families have active clocks and determine the highest division for each family
+		m_hasSubClock.fill(false);
 		std::array<int, 4> highestFamilyMultiplications{};
-		int highestMultiplication = 0;
-		m_divSubClocks.clear();
 		for (const ClockRatioData* clockRate : m_inputData.clockRates) {
-			// Check which index to use for the family (if it is part of a to-be-processed family)
 			int familyIndex = clockRatioFamilyToIndex(clockRate->family);
 			if (familyIndex != -1) {
-				// It's a multiplying clock, check that the ratio isn't in that family group yet
-				if (std::find(familyClockRatios[familyIndex].begin(), familyClockRatios[familyIndex].end(), clockRate) == familyClockRatios[familyIndex].end()) {
-					familyClockRatios[familyIndex].push_back(clockRate);
-					if (clockRate->ratio > highestFamilyMultiplications[familyIndex]) {
-						highestFamilyMultiplications[familyIndex] = clockRate->ratio;
-					}
-					if (clockRate->ratio > highestMultiplication) {
-						highestMultiplication = clockRate->ratio;
-					}
+				m_hasSubClock[familyIndex] = true;
+				if (clockRate->ratio > highestFamilyMultiplications[familyIndex]) {
+					highestFamilyMultiplications[familyIndex] = clockRate->ratio;
 				}
 			} else {
-				// It's a dividing clock, so check that it isn't in the list of dividing clocks yet, and add if needed
-				if (std::find_if(m_divSubClocks.begin(), m_divSubClocks.end(), [clockRate](WonkySubClockState& state) { return state.clockData->ratio == clockRate->ratio; }) == m_divSubClocks.end()) {
-					m_divSubClocks.push_back(WonkySubClockState(clockRate, clockRate->ratio, m_clockState.dividedClockProgress % clockRate->ratio));
-				}
-			}
-		}
-
-		for (int i = 0; i < 4; i++) {
-			int multiplication = highestFamilyMultiplications[i];
-			m_multFamilies[i].highestMultiplication = multiplication;
-
-			if (multiplication > 0) {
-				// There are subclocks in this family, so update the family properties
-				m_multFamilies[i].currentStep = m_clockState.sampleProgress / multiplication;
-
-				// Update the sub-clock properties
-				m_multSubClocks[i].clear();
-				for (unsigned int j = 0; j < familyClockRatios[i].size(); j++) {
-					const ClockRatioData* clockData = familyClockRatios[i][j];
-					int familyTickPerClockTick = multiplication / clockData->ratio;
-					int currentFamilyTick = m_multFamilies[i].currentStep % familyTickPerClockTick;
-					m_multSubClocks[i].push_back(WonkySubClockState(clockData, familyTickPerClockTick, currentFamilyTick));
-				}
+				// TODO: add the division clock to the main-clock-dependant list
 			}
 		}
 	}
 
-	// If the BPM changed, update timing related properties
-	if (bpmChanged) {
-		for (int i = 0; i < 4; i++) {
-			int multiplication = m_multFamilies[i].highestMultiplication;
-			for (int j = 0; j < multiplication; j++) {
-				m_multFamilies[i].offsets[j] = static_cast<int>(m_clockState.clockSampleDuration / multiplication * (j + 1));
-			}
-		}
+	if (clocksChanged || bpmChanged) {
+		// - Check if we need to generate clock ticks for the 2-based family, and generate up to the needed multiplication (taking into account that an active 6-based clock and 12-based clock also need these subdivisions)
+		// - Check if we need to generate clock ticks for the 3-based family (reusing the applicable 2-based family ticks)
+		// - Check if we need to generate clock ticks for the 5- and 7-based families
+		// - For each family, loop over all possible ticks, and make sure to reset those that are not needed so that we can skip them during further clock processing
 	}
 }
 
@@ -335,11 +321,11 @@ void WonkyCore::triggerMainClock() {
 	m_clockState.dividedClockProgress = (m_clockState.dividedClockProgress + 1) % 64;
 	m_listener->clockGateChanged(-1, true);
 
-	// Run through the active divided clocks and progress them
-	for (WonkySubClockState& subClockState : m_divSubClocks) {
-		subClockState.currentFamilyTick++;
-		if (subClockState.currentFamilyTick >= subClockState.familyTickPerClockTick) {
-			// TODO: send out the gate and manage gate high/low (no wobble anymore?)
-		}
-	}
+	// // Run through the active divided clocks and progress them
+	// for (WonkySubClockState& subClockState : m_divSubClocks) {
+	// 	subClockState.currentFamilyTick++;
+	// 	if (subClockState.currentFamilyTick >= subClockState.familyTickPerClockTick) {
+	// 		// TODO: send out the gate and manage gate high/low (no wobble anymore?)
+	// 	}
+	// }
 }
