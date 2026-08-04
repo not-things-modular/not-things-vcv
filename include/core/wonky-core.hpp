@@ -187,6 +187,8 @@ struct WonkyCore {
 		std::array<std::vector<WonkySubClockTickState>, 4> m_subClockTickStates;
 		// Identify if the sub clock family has any actual active clocks (i.e. should be processed)
 		std::array<bool, 4> m_hasSubClock;
+		// The highest clock multiplication that is present in each
+		std::array<int, 4> m_highestFamilyMultiplications{};
 
 		bool m_reset = false;
 

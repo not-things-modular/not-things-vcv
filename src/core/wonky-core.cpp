@@ -293,13 +293,13 @@ void WonkyCore::updateSubClocks(bool bpmChanged, bool clocksChanged) {
 	if (clocksChanged) {
 		// Check which multiplier families have active clocks and determine the highest division for each family
 		m_hasSubClock.fill(false);
-		std::array<int, 4> highestFamilyMultiplications{};
+		m_highestFamilyMultiplications.fill(0);
 		for (const ClockRatioData* clockRate : m_inputData.clockRates) {
 			int familyIndex = clockRatioFamilyToIndex(clockRate->family);
 			if (familyIndex != -1) {
 				m_hasSubClock[familyIndex] = true;
-				if (clockRate->ratio > highestFamilyMultiplications[familyIndex]) {
-					highestFamilyMultiplications[familyIndex] = clockRate->ratio;
+				if (clockRate->ratio > m_highestFamilyMultiplications[familyIndex]) {
+					m_highestFamilyMultiplications[familyIndex] = clockRate->ratio;
 				}
 			} else {
 				// TODO: add the division clock to the main-clock-dependant list
@@ -308,10 +308,22 @@ void WonkyCore::updateSubClocks(bool bpmChanged, bool clocksChanged) {
 	}
 
 	if (clocksChanged || bpmChanged) {
-		// - Check if we need to generate clock ticks for the 2-based family, and generate up to the needed multiplication (taking into account that an active 6-based clock and 12-based clock also need these subdivisions)
-		// - Check if we need to generate clock ticks for the 3-based family (reusing the applicable 2-based family ticks)
-		// - Check if we need to generate clock ticks for the 5- and 7-based families
-		// - For each family, loop over all possible ticks, and make sure to reset those that are not needed so that we can skip them during further clock processing
+		// If there are clocks in the 2-based family, or there are 3-based clocks that have overlapping clicks with the 2-based family, generate the appropriate ticks for the 2-based family
+		if ((m_hasSubClock[family2Index]) || (m_highestFamilyMultiplications[family3Index] > 3)) {
+			// - First determine the position and wobble of the middle index (i=7) (always, because there is at least one clock that will need it: there is either at least a 2x clock, or a 6x clock)
+			// - Then determine those of the middles of that middle (i=3 & i=11), based on where (i=7) landed (if there is a 4x clock or a 12x clock)
+			// - Then determine the middles of those of the next middles (i=1, 5, 9, 13, 15) (if there is an 8x clock)
+			// - Then determine the middles of those of the next middles (i= all even indices) (if there is an 16x clock)
+		}
+		// If there are clocks in the 3-based family, determine their ticks as needed
+		if (m_hasSubClock[family3Index]) {
+			// - First determine the 3x clock (always, it's the minimum needed)
+			// - Then determine the 6x clock (if needed, combining with 3x and 2x clock positions where applicable)
+			// - Then determine the 12x clock (if needed, combining the 6x ticks and 4x ticks where applicable)
+		}
+		// - Finally create the 5x and 7x clock ticks if needed
+
+		// - When generating each family, make sure to reset those that are not needed so that we can skip them during runtime clock processing
 	}
 }
 
