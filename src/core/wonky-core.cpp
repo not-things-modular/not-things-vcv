@@ -14,6 +14,117 @@ constexpr int family3Index = 1;
 constexpr int family5Index = 2;
 constexpr int family7Index = 3;
 
+struct WonkySubClockHierarchyItem {
+	WonkySubClockHierarchyItem(int index, int familyIndex, int parentStartTickIndex, int parentEndTickIndex, int parentTickDivisionCount, int parentTickDivisionIndex) : index(index), familyIndex(familyIndex), parentStartTickIndex(parentStartTickIndex), parentEndTickIndex(parentEndTickIndex), parentTickDivisionCount(parentTickDivisionCount), parentTickDivisionIndex(parentTickDivisionIndex), overlappingIndex(std::pair<int, int>(-1, -1)) {}
+	WonkySubClockHierarchyItem(int index, int familyIndex, std::pair<int, int> overlappingIndex) : index(index), familyIndex(familyIndex), parentStartTickIndex(-1), parentEndTickIndex(-1), parentTickDivisionCount(0), parentTickDivisionIndex(0), overlappingIndex(overlappingIndex) {}
+
+	// The index of this item within the family it belongs to
+	const int index;
+	// The family index of this item;
+	const int familyIndex;
+	// The index of the tick in this family that represents the starting point of this clock tick (or -1 if this tick is an overlapping tick with another family)
+	const int parentStartTickIndex;
+	// The index of the tick in this family that represents the ending point of this clock tick (or -1 if this tick is an overlapping tick with another family)
+	// Once this tick has been positions, the halfwaypoint of the parentEndTickIndex item should be updated to be positioned at this tick
+	const int parentEndTickIndex;
+	// The number of tick divisions that have to be made in between the parent ticks
+	const int parentTickDivisionCount;
+	// The index of this tick within the parent tick divisions
+	const int parentTickDivisionIndex;
+	// The index of the item in another family that should be used as value for this tick
+	// The first int is the family index, the second is the item within that family. Set to (-1, -1) if this tick is not overlapping with another family
+	const std::pair<int, int> overlappingIndex;
+};
+
+struct WonkySubClockHierarchyLayer {
+	WonkySubClockHierarchyLayer(int ratio, const std::vector<WonkySubClockHierarchyItem> items) : ratio(ratio), items(items) {}
+
+	const int ratio;
+	const std::vector<WonkySubClockHierarchyItem> items;
+};
+
+constexpr int startClick = -1;
+constexpr int endClick = -2;
+
+const std::array<std::vector<WonkySubClockHierarchyLayer>, 4> clockSubClockHierarchy = {{
+	// The 2-based family: for each increasingly faster clock, determine teh middle positions in between the existing ones
+	{
+		{ WonkySubClockHierarchyLayer(2, { WonkySubClockHierarchyItem(7, family2Index, startClick, endClick, 2, 1) }) },
+		{ WonkySubClockHierarchyLayer(4, { WonkySubClockHierarchyItem(3, family2Index, startClick, 7, 2, 1), WonkySubClockHierarchyItem(11, family2Index, 7, endClick, 2, 1) }) },
+		{ WonkySubClockHierarchyLayer(8, { WonkySubClockHierarchyItem(1, family2Index, startClick, 3, 2, 1), WonkySubClockHierarchyItem(5, family2Index, 3, 7, 2, 1), WonkySubClockHierarchyItem(9, family2Index, 7, 11, 2, 1), WonkySubClockHierarchyItem(13, family2Index, 11, endClick, 2, 1) }) },
+		{ WonkySubClockHierarchyLayer(16, { WonkySubClockHierarchyItem(0, family2Index, startClick, 1, 2, 1), WonkySubClockHierarchyItem(2, family2Index, 1, 3, 2, 1), WonkySubClockHierarchyItem(4, family2Index, 3, 5, 2, 1), WonkySubClockHierarchyItem(6, family2Index, 5, 7, 2, 1), WonkySubClockHierarchyItem(8, family2Index, 7, 9, 2, 1), WonkySubClockHierarchyItem(10, family2Index, 9, 11, 2, 1), WonkySubClockHierarchyItem(12, family2Index, 11, 13, 2, 1), WonkySubClockHierarchyItem(14, family2Index, 13, endClick, 2, 1) }) }
+	},
+	// The 3-based family, the fastest clock determines which single set of calculations to perform:
+	// - 3x: divide the full clock in 3 parts
+	// - 6x: use the 2x clock tick to determine position of the 5th tick, and divide the two resulting sections in 3 parts
+	// - 12x: use the 4x clock ticks to determine the 2nd, 5th and 8th ticks, and divide each of the resulting four sections in 3 parts
+	{
+		{ WonkySubClockHierarchyLayer(3, { WonkySubClockHierarchyItem(3, family3Index, startClick, endClick, 3, 1), WonkySubClockHierarchyItem(7, family3Index, startClick, endClick, 3, 2) }) },
+		{ WonkySubClockHierarchyLayer(6, {
+			// First use the 2x clock tick as middle click for the 6x clock
+			WonkySubClockHierarchyItem(5, family3Index, std::pair<int, int>(2, 7)),
+			// Then divide the two resulting sections into three parts
+			WonkySubClockHierarchyItem(1, family3Index, startClick, 5, 3, 1),
+			WonkySubClockHierarchyItem(3, family3Index, startClick, 5, 3, 2),
+			WonkySubClockHierarchyItem(7, family3Index, 5, endClick, 3, 1),
+			WonkySubClockHierarchyItem(9, family3Index, 5, endClick, 3, 2)
+		}) },
+		{ WonkySubClockHierarchyLayer(12, {
+			// First use the 1st tick (index 3) of the 4x clock tick and use it as 2nd tick of this clock
+			WonkySubClockHierarchyItem(2, family3Index, std::pair<int, int>(2, 3)),
+			// Then divide the first section of this tick into three parts
+			WonkySubClockHierarchyItem(0, family3Index, startClick, 2, 3, 1),
+			WonkySubClockHierarchyItem(1, family3Index, startClick, 2, 3, 2),
+			// Then use the 2nd tick (index 7) of the 4x clock tick and use it as 5th tick of this clock
+			WonkySubClockHierarchyItem(5, family3Index, std::pair<int, int>(2, 7)),
+			// Then divide the second section of this tick into three parts
+			WonkySubClockHierarchyItem(3, family3Index, 2, 5, 3, 1),
+			WonkySubClockHierarchyItem(4, family3Index, 2, 5, 3, 2),
+			// Then use the 3st tick (index 11) of the 4x clock tick and use it as 8th tick of this clock
+			WonkySubClockHierarchyItem(8, family3Index, std::pair<int, int>(2, 11)),
+			// Then divide the third and fourth sections of this tick into three parts
+			WonkySubClockHierarchyItem(6, family3Index, 5, 8, 3, 1),
+			WonkySubClockHierarchyItem(7, family3Index, 5, 8, 3, 2),
+			WonkySubClockHierarchyItem(9, family3Index, 8, endClick, 3, 1),
+			WonkySubClockHierarchyItem(10, family3Index, 8, endClick, 3, 2)
+		}) }
+	},
+	// The 5-family divides everything into 5 parts without internal or external influence
+	{
+		{ WonkySubClockHierarchyLayer(5, {
+			WonkySubClockHierarchyItem(0, family5Index, startClick, endClick, 5, 1),
+			WonkySubClockHierarchyItem(1, family5Index, startClick, endClick, 5, 2),
+			WonkySubClockHierarchyItem(2, family5Index, startClick, endClick, 5, 3),
+			WonkySubClockHierarchyItem(3, family5Index, startClick, endClick, 5, 4)
+		}) }
+	},
+	// The 7-family divides everything into 7 parts without internal or external influence
+	{
+		{ WonkySubClockHierarchyLayer(7, {
+			WonkySubClockHierarchyItem(0, family7Index, startClick, endClick, 7, 1),
+			WonkySubClockHierarchyItem(1, family7Index, startClick, endClick, 7, 2),
+			WonkySubClockHierarchyItem(2, family7Index, startClick, endClick, 7, 3),
+			WonkySubClockHierarchyItem(3, family7Index, startClick, endClick, 7, 4),
+			WonkySubClockHierarchyItem(4, family7Index, startClick, endClick, 7, 5),
+			WonkySubClockHierarchyItem(5, family7Index, startClick, endClick, 7, 6)
+		}) }
+	}
+}};
+
+float getWobbleAmount(const WonkyInputData& inputData, Randomizer* randomizer) {
+	float wobbleAmount = 0.f;
+
+	if ((inputData.wobbleAmount > 0.f) && (inputData.wobbleProbability > 0.f)) {
+		// Check if a wobble should occur (either because it is at 100% or because the randomizer said so)
+		if ((inputData.wobbleProbability == 100.f) || (randomizer->randomize(0.f, 100.f) <= inputData.wobbleProbability)) {
+			// Generate the wobble amount
+			wobbleAmount = randomizer->randomize(-inputData.wobbleAmount, inputData.wobbleAmount);
+		}
+	}
+
+	return wobbleAmount;
+}
+
 int clockRatioFamilyToIndex(ClockRatioFamily family) {
     switch (family) {
         case FAMILY_2: return family2Index;
@@ -147,14 +258,26 @@ void WonkySubClockTickState::initialize(int tickEndPosition, int wobbleSampleOff
 	this->gateHigh = false;
 }
 
+void WonkySubClockTickState::initialize(const WonkySubClockTickState& state) {
+	initialize(state.tickEndPosition, state.wobbleSampleOffset, state.gateLowPosition);
+}
+
+void WonkySubClockTickState::reset() {
+	this->tickEndPosition = -1;
+	this->wobbleSampleOffset = 0;
+	this->wobbleDelay = 0;
+	this->gateLowPosition = -1;
+	this->gateHigh = false;
+}
+
 WonkyCore::WonkyCore(const SampleRateReader* sampleRateReader, WonkyListener* listener) : WonkyCore(sampleRateReader, new WonkyRandomizer(), listener) {}
 
 WonkyCore::WonkyCore(const SampleRateReader* sampleRateReader, Randomizer* randomizer, WonkyListener* listener) : m_sampleRateReader(sampleRateReader), m_listener(listener), m_randomizer(randomizer), m_wonkiness(randomizer) {
 	// Allocate the ticks for each of the ratio families
-	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_2)].resize(16); // 16 total ticks in the 2-family to allow triggering of the 16x clock
-	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_3)].resize(12); // 12 total ticks in the 3-family to allow triggering of the 12x clock
-	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_5)].resize(5); // 5 total ticks in the 5-family to allow triggering of the 5x clock
-	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_7)].resize(7); // 7 total ticks in the 7-family to allow triggering of the 7x clock
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_2)].resize(15); // 15 total ticks plus the final main clock tick in the 2-family to allow triggering of the 16x clock
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_3)].resize(11); // 11 total ticks plus the final main clock tick in the 3-family to allow triggering of the 12x clock
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_5)].resize(4); // 4 total ticks plus the final main clock tick in the 5-family to allow triggering of the 5x clock
+	m_subClockTickStates[clockRatioFamilyToIndex(ClockRatioFamily::FAMILY_7)].resize(6); // 6 total ticks plus the final main clock tick in the 7-family to allow triggering of the 7x clock
 	// By default, no clocks are present
 	m_hasSubClock.fill(false);
 }
@@ -288,7 +411,31 @@ void WonkyCore::updateWonkiness() {
 	m_clockState.gateDuration = (m_clockState.clockSampleDuration + m_clockState.currentWobbleSampleOffset) / 2;
 }
 
+void initializeClockTickState(WonkySubClockTickState& clockTickState, int tickStartPosition, int tickEndPosition, const WonkyInputData& inputData, Randomizer* randomizer) {
+	float wobbleAmount = getWobbleAmount(inputData, randomizer);
+	int wobbleSampleOffset = static_cast<int>(wobbleAmount * tickEndPosition / 100.f);
+	clockTickState.initialize(tickEndPosition, wobbleSampleOffset, (tickEndPosition + wobbleAmount - tickStartPosition) / 2);
+}
+
+void applySubClockHierarchyItemToClockTickState(const WonkySubClockHierarchyItem& item, std::array<std::vector<WonkySubClockTickState>, 4>& subClockTickStates, int mainClockDuration) {
+	if (item.parentStartTickIndex > -1) {
+		// Calculate relative to the parent ticks within the same family
+		std::vector<WonkySubClockTickState>& familyTicks = subClockTickStates[item.familyIndex];
+		WonkySubClockTickState& tickState = familyTicks[item.index];
+
+		int parentStartPosition = (item.parentStartTickIndex != startClick) ? familyTicks[item.parentStartTickIndex].tickEndPosition : 0;
+		int parentEndPosition = (item.parentEndTickIndex != endClick) ? familyTicks[item.parentEndTickIndex].tickEndPosition : mainClockDuration;
+		int tickDuration = (parentEndPosition - parentStartPosition) * item.parentTickDivisionIndex / item.parentTickDivisionCount;
+		tickState.tickEndPosition = parentStartPosition + tickDuration;
+		tickState.gateLowPosition = tickDuration / 2;
+	} else {
+		// Re-use the ticks of another family
+		subClockTickStates[family2Index][item.index].initialize(subClockTickStates[item.overlappingIndex.first][item.overlappingIndex.second]);
+	}
+}
+
 void WonkyCore::updateSubClocks(bool bpmChanged, bool clocksChanged) {
+	// TODO: there are errors in here...
 	// If the clocks themselves changed, re-group the clocks and determine the family and sub-clocks hierarchy
 	if (clocksChanged) {
 		// Check which multiplier families have active clocks and determine the highest division for each family
@@ -308,22 +455,44 @@ void WonkyCore::updateSubClocks(bool bpmChanged, bool clocksChanged) {
 	}
 
 	if (clocksChanged || bpmChanged) {
+		// Re-usable looper to apply sub clock hierarchy items
+		auto subClockHierarchyItemApplier = [this](const WonkySubClockHierarchyLayer& layer) {
+			for (const WonkySubClockHierarchyItem& item : layer.items) {
+				applySubClockHierarchyItemToClockTickState(item, m_subClockTickStates, m_clockState.clockSampleDuration);
+			}
+		};
+
 		// If there are clocks in the 2-based family, or there are 3-based clocks that have overlapping clicks with the 2-based family, generate the appropriate ticks for the 2-based family
 		if ((m_hasSubClock[family2Index]) || (m_highestFamilyMultiplications[family3Index] > 3)) {
-			// - First determine the position and wobble of the middle index (i=7) (always, because there is at least one clock that will need it: there is either at least a 2x clock, or a 6x clock)
-			// - Then determine those of the middles of that middle (i=3 & i=11), based on where (i=7) landed (if there is a 4x clock or a 12x clock)
-			// - Then determine the middles of those of the next middles (i=1, 5, 9, 13, 15) (if there is an 8x clock)
-			// - Then determine the middles of those of the next middles (i= all even indices) (if there is an 16x clock)
+			int highestMultiplication = std::max(m_highestFamilyMultiplications[family2Index], m_highestFamilyMultiplications[family3Index] / 3);
+
+			// Loop through the multiplications and apply those that are below or equal to the highest multiplication
+			for (unsigned int i = 0; i < clockSubClockHierarchy[family2Index].size() && clockSubClockHierarchy[family2Index][i].ratio <= highestMultiplication; i++) {
+				subClockHierarchyItemApplier(clockSubClockHierarchy[family2Index][i]);
+			}
 		}
 		// If there are clocks in the 3-based family, determine their ticks as needed
 		if (m_hasSubClock[family3Index]) {
-			// - First determine the 3x clock (always, it's the minimum needed)
-			// - Then determine the 6x clock (if needed, combining with 3x and 2x clock positions where applicable)
-			// - Then determine the 12x clock (if needed, combining the 6x ticks and 4x ticks where applicable)
+			// Loop through the multiplications and only those that are for the highest multiplication
+			for (unsigned int i = 0; i < clockSubClockHierarchy[family3Index].size(); i++) {
+				if (clockSubClockHierarchy[family3Index][i].ratio == m_highestFamilyMultiplications[family3Index]) {
+				subClockHierarchyItemApplier(clockSubClockHierarchy[family3Index][i]);
+				}
+			}
 		}
-		// - Finally create the 5x and 7x clock ticks if needed
-
-		// - When generating each family, make sure to reset those that are not needed so that we can skip them during runtime clock processing
+		// - Finally create run through the 5- and 7-based clocks as needed
+		if (m_hasSubClock[family5Index]) {
+			// Loop through the multiplications and only those that are for the highest multiplication
+			for (unsigned int i = 0; i < clockSubClockHierarchy[family5Index].size(); i++) {
+				subClockHierarchyItemApplier(clockSubClockHierarchy[family5Index][i]);
+			}
+		}
+		if (m_hasSubClock[family7Index]) {
+			// Loop through the multiplications and only those that are for the highest multiplication
+			for (unsigned int i = 0; i < clockSubClockHierarchy[family7Index].size(); i++) {
+				subClockHierarchyItemApplier(clockSubClockHierarchy[family7Index][i]);
+			}
+		}
 	}
 }
 

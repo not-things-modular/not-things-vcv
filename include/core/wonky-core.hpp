@@ -156,7 +156,7 @@ struct WonkySubClockTickState {
 	// The number of samples that are still remaining from the wobble of the last clock tick since it had a ositive offset,
 	// i.e. the start of this clock tick gate should be delayed since the previous one didn't finish yet.
 	int wobbleDelay = 0;
-	
+
 	// The position where the gate for this clock tick should go low, relative to the start of the main clock beat
 	int gateLowPosition = 0;
 	// Flag to indicate if the gate is currently high for this click or not.
@@ -164,6 +164,10 @@ struct WonkySubClockTickState {
 
 	// Initialize the state for processing using the supplied values
 	void initialize(int tickEndPosition, int wobbleSampleOffset, int gateLowPosition);
+	// Initialzie the state for processing using the supplied tick (only non-state items)
+	void initialize(const WonkySubClockTickState& state);
+	// Reset the clock tick properties, putting it in the not-to-be-triggered state
+	void reset();
 };
 
 struct WonkyCore {
