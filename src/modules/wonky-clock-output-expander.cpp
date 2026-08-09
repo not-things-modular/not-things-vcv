@@ -41,7 +41,7 @@ struct WonkyRatioParam : ParamQuantity {
 			}
 		}
 		setValue(index);
-	}	
+	}
 
 	std::string getUnit() override {
 		int index = static_cast<int>(getValue());
@@ -56,8 +56,6 @@ struct WonkyRatioParam : ParamQuantity {
 WonkyClockOutputExpanderModule::WonkyClockOutputExpanderModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
-	configButton(PARAM_WOBBLE, "Wobble");
-
 	for (int i = 0; i < 8; i++) {
 		configParam<WonkyRatioParam>(PARAM_RATIOS + i, 0.f, wonkyClockRatioCount - 1, 11.f, string::f("Clock Ratio %d", (i + 1)));
 		paramQuantities[PARAM_RATIOS + i]->snapEnabled = true;
@@ -70,14 +68,6 @@ WonkyClockOutputExpanderModule::WonkyClockOutputExpanderModule() {
 	lights[LightId::LIGHT_WOBBLE].setBrightness(m_wobble);
 }
 
-void WonkyClockOutputExpanderModule::process(const ProcessArgs& args) {
-	bool wobbleTriggered = m_wobbleTrigger.process(params[ParamId::PARAM_WOBBLE].getValue());
-	if (wobbleTriggered) {
-		m_wobble = !m_wobble;
-		lights[LightId::LIGHT_WOBBLE].setBrightness(m_wobble);
-	}
-}
-
 void WonkyClockOutputExpanderModule::draw(const widget::Widget::DrawArgs& args) {
 	for (int i = 0; i < 8; i++) {
 		int ratio = static_cast<int>(getParam(PARAM_RATIOS + i).getValue());
@@ -88,8 +78,6 @@ void WonkyClockOutputExpanderModule::draw(const widget::Widget::DrawArgs& args) 
 }
 
 WonkyClockOutputExpanderWidget::WonkyClockOutputExpanderWidget(WonkyClockOutputExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock-output-expander") {
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(144.f, 352.f), module, WonkyClockOutputExpanderModule::PARAM_WOBBLE, WonkyClockOutputExpanderModule::LIGHT_WOBBLE));
-
 	for (int i = 0; i < 8; i++) {
 		addParam(createParamCentered<NTKnob35>(Vec(32.f, 41.5f + (40.f * i)), module, WonkyClockOutputExpanderModule::PARAM_RATIOS + i));
 

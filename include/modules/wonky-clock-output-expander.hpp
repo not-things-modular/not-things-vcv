@@ -39,7 +39,6 @@ constexpr std::array<WonkyClockRatio, wonkyClockRatioCount> wonkyClockRatios{{
 
 struct WonkyClockOutputExpanderModule : NTModule, DrawListener {
 	enum ParamId {
-		PARAM_WOBBLE,
 		ENUMS(PARAM_RATIOS, 8),
 		NUM_PARAMS
 	};
@@ -59,7 +58,6 @@ struct WonkyClockOutputExpanderModule : NTModule, DrawListener {
 
 	WonkyClockOutputExpanderModule();
 
-	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 
 	private:

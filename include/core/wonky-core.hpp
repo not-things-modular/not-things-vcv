@@ -63,6 +63,8 @@ enum ClockRatioId {
 
 	RATE_COUNT,
 	NO_RATE,
+	MIN_MULT_RATE = RATE_MULT_2,
+	MAX_MULT_RATE = RATE_MULT_16,
 };
 
 struct ClockRatioData {
@@ -126,7 +128,7 @@ struct WonkyClockState {
 	// The number of samples that have passed in the current clock beat
 	int sampleProgress = 0;
 
-	// The number of samples that have to have passed for the current (internal) clock to have completed one beat
+	// The number of samples that have to have passed for the current (internal, stable) clock to have completed one beat
 	int clockSampleDuration = 0;
 	// The impact of wobble on the start of the gate-high for the next clock beat, relative to the clockSampleDuration:
 	// - negative if the gate should go high before the (internal) clock
@@ -148,26 +150,21 @@ struct WonkyClockState {
 	int dividedClockProgress = 0;
 };
 
-struct WonkySubClockTickState {
-	// The non-wobbled position of the end of this tick relative, to the start of the main clock beat
-	int tickEndPosition = 0;
-	// The impact of wobble on the start of the gate-high for the next clock tick, relative to the tickDuration (negative or positive)
-	int wobbleSampleOffset = 0;
-	// The number of samples that are still remaining from the wobble of the last clock tick since it had a ositive offset,
-	// i.e. the start of this clock tick gate should be delayed since the previous one didn't finish yet.
-	int wobbleDelay = 0;
+struct WonkySubClockState {
+	WonkySubClockState();
 
-	// The position where the gate for this clock tick should go low, relative to the start of the main clock beat
-	int gateLowPosition = 0;
-	// Flag to indicate if the gate is currently high for this click or not.
-	bool gateHigh = false;
+	// Flag to indicate that subclocks changed in the input, so they have to be re-evaluated on the start of the next main clock
+	bool clocksChanged = false;
 
-	// Initialize the state for processing using the supplied values
-	void initialize(int tickEndPosition, int wobbleSampleOffset, int gateLowPosition);
-	// Initialzie the state for processing using the supplied tick (only non-state items)
-	void initialize(const WonkySubClockTickState& state);
-	// Reset the clock tick properties, putting it in the not-to-be-triggered state
-	void reset();
+	// Flag to indicate for each subclock family if there are any clocks active for it
+	std::array<bool, 4> hasSubClock;
+
+	// The active divided clocks (i.e. slower then the main clock)
+	std::vector<ClockRatioId> activeSlowClocks;
+	// The ticks for each family of clock multiplications
+	std::array<std::vector<int>, 4> familyClockTicksOffsets;
+	// The currently active sub clock tick in each family
+	std::array<int, 4> familyTickProgress;
 };
 
 struct WonkyCore {
@@ -186,21 +183,18 @@ struct WonkyCore {
 		WonkyInputData m_inputData;
 		Wonkiness m_wonkiness;
 		WonkyClockState m_clockState;
-
-		// The sub clock tick states for each of the multiplying clock rates
-		std::array<std::vector<WonkySubClockTickState>, 4> m_subClockTickStates;
-		// Identify if the sub clock family has any actual active clocks (i.e. should be processed)
-		std::array<bool, 4> m_hasSubClock;
-		// The highest clock multiplication that is present in each
-		std::array<int, 4> m_highestFamilyMultiplications{};
+		WonkySubClockState m_subClockState;
 
 		bool m_reset = false;
 
 		void updateBpm(int bpm);
 		void updateWonkiness();
-		void updateSubClocks(bool bpmChanged, bool clocksChanged);
+
+		void detectSubClocks();
+		void distributeSubClocks();
 
 		void triggerMainClock();
+		void triggerSubClocks(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds);
 };
 
 };

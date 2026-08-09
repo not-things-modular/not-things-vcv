@@ -164,6 +164,22 @@ float WonkyClockModule::getSampleRate() const {
 void WonkyClockModule::clockGateChanged(int index, bool high) {
 	if (index == -1) {
 		outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
+	} else {
+		WonkyClockOutputExpanderModule* outputExpanderModule = nullptr;
+		std::vector<Module*> expanders;
+		for (int i = 0; i < 2; i++) {
+			getExpanders(expanderModels, expanders, (i == 0));
+			if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
+				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[0]);
+				break;
+			} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
+				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[1]);
+				break;
+			}
+		}
+		if (outputExpanderModule != nullptr) {
+			outputExpanderModule->outputs[WonkyClockOutputExpanderModule::OUT_CLOCKS + index].setVoltage(high ? 10.f : 0.f);
+		}
 	}
 }
 
