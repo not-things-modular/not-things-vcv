@@ -67,8 +67,10 @@ WonkyClockModule::WonkyClockModule() {
 }
 
 void WonkyClockModule::process(const ProcessArgs& args) {
-	std::vector<Module*> expanders;
 	WonkyInputData inputData;
+
+	updateExpanders();
+	m_processing = true;
 
 	bool resetTriggered = m_buttonTrigger[TriggerId::TRIG_RESET].process(params[ParamId::PARAM_RESET].getValue()) || m_trigTriggers[TriggerId::TRIG_RESET].process(inputs[InputId::IN_RESET].getVoltage(), 0.f, 1.f);
 	bool runTriggered = m_buttonTrigger[TriggerId::TRIG_RUN].process(params[ParamId::PARAM_RUN].getValue()) || m_trigTriggers[TriggerId::TRIG_RUN].process(inputs[InputId::IN_RUN].getVoltage(), 0.f, 1.f);
@@ -90,17 +92,7 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 	int runOutputVoltage = m_runPulse.process(args.sampleTime) ? 10.f : 0.f;
 	int resetOutputVoltage = m_resetPulse.process(args.sampleTime) ? 10.f : 0.f;
 
-	WonkyClockCVExpanderModule* cvExpanderModule = nullptr;
-	for (int i = 0; i < 2; i++) {
-		getExpanders(expanderModels, expanders, (i == 0));
-		if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
-			cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
-			break;
-		} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
-			cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
-			break;
-		}
-	}
+	WonkyClockCVExpanderModule* cvExpanderModule = getCVExpander();
 	if (cvExpanderModule != nullptr) {
 		cvExpanderModule->getOutput(WonkyClockCVExpanderModule::OutputId::OUT_RUN).setVoltage(runOutputVoltage);
 		cvExpanderModule->getOutput(WonkyClockCVExpanderModule::OutputId::OUT_RESET).setVoltage(resetOutputVoltage);
@@ -128,17 +120,7 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 			cvExpanderModule->setCurrentBpm(inputData.bpm);
 		}
 
-		WonkyClockOutputExpanderModule* outputExpanderModule = nullptr;
-		for (int i = 0; i < 2; i++) {
-			getExpanders(expanderModels, expanders, (i == 0));
-			if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
-				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[0]);
-				break;
-			} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
-				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[1]);
-				break;
-			}
-		}
+		WonkyClockOutputExpanderModule* outputExpanderModule = getOutputExpander();
 		if (outputExpanderModule != nullptr) {
 			for (int i = 0; i < 8; i++) {
 				int index = static_cast<int>(outputExpanderModule->params[WonkyClockOutputExpanderModule::PARAM_RATIOS + i].getValue());
@@ -153,6 +135,8 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		}
 		m_core->process(inputData);
 	}
+
+	m_processing = false;
 }
 
 void WonkyClockModule::draw(const widget::Widget::DrawArgs& args) {
@@ -176,18 +160,7 @@ void WonkyClockModule::clockGateChanged(int index, bool high) {
 	if (index == -1) {
 		outputs[OUT_CLOCK].setVoltage(high ? 10.f : 0.f);
 	} else {
-		WonkyClockOutputExpanderModule* outputExpanderModule = nullptr;
-		std::vector<Module*> expanders;
-		for (int i = 0; i < 2; i++) {
-			getExpanders(expanderModels, expanders, (i == 0));
-			if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
-				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[0]);
-				break;
-			} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockOutputExpander)) {
-				outputExpanderModule = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[1]);
-				break;
-			}
-		}
+		WonkyClockOutputExpanderModule* outputExpanderModule = getOutputExpander();
 		if (outputExpanderModule != nullptr) {
 			outputExpanderModule->outputs[WonkyClockOutputExpanderModule::OUT_CLOCKS + index].setVoltage(high ? 10.f : 0.f);
 		}
@@ -211,6 +184,68 @@ void WonkyClockModule::wobbleChanged(float wobble, float max) {
 		m_wobbleDisplay->setWonkiness(wobble, max);
 	}
 }
+
+WonkyClockCVExpanderModule* WonkyClockModule::getCVExpander() {
+	updateExpanders();
+	return m_cvExpander;
+}
+
+WonkyClockOutputExpanderModule* WonkyClockModule::getOutputExpander() {
+	updateExpanders();
+	return m_outputExpander;
+}
+
+void WonkyClockModule::updateExpanders() {
+	if (!m_processing) {
+		std::vector<Module*> expanders;
+
+		m_cvExpander = nullptr;
+		m_outputExpander = nullptr;
+
+		// First look for the expander modules on the right side
+		getExpanders(expanderModels, expanders, true);
+		// If there is at least one expander to the right, check which one it is
+		if (!expanders.empty()) {
+			if (expanders[0]->getModel() == modelWonkyClockCVExpander) {
+				m_cvExpander = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
+			} else if (expanders[0]->getModel() == modelWonkyClockOutputExpander) {
+				m_outputExpander = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[0]);
+			}
+		}
+		// If there are two expanders to the right, check if the other type of expander is also present (but don't override the already-found one)
+		if (expanders.size() > 1) {
+			if ((expanders[1]->getModel() == modelWonkyClockCVExpander) && (m_cvExpander == nullptr)) {
+				m_cvExpander = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
+			} else if ((expanders[1]->getModel() == modelWonkyClockOutputExpander) && (m_outputExpander == nullptr)) {
+				m_outputExpander = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[1]);
+			}
+		}
+
+		// If either of the expander modules have not been found yet, also look to the left side
+		if ((m_cvExpander == nullptr) || (m_outputExpander == nullptr)) {
+			getExpanders(expanderModels, expanders, false);
+			// If there is at least one expander to the left, check if it is one we haven't found yet
+			if (!expanders.empty()) {
+				if ((expanders[0]->getModel() == modelWonkyClockCVExpander) && (m_cvExpander == nullptr)) {
+					m_cvExpander = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
+				} else if ((expanders[0]->getModel() == modelWonkyClockOutputExpander) && (m_outputExpander == nullptr)) {
+					m_outputExpander = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[0]);
+				}
+			}
+			// If there are two expanders to the left and we haven't found both types of expanders yet, check if it is one we haven't found yet
+			if ((m_cvExpander == nullptr) || (m_outputExpander == nullptr)) {
+				if (expanders.size() > 1) {
+					if ((expanders[1]->getModel() == modelWonkyClockCVExpander) && (m_cvExpander == nullptr)) {
+						m_cvExpander = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
+					} else if ((expanders[1]->getModel() == modelWonkyClockOutputExpander) && (m_outputExpander == nullptr)) {
+						m_outputExpander = dynamic_cast<WonkyClockOutputExpanderModule*>(expanders[1]);
+					}
+				}
+			}
+		}
+	}
+}
+
 
 WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock") {
 	NTKnob40* bpmKnob = createParamCentered<NTKnob40>(Vec(127.f, 107.f), module, WonkyClockModule::PARAM_BPM);

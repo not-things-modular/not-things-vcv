@@ -6,6 +6,9 @@
 struct LEDDisplay;
 struct WonkyClockDisplay;
 
+struct WonkyClockCVExpanderModule;
+struct WonkyClockOutputExpanderModule;
+
 struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky::WonkyListener {
 	enum ParamId {
 		PARAM_BPM,
@@ -64,11 +67,22 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		int m_displayedBpm;
 		std::unique_ptr<wonky::WonkyCore> m_core;
 
+		// Flag to indicate if we're currently inside a process invocation.
+		// Process should only be called single-threaded by VCV, so keeping a simple boolean should be safe
+		bool m_processing = false;
+
 		dsp::BooleanTrigger m_buttonTrigger[TriggerId::NUM_TRIGGERS];
 		dsp::TSchmittTrigger<float> m_trigTriggers[TriggerId::NUM_TRIGGERS];
 
 		dsp::PulseGenerator m_runPulse;
 		dsp::PulseGenerator m_resetPulse;
+
+		WonkyClockCVExpanderModule* m_cvExpander;
+		WonkyClockOutputExpanderModule* m_outputExpander;
+
+		WonkyClockCVExpanderModule* getCVExpander();
+		WonkyClockOutputExpanderModule* getOutputExpander();
+		void updateExpanders();
 };
 
 struct WonkyClockWidget : NTModuleWidget {
