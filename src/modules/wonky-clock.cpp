@@ -75,12 +75,35 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 
 	if (resetTriggered) {
 		m_core->reset();
+
 		lights[LightId::LIGHT_RESET].setBrightnessSmooth(1.f, .01f);
+		m_resetPulse.trigger(0.001f);
 	}
 
 	if (runTriggered) {
 		m_running = !m_running;
+
 		lights[LightId::LIGHT_RUN].setBrightness(m_running);
+		m_runPulse.trigger(0.001f);
+	}
+
+	int runOutputVoltage = m_runPulse.process(args.sampleTime) ? 10.f : 0.f;
+	int resetOutputVoltage = m_resetPulse.process(args.sampleTime) ? 10.f : 0.f;
+
+	WonkyClockCVExpanderModule* cvExpanderModule = nullptr;
+	for (int i = 0; i < 2; i++) {
+		getExpanders(expanderModels, expanders, (i == 0));
+		if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
+			cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
+			break;
+		} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
+			cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
+			break;
+		}
+	}
+	if (cvExpanderModule != nullptr) {
+		cvExpanderModule->getOutput(WonkyClockCVExpanderModule::OutputId::OUT_RUN).setVoltage(runOutputVoltage);
+		cvExpanderModule->getOutput(WonkyClockCVExpanderModule::OutputId::OUT_RESET).setVoltage(resetOutputVoltage);
 	}
 
 	if (m_running) {
@@ -93,18 +116,6 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue() / 100.f;
 		inputData.linked = params[PARAM_LINK].getValue() > 0.f;
 
-		WonkyClockCVExpanderModule* cvExpanderModule = nullptr;
-		std::vector<Module*> expanders;
-		for (int i = 0; i < 2; i++) {
-			getExpanders(expanderModels, expanders, (i == 0));
-			if ((expanders.size() > 0) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
-				cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[0]);
-				break;
-			} else if ((expanders.size() > 1) && (expanders[0]->getModel() == modelWonkyClockCVExpander)) {
-				cvExpanderModule = dynamic_cast<WonkyClockCVExpanderModule*>(expanders[1]);
-				break;
-			}
-		}
 		if (cvExpanderModule != nullptr) {
 			inputData.bpm = determineCVImpact(inputData.bpm, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_BPM, minBpm, maxBpm);
 			inputData.wobbleAmount = determineCVImpact(inputData.wobbleAmount, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_AMOUNT, 0.f, maxAmount);

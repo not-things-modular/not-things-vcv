@@ -63,8 +63,6 @@ enum ClockRatioId {
 
 	RATE_COUNT,
 	NO_RATE,
-	MIN_MULT_RATE = RATE_MULT_2,
-	MAX_MULT_RATE = RATE_MULT_16,
 };
 
 struct ClockRatioData {
@@ -94,8 +92,8 @@ struct WonkyInputData {
 
 	bool linked = false;
 
-	std::array<const ClockRatioData*, 8> clockRates;
 
+	std::array<const ClockRatioData*, 8> clockRates;
 	bool operator==(const WonkyInputData& other) const;
 	bool operator!=(const WonkyInputData& other) const;
 };
@@ -125,22 +123,25 @@ struct WonkyClockState {
 	// The amount of drift on the core clock due to the current sample rate
 	double clockDrift = 0.;
 
-	// The number of samples that have passed in the current clock beat
+	// The number of samples that have passed in the current wonky clock beat
 	int sampleProgress = 0;
 
-	// The number of samples that have to have passed for the current (internal, stable) clock to have completed one beat
+	// The number of samples that have to have passed for the internal stable clock to have completed a beat
 	int clockSampleDuration = 0;
-	// The impact of wobble on the start of the gate-high for the next clock beat, relative to the clockSampleDuration:
-	// - negative if the gate should go high before the (internal) clock
-	// - positive if the gate should go high after the (internal) clock
-	int currentWobbleSampleOffset = 0;
-	// The number of samples that are still remaining from the wobble of the last clock signal since it had a positive offset,
-	// i.e. the gate-high signal must be delayed with this amount. Will be decreased each time a sample passes.
-	int wobbleDelay = 0;
+	// The number of samples that have to have passed for the wonky clock to have completed its current beatr
+	int wonkyClockSampleDuration = 0;
 
-	// The number of samples that the gate should remain high. Already takes wander, waver and wobble into account.
+	// The amount of wobble samples that was carried over from the previous clock beat, i.e. moved the start position of the current clock:
+	// - earlier if it's a negative offset
+	// - later if it's a positive offset
+	int startWobbleSampleOffset = 0;
+	// The amount of wobble samples that will move the end of the current clock:
+	// - earlier if it's a negative offset
+	// - later if it's a positive offset
+	int endWobbleSampleOffset = 0;
+	// The duration of the gate-high signal, relative to the start position of the current wonky clock beat
 	int gateDuration = 0;
-	// Flag to indicate if the gate is currently high or not
+	// If the gate is high or not for this clock beat
 	bool gateHigh = false;
 
 	// If no wander, waver or wobble are applied, the number of drift that is introduced in the stable clock due the accuracy within the current sample rate
@@ -159,12 +160,12 @@ struct WonkySubClockState {
 	// Flag to indicate for each subclock family if there are any clocks active for it
 	std::array<bool, 4> hasSubClock;
 
-	// The active divided clocks (i.e. slower then the main clock)
-	std::vector<ClockRatioId> activeSlowClocks;
+	// The indices on the inputs where slow clocks are active
+	std::vector<int> slowClockIndices;
 	// The ticks for each family of clock multiplications
 	std::array<std::vector<int>, 4> familyClockTicksOffsets;
 	// The currently active sub clock tick in each family
-	std::array<int, 4> familyTickProgress;
+	std::array<unsigned int, 4> familyTickProgress;
 };
 
 struct WonkyCore {
@@ -188,13 +189,13 @@ struct WonkyCore {
 		bool m_reset = false;
 
 		void updateBpm(int bpm);
-		void updateWonkiness();
+		void updateWonkyClockDuration();
 
 		void detectSubClocks();
 		void distributeSubClocks();
 
-		void triggerMainClock();
-		void triggerSubClocks(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds);
+		void updateMainClockState(bool high);
+		void updateSubClockStates(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds);
 };
 
 };

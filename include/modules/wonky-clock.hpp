@@ -66,7 +66,10 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 
 		dsp::BooleanTrigger m_buttonTrigger[TriggerId::NUM_TRIGGERS];
 		dsp::TSchmittTrigger<float> m_trigTriggers[TriggerId::NUM_TRIGGERS];
-	};
+
+		dsp::PulseGenerator m_runPulse;
+		dsp::PulseGenerator m_resetPulse;
+};
 
 struct WonkyClockWidget : NTModuleWidget {
 	WonkyClockWidget(WonkyClockModule* module);

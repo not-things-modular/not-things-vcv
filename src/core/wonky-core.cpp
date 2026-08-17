@@ -203,8 +203,6 @@ struct WonkyRandomizer : Randomizer {
 WonkySubClockState::WonkySubClockState() {
 	// By default, no clocks are present
 	hasSubClock.fill(false);
-	// There are only 9 different types of slow clocks, so allocate the vector now to avoid re-alloc during processing.
-	activeSlowClocks.reserve(ClockRatioId::MAX_MULT_RATE - ClockRatioId::MIN_MULT_RATE);
 
 	// Initialize the tick offset vectors to the number of items they can contain
 	for (int i = 0; i < 4; i++) {
@@ -228,9 +226,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		bool bpmChanged = m_inputData.bpm != inputData.bpm;
 		if (bpmChanged) {
 			updateBpm(inputData.bpm);
-			if (m_wonkiness.isWonky()) {
-				updateWonkiness();
-			}
+			updateWonkyClockDuration();
 		}
 
 		// Check if the clock rates changed
@@ -248,45 +244,12 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 	// Advance the clock
 	m_clockState.sampleProgress++;
 
-	// Check if a negative wobble caused us to pass over the clock boundary
-	if ((m_reset) || // If a reset was triggered
-		(m_clockState.sampleProgress >= m_clockState.clockSampleDuration + m_clockState.currentWobbleSampleOffset) || // Or we pass over a negative wobble boundary
-		(m_clockState.sampleProgress >= m_clockState.clockSampleDuration) // Or we pass over the stable-clock boundary
-	) {
-
+	// Check if a reset was requested or we passed over the clock boundary
+	if ((m_reset) || (m_clockState.sampleProgress >= m_clockState.wonkyClockSampleDuration)) {
 		// Reset the progress
 		m_clockState.sampleProgress = 0;
-		m_reset = false;
 
-		// If the sub-clocks changed since the last main clock signal, redetect which are present
-		if (m_subClockState.clocksChanged) {
-			m_subClockState.clocksChanged = false;
-			detectSubClocks();
-		}
-
-		// If there is a positive wobble sample offset, we'll have to delay the gate signal
-		int remainingWobble = 0;
-		if (m_clockState.currentWobbleSampleOffset > 0) {
-			m_clockState.wobbleDelay = m_clockState.currentWobbleSampleOffset;
-		} else {
-			// Otherwise the gate must go high now (unless it is already high)
-			m_clockState.wobbleDelay = 0;
-			if (!m_clockState.gateHigh) {
-				triggerMainClock();
-			}
-
-			// If there was a negative wobble amount, the actual stable internal clock didn't fire yet,
-			// so we'll have to remember how much wobble was still remaining
-			remainingWobble = -m_clockState.currentWobbleSampleOffset;
-		}
-
-		// Generate new wonkiness
-		m_wonkiness.determineWonkiness(m_inputData);
-		m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
-		m_listener->waverChanged(m_wonkiness.getWaverAmount(), m_inputData.waverAmount);
-		m_listener->wobbleChanged(m_wonkiness.getWobbleAmount(), m_inputData.wobbleAmount);
-
-		// Prepare the new clock data (taking the possible remaining amount of wobble into account)
+		// Prepare the duration of the next stable clock tick
 		m_clockState.clockSampleDuration = static_cast<int>(m_clockState.clockDuration);
 		// Determine drift to account for mismatches between sample rate and clock rate
 		m_clockState.wonkyDrift += m_clockState.clockDrift;
@@ -294,43 +257,190 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 			m_clockState.clockSampleDuration++;
 			m_clockState.wonkyDrift--;
 		}
-		if (m_wonkiness.isWonky()) {
-			// If there is wonkiness, apply it
-			updateWonkiness();
-		} else {
-			// No wonkiness, so set all the other clock parameters to a simple clock with a half-duration gate
-			m_clockState.currentWobbleSampleOffset = 0;
+
+		// The end wobble of the previous clock beat becomes the start wobble of the new clock beat
+		m_clockState.startWobbleSampleOffset = m_clockState.endWobbleSampleOffset;
+
+		// Generate new wonkiness
+		m_wonkiness.determineWonkiness(m_inputData);
+		m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
+		m_listener->waverChanged(m_wonkiness.getWaverAmount(), m_inputData.waverAmount);
+		m_listener->wobbleChanged(m_wonkiness.getWobbleAmount(), m_inputData.wobbleAmount);
+
+		// Calculate the actual length to use for the current wonky clock output, taking any (carried over) wobble, waver and wander into account
+		updateWonkyClockDuration();
+
+		// If the sub-clocks changed since the last main clock signal, redetect which are present
+		if (m_subClockState.clocksChanged) {
+			m_subClockState.clocksChanged = false;
+			detectSubClocks();
 		}
-
-		// If there was any amount of clock duration left from the last tick (due to a negative wobble amount), add that to the duration of the new clock
-		m_clockState.clockSampleDuration += remainingWobble;
-
-		// Now we can determine the amount of time the gate should remain high based on the impact of waver and wobble (and add the remaining wobble of the last clock cycle)
-		m_clockState.gateDuration = ((m_clockState.clockSampleDuration + m_clockState.currentWobbleSampleOffset) / 2) + m_clockState.wobbleDelay;
 
 		// Determine the new sub clock data now that the new main clock data is available
 		distributeSubClocks();
 		// Reset the position of the sub clock tick progress
 		m_subClockState.familyTickProgress.fill(0);
+
+		if (m_reset) {
+			// Reset  the counter for the divided clocks upon reset
+			m_clockState.dividedClockProgress = 0;
+			// And clear the reset flag
+			m_reset = false;
+		}
+
+		// Trigger the main clock
+		updateMainClockState(true);
 	} else if ((m_clockState.gateHigh) && (m_clockState.sampleProgress >= m_clockState.gateDuration)) {
 		// We're past the halfway mark of the clock, so the gate goes low
-		m_clockState.gateHigh = false;
-		m_listener->clockGateChanged(-1, false);
+		updateMainClockState(false);
 	}
-	// If there is a wobbleDelay present, we're still processing the wobble of the previous gate
-	else if (m_clockState.wobbleDelay > 0) {
-		m_clockState.wobbleDelay--;
-		if ((m_clockState.wobbleDelay == 0) && (!m_clockState.gateHigh)) {
-			// We completed the previous wobble, so the gate can go high now
-			triggerMainClock();
-		}
-	}
+
+	// if (m_reset) {
+	// 	// A reset clears any accumulated progress, wonky carryover or state and starts a new clock
+	// 	m_clockState.gateHigh = false;
+	// 	m_clockState.sampleProgress = 0;
+	// 	m_clockState.dividedClockProgress = 0;
+
+	// 	m_clockState.startWobbleSampleOffset = 0;
+	// 	m_clockState.endWobbleSampleOffset = 0;
+	// 	m_clockState.clockDrift = 0.;
+
+	// 	m_reset = false;
+	// 	triggerClock = true;
+	// } else {
+	// 	// Check if we passed over the clock boundary
+	// 	if (m_clockState.sampleProgress >= m_clockState.clockSampleDuration) {
+	// 		// Reset the progress
+	// 		m_clockState.sampleProgress = 0;
+
+	// 		// If we're end-wobbling (there was a negative end wobble, so the next clock has already been started), we can stop that now
+	// 		if (m_clockState.isEndWobbling) {
+	// 			m_clockState.isEndWobbling = false;
+	// 		} else {
+	// 			if (m_clockState.endWobbleSampleOffset > 0) {
+	// 				// If there is a positive end wobble amount, this wobbly clock signal should still continue in the start of the next clock signal
+	// 				m_clockState.startWobbleSampleOffset = m_clockState.endWobbleSampleOffset;
+	// 				m_clockState.isStartWobbling = true;
+	// 				calculateClock = true;
+	// 			} else {
+	// 				// This can only be reached if there is no start or end wobble, so the clock is without wobble. Calculate and trigger it now
+	// 				m_clockState.startWobbleSampleOffset = 0;
+	// 				m_clockState.isStartWobbling = false;
+	// 				calculateClock = true;
+	// 				triggerClock = true;
+	// 			}
+	// 		}
+	// 	} else if (m_clockState.sampleProgress >= m_clockState.clockSampleDuration + m_clockState.endWobbleSampleOffset) {
+	// 		// If we passed over the boundary of a negative (i.e. earlier) wobbly clock, the next clock should already be calculated and we'll enter the end-wobbling state
+	// 		m_clockState.isEndWobbling = true;
+	// 		calculateClock = true;
+	// 		triggerClock = true;
+	// 	}
+	// }
+
+	// if (calculateClock) {
+	// 	// If the sub-clocks changed since the last main clock signal, redetect which are present
+	// 	if (m_subClockState.clocksChanged) {
+	// 		m_subClockState.clocksChanged = false;
+	// 		detectSubClocks();
+	// 	}
+
+	// 	// Generate new wonkiness
+	// 	m_wonkiness.determineWonkiness(m_inputData);
+	// 	m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
+	// 	m_listener->waverChanged(m_wonkiness.getWaverAmount(), m_inputData.waverAmount);
+	// 	m_listener->wobbleChanged(m_wonkiness.getWobbleAmount(), m_inputData.wobbleAmount);
+
+	// 	// Prepare the new clock data (taking the possible remaining amount of wobble into account)
+	// 	m_clockState.clockSampleDuration = static_cast<int>(m_clockState.clockDuration);
+	// 	// Determine drift to account for mismatches between sample rate and clock rate
+	// 	m_clockState.wonkyDrift += m_clockState.clockDrift;
+	// 	if (m_clockState.wonkyDrift >= 1.f) {
+	// 		m_clockState.clockSampleDuration++;
+	// 		m_clockState.wonkyDrift--;
+	// 	}
+	// 	if (m_wonkiness.isWonky()) {
+	// 		// If there is wonkiness, apply it
+	// 		updateWonkiness();
+	// 	} else {
+	// 		// No wonkiness, so set all the other clock parameters to a simple clock with a half-duration gate
+	// 		m_clockState.endWobbleSampleOffset = 0;
+	// 	}
+	// }
+
+	// // If a reset was triggered or we passed over a clock boundary (the end of the clock signal, possibly occurring earlier or later because of wobble)
+	// if ((m_reset) || // If a reset was triggered
+	// 	(m_clockState.isStartWobbling && m_clockState.sampleProgress >= m_clockState.startWobbleSampleOffset) || // Or we completed the end-wobble that was delaying the previous clock beat
+	// 	(m_clockState.sampleProgress >= m_clockState.clockSampleDuration + m_clockState.endWobbleSampleOffset) // Or we completed the current clock beat that moved forward due to a negative wobble
+	// ) {
+		// // Reset the progress
+		// m_clockState.sampleProgress = 0;
+		// m_reset = false;
+
+		// // If the sub-clocks changed since the last main clock signal, redetect which are present
+		// if (m_subClockState.clocksChanged) {
+		// 	m_subClockState.clocksChanged = false;
+		// 	detectSubClocks();
+		// }
+
+		// // If there is a positive wobble sample offset, we'll have to delay the gate signal
+		// m_clockState.startWobbleSampleOffset = std::max(0, m_clockState.endWobbleSampleOffset);
+		// // If there is no start wobble offset, the gate for the next clock beat will go high now
+		// if ((m_clockState.startWobbleSampleOffset == 0) && (!m_clockState.gateHigh)) {
+		// 	triggerMainClock();
+		// }
+
+		// // Generate new wonkiness
+		// m_wonkiness.determineWonkiness(m_inputData);
+		// m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
+		// m_listener->waverChanged(m_wonkiness.getWaverAmount(), m_inputData.waverAmount);
+		// m_listener->wobbleChanged(m_wonkiness.getWobbleAmount(), m_inputData.wobbleAmount);
+
+		// // Prepare the new clock data (taking the possible remaining amount of wobble into account)
+		// m_clockState.clockSampleDuration = static_cast<int>(m_clockState.clockDuration);
+		// // Determine drift to account for mismatches between sample rate and clock rate
+		// m_clockState.wonkyDrift += m_clockState.clockDrift;
+		// if (m_clockState.wonkyDrift >= 1.f) {
+		// 	m_clockState.clockSampleDuration++;
+		// 	m_clockState.wonkyDrift--;
+		// }
+		// if (m_wonkiness.isWonky()) {
+		// 	// If there is wonkiness, apply it
+		// 	updateWonkiness();
+		// } else {
+		// 	// No wonkiness, so set all the other clock parameters to a simple clock with a half-duration gate
+		// 	m_clockState.endWobbleSampleOffset = 0;
+		// }
+
+		// // If there was any amount of clock duration left from the last tick (due to a negative wobble amount), add that to the duration of the new clock
+		// m_clockState.clockSampleDuration += remainingWobble;
+
+		// Now we can determine the amount of time the gate should remain high based on the impact of waver and wobble (and add the remaining wobble of the last clock cycle)
+		// m_clockState.gateDuration = ((m_clockState.clockSampleDuration + m_clockState.currentWobbleSampleOffset) / 2) + m_clockState.wobbleDelay;
+
+		// // Determine the new sub clock data now that the new main clock data is available
+		// distributeSubClocks();
+		// // Reset the position of the sub clock tick progress
+		// m_subClockState.familyTickProgress.fill(0);
+	// } else if ((m_clockState.gateHigh) && (m_clockState.sampleProgress >= m_clockState.gateDuration)) {
+	// 	// We're past the halfway mark of the clock, so the gate goes low
+	// 	m_clockState.gateHigh = false;
+	// 	m_listener->clockGateChanged(-1, false);
+	// }
+	// // If there is a wobbleDelay present, we're still processing the wobble of the previous gate
+	// else if (m_clockState.wobbleDelay > 0) {
+	// 	m_clockState.wobbleDelay--;
+	// 	if ((m_clockState.wobbleDelay == 0) && (!m_clockState.gateHigh)) {
+	// 		// We completed the previous wobble, so the gate can go high now
+	// 		triggerMainClock();
+	// 	}
+	// }
 
 	// Check for each of the active families whether they passed over a tick boundary
 	for (int i = 0; i < 4; i++) {
 		if (m_subClockState.familyTickProgress[i] < m_subClockState.familyClockTicksOffsets[i].size() && m_subClockState.familyClockTicksOffsets[i][m_subClockState.familyTickProgress[i]] <= m_clockState.sampleProgress) {
 			const WonkySubClockTickActions& clockTickActions = wonkyClockTickActions[i][m_subClockState.familyTickProgress[i]];
-			triggerSubClocks(clockTickActions.clockHigh, clockTickActions.clockLow);
+			updateSubClockStates(clockTickActions.clockHigh, clockTickActions.clockLow);
 			m_subClockState.familyTickProgress[i]++;
 		}
 	}
@@ -358,67 +468,98 @@ void WonkyCore::updateBpm(int bpm) {
 	m_clockState.wonkyDrift = 0.;
 }
 
-void WonkyCore::updateWonkiness() {
+void WonkyCore::updateWonkyClockDuration() {
+	// First set the wonky clock duration equal to the duration of the stable clock
+	m_clockState.wonkyClockSampleDuration = m_clockState.clockSampleDuration;
+
 	// If there is a wander amount, apply it to the duration of the clock signal
 	if (m_wonkiness.getWanderAmount() != 0.f) {
-		m_clockState.clockSampleDuration *= 1.f + (m_wonkiness.getWanderAmount() / 100.f);
+		m_clockState.wonkyClockSampleDuration *= 1.f + (m_wonkiness.getWanderAmount() / 100.f);
 	}
 
-	// First apply the waver amount, since it moves the whole clock forward or backwards
+	// Then apply the waver amount first, since it moves the whole clock forward or backwards
 	if (m_wonkiness.getWaverAmount() != 0.f) {
-		m_clockState.clockSampleDuration += (float) m_clockState.clockSampleDuration * m_wonkiness.getWaverAmount() / 100.f;
+		m_clockState.wonkyClockSampleDuration += (float) m_clockState.wonkyClockSampleDuration * m_wonkiness.getWaverAmount() / 100.f;
 	}
 
-	// Then calculate how much wobble is to be applied
+	// Finally calculate how much wobble is to be applied to the end of the clock
 	if (m_wonkiness.getWobbleAmount() != 0.f) {
-		m_clockState.currentWobbleSampleOffset = static_cast<int>((float) m_clockState.clockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f);
+		m_clockState.endWobbleSampleOffset = static_cast<int>((float) m_clockState.wonkyClockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f);
 	}
+
+	// Remove the start wobble duration from the clock duration (remove, since a positive wobble of the previous clock causes the current clock to be shorter)
+	m_clockState.wonkyClockSampleDuration -= m_clockState.startWobbleSampleOffset;
+	// Add the end wobble duration from the clock duration (add, since a positive wobble causes the clock to become longer)
+	m_clockState.wonkyClockSampleDuration += m_clockState.endWobbleSampleOffset;
+
+	// Now that we know the wonky clock duration, determine when it should go from high to low
+	m_clockState.gateDuration = m_clockState.wonkyClockSampleDuration / 2;
+
 }
 
 void WonkyCore::detectSubClocks() {
-	// Check which multiplier families have active clocks and which slow clocks are present
+	// Reset the subclock data
 	m_subClockState.hasSubClock.fill(false);
-	m_subClockState.activeSlowClocks.clear();
-	for (const ClockRatioData* clockRate : m_inputData.clockRates) {
+	m_subClockState.slowClockIndices.clear();
+
+	// Check which multiplier families have active clocks and which slow clocks are present
+	for (unsigned int i = 0; i < m_inputData.clockRates.size(); i++) {
+		const ClockRatioData* clockRate = m_inputData.clockRates[i];
 		int familyIndex = clockRatioFamilyToIndex(clockRate->family);
 		if (familyIndex != -1) {
 			m_subClockState.hasSubClock[familyIndex] = true;
 		} else {
-			if (std::find(m_subClockState.activeSlowClocks.begin(), m_subClockState.activeSlowClocks.end(), clockRate->id) == m_subClockState.activeSlowClocks.end()) {
-				m_subClockState.activeSlowClocks.push_back(clockRate->id);
-			}
+			m_subClockState.slowClockIndices.push_back(i);
 		}
 	}
 }
 
 void WonkyCore::distributeSubClocks() {
-	int startPosition = m_clockState.wobbleDelay; // The clock starts when the wobble of the last clock
-	float clockDuration = m_clockState.clockSampleDuration - startPosition;
 	for (int i = 0; i < 4; i++) {
 		if (m_subClockState.hasSubClock[i]) {
 			for (unsigned int j = 0; j < wonkyClockTickActions[i].size(); j++) {
-				m_subClockState.familyClockTicksOffsets[i][j] = startPosition + static_cast<int>(clockDuration * j / wonkyClockTickActions[i].size());
+				m_subClockState.familyClockTicksOffsets[i][j] = static_cast<int>(m_clockState.wonkyClockSampleDuration * j / wonkyClockTickActions[i].size());
 			}
 		}
 	}
 }
 
-void WonkyCore::triggerMainClock() {
-	// Trigger the main clock
-	m_clockState.gateHigh = true;
-	m_clockState.dividedClockProgress = (m_clockState.dividedClockProgress + 1) % 64;
-	m_listener->clockGateChanged(-1, true);
+void WonkyCore::updateMainClockState(bool high) {
+	// Update the main clock state
+	m_clockState.gateHigh = high;
+	m_listener->clockGateChanged(-1, high);
 
-	// // Run through the active divided clocks and progress them
-	// for (WonkySubClockState& subClockState : m_divSubClocks) {
-	// 	subClockState.currentFamilyTick++;
-	// 	if (subClockState.currentFamilyTick >= subClockState.familyTickPerClockTick) {
-	// 		// TODO: send out the gate and manage gate high/low (no wobble anymore?)
-	// 	}
-	// }
+	// Advance the divided clock progress if a new clock signal triggered
+	if (high) {
+		for (int index : m_subClockState.slowClockIndices) {
+			int ratio = m_inputData.clockRates[index]->ratio;
+			int position = m_clockState.dividedClockProgress % ratio;
+
+			if (position == 0) {
+				// A divided clock goes high when the position is at the start of the cycle
+				m_listener->clockGateChanged(index, true);
+			} else if (position == static_cast<float>(ratio) / 2.f) {
+				// And low when it reaches the half-way point of the ratio
+				m_listener->clockGateChanged(index, false);
+			}
+		}
+
+		// Advance the divided clock progress: Increase and take remainder of the Least Common Multiple of all divided clocks
+		m_clockState.dividedClockProgress = (m_clockState.dividedClockProgress + 1) % 6720;
+	} else {
+		// A divided clock with an uneven ratio goes low halfway between clock ticks (i.e. when the main clock goes low)
+		for (int index : m_subClockState.slowClockIndices) {
+			int ratio = m_inputData.clockRates[index]->ratio;
+			int position = m_clockState.dividedClockProgress % ratio;
+
+			if (0.5f + position == static_cast<float>(ratio) / 2.f) {
+				m_listener->clockGateChanged(index, false);
+			}
+		}
+	}
 }
 
-void WonkyCore::triggerSubClocks(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds) {
+void WonkyCore::updateSubClockStates(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds) {
 	for (int i = 0; i < 8; i++) {
 		const ClockRatioData* clockRatio = m_inputData.clockRates[i];
 		if (clockRatio->id != ClockRatioId::NO_RATE) {

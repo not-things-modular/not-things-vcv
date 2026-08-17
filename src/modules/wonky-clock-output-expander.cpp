@@ -23,7 +23,7 @@ struct WonkyRatioParam : ParamQuantity {
 			index = 0;
 			for (int i = wonkyClockRatioCount - 1; i >= 0; i--) {
 				if (wonkyClockRatios[i].data.family == ClockRatioFamily::FAMILY_1 && wonkyClockRatios[i].data.ratio != 1.f) {
-					if (wonkyClockRatios[i].data.ratio <= displayValue) {
+					if (wonkyClockRatios[i].data.ratio >= -displayValue) {
 						index = i;
 						break;
 					}
