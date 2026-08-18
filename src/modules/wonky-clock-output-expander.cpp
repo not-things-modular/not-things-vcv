@@ -64,8 +64,6 @@ WonkyClockOutputExpanderModule::WonkyClockOutputExpanderModule() {
 		m_displayedRatios[i] = -1;
 		m_ratioLeds[i] = nullptr;
 	}
-
-	lights[LightId::LIGHT_WOBBLE].setBrightness(m_wobble);
 }
 
 void WonkyClockOutputExpanderModule::draw(const widget::Widget::DrawArgs& args) {
@@ -73,6 +71,7 @@ void WonkyClockOutputExpanderModule::draw(const widget::Widget::DrawArgs& args) 
 		int ratio = static_cast<int>(getParam(PARAM_RATIOS + i).getValue());
 		if ((ratio != m_displayedRatios[i]) && (m_ratioLeds[i] != nullptr)) {
 			m_ratioLeds[i]->setForegroundText(wonkyClockRatios[ratio].display);
+			m_displayedRatios[i] = ratio;
 		}
 	}
 }

@@ -17,7 +17,7 @@ constexpr std::array<WonkyClockRatio, wonkyClockRatioCount> wonkyClockRatios{{
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_64, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 64), "/ 64"),
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_32, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 32), "/ 32"),
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_16, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 16), " /16"),
-	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_12, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 12), " /16"),
+	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_12, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 12), " /12"),
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_8, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 8), " / 8"),
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_7, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 7), " / 7"),
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_DIV_6, wonky::ClockRatioType::RATIO_DIVIDE, wonky::ClockRatioFamily::FAMILY_1, 6), " / 6"),
@@ -50,7 +50,6 @@ struct WonkyClockOutputExpanderModule : NTModule, DrawListener {
 		NUM_OUTPUTS
 	};
 	enum LightId {
-		LIGHT_WOBBLE,
 		NUM_LIGHTS
 	};
 
@@ -62,9 +61,6 @@ struct WonkyClockOutputExpanderModule : NTModule, DrawListener {
 
 	private:
 		int m_displayedRatios[8];
-
-		dsp::BooleanTrigger m_wobbleTrigger;
-		bool m_wobble = true;
 };
 
 struct WonkyClockOutputExpanderWidget : NTModuleWidget {

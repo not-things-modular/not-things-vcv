@@ -220,6 +220,8 @@ WonkyCore::~WonkyCore() {
 }
 
 void WonkyCore::process(const WonkyInputData& inputData) {
+	bool shouldDistributeSubClocks = false;
+
 	// Check if the input data changed
 	if (m_inputData != inputData) {
 		// If the BPM changed, re-calculate the clock parameters
@@ -237,7 +239,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 
 		// If the clock rates or the bpm changed, recalculate the subdivision clocks information
 		if (bpmChanged) {
-			distributeSubClocks();
+			shouldDistributeSubClocks = true;
 		}
 	}
 
@@ -276,8 +278,8 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 			detectSubClocks();
 		}
 
-		// Determine the new sub clock data now that the new main clock data is available
-		distributeSubClocks();
+		// Flag that the sub clocks should be redistributed
+		shouldDistributeSubClocks = true;
 		// Reset the position of the sub clock tick progress
 		m_subClockState.familyTickProgress.fill(0);
 
@@ -293,6 +295,11 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 	} else if ((m_clockState.gateHigh) && (m_clockState.sampleProgress >= m_clockState.gateDuration)) {
 		// We're past the halfway mark of the clock, so the gate goes low
 		updateMainClockState(false);
+	}
+
+	// Determine the new sub clock data (if needed)
+	if (shouldDistributeSubClocks) {
+		distributeSubClocks();
 	}
 
 	// Check for each of the active families whether they passed over a tick boundary
@@ -313,7 +320,9 @@ void WonkyCore::reset() {
 	// And reset the high gate if needed
 	if (m_clockState.gateHigh) {
 		m_clockState.gateHigh = false;
-		m_listener->clockGateChanged(-1, false);
+		for (int i = -1; i < 8; i++) {
+			m_listener->clockGateChanged(i, false);
+		}
 	}
 }
 
@@ -344,6 +353,8 @@ void WonkyCore::updateWonkyClockDuration() {
 	// Finally calculate how much wobble is to be applied to the end of the clock
 	if (m_wonkiness.getWobbleAmount() != 0.f) {
 		m_clockState.endWobbleSampleOffset = static_cast<int>((float) m_clockState.wonkyClockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f);
+	} else {
+		m_clockState.endWobbleSampleOffset = 0;
 	}
 
 	// Remove the start wobble duration from the clock duration (remove, since a positive wobble of the previous clock causes the current clock to be shorter)
@@ -397,8 +408,8 @@ void WonkyCore::updateMainClockState(bool high) {
 			if (position == 0) {
 				// A divided clock goes high when the position is at the start of the cycle
 				m_listener->clockGateChanged(index, true);
-			} else if (position == static_cast<float>(ratio) / 2.f) {
-				// And low when it reaches the half-way point of the ratio
+			} else if ((ratio % 2 == 0) && (position == ratio / 2)) {
+				// And low when it reaches the half-way point of the ratio (but only if it is an even ratio)
 				m_listener->clockGateChanged(index, false);
 			}
 		}
@@ -409,10 +420,12 @@ void WonkyCore::updateMainClockState(bool high) {
 		// A divided clock with an uneven ratio goes low halfway between clock ticks (i.e. when the main clock goes low)
 		for (int index : m_subClockState.slowClockIndices) {
 			int ratio = m_inputData.clockRates[index]->ratio;
-			int position = m_clockState.dividedClockProgress % ratio;
+			if (ratio % 2 == 1) {
+				int position = m_clockState.dividedClockProgress % ratio;
 
-			if (0.5f + position == static_cast<float>(ratio) / 2.f) {
-				m_listener->clockGateChanged(index, false);
+				if (position == (ratio / 2) + 1) {
+					m_listener->clockGateChanged(index, false);
+				}
 			}
 		}
 	}
