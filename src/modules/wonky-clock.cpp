@@ -29,7 +29,7 @@ float determineCVImpact(float value, WonkyClockCVExpanderModule* expanderModule,
 	float cv = expanderModule->getInput(inputId).getVoltage();
 	if (cv != 0.f) {
 		result += (max - min) * (cv / 5.f);
-		result = std::max(std::min(result, maxBpm), minBpm);
+		result = std::max(std::min(result, max), min);
 	}
 
 	return result;
