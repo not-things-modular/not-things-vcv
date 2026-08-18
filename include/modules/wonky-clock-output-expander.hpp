@@ -35,6 +35,8 @@ constexpr std::array<WonkyClockRatio, wonkyClockRatioCount> wonkyClockRatios{{
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_MULT_8, wonky::ClockRatioType::RATIO_MULTIPLY, wonky::ClockRatioFamily::FAMILY_2, 8), " * 8"),
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_MULT_12, wonky::ClockRatioType::RATIO_MULTIPLY, wonky::ClockRatioFamily::FAMILY_3, 12), " *12"),
 	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_MULT_16, wonky::ClockRatioType::RATIO_MULTIPLY, wonky::ClockRatioFamily::FAMILY_2, 16), " *16"),
+	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_MULT_32, wonky::ClockRatioType::RATIO_MULTIPLY, wonky::ClockRatioFamily::FAMILY_2, 32), " *32"),
+	WonkyClockRatio(wonky::ClockRatioData(wonky::ClockRatioId::RATE_MULT_64, wonky::ClockRatioType::RATIO_MULTIPLY, wonky::ClockRatioFamily::FAMILY_2, 64), " *64"),
 }};
 
 struct WonkyClockOutputExpanderModule : NTModule, DrawListener {

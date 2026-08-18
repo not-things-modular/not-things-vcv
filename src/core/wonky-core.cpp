@@ -40,11 +40,13 @@ static const std::array<std::vector<WonkySubClockTickActions>, 4> wonkyClockTick
 	};
 
 	// The 2-based family has 16 possible clock beats, each going high and low, so reserve 32 ticks
-	result[family2Index].resize(32);
-	tickActionsPopulator(RATE_MULT_2, 8, result[family2Index]);
-	tickActionsPopulator(RATE_MULT_4, 4, result[family2Index]);
-	tickActionsPopulator(RATE_MULT_8, 2, result[family2Index]);
-	tickActionsPopulator(RATE_MULT_16, 1, result[family2Index]);
+	result[family2Index].resize(128);
+	tickActionsPopulator(RATE_MULT_2, 32, result[family2Index]);
+	tickActionsPopulator(RATE_MULT_4, 16, result[family2Index]);
+	tickActionsPopulator(RATE_MULT_8, 8, result[family2Index]);
+	tickActionsPopulator(RATE_MULT_16, 4, result[family2Index]);
+	tickActionsPopulator(RATE_MULT_32, 2, result[family2Index]);
+	tickActionsPopulator(RATE_MULT_64, 1, result[family2Index]);
 
 	// The 3-based family has 12 possible clock beats, each going high and low, so reserve 24 ticks
 	result[family3Index].resize(24);
@@ -323,7 +325,7 @@ void WonkyCore::reset() {
 	if (m_clockState.gateHigh) {
 		m_clockState.gateHigh = false;
 		// Disable all clock outputs, starting from -1 (the main clock index)
-		for (int i = -1; i < m_inputData.clockRates.size(); i++) {
+		for (int i = -1; i < (int) m_inputData.clockRates.size(); i++) {
 			m_listener->clockGateChanged(i, false);
 		}
 	}
@@ -438,7 +440,7 @@ void WonkyCore::updateMainClockState(bool high) {
 }
 
 void WonkyCore::updateSubClockStates(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds) {
-	for (int i = 0; i < m_inputData.clockRates.size(); i++) {
+	for (unsigned int i = 0; i < m_inputData.clockRates.size(); i++) {
 		const ClockRatioData* clockRatio = m_inputData.clockRates[i];
 		if (clockRatio->id != ClockRatioId::NO_RATE) {
 			if (std::find(highRatioIds.begin(), highRatioIds.end(), clockRatio->id) != highRatioIds.end()) {
