@@ -2,6 +2,7 @@
 #include <limits>
 #include <random>
 #include <algorithm>
+#include <cmath>
 
 using namespace wonky;
 
@@ -14,9 +15,10 @@ constexpr int family3Index = 1;
 constexpr int family5Index = 2;
 constexpr int family7Index = 3;
 
-struct WonkySubClockTickActions {
-	WonkySubClockTickActions() {};
+// The least common multiple of the divided clock ratios
+constexpr int lcmDivisionRatio = 6720;
 
+struct WonkySubClockTickActions {
 	// Which clock ratios go from low to high at this tick
 	std::vector<ClockRatioId> clockHigh;
 	// Which clock ratios go from high to low at this tick
@@ -76,13 +78,13 @@ float getWobbleAmount(const WonkyInputData& inputData, Randomizer* randomizer) {
 }
 
 int clockRatioFamilyToIndex(ClockRatioFamily family) {
-    switch (family) {
-        case FAMILY_2: return family2Index;
-        case FAMILY_3: return family3Index;
-        case FAMILY_5: return family5Index;
-        case FAMILY_7: return family7Index;
-        default: return -1; // FAMILY_0/FAMILY_1 don't need family data at all
-    }
+	switch (family) {
+		case FAMILY_2: return family2Index;
+		case FAMILY_3: return family3Index;
+		case FAMILY_5: return family5Index;
+		case FAMILY_7: return family7Index;
+	default: return -1; // FAMILY_0/FAMILY_1 don't need family data at all
+	}
 }
 
 bool ClockRatioData::operator==(const ClockRatioData& other) const {
@@ -284,7 +286,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		m_subClockState.familyTickProgress.fill(0);
 
 		if (m_reset) {
-			// Reset  the counter for the divided clocks upon reset
+			// Reset the counter for the divided clocks upon reset
 			m_clockState.dividedClockProgress = 0;
 			// And clear the reset flag
 			m_reset = false;
@@ -320,13 +322,14 @@ void WonkyCore::reset() {
 	// And reset the high gate if needed
 	if (m_clockState.gateHigh) {
 		m_clockState.gateHigh = false;
-		for (int i = -1; i < 8; i++) {
+		// Disable all clock outputs, starting from -1 (the main clock index)
+		for (int i = -1; i < m_inputData.clockRates.size(); i++) {
 			m_listener->clockGateChanged(i, false);
 		}
 	}
 }
 
-void WonkyCore::updateBpm(int bpm) {
+void WonkyCore::updateBpm(float bpm) {
 	double samplesPerMinute = (double) m_sampleRateReader->getSampleRate() * 60;
 	m_clockState.clockDuration = samplesPerMinute / bpm;
 	m_clockState.clockSampleDuration = static_cast<int>(m_clockState.clockDuration);
@@ -337,17 +340,17 @@ void WonkyCore::updateBpm(int bpm) {
 }
 
 void WonkyCore::updateWonkyClockDuration() {
-	// First set the wonky clock duration equal to the duration of the stable clock
-	m_clockState.wonkyClockSampleDuration = m_clockState.clockSampleDuration;
+	// First set the wonky clock duration equal to the duration of the stable clock (as a float for the upcoming calculations)
+	float wonkyClockSampleDuration = m_clockState.clockSampleDuration;
 
 	// If there is a wander amount, apply it to the duration of the clock signal
 	if (m_wonkiness.getWanderAmount() != 0.f) {
-		m_clockState.wonkyClockSampleDuration *= 1.f + (m_wonkiness.getWanderAmount() / 100.f);
+		wonkyClockSampleDuration *= 1.f + (m_wonkiness.getWanderAmount() / 100.f);
 	}
 
 	// Then apply the waver amount first, since it moves the whole clock forward or backwards
 	if (m_wonkiness.getWaverAmount() != 0.f) {
-		m_clockState.wonkyClockSampleDuration += (float) m_clockState.wonkyClockSampleDuration * m_wonkiness.getWaverAmount() / 100.f;
+		wonkyClockSampleDuration += (float) wonkyClockSampleDuration * m_wonkiness.getWaverAmount() / 100.f;
 	}
 
 	// Finally calculate how much wobble is to be applied to the end of the clock
@@ -358,9 +361,12 @@ void WonkyCore::updateWonkyClockDuration() {
 	}
 
 	// Remove the start wobble duration from the clock duration (remove, since a positive wobble of the previous clock causes the current clock to be shorter)
-	m_clockState.wonkyClockSampleDuration -= m_clockState.startWobbleSampleOffset;
+	wonkyClockSampleDuration -= m_clockState.startWobbleSampleOffset;
 	// Add the end wobble duration from the clock duration (add, since a positive wobble causes the clock to become longer)
-	m_clockState.wonkyClockSampleDuration += m_clockState.endWobbleSampleOffset;
+	wonkyClockSampleDuration += m_clockState.endWobbleSampleOffset;
+
+	// Assign the resulting duratino to the clock state (converting back to an int)
+	m_clockState.wonkyClockSampleDuration = static_cast<int>(wonkyClockSampleDuration);
 
 	// Now that we know the wonky clock duration, determine when it should go from high to low
 	m_clockState.gateDuration = m_clockState.wonkyClockSampleDuration / 2;
@@ -415,7 +421,7 @@ void WonkyCore::updateMainClockState(bool high) {
 		}
 
 		// Advance the divided clock progress: Increase and take remainder of the Least Common Multiple of all divided clocks
-		m_clockState.dividedClockProgress = (m_clockState.dividedClockProgress + 1) % 6720;
+		m_clockState.dividedClockProgress = (m_clockState.dividedClockProgress + 1) % lcmDivisionRatio;
 	} else {
 		// A divided clock with an uneven ratio goes low halfway between clock ticks (i.e. when the main clock goes low)
 		for (int index : m_subClockState.slowClockIndices) {
@@ -432,7 +438,7 @@ void WonkyCore::updateMainClockState(bool high) {
 }
 
 void WonkyCore::updateSubClockStates(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds) {
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < m_inputData.clockRates.size(); i++) {
 		const ClockRatioData* clockRatio = m_inputData.clockRates[i];
 		if (clockRatio->id != ClockRatioId::NO_RATE) {
 			if (std::find(highRatioIds.begin(), highRatioIds.end(), clockRatio->id) != highRatioIds.end()) {

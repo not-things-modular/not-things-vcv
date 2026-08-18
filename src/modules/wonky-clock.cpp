@@ -89,8 +89,8 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		m_runPulse.trigger(0.001f);
 	}
 
-	int runOutputVoltage = m_runPulse.process(args.sampleTime) ? 10.f : 0.f;
-	int resetOutputVoltage = m_resetPulse.process(args.sampleTime) ? 10.f : 0.f;
+	float runOutputVoltage = m_runPulse.process(args.sampleTime) ? 10.f : 0.f;
+	float resetOutputVoltage = m_resetPulse.process(args.sampleTime) ? 10.f : 0.f;
 
 	WonkyClockCVExpanderModule* cvExpanderModule = getCVExpander();
 	if (cvExpanderModule != nullptr) {

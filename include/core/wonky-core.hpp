@@ -6,10 +6,12 @@
 namespace wonky {
 
 struct SampleRateReader {
+	virtual ~SampleRateReader() {};
 	virtual float getSampleRate() const = 0;
 };
 
 struct WonkyListener {
+	virtual ~WonkyListener() {};
 	virtual void clockGateChanged(int index, bool high) = 0;
 	virtual void wanderChanged(float wander, float max) = 0;
 	virtual void waverChanged(float waver, float max) = 0;
@@ -188,7 +190,7 @@ struct WonkyCore {
 
 		bool m_reset = false;
 
-		void updateBpm(int bpm);
+		void updateBpm(float bpm);
 		void updateWonkyClockDuration();
 
 		void detectSubClocks();
