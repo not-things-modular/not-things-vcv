@@ -152,6 +152,10 @@ void WonkyClockModule::draw(const widget::Widget::DrawArgs& args) {
 	lights[LightId::LIGHT_RESET].setBrightnessSmooth(0.f, .01f, 20.f);
 }
 
+void WonkyClockModule::onSampleRateChange(const SampleRateChangeEvent& e) {
+	m_core->sampleRateChanged();
+}
+
 float WonkyClockModule::getSampleRate() const {
 	return APP->engine->getSampleRate();
 }

@@ -226,13 +226,15 @@ WonkyCore::~WonkyCore() {
 void WonkyCore::process(const WonkyInputData& inputData) {
 	bool shouldDistributeSubClocks = false;
 
-	// Check if the input data changed
-	if (m_inputData != inputData) {
-		// If the BPM changed, re-calculate the clock parameters
-		bool bpmChanged = m_inputData.bpm != inputData.bpm;
-		if (bpmChanged) {
+	// Check if the input data changed or the sample rate changed
+	if ((m_inputData != inputData) || (m_sampleRateChanged)) {
+		// If the BPM changed (or the sample rate changed, which also influences the bpm-to-sample ratio), re-calculate the clock parameters
+		bool bpmChanged = (m_inputData.bpm != inputData.bpm);
+		if (bpmChanged || m_sampleRateChanged) {
 			updateBpm(inputData.bpm);
 			updateWonkyClockDuration();
+
+			m_sampleRateChanged = false;
 		}
 
 		// Check if the clock rates changed
@@ -331,6 +333,10 @@ void WonkyCore::reset() {
 	}
 }
 
+void WonkyCore::sampleRateChanged() {
+	m_sampleRateChanged = true;
+}
+
 void WonkyCore::updateBpm(float bpm) {
 	double samplesPerMinute = (double) m_sampleRateReader->getSampleRate() * 60;
 	m_clockState.clockDuration = samplesPerMinute / bpm;
@@ -411,14 +417,19 @@ void WonkyCore::updateMainClockState(bool high) {
 	if (high) {
 		for (int index : m_subClockState.slowClockIndices) {
 			int ratio = m_inputData.clockRates[index]->ratio;
-			int position = m_clockState.dividedClockProgress % ratio;
-
-			if (position == 0) {
-				// A divided clock goes high when the position is at the start of the cycle
+			if (ratio == 1) {
+				// The clock runs at the same rate as the main clock, so just let it follow along with the main clock
 				m_listener->clockGateChanged(index, true);
-			} else if ((ratio % 2 == 0) && (position == ratio / 2)) {
-				// And low when it reaches the half-way point of the ratio (but only if it is an even ratio)
-				m_listener->clockGateChanged(index, false);
+			} else {
+				int position = m_clockState.dividedClockProgress % ratio;
+
+				if (position == 0) {
+					// A divided clock goes high when the position is at the start of the cycle
+					m_listener->clockGateChanged(index, true);
+				} else if ((ratio % 2 == 0) && (position == ratio / 2)) {
+					// And low when it reaches the half-way point of the ratio (but only if it is an even ratio)
+					m_listener->clockGateChanged(index, false);
+				}
 			}
 		}
 
@@ -428,7 +439,11 @@ void WonkyCore::updateMainClockState(bool high) {
 		// A divided clock with an uneven ratio goes low halfway between clock ticks (i.e. when the main clock goes low)
 		for (int index : m_subClockState.slowClockIndices) {
 			int ratio = m_inputData.clockRates[index]->ratio;
-			if (ratio % 2 == 1) {
+			if (ratio == 1) {
+				// The clock runs at the same rate as the main clock, so just let it follow along with the main clock
+				m_listener->clockGateChanged(index, false);
+			}
+			else if (ratio % 2 == 1) {
 				int position = m_clockState.dividedClockProgress % ratio;
 
 				if (position == (ratio / 2) + 1) {

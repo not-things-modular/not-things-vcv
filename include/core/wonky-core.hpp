@@ -179,6 +179,7 @@ struct WonkyCore {
 
 	void process(const WonkyInputData& inputData);
 	void reset();
+	void sampleRateChanged();
 
 	private:
 		const SampleRateReader* m_sampleRateReader;
@@ -191,6 +192,7 @@ struct WonkyCore {
 		WonkySubClockState m_subClockState;
 
 		bool m_reset = false;
+		bool m_sampleRateChanged = false;
 
 		void updateBpm(float bpm);
 		void updateWonkyClockDuration();
