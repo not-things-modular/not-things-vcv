@@ -25,14 +25,15 @@ struct Randomizer {
 };
 
 enum ClockRatioFamily {
-	// Set the value of the enum to the number of main clock ticks in one tick of the family
-	// so that we can use it as a divisor during processing
-	FAMILY_0 = 0, // the main clock (i.e x1)
-	FAMILY_1 = 1, // all divider ratios
-	FAMILY_2 = 2, // x2, x4, x8 and x16
-	FAMILY_3 = 3, // x3, x6 and x12
-	FAMILY_5 = 5, // x5
-	FAMILY_7 = 7  // x7
+	FAMILY_0, // The main clock rate
+	FAMILY_1, // The slower-then-main clocks
+	FAMILY_2, // Clocks that run at multiples of two of the main clock
+	FAMILY_3_2, // Clocks that run at three times the speed of the main clock, each time multiplying by 2 (3, 6, 12, ...)
+	FAMILY_5_2, // Clocks that run at five times the speed of the main clock, each time multiplying by 2 (5, 10, 20, ...)
+	FAMILY_7_2, // Clocks that run at seven times the speed of the main clock, each time multiplying by 2 (7, 14, 28, ...)
+	FAMILY_3_3, // Clocks that run at three times the speed of the main clock, each time multiplying by 3 (3, 9, 27, ...)
+	FAMILY_5_5, // Clocks that run at five times the speed of the main clock, each time multiplying by 5 (5, 25)
+	FAMILY_7_7 // Clocks that run at seven times the speed of the main clock, each time multiplying by 7 )49)
 };
 
 enum ClockRatioType {
@@ -40,11 +41,31 @@ enum ClockRatioType {
 	RATIO_MULTIPLY, // The clock is faster then the main clock
 };
 
+// Included clock ratios:
+// - Multiples of two (2, 4, 8, 16, ...)
+// - Triplets, each time doubling in amount (3, 6, 12, ...)
+// - triplets, multiplying by 3 (3, 9, 18, ...)
+// - Five-based clocks, each time doubling in amount (5, 10, 20, ...)
+// - Five-based clocks, each time multiplying by 5 (5, 25)
+// - Seven-based clocks, each time mutliplying by 7 (7, 49)
+// All with a maximum of 64
 enum ClockRatioId {
 	RATE_DIV_64,
+	RATE_DIV_56,
+	RATE_DIV_49,
+	RATE_DIV_48,
+	RATE_DIV_40,
 	RATE_DIV_32,
+	RATE_DIV_28,
+	RATE_DIV_27,
+	RATE_DIV_25,
+	RATE_DIV_24,
+	RATE_DIV_20,
 	RATE_DIV_16,
+	RATE_DIV_14,
 	RATE_DIV_12,
+	RATE_DIV_10,
+	RATE_DIV_9,
 	RATE_DIV_8,
 	RATE_DIV_7,
 	RATE_DIV_6,
@@ -60,9 +81,21 @@ enum ClockRatioId {
 	RATE_MULT_6,
 	RATE_MULT_7,
 	RATE_MULT_8,
+	RATE_MULT_9,
+	RATE_MULT_10,
 	RATE_MULT_12,
+	RATE_MULT_14,
 	RATE_MULT_16,
+	RATE_MULT_20,
+	RATE_MULT_24,
+	RATE_MULT_25,
+	RATE_MULT_27,
+	RATE_MULT_28,
 	RATE_MULT_32,
+	RATE_MULT_40,
+	RATE_MULT_48,
+	RATE_MULT_49,
+	RATE_MULT_56,
 	RATE_MULT_64,
 
 	RATE_COUNT,
@@ -167,9 +200,9 @@ struct WonkySubClockState {
 	// The indices on the inputs where slow clocks are active
 	std::vector<int> slowClockIndices;
 	// The ticks for each family of clock multiplications
-	std::array<std::vector<int>, 4> familyClockTicksOffsets;
+	std::array<std::vector<int>, 7> familyClockTicksOffsets;
 	// The currently active sub clock tick in each family
-	std::array<unsigned int, 4> familyTickProgress;
+	std::array<unsigned int, 7> familyTickProgress;
 };
 
 struct WonkyCore {

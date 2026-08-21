@@ -2,6 +2,7 @@
 #include "components/leddisplay.hpp"
 #include "components/ntport.hpp"
 #include "components/ntknob.hpp"
+#include <cmath>
 
 #include "core/wonky-core.hpp"
 
@@ -57,7 +58,7 @@ WonkyClockOutputExpanderModule::WonkyClockOutputExpanderModule() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
 	for (int i = 0; i < 8; i++) {
-		configParam<WonkyRatioParam>(PARAM_RATIOS + i, 0.f, wonkyClockRatioCount - 1, 11.f, string::f("Clock Ratio %d", (i + 1)));
+		configParam<WonkyRatioParam>(PARAM_RATIOS + i, 0.f, wonkyClockRatioCount - 1, wonkyClockRatioCount / 2, string::f("Clock Ratio %d", (i + 1)));
 		paramQuantities[PARAM_RATIOS + i]->snapEnabled = true;
 		configOutput(OUT_CLOCKS + i, string::f("Clock %d", (i + 1)));
 
