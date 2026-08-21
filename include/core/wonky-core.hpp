@@ -37,7 +37,7 @@ enum ClockRatioFamily {
 };
 
 enum ClockRatioType {
-	RATIO_DIVIDE, // The clock is slower then the main clock
+	RATIO_DIVIDE, // The clock is slower then (or equal to) the main clock
 	RATIO_MULTIPLY, // The clock is faster then the main clock
 };
 
@@ -189,20 +189,14 @@ struct WonkyClockState {
 };
 
 struct WonkySubClockState {
-	WonkySubClockState();
-
 	// Flag to indicate that subclocks changed in the input, so they have to be re-evaluated on the start of the next main clock
 	bool clocksChanged = false;
 
-	// Flag to indicate for each subclock family if there are any clocks active for it
-	std::array<bool, 4> hasSubClock;
-
 	// The indices on the inputs where slow clocks are active
 	std::vector<int> slowClockIndices;
-	// The ticks for each family of clock multiplications
-	std::array<std::vector<int>, 7> familyClockTicksOffsets;
-	// The currently active sub clock tick in each family
-	std::array<unsigned int, 7> familyTickProgress;
+
+	std::array<std::vector<int>, 8> fastClockDivisions;
+	std::array<unsigned int, 8> fastClockProgress;
 };
 
 struct WonkyCore {

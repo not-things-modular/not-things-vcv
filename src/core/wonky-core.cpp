@@ -10,84 +10,8 @@ constexpr float kMinTheta = 0.001f;
 constexpr float kMaxTheta = 0.35f;
 constexpr float kStdDevScale = 3.0f;
 
-constexpr int family2Base2Index = 0;
-constexpr int family3Base2Index = 1;
-constexpr int family5Base2Index = 2;
-constexpr int family7Base2Index = 3;
-constexpr int family3Base3Index = 4;
-constexpr int family5Base5Index = 5;
-constexpr int family7Base7Index = 6;
-
 // The least common multiple of the divided clock ratios
 constexpr int lcmDivisionRatio = 2116800;
-
-struct WonkySubClockTickActions {
-	// Which clock ratios go from low to high at this tick
-	std::vector<ClockRatioId> clockHigh;
-	// Which clock ratios go from high to low at this tick
-	std::vector<ClockRatioId> clockLow;
-};
-
-static const std::array<std::vector<WonkySubClockTickActions>, 7> wonkyClockTickActions = [] {
-	std::array<std::vector<WonkySubClockTickActions>, 7> result;
-
-	// Adds tick actions to a family based on the supplied step size within the family tick actions
-	auto tickActionsPopulator = [](ClockRatioId ratioId, int stepSize, std::vector<WonkySubClockTickActions>& tickActions) {
-		for (unsigned int i = 0; i < tickActions.size(); i += stepSize) {
-			if ((i / stepSize) % 2 == 0) {
-				tickActions[i].clockHigh.push_back(ratioId);
-			} else {
-				tickActions[i].clockLow.push_back(ratioId);
-			}
-		}
-	};
-
-	// The 2-based with 2 multiplication family has 64 possible clock beats, each going high and low, so reserve 128 ticks
-	result[family2Base2Index].resize(128);
-	tickActionsPopulator(RATE_MULT_2, 32, result[family2Base2Index]);
-	tickActionsPopulator(RATE_MULT_4, 16, result[family2Base2Index]);
-	tickActionsPopulator(RATE_MULT_8, 8, result[family2Base2Index]);
-	tickActionsPopulator(RATE_MULT_16, 4, result[family2Base2Index]);
-	tickActionsPopulator(RATE_MULT_32, 2, result[family2Base2Index]);
-	tickActionsPopulator(RATE_MULT_64, 1, result[family2Base2Index]);
-
-	// The 3-based with 2 multiplication family has 48 possible clock beats, each going high and low, so reserve 96 ticks
-	result[family3Base2Index].resize(96);
-	tickActionsPopulator(RATE_MULT_3, 16, result[family3Base2Index]);
-	tickActionsPopulator(RATE_MULT_6, 8, result[family3Base2Index]);
-	tickActionsPopulator(RATE_MULT_12, 4, result[family3Base2Index]);
-	tickActionsPopulator(RATE_MULT_24, 2, result[family3Base2Index]);
-	tickActionsPopulator(RATE_MULT_48, 1, result[family3Base2Index]);
-
-	// The 5-based with 2 multiplication family has 40 possible clock beats, each going high and low, so reserve 80 ticks
-	result[family5Base2Index].resize(80);
-	tickActionsPopulator(RATE_MULT_5, 8, result[family5Base2Index]);
-	tickActionsPopulator(RATE_MULT_10, 4, result[family5Base2Index]);
-	tickActionsPopulator(RATE_MULT_20, 2, result[family5Base2Index]);
-	tickActionsPopulator(RATE_MULT_40, 1, result[family5Base2Index]);
-
-	// The 7-based with 2 multiplication family has 56 possible clock beats, each going high and low, so reserve 112 ticks
-	result[family7Base2Index].resize(112);
-	tickActionsPopulator(RATE_MULT_7, 8, result[family7Base2Index]);
-	tickActionsPopulator(RATE_MULT_14, 4, result[family7Base2Index]);
-	tickActionsPopulator(RATE_MULT_28, 2, result[family7Base2Index]);
-	tickActionsPopulator(RATE_MULT_56, 1, result[family7Base2Index]);
-
-	// The 3-based with 3 multiplication family has 27 possible clock beats, each going high and low, so reserve 54 ticks
-	result[family3Base3Index].resize(54);
-	tickActionsPopulator(RATE_MULT_9, 3, result[family3Base3Index]);
-	tickActionsPopulator(RATE_MULT_27, 1, result[family3Base3Index]);
-
-	// The 5-based with 5 multiplication family has 25 possible clock beats, each going high and low, so reserve 50 ticks
-	result[family5Base5Index].resize(50);
-	tickActionsPopulator(RATE_MULT_25, 1, result[family5Base5Index]);
-
-	// The 7-based with 7 multiplication family has 49 possible clock beats, each going high and low, so reserve 98 ticks
-	result[family7Base7Index].resize(98);
-	tickActionsPopulator(RATE_MULT_49, 1, result[family7Base7Index]);
-
-	return result;
-}();
 
 float getWobbleAmount(const WonkyInputData& inputData, Randomizer* randomizer) {
 	float wobbleAmount = 0.f;
@@ -101,19 +25,6 @@ float getWobbleAmount(const WonkyInputData& inputData, Randomizer* randomizer) {
 	}
 
 	return wobbleAmount;
-}
-
-int clockRatioFamilyToIndex(ClockRatioFamily family) {
-	switch (family) {
-		case FAMILY_2: return family2Base2Index;
-		case FAMILY_3_2: return family3Base2Index;
-		case FAMILY_5_2: return family5Base2Index;
-		case FAMILY_7_2: return family7Base2Index;
-		case FAMILY_3_3: return family3Base3Index;
-		case FAMILY_5_5: return family5Base5Index;
-		case FAMILY_7_7: return family7Base7Index;
-	default: return -1; // FAMILY_0/FAMILY_1 don't need family data at all
-	}
 }
 
 bool ClockRatioData::operator==(const ClockRatioData& other) const {
@@ -231,18 +142,6 @@ struct WonkyRandomizer : Randomizer {
 		std::minstd_rand m_generator;
 };
 
-WonkySubClockState::WonkySubClockState() {
-	// By default, no clocks are present
-	hasSubClock.fill(false);
-
-	// Initialize the tick offset vectors to the number of items they can contain
-	for (int i = 0; i < 7; i++) {
-		familyClockTicksOffsets[i].resize(wonkyClockTickActions[i].size());
-	}
-	// Place the family tick progress counters to 0
-	familyTickProgress.fill(0);
-}
-
 WonkyCore::WonkyCore(const SampleRateReader* sampleRateReader, WonkyListener* listener) : WonkyCore(sampleRateReader, new WonkyRandomizer(), listener) {}
 WonkyCore::WonkyCore(const SampleRateReader* sampleRateReader, Randomizer* randomizer, WonkyListener* listener) : m_sampleRateReader(sampleRateReader), m_listener(listener), m_randomizer(randomizer), m_wonkiness(randomizer) {}
 
@@ -313,8 +212,8 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 
 		// Flag that the sub clocks should be redistributed
 		shouldDistributeSubClocks = true;
-		// Reset the position of the sub clock tick progress
-		m_subClockState.familyTickProgress.fill(0);
+		// Reset the position of the faster sub clock tick progress
+		m_subClockState.fastClockProgress.fill(0);
 
 		if (m_reset) {
 			// Reset the counter for the divided clocks upon reset
@@ -335,12 +234,15 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		distributeSubClocks();
 	}
 
-	// Check for each of the active families whether they passed over a tick boundary
-	for (int i = 0; i < 7; i++) {
-		if (m_subClockState.hasSubClock[i] && m_subClockState.familyTickProgress[i] < m_subClockState.familyClockTicksOffsets[i].size() && m_subClockState.familyClockTicksOffsets[i][m_subClockState.familyTickProgress[i]] <= m_clockState.sampleProgress) {
-			const WonkySubClockTickActions& clockTickActions = wonkyClockTickActions[i][m_subClockState.familyTickProgress[i]];
-			updateSubClockStates(clockTickActions.clockHigh, clockTickActions.clockLow);
-			m_subClockState.familyTickProgress[i]++;
+	// Check for each fast clock whether it passed over a tick boundary
+	for (int i = 0; i < 8; i++) {
+		const ClockRatioData* clockRatio = m_inputData.clockRates[i];
+		if (clockRatio->type == ClockRatioType::RATIO_MULTIPLY) {
+			unsigned int progress = m_subClockState.fastClockProgress[i];
+			if ((progress < m_subClockState.fastClockDivisions[i].size()) && (m_subClockState.fastClockDivisions[i][progress] <= m_clockState.sampleProgress)) {
+				m_listener->clockGateChanged(i, progress % 2 == 0);
+				m_subClockState.fastClockProgress[i]++;
+			}
 		}
 	}
 }
@@ -409,35 +311,21 @@ void WonkyCore::updateWonkyClockDuration() {
 }
 
 void WonkyCore::detectSubClocks() {
-	// Reset the subclock data
-	m_subClockState.hasSubClock.fill(false);
 	m_subClockState.slowClockIndices.clear();
-
-	// Check which multiplier families have active clocks and which slow clocks are present
-	for (unsigned int i = 0; i < m_inputData.clockRates.size(); i++) {
-		const ClockRatioData* clockRate = m_inputData.clockRates[i];
-		int familyIndex = clockRatioFamilyToIndex(clockRate->family);
-		if (familyIndex != -1) {
-			m_subClockState.hasSubClock[familyIndex] = true;
-		} else {
+	for (int i = 0; i < 8; i++) {
+		if (m_inputData.clockRates[i]->type == ClockRatioType::RATIO_DIVIDE) {
 			m_subClockState.slowClockIndices.push_back(i);
 		}
 	}
 }
 
 void WonkyCore::distributeSubClocks() {
-	// for (int i = 0; i < 7; i++) {
-	// 	if (m_subClockState.hasSubClock[i]) {
-	// 		for (unsigned int j = 0; j < wonkyClockTickActions[i].size(); j++) {
-	// 			m_subClockState.familyClockTicksOffsets[i][j] = static_cast<int>(m_clockState.wonkyClockSampleDuration * j / wonkyClockTickActions[i].size());
-	// 		}
-	// 	}
-	// }
-	for (int i = 0; i < 7; i++) {
-		if (m_subClockState.hasSubClock[i]) {
-			double stepSize = static_cast<double>(m_clockState.wonkyClockSampleDuration) / wonkyClockTickActions[i].size();
-			for (unsigned int j = 0; j < wonkyClockTickActions[i].size(); j++) {
-				m_subClockState.familyClockTicksOffsets[i][j] = stepSize * j;
+	for (int i = 0; i < 8; i++) {
+		m_subClockState.fastClockDivisions[i].clear();
+		if (m_inputData.clockRates[i]->type == ClockRatioType::RATIO_MULTIPLY) {
+			int divisions = m_inputData.clockRates[i]->ratio * 2;
+			for (int j = 0; j < divisions; j++) {
+				m_subClockState.fastClockDivisions[i].push_back(m_clockState.wonkyClockSampleDuration * j / divisions);
 			}
 		}
 	}
