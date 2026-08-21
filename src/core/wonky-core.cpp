@@ -150,8 +150,6 @@ WonkyCore::~WonkyCore() {
 }
 
 void WonkyCore::process(const WonkyInputData& inputData) {
-	bool shouldDistributeSubClocks = false;
-
 	// Check if the input data changed or the sample rate changed
 	if ((m_inputData != inputData) || (m_sampleRateChanged)) {
 		// If the BPM changed (or the sample rate changed, which also influences the bpm-to-sample ratio), re-calculate the clock parameters
@@ -171,7 +169,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 
 		// If the clock rates or the bpm changed, recalculate the subdivision clocks information
 		if (bpmChanged) {
-			shouldDistributeSubClocks = true;
+			distributeSubClocks();
 		}
 	}
 
@@ -210,10 +208,9 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 			detectSubClocks();
 		}
 
-		// Flag that the sub clocks should be redistributed
-		shouldDistributeSubClocks = true;
-		// Reset the position of the faster sub clock tick progress
+		// Reset the position of the faster sub clock tick progress, and let all of them trigger together with the main clock
 		m_subClockState.fastClockProgress.fill(0);
+		m_subClockState.fastClockNextSamplePosition.fill(0);
 
 		if (m_reset) {
 			// Reset the counter for the divided clocks upon reset
@@ -229,19 +226,14 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		updateMainClockState(false);
 	}
 
-	// Determine the new sub clock data (if needed)
-	if (shouldDistributeSubClocks) {
-		distributeSubClocks();
-	}
-
 	// Check for each fast clock whether it passed over a tick boundary
 	for (int i = 0; i < 8; i++) {
 		const ClockRatioData* clockRatio = m_inputData.clockRates[i];
 		if (clockRatio->type == ClockRatioType::RATIO_MULTIPLY) {
-			unsigned int progress = m_subClockState.fastClockProgress[i];
-			if ((progress < m_subClockState.fastClockDivisions[i].size()) && (m_subClockState.fastClockDivisions[i][progress] <= m_clockState.sampleProgress)) {
-				m_listener->clockGateChanged(i, progress % 2 == 0);
+			if ((m_subClockState.fastClockProgress[i] < clockRatio->ratio * 2) && (m_subClockState.fastClockNextSamplePosition[i] <= m_clockState.sampleProgress)) {
+				m_listener->clockGateChanged(i, m_subClockState.fastClockProgress[i] % 2 == 0);
 				m_subClockState.fastClockProgress[i]++;
+				m_subClockState.fastClockNextSamplePosition[i] = m_clockState.wonkyClockSampleDuration * m_subClockState.fastClockProgress[i] / (clockRatio->ratio * 2);
 			}
 		}
 	}
@@ -321,12 +313,9 @@ void WonkyCore::detectSubClocks() {
 
 void WonkyCore::distributeSubClocks() {
 	for (int i = 0; i < 8; i++) {
-		m_subClockState.fastClockDivisions[i].clear();
 		if (m_inputData.clockRates[i]->type == ClockRatioType::RATIO_MULTIPLY) {
 			int divisions = m_inputData.clockRates[i]->ratio * 2;
-			for (int j = 0; j < divisions; j++) {
-				m_subClockState.fastClockDivisions[i].push_back(m_clockState.wonkyClockSampleDuration * j / divisions);
-			}
+			m_subClockState.fastClockNextSamplePosition[i] = m_clockState.wonkyClockSampleDuration * m_subClockState.fastClockProgress[i] / divisions;
 		}
 	}
 }

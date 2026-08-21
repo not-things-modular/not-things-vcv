@@ -103,13 +103,13 @@ enum ClockRatioId {
 };
 
 struct ClockRatioData {
-	constexpr ClockRatioData(ClockRatioId id, ClockRatioType type, ClockRatioFamily family, int ratio) : id(id), type(type), family(family), ratio(ratio) {};
+	constexpr ClockRatioData(ClockRatioId id, ClockRatioType type, ClockRatioFamily family, unsigned int ratio) : id(id), type(type), family(family), ratio(ratio) {};
 
 	ClockRatioId id;
 	ClockRatioType type;
 	ClockRatioFamily family;
 
-	int ratio;
+	unsigned int ratio;
 
 	bool operator==(const ClockRatioData& other) const;
 	bool operator!=(const ClockRatioData& other) const;
@@ -161,12 +161,12 @@ struct WonkyClockState {
 	double clockDrift = 0.;
 
 	// The number of samples that have passed in the current wonky clock beat
-	int sampleProgress = 0;
+	unsigned int sampleProgress = 0;
 
 	// The number of samples that have to have passed for the internal stable clock to have completed a beat
-	int clockSampleDuration = 0;
+	unsigned int clockSampleDuration = 0;
 	// The number of samples that have to have passed for the wonky clock to have completed its current beatr
-	int wonkyClockSampleDuration = 0;
+	unsigned int wonkyClockSampleDuration = 0;
 
 	// The amount of wobble samples that was carried over from the previous clock beat, i.e. moved the start position of the current clock:
 	// - earlier if it's a negative offset
@@ -177,7 +177,7 @@ struct WonkyClockState {
 	// - later if it's a positive offset
 	int endWobbleSampleOffset = 0;
 	// The duration of the gate-high signal, relative to the start position of the current wonky clock beat
-	int gateDuration = 0;
+	unsigned int gateDuration = 0;
 	// If the gate is high or not for this clock beat
 	bool gateHigh = false;
 
@@ -185,7 +185,7 @@ struct WonkyClockState {
 	double wonkyDrift = 0.;
 
 	// How many ticks of a 64-divider clock have already passed (to allow re-calculation of changed output clock settings)
-	int dividedClockProgress = 0;
+	unsigned int dividedClockProgress = 0;
 };
 
 struct WonkySubClockState {
@@ -195,7 +195,7 @@ struct WonkySubClockState {
 	// The indices on the inputs where slow clocks are active
 	std::vector<int> slowClockIndices;
 
-	std::array<std::vector<int>, 8> fastClockDivisions;
+	std::array<unsigned int, 8> fastClockNextSamplePosition;
 	std::array<unsigned int, 8> fastClockProgress;
 };
 
