@@ -24,18 +24,6 @@ struct Randomizer {
 	virtual float randomizeGaussian(float mean, float stddev) = 0;
 };
 
-enum ClockRatioFamily {
-	FAMILY_0, // The main clock rate
-	FAMILY_1, // The slower-then-main clocks
-	FAMILY_2, // Clocks that run at multiples of two of the main clock
-	FAMILY_3_2, // Clocks that run at three times the speed of the main clock, each time multiplying by 2 (3, 6, 12, ...)
-	FAMILY_5_2, // Clocks that run at five times the speed of the main clock, each time multiplying by 2 (5, 10, 20, ...)
-	FAMILY_7_2, // Clocks that run at seven times the speed of the main clock, each time multiplying by 2 (7, 14, 28, ...)
-	FAMILY_3_3, // Clocks that run at three times the speed of the main clock, each time multiplying by 3 (3, 9, 27, ...)
-	FAMILY_5_5, // Clocks that run at five times the speed of the main clock, each time multiplying by 5 (5, 25)
-	FAMILY_7_7 // Clocks that run at seven times the speed of the main clock, each time multiplying by 7 )49)
-};
-
 enum ClockRatioType {
 	RATIO_DIVIDE, // The clock is slower then (or equal to) the main clock
 	RATIO_MULTIPLY, // The clock is faster then the main clock
@@ -103,11 +91,10 @@ enum ClockRatioId {
 };
 
 struct ClockRatioData {
-	constexpr ClockRatioData(ClockRatioId id, ClockRatioType type, ClockRatioFamily family, unsigned int ratio) : id(id), type(type), family(family), ratio(ratio) {};
+	constexpr ClockRatioData(ClockRatioId id, ClockRatioType type, unsigned int ratio) : id(id), type(type), ratio(ratio) {};
 
 	ClockRatioId id;
 	ClockRatioType type;
-	ClockRatioFamily family;
 
 	unsigned int ratio;
 

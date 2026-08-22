@@ -13,20 +13,6 @@ constexpr float kStdDevScale = 3.0f;
 // The least common multiple of the divided clock ratios
 constexpr int lcmDivisionRatio = 2116800;
 
-float getWobbleAmount(const WonkyInputData& inputData, Randomizer* randomizer) {
-	float wobbleAmount = 0.f;
-
-	if ((inputData.wobbleAmount > 0.f) && (inputData.wobbleProbability > 0.f)) {
-		// Check if a wobble should occur (either because it is at 100% or because the randomizer said so)
-		if ((inputData.wobbleProbability == 100.f) || (randomizer->randomize(0.f, 100.f) <= inputData.wobbleProbability)) {
-			// Generate the wobble amount
-			wobbleAmount = randomizer->randomize(-inputData.wobbleAmount, inputData.wobbleAmount);
-		}
-	}
-
-	return wobbleAmount;
-}
-
 bool ClockRatioData::operator==(const ClockRatioData& other) const {
 	return !(*this != other);
 }
@@ -245,12 +231,10 @@ void WonkyCore::reset() {
 	// Remove any collected drift
 	m_clockState.wonkyDrift = 0.;
 	// And reset the high gate if needed
-	if (m_clockState.gateHigh) {
-		m_clockState.gateHigh = false;
-		// Disable all clock outputs, starting from -1 (the main clock index)
-		for (int i = -1; i < (int) m_inputData.clockRates.size(); i++) {
-			m_listener->clockGateChanged(i, false);
-		}
+	m_clockState.gateHigh = false;
+	// Disable all clock outputs, starting from -1 (the main clock index)
+	for (int i = -1; i < (int) m_inputData.clockRates.size(); i++) {
+		m_listener->clockGateChanged(i, false);
 	}
 }
 
@@ -284,7 +268,7 @@ void WonkyCore::updateWonkyClockDuration() {
 
 	// Finally calculate how much wobble is to be applied to the end of the clock
 	if (m_wonkiness.getWobbleAmount() != 0.f) {
-		m_clockState.endWobbleSampleOffset = static_cast<int>((float) m_clockState.wonkyClockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f);
+		m_clockState.endWobbleSampleOffset = static_cast<int>((float) wonkyClockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f);
 	} else {
 		m_clockState.endWobbleSampleOffset = 0;
 	}

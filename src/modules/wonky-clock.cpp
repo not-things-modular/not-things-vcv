@@ -21,7 +21,7 @@ constexpr float maxBpm = 400.f;
 constexpr float defaultBpm = 120.f;
 constexpr float maxAmount = 40.f;
 
-constexpr ClockRatioData noOutputClock = ClockRatioData(ClockRatioId::NO_RATE, ClockRatioType::RATIO_DIVIDE, ClockRatioFamily::FAMILY_1, 1);
+constexpr ClockRatioData noOutputClock = ClockRatioData(ClockRatioId::NO_RATE, ClockRatioType::RATIO_DIVIDE, 1);
 
 float determineCVImpact(float value, WonkyClockCVExpanderModule* expanderModule, WonkyClockCVExpanderModule::InputId inputId, float min, float max) {
 	float result = value;
