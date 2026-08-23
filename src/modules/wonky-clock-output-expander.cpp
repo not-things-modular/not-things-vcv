@@ -79,10 +79,10 @@ void WonkyClockOutputExpanderModule::draw(const widget::Widget::DrawArgs& args) 
 
 WonkyClockOutputExpanderWidget::WonkyClockOutputExpanderWidget(WonkyClockOutputExpanderModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock-output-expander") {
 	for (int i = 0; i < 8; i++) {
-		addParam(createParamCentered<NTKnob35>(Vec(32.f, 41.5f + (40.f * i)), module, WonkyClockOutputExpanderModule::PARAM_RATIOS + i));
+		addParam(createParamCentered<NTKnob35>(Vec(32.f, 51.5f + (40.f * i)), module, WonkyClockOutputExpanderModule::PARAM_RATIOS + i));
 
 		LEDDisplay* ratioLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "", 15, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
-		ratioLed->box.pos = Vec(60.5f, 31.f + (40.f * i));
+		ratioLed->box.pos = Vec(60.5f, 41.f + (40.f * i));
 		ratioLed->box.size = Vec(36.f, 20.f);
 		ratioLed->setForegroundText(wonkyClockRatios[static_cast<int>(i * 2.5) + 1].display);
 		addChild(ratioLed);
@@ -90,7 +90,7 @@ WonkyClockOutputExpanderWidget::WonkyClockOutputExpanderWidget(WonkyClockOutputE
 			module->m_ratioLeds[i] = ratioLed;
 		}
 
-		addOutput(createOutputCentered<NTPort>(Vec(123.f, 41.5f + (40.f * i)), module, WonkyClockOutputExpanderModule::OUT_CLOCKS + i));
+		addOutput(createOutputCentered<NTPort>(Vec(123.f, 51.5f + (40.f * i)), module, WonkyClockOutputExpanderModule::OUT_CLOCKS + i));
 	}
 }
 
