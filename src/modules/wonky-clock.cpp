@@ -55,6 +55,7 @@ WonkyClockModule::WonkyClockModule() {
 	configParam(PARAM_WANDER_AMOUNT, 0.f, maxAmount, 5.f, "Wander Amount");
 	configParam(PARAM_WANDER_RATE, 0.f, 100.f, 25.f, "Wander Rate");
 
+	configSwitch(PARAM_MODE, 0.f, 1.f, 1.f, "Wobble and Waver Mode", { "Walk", "Random" });
 	configSwitch(PARAM_LINK, 0.f, 1.f, 1.f, "Link Wobble and Waver", { "Unlinked", "Linked" });
 
 	configOutput(OUT_CLOCK, "Clock");
@@ -265,7 +266,8 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	addParam(createParamCentered<NTKnob35>(Vec(46.f, 288.5f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
 	addParam(createParamCentered<Trimpot>(Vec(54.57f, 333.f), module, WonkyClockModule::PARAM_WANDER_RATE));
 
-	addParam(createParamCentered<CKSS>(Vec(82.5f, 200.f), module, WonkyClockModule::PARAM_LINK));
+	addParam(createParamCentered<CKSS>(Vec(110.5f, 155.f), module, WonkyClockModule::PARAM_LINK));
+	addParam(createParamCentered<CKSS>(Vec(138.5f, 155.f), module, WonkyClockModule::PARAM_MODE));
 
 	addInput(createInputCentered<NTPort>(Vec(25.f, 45.f), module, WonkyClockModule::IN_RUN));
 	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(25.f, 91.5f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));

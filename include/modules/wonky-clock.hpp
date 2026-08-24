@@ -22,6 +22,7 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		PARAM_WANDER_AMOUNT,
 		PARAM_WANDER_RATE,
 
+		PARAM_MODE,
 		PARAM_LINK,
 
 		NUM_PARAMS
