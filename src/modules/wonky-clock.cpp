@@ -106,7 +106,8 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.waverAmount = params[PARAM_WAVER_AMOUNT].getValue();
 		inputData.waverProbability = params[PARAM_WAVER_PROBABILITY].getValue();
 		inputData.wanderAmount = params[PARAM_WANDER_AMOUNT].getValue();
-		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue() / 100.f;
+		inputData.wanderRate = params[PARAM_WANDER_RATE].getValue();
+		inputData.mode == (params[PARAM_MODE].getValue() == 0.f) ? WonkyWobbleWaverMode::MODE_WALK : WonkyWobbleWaverMode::MODE_RANDOM;
 		inputData.linked = params[PARAM_LINK].getValue() > 0.f;
 
 		if (cvExpanderModule != nullptr) {

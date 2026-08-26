@@ -102,6 +102,11 @@ struct ClockRatioData {
 	bool operator!=(const ClockRatioData& other) const;
 };
 
+enum WonkyWobbleWaverMode {
+	MODE_WALK,
+	MODE_RANDOM
+};
+
 struct WonkyInputData {
 	float bpm = -1.f;
 
@@ -115,7 +120,7 @@ struct WonkyInputData {
 	float wanderRate = 0.f;
 
 	bool linked = false;
-
+	WonkyWobbleWaverMode mode = WonkyWobbleWaverMode::MODE_WALK;
 
 	std::array<const ClockRatioData*, 8> clockRates;
 	bool operator==(const WonkyInputData& other) const;
@@ -131,6 +136,8 @@ struct Wonkiness {
 
 	bool isWonky() const;
 	void determineWonkiness(const WonkyInputData& inputData);
+	void determineRandomizedWobbleAndWaver(const WonkyInputData& inputData);
+	void determineWalkingWobbleAndWaver(const WonkyInputData& inputData);
 
 	private:
 		Randomizer* m_randomizer;

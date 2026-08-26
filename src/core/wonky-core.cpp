@@ -32,7 +32,23 @@ bool WonkyInputData::operator!=(const WonkyInputData& other) const {
 		other.waverAmount != waverAmount || other.waverProbability != waverProbability ||
 		other.wanderAmount != wanderAmount || other.wanderRate != wanderRate ||
 		other.linked != linked ||
+		other.mode != mode ||
 		other.clockRates != clockRates;
+}
+
+float wonkyWalk(const float amount, const float rate, float currentValue, Randomizer* randomizer) {
+	if ((amount > 0.f) && (rate > 0.f)) {
+		const float theta = kMinTheta * std::pow(kMaxTheta / kMinTheta, rate);
+		const float sigma = amount / kStdDevScale * std::sqrt(theta * (2.0f - theta));
+
+		float t = std::abs(currentValue) / amount;
+		float strength = theta * t * t;
+		const float newOffset = currentValue + sigma * randomizer->randomizeGaussian(0.f, 1.f) - strength * currentValue;
+
+		return std::min(std::max(newOffset, -amount), amount);
+	} else {
+		return 0.f;
+	}
 }
 
 Wonkiness::Wonkiness(Randomizer* randomizer) : m_randomizer(randomizer) {}
@@ -54,6 +70,18 @@ bool Wonkiness::isWonky() const {
 }
 
 void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
+	// Determine which type of wobble and waver determination should be used
+	if (inputData.mode == WonkyWobbleWaverMode::MODE_RANDOM) {
+		determineRandomizedWobbleAndWaver(inputData);
+	} else {
+		determineWalkingWobbleAndWaver(inputData);
+	}
+
+	// Determine the wander amount
+	m_wanderAmount = wonkyWalk(inputData.wanderAmount, inputData.wanderRate / 100.f, m_wanderAmount, m_randomizer);
+}
+
+void Wonkiness::determineRandomizedWobbleAndWaver(const WonkyInputData& inputData) {
 	// Determine the wobble amount
 	bool wobbled = false;
 	m_wobbleAmount = 0.f;
@@ -93,19 +121,17 @@ void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
 			}
 		}
 	}
+}
 
-	// Determine the wander amount
-	if ((inputData.wanderAmount > 0.f) && (inputData.wanderRate > 0.f)) {
-		const float theta = kMinTheta * std::pow(kMaxTheta / kMinTheta, inputData.wanderRate);
-		const float sigma = inputData.wanderAmount / kStdDevScale * std::sqrt(theta * (2.0f - theta));
+void Wonkiness::determineWalkingWobbleAndWaver(const WonkyInputData& inputData) {
+	// Determine the wobble amount
+	m_wobbleAmount = wonkyWalk(inputData.wobbleAmount, inputData.wobbleProbability / 100.f, m_wobbleAmount, m_randomizer);
+	// Determine the waver amount
+	m_waverAmount = wonkyWalk(inputData.waverAmount, inputData.waverProbability / 100.f, m_waverAmount, m_randomizer);
 
-		float t = std::abs(m_wanderAmount) / inputData.wanderAmount;
-		float strength = theta * t * t;
-		const float newOffset = m_wanderAmount + sigma * m_randomizer->randomizeGaussian(0.f, 1.f) - strength * m_wanderAmount;
-
-		m_wanderAmount = std::min(std::max(newOffset, -inputData.wanderAmount), inputData.wanderAmount);
-	} else {
-		m_wanderAmount = 0.f;
+	// If wobble and waver are linked, make sure waver has the same sign as wobble
+	if (inputData.linked) {
+		m_waverAmount = std::copysign(m_waverAmount, m_wobbleAmount);
 	}
 }
 
