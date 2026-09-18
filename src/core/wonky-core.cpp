@@ -127,11 +127,12 @@ void Wonkiness::determineWalkingWobbleAndWaver(const WonkyInputData& inputData) 
 	// Determine the wobble amount
 	m_wobbleAmount = wonkyWalk(inputData.wobbleAmount, inputData.wobbleProbability / 100.f, m_wobbleAmount, m_randomizer);
 	// Determine the waver amount
-	m_waverAmount = wonkyWalk(inputData.waverAmount, inputData.waverProbability / 100.f, m_waverAmount, m_randomizer);
-
-	// If wobble and waver are linked, make sure waver has the same sign as wobble
-	if (inputData.linked) {
-		m_waverAmount = std::copysign(m_waverAmount, m_wobbleAmount);
+	if (!inputData.linked) {
+		// If waver is not linked to wobble, determine it separately
+		m_waverAmount = wonkyWalk(inputData.waverAmount, inputData.waverProbability / 100.f, m_waverAmount, m_randomizer);
+	} else {
+		// If waver is linked to wobble, and there is a wobble amount, scale waver according ot the current wobble
+		m_waverAmount = m_wobbleAmount * inputData.waverAmount / inputData.wobbleAmount;
 	}
 }
 

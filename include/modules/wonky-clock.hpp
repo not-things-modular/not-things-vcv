@@ -17,13 +17,12 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 
 		PARAM_WOBBLE_AMOUNT,
 		PARAM_WOBBLE_PROBABILITY,
+		PARAM_WOBBLE_WALK,
 		PARAM_WAVER_AMOUNT,
 		PARAM_WAVER_PROBABILITY,
+		PARAM_WAVER_PARTIAL,
 		PARAM_WANDER_AMOUNT,
 		PARAM_WANDER_RATE,
-
-		PARAM_MODE,
-		PARAM_LINK,
 
 		NUM_PARAMS
 	};
@@ -39,11 +38,15 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 	enum LightId {
 		LIGHT_RUN,
 		LIGHT_RESET,
+		LIGHT_WOBBLE_WALK,
+		LIGHT_WAVER_PARTIAL,
 		NUM_LIGHTS
 	};
 	enum TriggerId {
 		TRIG_RUN,
 		TRIG_RESET,
+		TRIG_WOBBLE_WALK,
+		TRIG_WAVER_PARTIAL,
 		NUM_TRIGGERS
 	};
 
