@@ -79,7 +79,7 @@ const std::array<std::array<float, 16>, 96>& TimeSeqOutputManager::getVoltages()
 
 bool TimeSeqOutputManager::setVoltage(int index, int channel, float voltage) {
 	m_voltages[index][channel] = voltage;
-	
+
 	Output* output = getOutput(index);
 	if (output) {
 		output->setVoltage(voltage, channel);
@@ -97,11 +97,13 @@ void TimeSeqOutputManager::reset() {
 	for (int i = 0; i < 96; i++) {
 		setLabel(i, string::f("Output %d", i + 1));
 	}
+
+	updateOutputs();
 }
 
 void TimeSeqOutputManager::updateOutputs() {
 	m_dirty = false;
-	
+
 	for (int i = 0; i < 96; i++) {
 		Output* output = getOutput(i);
 		if (output != nullptr) {
@@ -133,7 +135,7 @@ Output* TimeSeqOutputManager::getOutput(int index) {
 }
 
 
-TimeSeqModule::TimeSeqModule() : m_outputManager(this) { 
+TimeSeqModule::TimeSeqModule() : m_outputManager(this) {
 	m_timeSeqCore = new timeseq::TimeSeqCore(this, this, this, this);
 
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -307,7 +309,7 @@ void TimeSeqModule::draw(const widget::Widget::DrawArgs& args) {
 
 void TimeSeqModule::onPortChange(const PortChangeEvent& e) {
 	// If one of the output ports gets (dis)connected, mark the ports as dirty.
-	m_outputManager.setDirty();
+	setOutputsDirty();
 }
 
 void TimeSeqModule::onSampleRateChange(const SampleRateChangeEvent& sampleRateChangeEvent) {
@@ -349,16 +351,20 @@ void TimeSeqModule::setOutputPortVoltage(int index, int channel, float voltage) 
 	}
 
 	if (!assigned) {
-		// TODO: update "output not found" index
+		m_timeSeqDisplay->setMissingOutput(index);
 	}
 }
 
 void TimeSeqModule::setOutputPortChannels(int index, int channels) {
-	m_outputManager.setPolyphony(index, channels);
+	if (!m_outputManager.setPolyphony(index, channels)) {
+		m_timeSeqDisplay->setMissingOutput(index);
+	}
 }
 
 void TimeSeqModule::setOutputPortLabel(int index, const std::string& label) {
-	m_outputManager.setLabel(index, label);
+	if (!m_outputManager.setLabel(index, label)) {
+		m_timeSeqDisplay->setMissingOutput(index);
+	}
 }
 
 void TimeSeqModule::laneLooped() {
@@ -433,6 +439,7 @@ void TimeSeqModule::resetUi() {
 	if (m_timeSeqDisplay) {
 		m_timeSeqDisplay->reset();
 		m_timeSeqDisplay->setAssert(false);
+		m_timeSeqDisplay->setMissingOutput(-1);
 	}
 }
 

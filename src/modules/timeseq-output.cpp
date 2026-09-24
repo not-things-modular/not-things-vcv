@@ -47,6 +47,7 @@ void TimeSeqOutputModule::onPortChange(const PortChangeEvent& e) {
 			expander = &expander->module->getLeftExpander();
 		} else if ((expander->module != nullptr) && (expander->module->getModel() == modelTimeSeq)) {
 			dynamic_cast<TimeSeqModule*>(expander->module)->setOutputsDirty();
+			break;
 		}
 	}
 }
@@ -62,7 +63,7 @@ TimeSeqOutputWidget::TimeSeqOutputWidget(TimeSeqOutputModule* module): NTModuleW
 		LEDDisplay* pDisplay = new LEDDisplay(nvgRGB(0xFF, 0x60, 0x60), nvgRGB(0x40, 0x40, 0x40), "88", 10, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
 		pDisplay->box.pos = Vec(3.f + 15.5f - 1.5f, 52.f + (yDelta * i) + 2.5f);
 		pDisplay->box.size = Vec(13.f + 3.f, 12.5f);
-		pDisplay->setForegroundText("1");
+		pDisplay->setForegroundText(string::f("%d", 9 + i));
 		addChild(pDisplay);
 
 		if (module) {
