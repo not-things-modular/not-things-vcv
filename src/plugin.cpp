@@ -12,8 +12,10 @@ extern Model* modelPipoOutput;
 extern Model* modelPipoInput;
 
 extern Model* modelPolySameDiff;
+
 extern Model* modelTimeSeq;
 
+extern Model* modelTimeSeqOutputExpander;
 extern Model* modelRamelig;
 extern Model* modelRatrilig;
 extern Model* modelRameligExpander;
@@ -34,6 +36,7 @@ void init(Plugin* p) {
 	p->addModel(modelPipoOutput);
 	p->addModel(modelPolySameDiff);
 	p->addModel(modelTimeSeq);
+	p->addModel(modelTimeSeqOutputExpander);
 	p->addModel(modelRamelig);
 	p->addModel(modelRatrilig);
 	p->addModel(modelRameligExpander);

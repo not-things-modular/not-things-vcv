@@ -384,6 +384,21 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetValueWithFloatShorthand
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetvalueWithShorthandOutputOutOfRange) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_4_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-value", { { "value", { { "ref", "value-ref" } } }, { "output", 97 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/actions/0/set-value");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetvalueWithShorthandOutputOutOfRangePreVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "actions", json::array({
@@ -393,7 +408,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetvalueWithShorthandOutpu
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/actions/0/set-value");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0/set-value");
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnMissingSetVariableName) {
@@ -562,7 +577,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetPolyphonyIndexOutOfRang
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "set-polyphony", { { "index", 0 }, { "channels", 1 } } } },
-			{ { "id", "action-2" }, { "set-polyphony", { { "index", 9 }, { "channels", 1 } } } }
+			{ { "id", "action-2" }, { "set-polyphony", { { "index", 97 }, { "channels", 1 } } } }
 		}) }
 	};
 
@@ -570,6 +585,43 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetPolyphonyIndexOutOfRang
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_IndexRange, "/component-pool/actions/0/set-polyphony");
 	expectError(validationErrors, ValidationErrorCode::SetPolyphony_IndexRange, "/component-pool/actions/1/set-polyphony");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetPolyphonyAbove8WithVersionBelow140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-polyphony", { { "index", 9 }, { "channels", 1 } } } },
+			{ { "id", "action-2" }, { "set-polyphony", { { "index", 96 }, { "channels", 1 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0/set-polyphony");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/1/set-polyphony");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldAllowSetPolyphonyOnHigherChannelsWithVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_4_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-polyphony", { { "index", 9 }, { "channels", 1 } } } },
+			{ { "id", "action-2" }, { "set-polyphony", { { "index", 96 }, { "channels", 1 } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->actions.size(), 2u);
+	ASSERT_TRUE(script->actions[0].setPolyphony);
+	EXPECT_EQ(script->actions[0].setPolyphony->index, 9);
+	ASSERT_TRUE(script->actions[1].setPolyphony);
+	EXPECT_EQ(script->actions[1].setPolyphony->index, 96);
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonIntegerPolyphonyIndex) {
@@ -721,7 +773,7 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetLabelIndexOutOfRange) {
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "set-label", { { "index", 0 }, { "label", "the-label-1" } } } },
-			{ { "id", "action-2" }, { "set-label", { { "index", 9 }, { "label", "the-label-2" } } } }
+			{ { "id", "action-2" }, { "set-label", { { "index", 97 }, { "label", "the-label-2" } } } }
 		}) }
 	};
 
@@ -729,6 +781,43 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetLabelIndexOutOfRange) {
 	ASSERT_EQ(validationErrors.size(), 2u);
 	expectError(validationErrors, ValidationErrorCode::SetLabel_IndexRange, "/component-pool/actions/0/set-label");
 	expectError(validationErrors, ValidationErrorCode::SetLabel_IndexRange, "/component-pool/actions/1/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnSetLabelExtendedOutputRangePreVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson();
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "index", 9 }, { "label", "the-label-1" } } } },
+			{ { "id", "action-2" }, { "set-label", { { "index", 96 }, { "label", "the-label-2" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 2u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0/set-label");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/1/set-label");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldParseSetLabelExtendedOutputRangeInVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_4_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "set-label", { { "index", 9 }, { "label", "the-label-1" } } } },
+			{ { "id", "action-2" }, { "set-label", { { "index", 96 }, { "label", "the-label-2" } } } }
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	EXPECT_NO_ERRORS(validationErrors);
+	ASSERT_EQ(script->actions.size(), 2u);
+	ASSERT_TRUE(script->actions[0].setLabel);
+	EXPECT_EQ(script->actions[0].setLabel->index, 9);
+	ASSERT_TRUE(script->actions[1].setLabel);
+	EXPECT_EQ(script->actions[1].setLabel->index, 96);
 }
 
 TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailOnNonIntegerLabelIndex) {
@@ -1283,13 +1372,28 @@ TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithFloatShorthandOutput) {
 	expectError(validationErrors, ValidationErrorCode::Output_IndexNumber, "/component-pool/actions/0");
 }
 
-TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithShorthandOutputOutOfRange) {
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithShorthandOutputOutOfRangePre140) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "actions", json::array({
 			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "output", 9 } }
+		} ) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/actions/0");
+}
+
+TEST(TimeSeqJsonScriptAction, ParseActionsShouldFailWithShorthandOutputOutOfExtendedRangeVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_4_0);
+	json["component-pool"] = {
+		{ "actions", json::array({
+			{ { "id", "action-1" }, { "timing", "glide" }, { "start-value", { { "ref", "ref-start-value" } } }, { "end-value", { { "ref", "ref-end-value" } } }, { "output", 97 } }
 		} ) }
 	};
 

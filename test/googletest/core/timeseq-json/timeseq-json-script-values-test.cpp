@@ -590,7 +590,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithInvalidOutput) {
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "values", json::array({
-			{ { "id", "value-1" }, { "output", { { "index", 9 } } } },
+			{ { "id", "value-1" }, { "output", { { "index", 97 } } } },
 		}) }
 	};
 
@@ -617,6 +617,21 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithFloatShorthandOutput) {
 TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithShorthandOutputOutOfRange) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;
+	json json = getMinimalJson(SCRIPT_VERSION_1_4_0);
+	json["component-pool"] = {
+		{ "values", json::array({
+			{ { "id", "value-1" }, { "output", 97 } },
+		}) }
+	};
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_GT(validationErrors.size(), 0u);
+	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/values/0");
+}
+
+TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithShorthandOutputOutOfRangePreVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
 	json json = getMinimalJson();
 	json["component-pool"] = {
 		{ "values", json::array({
@@ -626,7 +641,7 @@ TEST(TimeSeqJsonScriptValue, ParseValueShouldFailWithShorthandOutputOutOfRange) 
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_GT(validationErrors.size(), 0u);
-	expectError(validationErrors, ValidationErrorCode::Output_IndexRange, "/component-pool/values/0");
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/component-pool/values/0");
 }
 
 TEST(TimeSeqJsonScriptValue, ParseValueShouldParseOutput) {

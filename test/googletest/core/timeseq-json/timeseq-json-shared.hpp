@@ -15,6 +15,7 @@ using namespace std;
 #define SCRIPT_VERSION_1_1_0 "1.1.0"
 #define SCRIPT_VERSION_1_2_0 "1.2.0"
 #define SCRIPT_VERSION_1_3_0 "1.3.0"
+#define SCRIPT_VERSION_1_4_0 "1.4.0"
 
 
 shared_ptr<Script> loadScript(JsonLoader& jsonLoader, nlohmann::json& json, vector<ValidationError>& validationErrors);
