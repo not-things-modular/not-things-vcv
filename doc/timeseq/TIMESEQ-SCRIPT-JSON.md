@@ -84,7 +84,7 @@ At least one of `timelines` or a `clocks` is required in a script (or both).
 | property | required | type | since | description |
 | --- | --- | --- | --- | --- |
 | `type` | yes | string | | Must be set to `not-things_timeseq_script` |
-| `version` | yes | string | | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0`, `1.1.0`, `1.2.0` and `1.3.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
+| `version` | yes | string | | Identifies which version of the TimeSeq JSON script format is used. Currently versions `1.0.0`, `1.1.0`, `1.2.0`, `1.3.0` and `1.4.0` are supported (see [this](TIMESEQ-SCRIPT-VERSION.md) page for features included in each version). |
 | `$schema` | no | uri string | | Allows JSON schema validation to be performed by schema-aware JSON editors. See the [script version](TIMESEQ-SCRIPT-VERSION.md) page for the schema URIs that can be used. The value given to this property will not influence TimeSeq parsing or processing itself. |
 | `timelines` | no | [timeline](#timeline) list | | A list of *timeline*s that will drive the sequencer. |
 | `clocks` | no | [clock](#clock) list | *1.3.0* | A list of *clock*s that will output clock trigger/gate signals. |
@@ -98,7 +98,7 @@ At least one of `timelines` or a `clocks` is required in a script (or both).
 ```js
 {
     "type": "not-things_timeseq_script",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "timelines": [
         { ... },
         { ... }
@@ -1004,7 +1004,7 @@ The *set-polyphony* is used within an [action](#action) to update the number of 
 
 The port on which the number of channels should be updated is determined by the `index` property. The number of channels that the port should have is determined by the `channels` property. Setting the number of channels to `1` will make the port monophonic. A port can have up to `16` channels.
 
-The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8`
+The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8` for the main module. Starting from script version `1.4.0`, ports on the TimeSeq Output Expander modules can be addressed using indices `9` to `96`, matching the number label on the UI of the expander.
 
 When changing the number of channels on an output port, the voltages that were previously assigned to channels of that output will be remembered. Lowering the number of channels of a port and subsequently increasing the count again will not clear previously assigned voltages.
 
@@ -1012,7 +1012,7 @@ When changing the number of channels on an output port, the voltages that were p
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `index` | yes | unsigned number [1-8] | The output port on which the number of channels should be updated. |
+| `index` | yes | unsigned number [1-8], or [1-96] starting from version *1.4.0* | The output port on which the number of channels should be updated. |
 | `channels` | yes | unsigned number [1-16] | The number of channels that should be available on the output port. |
 
 ### Example
@@ -1035,13 +1035,13 @@ The *set-label* is used within an [action](#action) to update text label of the 
 
 The port on which the label should be updated is determined by the `index` property. The `label` property should contain the text to use.
 
-The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8`
+The output ports can be addressed by their number label as it is visible on the UI, so the `index` property can go from `1` up to (and including) `8`. Starting from script version `1.4.0`, ports on the TimeSeq Output Expander modules can be addressed using indices `9` to `96`, matching the number label on the UI of the expander.
 
 ### Properties
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `index` | yes | unsigned number [1-8] | The output port on which the label should be updated. |
+| `index` | yes | unsigned number [1-8], or [1-96] starting from version *1.4.0* | The output port on which the label should be updated. |
 | `label` | yes | string | The label to assign to the output port. |
 
 ### Example
@@ -1415,7 +1415,7 @@ This shorthand notation can be used in all places where inputs are used, except 
 
 An output identifies a channel on one of the output ports of TimeSeq, either to assign a voltage to it through an [action](#action), or to read a voltage from it using a [value](#value).
 
-The output port is identified by the `index` property, using a number from `1` to `8`. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If no `channel` property is specified, the first channel of the port will be used. When working with monophonic output signals, either the `channel` property can be omitted, or it can be set to `1` (since in VCV Rack, a monophonic signal is considered to be a signal containing one channel).
+The output port is identified by the `index` property, using a number from `1` to `8` for the output ports on the main TimeSeq module. Starting from script version `1.4.0`, ports on the TimeSeq Output Expander modules can be addressed using indices `9` to `96`, matching the number label on the UI of the expander. The `channel` property identifies which (polyphonic) channel to use. Ports can have up to 16 channels. If no `channel` property is specified, the first channel of the port will be used. When working with monophonic output signals, either the `channel` property can be omitted, or it can be set to `1` (since in VCV Rack, a monophonic signal is considered to be a signal containing one channel).
 
 Note that TimeSeq will not validate how many channels are present on the output port. Assigning a value to a channel that is outside the current polyphonic channel count will not result in more channels becoming active on that output. TimeSeq will however remember any voltage updates done on all channels (even if they are outside of the current polyphonic channel count), and will assign those voltages to the channels if the channel count is changed afterwards using a [set-polyphony](#set-polyphony) *action*. Similarly, if a voltage is assigned to a channel that is outside of the current polyphonic channel count, a [value](#value) that references that channel on the output port will still return the value that was assigned to it.
 
@@ -1425,7 +1425,7 @@ When a script is loaded or reset, all output ports of TimeSeq will be set to mon
 
 | property | required | type | description |
 | --- | --- | --- | --- |
-| `index` | yes | unsigned number | The index of the port from which to retrieve or on which to set a voltage. Must be between `1` and `8`. See [Shorthand Output Notation](#shorthand-output-notation) for a shortened way to write outputs with only an `index` property. |
+| `index` | yes | unsigned number | The index of the port from which to retrieve or on which to set a voltage. Must be between `1` and `96` (or between `1` and `8` before script version *1.4.0*). See [Shorthand Output Notation](#shorthand-output-notation) for a shortened way to write outputs with only an `index` property. |
 | `channel` | no | unsigned number | The channel on the output port from which to retrieve or on which to set the voltage, as a number between `1` and `16`. Defaults to `1` |
 
 ### Examples

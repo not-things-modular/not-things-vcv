@@ -10,6 +10,7 @@
 * [Input Ports and Channels](#input-and-output-ports-and-channels)
 * [Rate Control](#rate-control)
 * [Asserts](#asserts)
+* [Output Expander](#output-expander)
 
 ## TimeSeq Controls
 
@@ -101,3 +102,13 @@ If the script is not paused due to the fired assert, it is possible that multipl
 Testing the expected behaviour of a module can thus be done by writing a script that generates voltages on the output ports, connecting these with the module that is to be tested, and subsequently verifying the expected voltages on the output ports of the to-be-tested module by connecting them back to the input ports of TimeSeq and validating their voltages using assert actions.
 
 Note that due to the way VCV Rack works, any cable connection in VCV Rack will introduce a 1 sample delay in the processing chain. When setting an output port voltage and subsequently verifying the resulting input voltage, sufficient time has to be foreseen for the signal to reach the other module, that module to perform its processing and the resulting output to reach TimeSeq again.
+
+## Output Expander
+
+![TimeSeq Output Expander](./timeseq-output-expander.png)
+
+Since the main TimeSeq module is limited to 8 output ports, and bigger or more complex scripts might have a need for more outputs, a TimeSeq Output Expander module is available. An output expander module must be placed on the right side of the main TimeSeq module or next to another TimeSeq Output Expander module.
+
+Each TimeSeq Output Expander module makes 8 additional output ports available in the active TimeSeq script, with a maximum of 96 total output ports. I.e. 1-8 are the output ports on the main TimeSeq module, and outputs 9-96 are outputs on the TimeSeq Output Expander module(s).
+
+If a script tries to access an output port that is not available (e.g. there is one active TimeSeq OUtput Expander and the script tries to use output 17), the top line of the [Status Display](#status-display) will show an `OUT ?` error message with an indication of the output port index that was not available. This message will remain displayed until a new script is loaded, the script is reset or another port that is not available is accessed by the running script.
