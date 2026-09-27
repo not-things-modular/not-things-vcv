@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2.0.9 (TBD)
+
+* **TimeSeq**
+  * Added TimeSeq Output Expander module
+  * Allow up to 96 outputs to be addressed in TimeSeq scripts to allow adressing the TimeSeq Output Expander ports
+  * Update JSON Schema definition to v1.4.0 for increase of addressable output ports
+
 ## 2.0.8 (2026-07-14)
 
 * **TimeSeq**
