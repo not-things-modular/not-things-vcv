@@ -52,7 +52,7 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 	nvgGlobalCompositeOperation(args.vg, NVG_SOURCE_OVER);
 	nvgScissor(args.vg, 0, 0, box.getWidth(), box.getHeight());
 
-	if ((status == timeseq::TimeSeqCore::Status::RUNNING) && (!m_assert)) {
+	if ((status == timeseq::TimeSeqCore::Status::RUNNING) && (!m_assert) && (m_missingOutput == -1)) {
 		float index;
 		float fraction = std::modf(animationPos, &index); // How far along we are in the animation of the currently active circle
 		float *offsets = m_animCoords.m_offsetCircles[(int) index];
@@ -85,12 +85,24 @@ void TimeSeqDisplay::drawLayer(const DrawArgs& args, int layer) {
 
 		std::shared_ptr<window::Font> font = APP->window->loadFont("res/fonts/Nunito-Bold.ttf");
 		if (font && font->handle >= 0) {
+			std::string text;
+			if (m_error) {
+				text = "ERROR";
+			} else if (status == timeseq::TimeSeqCore::Status::EMPTY) {
+				text = "EMPTY";
+			} else if (m_assert) {
+				text = "ASSERT";
+			} else if (m_missingOutput != -1) {
+				text = string::f("OUT %d?", m_missingOutput);
+			} else {
+				text = "PAUSED";
+			}
 			nvgBeginPath(args.vg);
 			nvgFontFaceId(args.vg, font->handle);
 			nvgTextLetterSpacing(args.vg, 0.0);
 			nvgFontSize(args.vg, 11.5f);
 			nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-			nvgText(args.vg, box.getWidth() / 2, 5.5f, status == timeseq::TimeSeqCore::Status::EMPTY ? (m_error ? "ERROR" : "EMPTY") : (m_assert ? "ASSERT" : "PAUSED"), NULL);
+			nvgText(args.vg, box.getWidth() / 2, 5.5f, text.c_str(), NULL);
 			nvgFill(args.vg);
 		}
 	}
@@ -140,7 +152,7 @@ void TimeSeqDisplay::onResize(const ResizeEvent& e) {
 	m_animCoords.m_offsetCircles[3][2] = m_animCoords.m_arcOffset + m_animCoords.m_arcDelta;
 }
 
-void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages) {
+void TimeSeqDisplay::processChangedVoltages(const std::vector<int>& changedVoltages, const std::array<std::array<float, 16>, 96>& outputVoltages) {
 	// Remove voltage points that haven't changed recently, and update & age those that are recent enough
 	for (int i = m_voltagePoints.size() - 1; i >= 0; i--) {
 		if (m_voltagePoints[i].age >= TIMESEQ_DISPLAY_WINDOW_SIZE * 2) {
@@ -152,7 +164,7 @@ void TimeSeqDisplay::processChangedVoltages(std::vector<int>& changedVoltages, s
 	}
 
 	// Update/add the voltage points for the recently changed ports
-	for (std::vector<int>::iterator it = changedVoltages.begin(); it != changedVoltages.end(); it++) {
+	for (std::vector<int>::const_iterator it = changedVoltages.begin(); it != changedVoltages.end(); it++) {
 		bool found = false;
 		// See if the port&channel combination is already in the current list of voltage points
 		for (std::vector<TimeSeqVoltagePoints>::iterator vpIt = m_voltagePoints.begin(); vpIt != m_voltagePoints.end(); vpIt++) {
@@ -208,6 +220,10 @@ void TimeSeqDisplay::setError(bool error) {
 
 void TimeSeqDisplay::setAssert(bool assert) {
 	m_assert = assert;
+}
+
+void TimeSeqDisplay::setMissingOutput(int missingOutput) {
+	m_missingOutput = missingOutput;
 }
 
 void TimeSeqDisplay::setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore) {

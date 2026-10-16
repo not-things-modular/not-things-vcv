@@ -4,10 +4,29 @@
 
 ## Table of Contents
 
+* [1.4.0](#version-140)
 * [1.3.0](#version-130)
 * [1.2.0](#version-120)
 * [1.1.0](#version-110)
 * [1.0.0](#version-100)
+
+## Version 1.4.0
+
+**Supported from**: TimeSeq TBD, **Release date**: TBD
+
+### Changes
+
+* Changed range of [output port](TIMESEQ-SCRIPT-JSON.md#output) indices from between 1-8 to 1-96 to allow addressing of output ports on the TimeSeq Output Expander.
+
+### JSON Schema
+
+Add following property at the root of the JSON Script to allow JSON Schema validation:
+
+```json
+{
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.4.0.schema.json"
+}
+```
 
 ## Version 1.3.0
 

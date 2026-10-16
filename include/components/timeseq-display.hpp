@@ -30,12 +30,13 @@ struct TimeSeqDisplay : widget::Widget {
 
 	void onResize(const ResizeEvent& e) override;
 
-	void processChangedVoltages(std::vector<int>& changedVoltages, std::array<std::array<float, 16>, 8>& outputVoltages);
+	void processChangedVoltages(const std::vector<int>& changedVoltages, const std::array<std::array<float, 16>, 96>& outputVoltages);
 	void ageVoltages();
 	void reset();
 
 	void setError(bool error);
 	void setAssert(bool assert);
+	void setMissingOutput(int missingOutput);
 	void setTimeSeqCore(timeseq::TimeSeqCore* timeSeqCore);
 
 	private:
@@ -45,6 +46,7 @@ struct TimeSeqDisplay : widget::Widget {
 		std::vector<TimeSeqVoltagePoints> m_dummyVoltagePoints;
 		bool m_error = false;
 		bool m_assert = false;
+		int m_missingOutput = -1;
 
 		float m_arcDelta = 0.f;
 };

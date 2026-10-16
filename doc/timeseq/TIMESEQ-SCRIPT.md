@@ -35,7 +35,7 @@ The schema can be associated with a script file by adding following property at 
 
 ```js
 {
-    "$schema": "https://not-things.com/schemas/timeseq-script-1.3.0.schema.json"
+    "$schema": "https://not-things.com/schemas/timeseq-script-1.4.0.schema.json"
     ...
 }
 ```
