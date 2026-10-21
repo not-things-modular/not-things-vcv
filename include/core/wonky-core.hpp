@@ -13,8 +13,8 @@ struct SampleRateReader {
 struct WonkyListener {
 	virtual ~WonkyListener() {};
 	virtual void clockGateChanged(int index, bool high) = 0;
+	virtual void wiggleChanged(float wiggle, float max) = 0;
 	virtual void wanderChanged(float wander, float max) = 0;
-	virtual void waverChanged(float waver, float max) = 0;
 	virtual void wobbleChanged(float wobble, float max) = 0;
 };
 
@@ -102,7 +102,7 @@ struct ClockRatioData {
 	bool operator!=(const ClockRatioData& other) const;
 };
 
-enum WonkyWobbleWaverMode {
+enum WonkyWiggleMode {
 	MODE_WALK,
 	MODE_RANDOM
 };
@@ -110,17 +110,16 @@ enum WonkyWobbleWaverMode {
 struct WonkyInputData {
 	float bpm = -1.f;
 
-	float wobbleAmount = 0.f;
-	float wobbleProbability = 0.f;
-
-	float waverAmount = 0.f;
-	float waverProbability = 0.f;
+	float wiggleAmount = 0.f;
+	float wiggleRate = 0.f;
+	WonkyWiggleMode wiggleMode = WonkyWiggleMode::MODE_WALK;
 
 	float wanderAmount = 0.f;
 	float wanderRate = 0.f;
+	bool wanderRandom = true;
 
-	bool linked = false;
-	WonkyWobbleWaverMode mode = WonkyWobbleWaverMode::MODE_WALK;
+	float wobbleAmount = 0.f;
+	float wobbleRate = 0.f;
 
 	std::array<const ClockRatioData*, 8> clockRates;
 	bool operator==(const WonkyInputData& other) const;
@@ -130,20 +129,21 @@ struct WonkyInputData {
 struct Wonkiness {
 	Wonkiness(Randomizer* randomizer);
 
+	float getWiggleAmount() const;
 	float getWanderAmount() const;
-	float getWaverAmount() const;
 	float getWobbleAmount() const;
 
 	bool isWonky() const;
 	void determineWonkiness(const WonkyInputData& inputData);
-	void determineRandomizedWobbleAndWaver(const WonkyInputData& inputData);
-	void determineWalkingWobbleAndWaver(const WonkyInputData& inputData);
+	void determineRandomizedWiggleAndWander(const WonkyInputData& inputData);
+	void determineWalkingWiggleAndWander(const WonkyInputData& inputData);
+	void determineWander(const WonkyInputData& inputData);
 
 	private:
 		Randomizer* m_randomizer;
 
+		float m_wiggleAmount = 0.f;
 		float m_wanderAmount = 0.f;
-		float m_waverAmount = 0.f;
 		float m_wobbleAmount = 0.f;
 };
 
@@ -162,14 +162,14 @@ struct WonkyClockState {
 	// The number of samples that have to have passed for the wonky clock to have completed its current beatr
 	unsigned int wonkyClockSampleDuration = 0;
 
-	// The amount of wobble samples that was carried over from the previous clock beat, i.e. moved the start position of the current clock:
+	// The amount of wiggle samples that was carried over from the previous clock beat, i.e. moved the start position of the current clock:
 	// - earlier if it's a negative offset
 	// - later if it's a positive offset
-	int startWobbleSampleOffset = 0;
-	// The amount of wobble samples that will move the end of the current clock:
+	int startWiggleSampleOffset = 0;
+	// The amount of wiggle samples that will move the end of the current clock:
 	// - earlier if it's a negative offset
 	// - later if it's a positive offset
-	int endWobbleSampleOffset = 0;
+	int endWiggleSampleOffset = 0;
 	// The duration of the gate-high signal, relative to the start position of the current wonky clock beat
 	unsigned int gateDuration = 0;
 	// If the gate is high or not for this clock beat

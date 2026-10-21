@@ -28,11 +28,9 @@ bool WonkyInputData::operator==(const WonkyInputData& other) const {
 
 bool WonkyInputData::operator!=(const WonkyInputData& other) const {
 	return other.bpm != bpm ||
-		other.wobbleAmount != wobbleAmount || other.wobbleProbability != wobbleProbability ||
-		other.waverAmount != waverAmount || other.waverProbability != waverProbability ||
-		other.wanderAmount != wanderAmount || other.wanderRate != wanderRate ||
-		other.linked != linked ||
-		other.mode != mode ||
+		other.wiggleAmount != wiggleAmount || other.wiggleRate != wiggleRate || other.wiggleMode != wiggleMode ||
+		other.wanderAmount != wanderAmount || other.wiggleRate != wiggleRate || other.wanderRandom != wanderRandom ||
+		other.wobbleAmount != wobbleAmount || other.wobbleRate != wobbleRate ||
 		other.clockRates != clockRates;
 }
 
@@ -53,12 +51,12 @@ float wonkyWalk(const float amount, const float rate, float currentValue, Random
 
 Wonkiness::Wonkiness(Randomizer* randomizer) : m_randomizer(randomizer) {}
 
-float Wonkiness::getWanderAmount() const {
-	return m_wanderAmount;
+float Wonkiness::getWiggleAmount() const {
+	return m_wiggleAmount;
 }
 
-float Wonkiness::getWaverAmount() const {
-	return m_waverAmount;
+float Wonkiness::getWanderAmount() const {
+	return m_wanderAmount;
 }
 
 float Wonkiness::getWobbleAmount() const {
@@ -66,73 +64,65 @@ float Wonkiness::getWobbleAmount() const {
 }
 
 bool Wonkiness::isWonky() const {
-	return m_wanderAmount != 0.f || m_waverAmount != 0.f || m_wobbleAmount != 0.f;
+	return m_wiggleAmount != 0.f || m_wanderAmount != 0.f || m_wobbleAmount != 0.f;
 }
 
 void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
-	// Determine which type of wobble and waver determination should be used
-	if (inputData.mode == WonkyWobbleWaverMode::MODE_RANDOM) {
-		determineRandomizedWobbleAndWaver(inputData);
+	// Determine which type of wiggle and wander determination should be used
+	if (inputData.wiggleMode == WonkyWiggleMode::MODE_RANDOM) {
+		determineRandomizedWiggleAndWander(inputData);
 	} else {
-		determineWalkingWobbleAndWaver(inputData);
+		determineWalkingWiggleAndWander(inputData);
+	}
+
+	// Determine the wobble amount
+	m_wobbleAmount = wonkyWalk(inputData.wobbleAmount, inputData.wobbleRate / 100.f, m_wobbleAmount, m_randomizer);
+}
+
+void Wonkiness::determineRandomizedWiggleAndWander(const WonkyInputData& inputData) {
+	// Determine the wiggle amount
+	bool wiggled = false;
+	m_wiggleAmount = 0.f;
+	if ((inputData.wiggleAmount > 0.f) && (inputData.wiggleRate > 0.f)) {
+		// Check if a wiggle should occur (either because it is at 100% or because the randomizer said so)
+		if ((inputData.wiggleRate == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wiggleRate)) {
+			// Generate the wiggle amount
+			m_wiggleAmount = m_randomizer->randomize(-inputData.wiggleAmount, inputData.wiggleAmount);
+			wiggled = true;
+		}
 	}
 
 	// Determine the wander amount
-	m_wanderAmount = wonkyWalk(inputData.wanderAmount, inputData.wanderRate / 100.f, m_wanderAmount, m_randomizer);
-}
-
-void Wonkiness::determineRandomizedWobbleAndWaver(const WonkyInputData& inputData) {
-	// Determine the wobble amount
-	bool wobbled = false;
-	m_wobbleAmount = 0.f;
-	if ((inputData.wobbleAmount > 0.f) && (inputData.wobbleProbability > 0.f)) {
-		// Check if a wobble should occur (either because it is at 100% or because the randomizer said so)
-		if ((inputData.wobbleProbability == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wobbleProbability)) {
-			// Generate the wobble amount
-			m_wobbleAmount = m_randomizer->randomize(-inputData.wobbleAmount, inputData.wobbleAmount);
-			wobbled = true;
-		}
-	}
-
-	// Determine the waver amount
-	m_waverAmount = 0.f;
-	if ((inputData.waverProbability > 0.f) && (inputData.waverAmount > 0.f)) {
-		// Check if waver should be attempted based on the linked property
-		float minWaverAmount = -inputData.waverAmount;
-		float maxWaverAmount = inputData.waverAmount;
-		// Check if the linked property influences waver behaviour
-		if (inputData.linked) {
-			if (wobbled) {
-				// There was a wobble, so waver in the same direction
-				minWaverAmount = (m_wobbleAmount > 0.f) ? 0.f : -inputData.waverAmount;
-				maxWaverAmount = (m_wobbleAmount > 0.f) ? inputData.waverAmount : 0.f;
-			} else {
-				// There was no wobble, so don't waver
-				minWaverAmount = maxWaverAmount = 0.f;
-			}
-		}
-
-		// If there is a waverAmount set, use it now
-		if (minWaverAmount != 0.f || maxWaverAmount != 0.f) {
-			// Check if a waver should occur (either because it is at 100% or because the randomizer said so)
-			if ((inputData.waverProbability == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.waverProbability)) {
-				// Generate the waver amount
-				m_waverAmount = m_randomizer->randomize(minWaverAmount, maxWaverAmount);
-			}
-		}
-	}
-}
-
-void Wonkiness::determineWalkingWobbleAndWaver(const WonkyInputData& inputData) {
-	// Determine the wobble amount
-	m_wobbleAmount = wonkyWalk(inputData.wobbleAmount, inputData.wobbleProbability / 100.f, m_wobbleAmount, m_randomizer);
-	// Determine the waver amount
-	if (!inputData.linked) {
-		// If waver is not linked to wobble, determine it separately
-		m_waverAmount = wonkyWalk(inputData.waverAmount, inputData.waverProbability / 100.f, m_waverAmount, m_randomizer);
+	if (wiggled) {
+		determineWander(inputData);
 	} else {
-		// If waver is linked to wobble, and there is a wobble amount, scale waver according ot the current wobble
-		m_waverAmount = m_wobbleAmount * inputData.waverAmount / inputData.wobbleAmount;
+		m_wanderAmount = 0.f;
+	}
+}
+
+void Wonkiness::determineWalkingWiggleAndWander(const WonkyInputData& inputData) {
+	// Determine the wobble amount
+	m_wiggleAmount = wonkyWalk(inputData.wiggleAmount, inputData.wiggleRate / 100.f, m_wiggleAmount, m_randomizer);
+	// Determine the wander amount
+	determineWander(inputData);
+}
+
+void Wonkiness::determineWander(const WonkyInputData& inputData) {
+	m_wanderAmount = 0.f;
+	if ((inputData.wanderRate > 0.f) && (inputData.wanderAmount > 0.f)) {
+		// Check that the wander probability triggers a wander
+		if ((inputData.wanderAmount == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wanderAmount)) {
+			// Check if the wander amount is either a fixed amount of the wiggle amount, or a random percentage
+			float wanderPercentage;
+			if (inputData.wanderRandom) {
+				wanderPercentage = m_randomizer->randomize(0.f, inputData.wanderAmount);
+			} else {
+				wanderPercentage = inputData.wanderAmount;
+			}
+			if (wanderPercentage > 0.f) {
+				m_wanderAmount = m_wiggleAmount * wanderPercentage / 100.f;
+			}
+		}
 	}
 }
 
@@ -203,16 +193,16 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 			m_clockState.wonkyDrift--;
 		}
 
-		// The end wobble of the previous clock beat becomes the start wobble of the new clock beat
-		m_clockState.startWobbleSampleOffset = m_clockState.endWobbleSampleOffset;
+		// The end wiggle of the previous clock beat becomes the start wiggle of the new clock beat
+		m_clockState.startWiggleSampleOffset = m_clockState.endWiggleSampleOffset;
 
 		// Generate new wonkiness
 		m_wonkiness.determineWonkiness(m_inputData);
+		m_listener->wiggleChanged(m_wonkiness.getWiggleAmount(), m_inputData.wiggleAmount);
 		m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
-		m_listener->waverChanged(m_wonkiness.getWaverAmount(), m_inputData.waverAmount);
 		m_listener->wobbleChanged(m_wonkiness.getWobbleAmount(), m_inputData.wobbleAmount);
 
-		// Calculate the actual length to use for the current wonky clock output, taking any (carried over) wobble, waver and wander into account
+		// Calculate the actual length to use for the current wonky clock output, taking any (carried over) wiggle, wander and wobble into account
 		updateWonkyClockDuration();
 
 		// If the sub-clocks changed since the last main clock signal, redetect which are present
@@ -283,29 +273,29 @@ void WonkyCore::updateWonkyClockDuration() {
 	// First set the wonky clock duration equal to the duration of the stable clock (as a float for the upcoming calculations)
 	float wonkyClockSampleDuration = m_clockState.clockSampleDuration;
 
-	// If there is a wander amount, apply it to the duration of the clock signal
-	if (m_wonkiness.getWanderAmount() != 0.f) {
-		wonkyClockSampleDuration *= 1.f + (m_wonkiness.getWanderAmount() / 100.f);
-	}
-
-	// Then apply the waver amount first, since it moves the whole clock forward or backwards
-	if (m_wonkiness.getWaverAmount() != 0.f) {
-		wonkyClockSampleDuration += (float) wonkyClockSampleDuration * m_wonkiness.getWaverAmount() / 100.f;
-	}
-
-	// Finally calculate how much wobble is to be applied to the end of the clock
+	// If there is a wobble amount, apply it to the duration of the clock signal
 	if (m_wonkiness.getWobbleAmount() != 0.f) {
-		m_clockState.endWobbleSampleOffset = static_cast<int>((float) wonkyClockSampleDuration * m_wonkiness.getWobbleAmount() / 100.f);
-	} else {
-		m_clockState.endWobbleSampleOffset = 0;
+		wonkyClockSampleDuration *= 1.f + (m_wonkiness.getWobbleAmount() / 100.f);
 	}
 
-	// Remove the start wobble duration from the clock duration (remove, since a positive wobble of the previous clock causes the current clock to be shorter)
-	wonkyClockSampleDuration -= m_clockState.startWobbleSampleOffset;
-	// Add the end wobble duration from the clock duration (add, since a positive wobble causes the clock to become longer)
-	wonkyClockSampleDuration += m_clockState.endWobbleSampleOffset;
+	// Then apply the wander amount first, since it moves the whole clock forward or backwards
+	if (m_wonkiness.getWanderAmount() != 0.f) {
+		wonkyClockSampleDuration += (float) wonkyClockSampleDuration * m_wonkiness.getWanderAmount() / 100.f;
+	}
 
-	// Assign the resulting duratino to the clock state (converting back to an int)
+	// Finally calculate how much wiggle is to be applied to the end of the clock
+	if (m_wonkiness.getWiggleAmount() != 0.f) {
+		m_clockState.endWiggleSampleOffset = static_cast<int>((float) wonkyClockSampleDuration * m_wonkiness.getWiggleAmount() / 100.f);
+	} else {
+		m_clockState.endWiggleSampleOffset = 0;
+	}
+
+	// Remove the start wiggle duration from the clock duration (remove, since a positive wiggle of the previous clock causes the current clock to be shorter)
+	wonkyClockSampleDuration -= m_clockState.startWiggleSampleOffset;
+	// Add the end wiggle duration to the clock duration (add, since a positive wiggle causes the clock to become longer)
+	wonkyClockSampleDuration += m_clockState.endWiggleSampleOffset;
+
+	// Assign the resulting duration to the clock state (converting back to an int)
 	m_clockState.wonkyClockSampleDuration = static_cast<int>(wonkyClockSampleDuration);
 
 	// Now that we know the wonky clock duration, determine when it should go from high to low

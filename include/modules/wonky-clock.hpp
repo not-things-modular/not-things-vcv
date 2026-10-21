@@ -15,14 +15,12 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		PARAM_RUN,
 		PARAM_RESET,
 
-		PARAM_WOBBLE_AMOUNT,
-		PARAM_WOBBLE_PROBABILITY,
-		PARAM_WOBBLE_WALK,
-		PARAM_WAVER_AMOUNT,
-		PARAM_WAVER_PROBABILITY,
-		PARAM_WAVER_PARTIAL,
+		PARAM_WIGGLE_AMOUNT,
+		PARAM_WIGGLE_RATE,
 		PARAM_WANDER_AMOUNT,
 		PARAM_WANDER_RATE,
+		PARAM_WOBBLE_AMOUNT,
+		PARAM_WOBBLE_RATE,
 
 		NUM_PARAMS
 	};
@@ -38,21 +36,17 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 	enum LightId {
 		LIGHT_RUN,
 		LIGHT_RESET,
-		LIGHT_WOBBLE_WALK,
-		LIGHT_WAVER_PARTIAL,
 		NUM_LIGHTS
 	};
 	enum TriggerId {
 		TRIG_RUN,
 		TRIG_RESET,
-		TRIG_WOBBLE_WALK,
-		TRIG_WAVER_PARTIAL,
 		NUM_TRIGGERS
 	};
 
 	LEDDisplay* m_bpmLed;
+	WonkyClockDisplay* m_wiggleDisplay = nullptr;
 	WonkyClockDisplay* m_wanderDisplay = nullptr;
-	WonkyClockDisplay* m_waverDisplay = nullptr;
 	WonkyClockDisplay* m_wobbleDisplay = nullptr;
 
 	WonkyClockModule();
@@ -63,10 +57,10 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 	void onSampleRateChange(const SampleRateChangeEvent& e) override;
 
 	float getSampleRate() const override;
-	void clockGateChanged(int index, bool high) override;
-	void wanderChanged(float wander, float max) override;
-	void waverChanged(float waver, float max) override;
-	void wobbleChanged(float wobble, float max) override;
+	void clockGateChanged(int index, bool high);
+	void wiggleChanged(float wiggle, float max);
+	void wanderChanged(float wander, float max);
+	void wobbleChanged(float wobble, float max);
 
 	private:
 		bool m_running = true;

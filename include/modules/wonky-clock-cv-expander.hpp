@@ -10,12 +10,12 @@ struct WonkyClockCVExpanderModule : NTModule, DrawListener {
 	};
 	enum InputId {
 		IN_BPM,
-		IN_WOBBLE_AMOUNT,
-		IN_WOBBLE_PROBABILITY,
-		IN_WAVER_AMOUNT,
-		IN_WAVER_PROBABILITY,
+		IN_WIGGLE_AMOUNT,
+		IN_WIGGLE_RATE,
 		IN_WANDER_AMOUNT,
 		IN_WANDER_RATE,
+		IN_WOBBLE_AMOUNT,
+		IN_WOBBLE_RATE,
 		NUM_INPUTS
 	};
 	enum OutputId {
