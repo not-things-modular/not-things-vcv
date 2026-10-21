@@ -49,7 +49,7 @@ WonkyClockModule::WonkyClockModule() {
 	configButton(PARAM_RESET, "Reset");
 
 	configParam(PARAM_WIGGLE_AMOUNT, 0.f, maxAmount, 9.f, "Wiggle Amount");
-	configParam(PARAM_WIGGLE_RATE, 0.f, 100.f, 50.f, "Wiggle Rate");
+	configParam(PARAM_WIGGLE_RATE, 0.f, 100.f, 25.f, "Wiggle Rate");
 	configParam(PARAM_WANDER_AMOUNT, 0.f, 100.f, 50.f, "Wander Amount");
 	configParam(PARAM_WANDER_RATE, 0.f, 100.f, 25.f, "Wander Rate");
 	configParam(PARAM_WOBBLE_AMOUNT, 0.f, maxAmount, 5.f, "Wobble Amount");
@@ -62,6 +62,35 @@ WonkyClockModule::WonkyClockModule() {
 	m_core.reset(new WonkyCore(this, this));
 
 	lights[LightId::LIGHT_RUN].setBrightness(m_running);
+}
+
+json_t *WonkyClockModule::dataToJson() {
+	json_t *rootJ = NTModule::dataToJson();
+	json_object_set_new(rootJ, "ntWonkyClockWiggleMode", json_integer(m_wiggleMode));
+	json_object_set_new(rootJ, "ntWonkyClockWanderRandom", json_boolean(m_wanderRandom));
+	return rootJ;
+}
+
+void WonkyClockModule::dataFromJson(json_t *rootJ) {
+	NTModule::dataFromJson(rootJ);
+
+	json_t *ntWonkyClockWiggleModeJson = json_object_get(rootJ, "ntWonkyClockWiggleMode");
+	if (ntWonkyClockWiggleModeJson) {
+		json_int_t wiggleMode = json_integer_value(ntWonkyClockWiggleModeJson);
+		if (wiggleMode > 0 && wiggleMode < WonkyWiggleMode::WIGGLE_MODE_COUNT) {
+			setWiggleMode(static_cast<WonkyWiggleMode>(wiggleMode));
+		} else {
+			setWiggleMode(WonkyWiggleMode::MODE_WALK);
+		}
+	}
+
+	json_t *ntWonkyClockWanderRandomJson = json_object_get(rootJ, "ntWonkyClockWanderRandom");
+	if (ntWonkyClockWanderRandomJson) {
+		if (json_is_boolean(ntWonkyClockWanderRandomJson)) {
+			bool wanderRandom = json_boolean_value(ntWonkyClockWanderRandomJson);
+			setWanderRandom(wanderRandom);
+		}
+	}
 }
 
 void WonkyClockModule::process(const ProcessArgs& args) {
@@ -97,6 +126,9 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 	}
 
 	if (m_running) {
+		inputData.wiggleMode = m_wiggleMode;
+		inputData.wanderRandom = m_wanderRandom;
+
 		inputData.bpm = params[PARAM_BPM].getValue();
 		inputData.wiggleAmount = params[PARAM_WIGGLE_AMOUNT].getValue();
 		inputData.wiggleRate = params[PARAM_WIGGLE_RATE].getValue();
@@ -153,6 +185,13 @@ void WonkyClockModule::onSampleRateChange(const SampleRateChangeEvent& e) {
 	m_core->sampleRateChanged();
 }
 
+void WonkyClockModule::onReset(const ResetEvent& e) {
+	NTModule::onReset(e);
+
+	m_wiggleMode = WonkyWiggleMode::MODE_WALK;
+	m_wanderRandom = true;
+}
+
 float WonkyClockModule::getSampleRate() const {
 	return APP->engine->getSampleRate();
 }
@@ -184,6 +223,22 @@ void WonkyClockModule::wobbleChanged(float wobble, float max) {
 	if (m_wobbleDisplay != nullptr) {
 		m_wobbleDisplay->setWonkiness(wobble, max);
 	}
+}
+
+WonkyWiggleMode WonkyClockModule::getWiggleMode() const {
+	return m_wiggleMode;
+}
+
+void WonkyClockModule::setWiggleMode(WonkyWiggleMode wiggleMode) {
+	m_wiggleMode = wiggleMode;
+}
+
+bool WonkyClockModule::getWanderRandom() const {
+	return m_wanderRandom;
+}
+
+void WonkyClockModule::setWanderRandom(bool wanderRandom) {
+	m_wanderRandom = wanderRandom;
 }
 
 WonkyClockCVExpanderModule* WonkyClockModule::getCVExpander() {
@@ -300,6 +355,42 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	addChild(pDisplay);
 	if (module) {
 		module->m_wobbleDisplay = pDisplay;
+	}
+}
+
+void WonkyClockWidget::appendContextMenu(Menu* menu) {
+	NTModuleWidget::appendContextMenu(menu);
+
+	menu->addChild(new MenuSeparator);
+
+	WonkyWiggleMode wiggleMode = getModule() ? dynamic_cast<WonkyClockModule *>(getModule())->getWiggleMode() : WonkyWiggleMode::MODE_WALK;
+	menu->addChild(createSubmenuItem("Wiggle Mode", "",
+		[=](Menu* menu) {
+			menu->addChild(createCheckMenuItem("Walk", "", [wiggleMode]() { return wiggleMode == WonkyWiggleMode::MODE_WALK; }, [this]() { setWiggleMode(WonkyWiggleMode::MODE_WALK); }));
+			menu->addChild(createCheckMenuItem("Random", "", [wiggleMode]() { return wiggleMode == WonkyWiggleMode::MODE_RANDOM; }, [this]() { setWiggleMode(WonkyWiggleMode::MODE_RANDOM); }));
+		}
+	));
+
+	bool wanderRandom = getModule() ? dynamic_cast<WonkyClockModule *>(getModule())->getWanderRandom() : true;
+	menu->addChild(createSubmenuItem("Wander Amount is", "",
+		[=](Menu* menu) {
+			menu->addChild(createCheckMenuItem("Maximum amount of wiggle (with random percentage)", "", [wanderRandom]() { return wanderRandom; }, [this]() { setWanderRandom(true); }));
+			menu->addChild(createCheckMenuItem("Exact amount of wiggle (absolute percentage)", "", [wanderRandom]() { return !wanderRandom; }, [this]() { setWanderRandom(false); }));
+		}
+	));
+}
+
+void WonkyClockWidget::setWiggleMode(wonky::WonkyWiggleMode wiggleMode) {
+	WonkyClockModule* wonkyClockModule = dynamic_cast<WonkyClockModule *>(getModule());
+	if (wonkyClockModule != nullptr) {
+		wonkyClockModule->setWiggleMode(wiggleMode);
+	}
+}
+
+void WonkyClockWidget::setWanderRandom(bool wanderRandom) {
+	WonkyClockModule* wonkyClockModule = dynamic_cast<WonkyClockModule *>(getModule());
+	if (wonkyClockModule != nullptr) {
+		wonkyClockModule->setWanderRandom(wanderRandom);
 	}
 }
 

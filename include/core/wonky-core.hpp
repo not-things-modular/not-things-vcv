@@ -104,7 +104,8 @@ struct ClockRatioData {
 
 enum WonkyWiggleMode {
 	MODE_WALK,
-	MODE_RANDOM
+	MODE_RANDOM,
+	WIGGLE_MODE_COUNT
 };
 
 struct WonkyInputData {

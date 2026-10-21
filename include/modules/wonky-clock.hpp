@@ -51,21 +51,35 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 
 	WonkyClockModule();
 
+	json_t *dataToJson() override;
+	void dataFromJson(json_t *rootJ) override;
+
 	void process(const ProcessArgs& args) override;
 	void draw(const widget::Widget::DrawArgs& args) override;
 
 	void onSampleRateChange(const SampleRateChangeEvent& e) override;
+	void onReset(const ResetEvent& e) override;
 
 	float getSampleRate() const override;
-	void clockGateChanged(int index, bool high);
-	void wiggleChanged(float wiggle, float max);
-	void wanderChanged(float wander, float max);
-	void wobbleChanged(float wobble, float max);
+	void clockGateChanged(int index, bool high) override;
+	void wiggleChanged(float wiggle, float max) override;
+	void wanderChanged(float wander, float max) override;
+	void wobbleChanged(float wobble, float max) override;
+
+	wonky::WonkyWiggleMode getWiggleMode() const;
+	void setWiggleMode(wonky::WonkyWiggleMode wiggleMode);
+	bool getWanderRandom() const;
+	void setWanderRandom(bool wanderRandom);
 
 	private:
 		bool m_running = true;
 		int m_displayedBpm;
 		std::unique_ptr<wonky::WonkyCore> m_core;
+
+		// The stored right-click menu settings
+		wonky::WonkyWiggleMode m_wiggleMode = wonky::WonkyWiggleMode::MODE_WALK;
+		bool m_wanderRandom = true;
+		
 
 		// Flag to indicate if we're currently inside a process invocation.
 		// Process should only be called single-threaded by VCV, so keeping a simple boolean should be safe
@@ -87,4 +101,8 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 
 struct WonkyClockWidget : NTModuleWidget {
 	WonkyClockWidget(WonkyClockModule* module);
+
+	virtual void appendContextMenu(Menu* menu) override;
+	void setWiggleMode(wonky::WonkyWiggleMode wiggleMode);
+	void setWanderRandom(bool wanderRandom);
 };
