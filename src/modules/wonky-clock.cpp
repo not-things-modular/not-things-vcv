@@ -41,9 +41,12 @@ WonkyClockModule::WonkyClockModule() {
 	ParamQuantity* pq = configParam(PARAM_BPM, minBpm, maxBpm, defaultBpm, "Clock Speed (Beats per Minute)");
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
+	configInput(IN_BPM, "BMP CV");
 
 	configInput(IN_RUN, "Run");
 	configInput(IN_RESET, "Reset");
+	configOutput(OUT_RUN, "Run");
+	configOutput(OUT_RESET, "Reset");
 
 	configButton(PARAM_RUN, "Run");
 	configButton(PARAM_RESET, "Reset");
@@ -304,29 +307,32 @@ void WonkyClockModule::updateExpanders() {
 
 
 WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dynamic_cast<NTModule*>(module), "wonky-clock") {
-	NTKnob40* bpmKnob = createParamCentered<NTKnob40>(Vec(127.f, 107.f), module, WonkyClockModule::PARAM_BPM);
+	NTKnob40* bpmKnob = createParamCentered<NTKnob40>(Vec(134.f, 102.f), module, WonkyClockModule::PARAM_BPM);
 	bpmKnob->setAngles(-.85 * M_PI, .85 * M_PI);
 	addParam(bpmKnob);
+	addInput(createInputCentered<NTPort>(Vec(134.f, 40.f), module, WonkyClockModule::IN_BPM));
 
-	addParam(createParamCentered<NTKnob35>(Vec(46.f, 163.5f), module, WonkyClockModule::PARAM_WIGGLE_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(54.57f, 208.f), module, WonkyClockModule::PARAM_WIGGLE_RATE));
+	addParam(createParamCentered<NTKnob35>(Vec(32.f, 285.5f), module, WonkyClockModule::PARAM_WIGGLE_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(39.f, 330.f), module, WonkyClockModule::PARAM_WIGGLE_RATE));
 
-	addParam(createParamCentered<NTKnob35>(Vec(132.55f, 225.5f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(141.7f, 270.f), module, WonkyClockModule::PARAM_WANDER_RATE));
+	addParam(createParamCentered<NTKnob35>(Vec(133.f, 285.f), module, WonkyClockModule::PARAM_WANDER_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(126.f, 330.f), module, WonkyClockModule::PARAM_WANDER_RATE));
 
-	addParam(createParamCentered<NTKnob35>(Vec(46.f, 288.5f), module, WonkyClockModule::PARAM_WOBBLE_AMOUNT));
-	addParam(createParamCentered<Trimpot>(Vec(54.57f, 333.f), module, WonkyClockModule::PARAM_WOBBLE_RATE));
+	addParam(createParamCentered<NTKnob35>(Vec(32.f, 191.f), module, WonkyClockModule::PARAM_WOBBLE_AMOUNT));
+	addParam(createParamCentered<Trimpot>(Vec(76.5f, 198.f), module, WonkyClockModule::PARAM_WOBBLE_RATE));
 
-	addInput(createInputCentered<NTPort>(Vec(25.f, 45.f), module, WonkyClockModule::IN_RUN));
-	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(25.f, 91.5f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));
-	addInput(createInputCentered<NTPort>(Vec(68.f, 45.f), module, WonkyClockModule::IN_RESET));
-	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(68.f, 91.5f), module, WonkyClockModule::PARAM_RESET, WonkyClockModule::LIGHT_RESET));
+	addInput(createInputCentered<NTPort>(Vec(28.f, 40.f), module, WonkyClockModule::IN_RUN));
+	addParam(createLightParamCentered<LEDLightBezel<RedLight>>(Vec(28.f, 86.5f), module, WonkyClockModule::PARAM_RUN, WonkyClockModule::LIGHT_RUN));
+	addOutput(createOutputCentered<NTPort>(Vec(28.f, 120.f), module, WonkyClockModule::OUT_RUN));
+	addInput(createInputCentered<NTPort>(Vec(73.f, 40.f), module, WonkyClockModule::IN_RESET));
+	addParam(createLightParamCentered<LEDLightBezel<DimmedLight<RedLight>>>(Vec(73.f, 86.5f), module, WonkyClockModule::PARAM_RESET, WonkyClockModule::LIGHT_RESET));
+	addOutput(createOutputCentered<NTPort>(Vec(73.f, 120.f), module, WonkyClockModule::OUT_RESET));
 
-	addOutput(createOutputCentered<NTPort>(Vec(123.75f, 332.f), module, WonkyClockModule::OUT_CLOCK));
+	addOutput(createOutputCentered<NTPort>(Vec(134.f, 203.5f), module, WonkyClockModule::OUT_CLOCK));
 
-	LEDDisplay* bpmLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 20, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
-	bpmLed->box.pos = Vec(101.5f, 27.f);
-	bpmLed->box.size = Vec(50.f, 25.f);
+	LEDDisplay* bpmLed = new LEDDisplay(nvgRGB(0xFF, 0x50, 0x50), nvgRGB(0x40, 0x40, 0x40), "888", 19, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE, true);
+	bpmLed->box.pos = Vec(107.f, 132.5f);
+	bpmLed->box.size = Vec(50.f, 27.f);
 	bpmLed->setForegroundText(string::f("%d", static_cast<int>(defaultBpm)));
 	addChild(bpmLed);
 	if (module) {
@@ -334,27 +340,33 @@ WonkyClockWidget::WonkyClockWidget(WonkyClockModule* module): NTModuleWidget(dyn
 	}
 
 	WonkyClockDisplay *pDisplay = new WonkyClockDisplay();
-	pDisplay->box.pos = Vec(15.f, 146.f);
+	pDisplay->box.pos = Vec(60.f, 269.f);
 	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
 		module->m_wiggleDisplay = pDisplay;
+	} else {
+		pDisplay->setWonkiness(0.33f, .5f);
 	}
 
 	pDisplay = new WonkyClockDisplay();
-	pDisplay->box.pos = Vec(101.5f, 208.f);
+	pDisplay->box.pos = Vec(98.f, 269.f);
 	pDisplay->box.size = Vec(6.f, 80.f);
 	addChild(pDisplay);
 	if (module) {
 		module->m_wanderDisplay = pDisplay;
+	} else {
+		pDisplay->setWonkiness(-.6f, .5f);
 	}
 
-	pDisplay = new WonkyClockDisplay();
-	pDisplay->box.pos = Vec(15.f, 271.f);
-	pDisplay->box.size = Vec(6.f, 80.f);
+	pDisplay = new WonkyClockDisplay(true);
+	pDisplay->box.pos = Vec(10.f, 223.f);
+	pDisplay->box.size = Vec(80.f, 6.f);
 	addChild(pDisplay);
 	if (module) {
 		module->m_wobbleDisplay = pDisplay;
+	} else {
+		pDisplay->setWonkiness(.8f, .5f);
 	}
 }
 
@@ -372,10 +384,10 @@ void WonkyClockWidget::appendContextMenu(Menu* menu) {
 	));
 
 	bool wanderRandom = getModule() ? dynamic_cast<WonkyClockModule *>(getModule())->getWanderRandom() : true;
-	menu->addChild(createSubmenuItem("Wander Amount is", "",
+	menu->addChild(createSubmenuItem("Wander Size", "",
 		[=](Menu* menu) {
-			menu->addChild(createCheckMenuItem("Maximum amount of wiggle (with random percentage)", "", [wanderRandom]() { return wanderRandom; }, [this]() { setWanderRandom(true); }));
-			menu->addChild(createCheckMenuItem("Exact amount of wiggle (absolute percentage)", "", [wanderRandom]() { return !wanderRandom; }, [this]() { setWanderRandom(false); }));
+			menu->addChild(createCheckMenuItem("Random (percentage between 0 and Wander Amount)", "", [wanderRandom]() { return wanderRandom; }, [this]() { setWanderRandom(true); }));
+			menu->addChild(createCheckMenuItem("Exact (exact percentage specified by Wander Amount)", "", [wanderRandom]() { return !wanderRandom; }, [this]() { setWanderRandom(false); }));
 		}
 	));
 }

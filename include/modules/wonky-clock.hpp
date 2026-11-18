@@ -25,12 +25,15 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		NUM_PARAMS
 	};
 	enum InputId {
+		IN_BPM,
 		IN_RUN,
 		IN_RESET,
 		NUM_INPUTS
 	};
 	enum OutputId {
 		OUT_CLOCK,
+		OUT_RUN,
+		OUT_RESET,
 		NUM_OUTPUTS
 	};
 	enum LightId {
@@ -79,7 +82,7 @@ struct WonkyClockModule : NTModule, DrawListener, wonky::SampleRateReader, wonky
 		// The stored right-click menu settings
 		wonky::WonkyWiggleMode m_wiggleMode = wonky::WonkyWiggleMode::MODE_WALK;
 		bool m_wanderRandom = true;
-		
+
 
 		// Flag to indicate if we're currently inside a process invocation.
 		// Process should only be called single-threaded by VCV, so keeping a simple boolean should be safe
