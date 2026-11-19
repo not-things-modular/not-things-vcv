@@ -23,10 +23,10 @@ constexpr float maxAmount = 40.f;
 
 constexpr ClockRatioData noOutputClock = ClockRatioData(ClockRatioId::NO_RATE, ClockRatioType::RATIO_DIVIDE, 1);
 
-float determineCVImpact(float value, WonkyClockCVExpanderModule* expanderModule, WonkyClockCVExpanderModule::InputId inputId, float min, float max) {
+float determineCVImpact(float value, Module* cvModule, int inputId, float min, float max) {
 	float result = value;
 
-	float cv = expanderModule->getInput(inputId).getVoltage();
+	float cv = cvModule->getInput(inputId).getVoltage();
 	if (cv != 0.f) {
 		result += (max - min) * (cv / 5.f);
 		result = std::max(std::min(result, max), min);
@@ -122,17 +122,15 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 	float runOutputVoltage = m_runPulse.process(args.sampleTime) ? 10.f : 0.f;
 	float resetOutputVoltage = m_resetPulse.process(args.sampleTime) ? 10.f : 0.f;
 
-	WonkyClockCVExpanderModule* cvExpanderModule = getCVExpander();
-	if (cvExpanderModule != nullptr) {
-		cvExpanderModule->getOutput(WonkyClockCVExpanderModule::OutputId::OUT_RUN).setVoltage(runOutputVoltage);
-		cvExpanderModule->getOutput(WonkyClockCVExpanderModule::OutputId::OUT_RESET).setVoltage(resetOutputVoltage);
-	}
+	getOutput(OutputId::OUT_RUN).setVoltage(runOutputVoltage);
+	getOutput(OutputId::OUT_RESET).setVoltage(resetOutputVoltage);
 
 	if (m_running) {
 		inputData.wiggleMode = m_wiggleMode;
 		inputData.wanderRandom = m_wanderRandom;
 
 		inputData.bpm = params[PARAM_BPM].getValue();
+		inputData.bpm = determineCVImpact(params[PARAM_BPM].getValue(), this, IN_BPM, minBpm, maxBpm);
 		inputData.wiggleAmount = params[PARAM_WIGGLE_AMOUNT].getValue();
 		inputData.wiggleRate = params[PARAM_WIGGLE_RATE].getValue();
 		inputData.wanderAmount = params[PARAM_WANDER_AMOUNT].getValue();
@@ -140,16 +138,14 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.wobbleAmount = params[PARAM_WOBBLE_AMOUNT].getValue();
 		inputData.wobbleRate = params[PARAM_WOBBLE_RATE].getValue();
 
+		WonkyClockCVExpanderModule* cvExpanderModule = getCVExpander();
 		if (cvExpanderModule != nullptr) {
-			inputData.bpm = determineCVImpact(inputData.bpm, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_BPM, minBpm, maxBpm);
 			inputData.wiggleAmount = determineCVImpact(inputData.wiggleAmount, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WIGGLE_AMOUNT, 0.f, maxAmount);
 			inputData.wiggleRate = determineCVImpact(inputData.wiggleRate, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WIGGLE_RATE, 0.f, 100.f);
 			inputData.wanderAmount = determineCVImpact(inputData.wanderAmount, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_AMOUNT, 0.f, 100.f);
 			inputData.wanderRate = determineCVImpact(inputData.wanderRate, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WANDER_RATE, 0.f, 100.f);
 			inputData.wobbleAmount = determineCVImpact(inputData.wobbleAmount, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_AMOUNT, 0.f, maxAmount);
 			inputData.wobbleRate = determineCVImpact(inputData.wobbleRate, cvExpanderModule, WonkyClockCVExpanderModule::InputId::IN_WOBBLE_RATE, 0.f, 100.f);
-
-			cvExpanderModule->setCurrentBpm(inputData.bpm);
 		}
 
 		WonkyClockOutputExpanderModule* outputExpanderModule = getOutputExpander();

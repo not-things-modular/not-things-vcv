@@ -4,12 +4,11 @@
 
 struct LEDDisplay;
 
-struct WonkyClockCVExpanderModule : NTModule, DrawListener {
+struct WonkyClockCVExpanderModule : NTModule {
 	enum ParamId {
 		NUM_PARAMS
 	};
 	enum InputId {
-		IN_BPM,
 		IN_WIGGLE_AMOUNT,
 		IN_WIGGLE_RATE,
 		IN_WANDER_AMOUNT,
@@ -19,25 +18,13 @@ struct WonkyClockCVExpanderModule : NTModule, DrawListener {
 		NUM_INPUTS
 	};
 	enum OutputId {
-		OUT_RUN,
-		OUT_RESET,
 		NUM_OUTPUTS
 	};
 	enum LightId {
 		NUM_LIGHTS
 	};
 
-	LEDDisplay* m_bpmLed = nullptr;
-
 	WonkyClockCVExpanderModule();
-
-	void setCurrentBpm(float currentBpm);
-
-	void draw(const widget::Widget::DrawArgs& args) override;
-
-	private:
-		int m_displayedBpm;
-		int m_currentBpm;
 };
 
 struct WonkyClockCVExpanderWidget : NTModuleWidget {
