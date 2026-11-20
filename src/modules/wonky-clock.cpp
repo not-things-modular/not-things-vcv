@@ -383,7 +383,7 @@ void WonkyClockWidget::appendContextMenu(Menu* menu) {
 	menu->addChild(createSubmenuItem("Wander Size", "",
 		[=](Menu* menu) {
 			menu->addChild(createCheckMenuItem("Random (percentage between 0 and Wander Amount)", "", [wanderRandom]() { return wanderRandom; }, [this]() { setWanderRandom(true); }));
-			menu->addChild(createCheckMenuItem("Exact (exact percentage specified by Wander Amount)", "", [wanderRandom]() { return !wanderRandom; }, [this]() { setWanderRandom(false); }));
+			menu->addChild(createCheckMenuItem("Exact (Wander Amount specifies the exact percentage of the Wiggle size)", "", [wanderRandom]() { return !wanderRandom; }, [this]() { setWanderRandom(false); }));
 		}
 	));
 }
