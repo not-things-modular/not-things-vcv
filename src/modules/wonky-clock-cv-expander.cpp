@@ -10,7 +10,7 @@ WonkyClockCVExpanderModule::WonkyClockCVExpanderModule() {
 	configInput(IN_WOBBLE_RATE, "Wobble Rate");
 	configInput(IN_WIGGLE_AMOUNT, "Wiggle Amount");
 	configInput(IN_WIGGLE_RATE, "Wiggle Rate");
-	configInput(IN_WANDER_AMOUNT, "WaWanderver Amount");
+	configInput(IN_WANDER_AMOUNT, "Wander Amount");
 	configInput(IN_WANDER_RATE, "Wander Rate");
 }
 

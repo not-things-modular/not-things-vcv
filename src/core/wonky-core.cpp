@@ -29,7 +29,7 @@ bool WonkyInputData::operator==(const WonkyInputData& other) const {
 bool WonkyInputData::operator!=(const WonkyInputData& other) const {
 	return other.bpm != bpm ||
 		other.wiggleAmount != wiggleAmount || other.wiggleRate != wiggleRate || other.wiggleMode != wiggleMode ||
-		other.wanderAmount != wanderAmount || other.wiggleRate != wiggleRate || other.wanderRandom != wanderRandom ||
+		other.wanderAmount != wanderAmount || other.wanderRate != wanderRate || other.wanderRandom != wanderRandom ||
 		other.wobbleAmount != wobbleAmount || other.wobbleRate != wobbleRate ||
 		other.clockRates != clockRates;
 }
@@ -362,19 +362,6 @@ void WonkyCore::updateMainClockState(bool high) {
 				if (position == (ratio / 2) + 1) {
 					m_listener->clockGateChanged(index, false);
 				}
-			}
-		}
-	}
-}
-
-void WonkyCore::updateSubClockStates(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds) {
-	for (unsigned int i = 0; i < m_inputData.clockRates.size(); i++) {
-		const ClockRatioData* clockRatio = m_inputData.clockRates[i];
-		if (clockRatio->id != ClockRatioId::NO_RATE) {
-			if (std::find(highRatioIds.begin(), highRatioIds.end(), clockRatio->id) != highRatioIds.end()) {
-				m_listener->clockGateChanged(i, true);
-			} else if (std::find(lowRatioIds.begin(), lowRatioIds.end(), clockRatio->id) != lowRatioIds.end()) {
-				m_listener->clockGateChanged(i, false);
 			}
 		}
 	}

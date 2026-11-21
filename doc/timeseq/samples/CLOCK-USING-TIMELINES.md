@@ -94,7 +94,7 @@ The `beat` property of the *segment* *duration* can also be set to decimal numbe
 }
 ```
 
-This *lane* will create a clock beat that lasts one and three quarters of the 120 bpm that is specified on the *timeline* (so slower then the previous *lane*, but not quite double as long). The clock signal will be sent to the second channel of the first output port.
+This *lane* will create a clock beat that lasts one and three quarters of the 120 bpm that is specified on the *timeline* (so slower than the previous *lane*, but not quite double as long). The clock signal will be sent to the second channel of the first output port.
 
 The `gate-high-ratio` property will control how long the clock signal will remain high (as a value between `0` and `1`). The `0.66` value used here will cause it to remain high for 66% of the segment duration, and low for 34% of the segment duration. This can be useful in certain scenarios, like when the clock signal is used for generating an ADSR envelope, and the sustain section of the envelope should be longer or shorter.
 

@@ -41,7 +41,7 @@ WonkyClockModule::WonkyClockModule() {
 	ParamQuantity* pq = configParam(PARAM_BPM, minBpm, maxBpm, defaultBpm, "Clock Speed (Beats per Minute)");
 	pq->snapEnabled = true;
 	pq->smoothEnabled = false;
-	configInput(IN_BPM, "BMP CV");
+	configInput(IN_BPM, "BPM CV");
 
 	configInput(IN_RUN, "Run");
 	configInput(IN_RESET, "Reset");
@@ -206,15 +206,15 @@ void WonkyClockModule::clockGateChanged(int index, bool high) {
 	}
 }
 
-void WonkyClockModule::wiggleChanged(float wander, float max) {
+void WonkyClockModule::wiggleChanged(float wiggle, float max) {
 	if (m_wiggleDisplay != nullptr) {
-		m_wiggleDisplay->setWonkiness(wander, max);
+		m_wiggleDisplay->setWonkiness(wiggle, max);
 	}
 }
 
-void WonkyClockModule::wanderChanged(float waver, float max) {
+void WonkyClockModule::wanderChanged(float wander, float max) {
 	if (m_wanderDisplay != nullptr) {
-		m_wanderDisplay->setWonkiness(waver, max);
+		m_wanderDisplay->setWonkiness(wander, max);
 	}
 }
 

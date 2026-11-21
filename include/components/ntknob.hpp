@@ -18,7 +18,7 @@ struct NTKnobDark16 : app::SvgKnob, ThemeChangeListener {
 };
 
 struct NTKnob : app::SvgKnob, ThemeChangeListener {
-	NTKnob(std::string lightBackroundSvg, std::string lightForegroundSvg, std::string darkBackgroundSvg, std::string darkForegroundSvg);
+	NTKnob(std::string lightBackgroundSvg, std::string lightForegroundSvg, std::string darkBackgroundSvg, std::string darkForegroundSvg);
 
 	void setAngles(float minAngle, float maxAngle);
 

@@ -25,7 +25,7 @@ struct Randomizer {
 };
 
 enum ClockRatioType {
-	RATIO_DIVIDE, // The clock is slower then (or equal to) the main clock
+	RATIO_DIVIDE, // The clock is slower than (or equal to) the main clock
 	RATIO_MULTIPLY, // The clock is faster then the main clock
 };
 
@@ -223,7 +223,6 @@ struct WonkyCore {
 		void distributeSubClocks();
 
 		void updateMainClockState(bool high);
-		void updateSubClockStates(const std::vector<ClockRatioId>& highRatioIds, const std::vector<ClockRatioId>& lowRatioIds);
 };
 
 };

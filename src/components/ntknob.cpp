@@ -48,7 +48,7 @@ void NTKnobDark16::step() {
 	}
 }
 
-NTKnob::NTKnob(std::string lightBackroundSvg, std::string lightForegroundSvg, std::string darkBackgroundSvg, std::string darkForegroundSvg) {
+NTKnob::NTKnob(std::string lightBackgroundSvg, std::string lightForegroundSvg, std::string darkBackgroundSvg, std::string darkForegroundSvg) {
 	minAngle = -0.75 * M_PI;
 	maxAngle = 0.75 * M_PI;
 
@@ -57,7 +57,7 @@ NTKnob::NTKnob(std::string lightBackroundSvg, std::string lightForegroundSvg, st
 	
 	m_ntFgLightSvg = APP->window->loadSvg(asset::plugin(pluginInstance, lightForegroundSvg));
 	m_ntFgDarkSvg = APP->window->loadSvg(asset::plugin(pluginInstance, darkForegroundSvg));
-	m_ntBgLightSvg = APP->window->loadSvg(asset::plugin(pluginInstance, lightBackroundSvg));
+	m_ntBgLightSvg = APP->window->loadSvg(asset::plugin(pluginInstance, lightBackgroundSvg));
 	m_ntBgDarkSvg = APP->window->loadSvg(asset::plugin(pluginInstance, darkBackgroundSvg));
 	setSvg(m_ntFgLightSvg);
 	bg->setSvg(m_ntBgLightSvg);
