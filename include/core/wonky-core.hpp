@@ -35,7 +35,7 @@ enum ClockRatioType {
 // - triplets, multiplying by 3 (3, 9, 18, ...)
 // - Five-based clocks, each time doubling in amount (5, 10, 20, ...)
 // - Five-based clocks, each time multiplying by 5 (5, 25)
-// - Seven-based clocks, each time mutliplying by 7 (7, 49)
+// - Seven-based clocks, each time multiplying by 7 (7, 49)
 // All with a maximum of 64
 enum ClockRatioId {
 	RATE_DIV_64,
@@ -160,7 +160,7 @@ struct WonkyClockState {
 
 	// The number of samples that have to have passed for the internal stable clock to have completed a beat
 	unsigned int clockSampleDuration = 0;
-	// The number of samples that have to have passed for the wonky clock to have completed its current beatr
+	// The number of samples that have to have passed for the wonky clock to have completed its current beat
 	unsigned int wonkyClockSampleDuration = 0;
 
 	// The amount of wiggle samples that was carried over from the previous clock beat, i.e. moved the start position of the current clock:

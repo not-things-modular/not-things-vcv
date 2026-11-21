@@ -71,6 +71,7 @@ json_t *WonkyClockModule::dataToJson() {
 	json_t *rootJ = NTModule::dataToJson();
 	json_object_set_new(rootJ, "ntWonkyClockWiggleMode", json_integer(m_wiggleMode));
 	json_object_set_new(rootJ, "ntWonkyClockWanderRandom", json_boolean(m_wanderRandom));
+	json_object_set_new(rootJ, "ntWonkyClockRunning", json_boolean(m_running));
 	return rootJ;
 }
 
@@ -92,6 +93,14 @@ void WonkyClockModule::dataFromJson(json_t *rootJ) {
 		if (json_is_boolean(ntWonkyClockWanderRandomJson)) {
 			bool wanderRandom = json_boolean_value(ntWonkyClockWanderRandomJson);
 			setWanderRandom(wanderRandom);
+		}
+	}
+
+	json_t *ntWonkyClockRunning = json_object_get(rootJ, "ntWonkyClockRunning");
+	if (ntWonkyClockRunning) {
+		if (json_is_boolean(ntWonkyClockRunning)) {
+			m_running = json_boolean_value(ntWonkyClockRunning);
+			lights[LightId::LIGHT_RUN].setBrightness(m_running);
 		}
 	}
 }
@@ -129,7 +138,6 @@ void WonkyClockModule::process(const ProcessArgs& args) {
 		inputData.wiggleMode = m_wiggleMode;
 		inputData.wanderRandom = m_wanderRandom;
 
-		inputData.bpm = params[PARAM_BPM].getValue();
 		inputData.bpm = determineCVImpact(params[PARAM_BPM].getValue(), this, IN_BPM, minBpm, maxBpm);
 		inputData.wiggleAmount = params[PARAM_WIGGLE_AMOUNT].getValue();
 		inputData.wiggleRate = params[PARAM_WIGGLE_RATE].getValue();
@@ -189,6 +197,7 @@ void WonkyClockModule::onReset(const ResetEvent& e) {
 
 	m_wiggleMode = WonkyWiggleMode::MODE_WALK;
 	m_wanderRandom = true;
+	m_core->reset();
 }
 
 float WonkyClockModule::getSampleRate() const {

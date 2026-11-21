@@ -265,7 +265,7 @@ void WonkyCore::updateBpm(float bpm) {
 	m_clockState.clockSampleDuration = static_cast<int>(m_clockState.clockDuration);
 	m_clockState.clockDrift = m_clockState.clockDuration - m_clockState.clockSampleDuration;
 
-	// Reset the accumulated drift since the interal clock changed
+	// Reset the accumulated drift since the internal clock changed
 	m_clockState.wonkyDrift = 0.;
 }
 
