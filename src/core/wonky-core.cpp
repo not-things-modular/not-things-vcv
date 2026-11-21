@@ -18,7 +18,7 @@ bool ClockRatioData::operator==(const ClockRatioData& other) const {
 }
 
 bool ClockRatioData::operator!=(const ClockRatioData& other) const {
-	// Only one instance of each ClockRatioId whould be made, so comparing the IDs should indicate if they are equal.
+	// Only one instance of each ClockRatioId should be made, so comparing the IDs should indicate if they are equal.
 	return other.id != id;
 }
 
@@ -82,9 +82,9 @@ void Wonkiness::determineWonkiness(const WonkyInputData& inputData) {
 void Wonkiness::determineRandomizedWiggleAndWander(const WonkyInputData& inputData) {
 	// Determine the wiggle amount
 	bool wiggled = false;
-	m_wiggleAmount = 0.f;
+	m_wiggleAmount = 0.f; 
 	if ((inputData.wiggleAmount > 0.f) && (inputData.wiggleRate > 0.f)) {
-		// Check if a wiggle should occur (either because it is at 100% or because the randomizer said so)
+		// Check if a wiggle should occur (either because its rate at 100% or because the randomizer said so)
 		if ((inputData.wiggleRate == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wiggleRate)) {
 			// Generate the wiggle amount
 			m_wiggleAmount = m_randomizer->randomize(-inputData.wiggleAmount, inputData.wiggleAmount);
@@ -92,7 +92,7 @@ void Wonkiness::determineRandomizedWiggleAndWander(const WonkyInputData& inputDa
 		}
 	}
 
-	// Determine the wander amount
+	// Determine the wander amount (if a wiggle occurred)
 	if (wiggled) {
 		determineWander(inputData);
 	} else {
@@ -101,7 +101,7 @@ void Wonkiness::determineRandomizedWiggleAndWander(const WonkyInputData& inputDa
 }
 
 void Wonkiness::determineWalkingWiggleAndWander(const WonkyInputData& inputData) {
-	// Determine the wobble amount
+	// Determine the wiggle amount
 	m_wiggleAmount = wonkyWalk(inputData.wiggleAmount, inputData.wiggleRate / 100.f, m_wiggleAmount, m_randomizer);
 	// Determine the wander amount
 	determineWander(inputData);
@@ -111,7 +111,7 @@ void Wonkiness::determineWander(const WonkyInputData& inputData) {
 	m_wanderAmount = 0.f;
 	if ((inputData.wanderRate > 0.f) && (inputData.wanderAmount > 0.f)) {
 		// Check that the wander probability triggers a wander
-		if ((inputData.wanderAmount == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wanderAmount)) {
+		if ((inputData.wanderRate == 100.f) || (m_randomizer->randomize(0.f, 100.f) <= inputData.wanderRate)) {
 			// Check if the wander amount is either a fixed amount of the wiggle amount, or a random percentage
 			float wanderPercentage;
 			if (inputData.wanderRandom) {
@@ -199,7 +199,7 @@ void WonkyCore::process(const WonkyInputData& inputData) {
 		// Generate new wonkiness
 		m_wonkiness.determineWonkiness(m_inputData);
 		m_listener->wiggleChanged(m_wonkiness.getWiggleAmount(), m_inputData.wiggleAmount);
-		m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wanderAmount);
+		m_listener->wanderChanged(m_wonkiness.getWanderAmount(), m_inputData.wiggleAmount);
 		m_listener->wobbleChanged(m_wonkiness.getWobbleAmount(), m_inputData.wobbleAmount);
 
 		// Calculate the actual length to use for the current wonky clock output, taking any (carried over) wiggle, wander and wobble into account
