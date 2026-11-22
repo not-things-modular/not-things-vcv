@@ -155,6 +155,9 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 		durationCount++;
 		if (trigger->is_string()) {
 			duration.triggerId = trigger->get<string>();
+			if (duration.triggerId.length() == 0) {
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_TriggerNotString, "'trigger' must be a non-empty string.");
+			}
 		} else {
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_TriggerNotString, "'trigger' must be a non-empty string.");
 		}
