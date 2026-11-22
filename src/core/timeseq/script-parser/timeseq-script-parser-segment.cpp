@@ -151,6 +151,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 
 	json::const_iterator trigger = durationJson.find("trigger");
 	if (trigger != durationJson.end()) {
+		verifyVersion(VERSION_1_4_0, m_context, "'trigger' durations");
 		durationCount++;
 		if (trigger->is_string()) {
 			duration.triggerId = trigger->get<string>();
