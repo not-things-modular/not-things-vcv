@@ -209,7 +209,7 @@ double DurationTriggerProcessor::process(double drift) {
 			m_triggerCounter++;
 			m_position = m_triggerCounter + 1; // The duration is expected to start from 1 iso 0, so reported position and duration is increased by 1
 			if (m_triggerCounter >= m_division) {
-				m_position = m_division; // Don't allow the position to go past the duration of the segment
+				m_position = m_division + 1; // Don't allow the position to go past the duration of the segment
 				m_state = DurationState::STATE_END;
 			}
 		}
