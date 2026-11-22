@@ -415,7 +415,7 @@ struct DurationProcessor {
 	uint64_t getPosition();
 	uint64_t getDuration();
 
-	double process(double drift);
+	virtual double process(double drift);
 	void reset();
 
 	void setDuration(uint64_t duration);
@@ -426,6 +426,8 @@ struct DurationProcessor {
 		uint64_t m_duration;
 		double m_drift;
 		uint64_t m_position;
+	
+	friend struct DurationTriggerProcessor;
 };
 
 struct DurationConstantProcessor : DurationProcessor {
@@ -452,6 +454,20 @@ struct DurationVariableHzProcessor : DurationProcessor {
 	nt_private:
 		const std::shared_ptr<ValueProcessor> m_value;
 		double m_sampleRate;
+};
+
+struct DurationTriggerProcessor : DurationProcessor {
+	DurationTriggerProcessor(const std::string triggerId, int division, TriggerHandler *triggerHandler);
+
+	void prepareForStart() override;
+	double process(double drift) override;
+
+	nt_private:
+		TriggerHandler *m_triggerHandler;
+		const std::string m_triggerId;
+		int m_division;
+
+		int m_triggerCounter = 0;
 };
 
 struct ActionGateProcessor : ActionOngoingProcessor {

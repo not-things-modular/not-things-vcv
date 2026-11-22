@@ -184,3 +184,36 @@ void DurationVariableHzProcessor::prepareForStart() {
 		setDrift(0.);
 	}
 }
+
+DurationTriggerProcessor::DurationTriggerProcessor(const std::string triggerId, int division, TriggerHandler *triggerHandler) : m_triggerHandler(triggerHandler), m_triggerId(triggerId), m_division(division) {}
+
+void DurationTriggerProcessor::prepareForStart() {
+	m_triggerCounter = 0;
+	// The duration is expected to start from 1 iso 0, so reported position and duration is increased by 1
+	m_position = 1;
+	setDuration(m_division + 1);
+}
+
+double DurationTriggerProcessor::process(double drift) {
+	if (m_state == DurationState::STATE_START) {
+		m_triggerCounter = 0;
+		// The duration is expected to start from 1 iso 0, so reported position and duration is increased by 1
+		m_position = 1;
+		setDuration(m_division + 1);
+	}
+	m_state = DurationState::STATE_PROGRESS;
+
+	const vector<string>& triggers = m_triggerHandler->getTriggers();
+	if (triggers.size() > 0) {
+		if (find(triggers.begin(), triggers.end(), m_triggerId) != triggers.end()) {
+			m_triggerCounter++;
+			m_position = m_triggerCounter + 1; // The duration is expected to start from 1 iso 0, so reported position and duration is increased by 1
+			if (m_triggerCounter >= m_division) {
+				m_position = m_division; // Don't allow the position to go past the duration of the segment
+				m_state = DurationState::STATE_END;
+			}
+		}
+	}
+
+	return 0.;
+}

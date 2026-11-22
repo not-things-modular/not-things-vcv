@@ -82,7 +82,7 @@ ScriptSegmentBlock JsonScriptParser::parseSegmentBlock(const json& segmentBlockJ
 }
 
 ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
-	static const vector<string> durationProperties = { "samples", "millis", "bars", "beats", "hz" };
+	static const vector<string> durationProperties = { "samples", "millis", "bars", "beats", "hz", "trigger", "division" };
 	ScriptDuration duration;
 	int durationCount = 0;
 
@@ -149,16 +149,38 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 		}
 	}
 
+	json::const_iterator trigger = durationJson.find("trigger");
+	if (trigger != durationJson.end()) {
+		durationCount++;
+		if (trigger->is_string()) {
+			duration.triggerId = trigger->get<string>();
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_TriggerNotString, "'trigger' must be a non-empty string.");
+		}
+	}
+
+	json::const_iterator division = durationJson.find("division");
+	if (division != durationJson.end()) {
+		if ((division->is_number()) && (division->get<int>() > 0)) {
+			duration.triggerDivision.reset(new int(division->get<int>()));
+		} else {
+			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_DivisionNumber, "'division' must be a positive integer number.");
+		}
+	}
+
 	if (durationCount == 0) {
-		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "either 'samples', 'millis', 'beats' or 'hz' must be used.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHzOrTrigger, "either 'samples', 'millis', 'beats', 'hz' or 'trigger' must be used.");
 	} else if (durationCount > 1) {
-		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "only one of 'samples', 'millis', 'beats' or 'hz' can be used at a time.");
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "only one of 'samples', 'millis', 'beats', 'hz' or 'trigger' can be used at a time.");
 	} else if (duration.bars && duration.beatsValue) {
 		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can only be used with a constant 'beats', not with a value-based 'beats'.");
 	} else if (duration.bars && !duration.beats) {
 		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BarsRequiresBeats, "'bars' can not be used without 'beats'.");
 	} else if ((!duration.bars) && (duration.beats) && (*duration.beats.get() == 0)) {
 		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_BeatsNotZero, "'beats' can not be 0 unless 'bars' is also used.");
+	}
+	if ((duration.triggerDivision) && (duration.triggerId.length() == 0)) {
+		addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_DivisionWithoutTrigger, "'division' can not be used without 'trigger'.");
 	}
 
 	return duration;

@@ -208,6 +208,8 @@ struct ScriptDuration {
 	std::unique_ptr<ScriptValue> beatsValue;
 	std::unique_ptr<float> hz;
 	std::unique_ptr<ScriptValue> hzValue;
+	std::string triggerId;
+	std::unique_ptr<int> triggerDivision;
 };
 
 struct ScriptAction : ScriptRefObject {

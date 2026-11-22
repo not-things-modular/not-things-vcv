@@ -251,6 +251,10 @@ const shared_ptr<DurationProcessor> ProcessorScriptParser::parseDuration(const S
 		vector<string> stack;
 		shared_ptr<ValueProcessor> valueProcessor = parseValue(scriptDuration->hzValue.get(), stack);
 		return make_shared<DurationVariableHzProcessor>(valueProcessor, m_sampleRateReader->getSampleRate());
+	} else if (scriptDuration->triggerId.size() > 0) {
+		// Construct a trigger-based duration processor
+		int division = scriptDuration->triggerDivision ? *scriptDuration->triggerDivision.get() : 1;
+		return make_shared<DurationTriggerProcessor>(scriptDuration->triggerId, division, m_triggerHandler);
 	} else {
 		// Construct a variable duration processor with a factor
 		shared_ptr<ValueProcessor> valueProcessor;
