@@ -17,6 +17,7 @@
 ### Changes
 
 * Changed range of [output port](TIMESEQ-SCRIPT-JSON.md#output) indices from between 1-8 to 1-96 to allow addressing of output ports on the TimeSeq Output Expander.
+* Add trigger-based [duration](TIMESEQ-SCRIPT-JSON.md#durations)s
 
 ### JSON Schema
 

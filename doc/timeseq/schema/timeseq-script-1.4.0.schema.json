@@ -497,6 +497,21 @@
 					"required": [ "hz" ],
 					"patternProperties": { "^x-": true },
 					"additionalProperties": false
+				},
+				{
+					"properties": {
+						"trigger": {
+							"description": "Specifies the id of the trigger that will complete the duration",
+							"type": "string",
+							"minLength": 1
+						},
+						"division": {
+							"description": "Specifies how many triggers should be received before the duration completes",
+							"type": "integer",
+							"minimum": 1
+						}
+					},
+					"required": [ "trigger" ]
 				}
 			]
 		},
