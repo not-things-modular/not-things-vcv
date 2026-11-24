@@ -408,35 +408,42 @@ struct ActionGlideProcessor : ActionOngoingProcessor {
 
 struct DurationProcessor {
 	enum DurationState { STATE_START, STATE_PROGRESS, STATE_END };
-
 	virtual void prepareForStart() = 0;
 
 	DurationState getState();
 	uint64_t getPosition();
 	uint64_t getDuration();
+	double getDrift();
 
-	virtual double process(double drift);
-	void reset();
+	virtual double process(double drift) = 0;
+	virtual void reset() = 0;
 
+	void setState(DurationState state);
 	void setDuration(uint64_t duration);
 	void setDrift(double drift);
+
+	void resetPosition();
+	void increasePosition();
 
 	nt_private:
 		DurationState m_state = STATE_START;
 		uint64_t m_duration;
 		double m_drift;
 		uint64_t m_position;
-	
-	friend struct DurationTriggerProcessor;
 };
 
-struct DurationConstantProcessor : DurationProcessor {
+struct TimeDurationProcessor : DurationProcessor {
+	double process(double drift) override;
+	void reset() override;
+};
+
+struct DurationConstantProcessor : TimeDurationProcessor {
 	DurationConstantProcessor(uint64_t duration, double drift);
 
 	void prepareForStart() override;
 };
 
-struct DurationVariableFactorProcessor : DurationProcessor {
+struct DurationVariableFactorProcessor : TimeDurationProcessor {
 	DurationVariableFactorProcessor(const std::shared_ptr<ValueProcessor>& value, double samplesFactor);
 
 	void prepareForStart() override;
@@ -446,7 +453,7 @@ struct DurationVariableFactorProcessor : DurationProcessor {
 		double m_samplesFactor;
 };
 
-struct DurationVariableHzProcessor : DurationProcessor {
+struct DurationVariableHzProcessor : TimeDurationProcessor {
 	DurationVariableHzProcessor(const std::shared_ptr<ValueProcessor>& value, double sampleRate);
 
 	void prepareForStart() override;
@@ -461,6 +468,7 @@ struct DurationTriggerProcessor : DurationProcessor {
 
 	void prepareForStart() override;
 	double process(double drift) override;
+	void reset() override;
 
 	nt_private:
 		TriggerHandler *m_triggerHandler;

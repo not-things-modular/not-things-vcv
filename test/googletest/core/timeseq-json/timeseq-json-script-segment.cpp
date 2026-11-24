@@ -198,7 +198,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithNoChildren) 
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHz, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_NoSamplesOrMillisOrBeatsOrHzOrTrigger, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndMillis) {
@@ -213,7 +213,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndMi
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndBeats) {
@@ -228,7 +228,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndBe
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndHz) {
@@ -243,7 +243,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithSamplesAndHz
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithMillisAndBeat) {
@@ -258,7 +258,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithMillisAndBea
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithMillisAndHz) {
@@ -273,7 +273,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithMillisAndHz)
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithBeatsAndHz) {
@@ -288,7 +288,7 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithBeatsAndHz) 
 
 	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
 	ASSERT_EQ(validationErrors.size(), 1u);
-	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHz, "/component-pool/segments/0/duration");
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "/component-pool/segments/0/duration");
 }
 
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailWithDurationWithBarsButNoBeats) {
