@@ -223,9 +223,12 @@ ScriptAction JsonScriptParser::parseAction(const json& actionJson, bool allowRef
 			if (gateHighDuration->is_object()) {
 				m_context.location.push_back("gate-high-duration");
 				action.gateHighDuration.reset(new ScriptDuration(parseDuration(*gateHighDuration)));
+				if (action.gateHighDuration.get()->triggerId.length() > 0) {
+					addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighDurationTrigger, "'gate-high-duration' can not be a trigger-based duration.");
+				}
 				m_context.location.pop_back();
 			} else {
-				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighDurationObject, "'gate-high-duration' must be a duration object.");
+				addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Action_GateHighDurationTrigger, "'gate-high-duration' must be a duration object.");
 			}
 		}
 

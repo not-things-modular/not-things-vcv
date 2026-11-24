@@ -160,6 +160,7 @@ enum ValidationErrorCode {
 	Action_RemoveFromSequenceObject = 933, // Since 1.2.0
 	Action_GateHighDurationObject = 934, // Since 1.3.0
 	Action_GateHighRatioOrGateHighDuration = 935, // Since 1.3.0
+	Action_GateHighDurationTrigger = 934, // Since 1.4.0
 
 	SetValue_OutputObject = 1000,
 	SetValue_ValueObject = 1001,
