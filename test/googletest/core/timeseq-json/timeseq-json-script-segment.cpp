@@ -928,6 +928,204 @@ TEST(TimeSeqJsonScriptSegment, ParseScriptShouldNotAllowBarsValue) {
 	expectError(validationErrors, ValidationErrorCode::Duration_BarsNumber, "/component-pool/segments/0/duration");
 }
 
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithTriggerPreVersion140) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_3_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "trigger": "my-trigger" } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Feature_Not_In_Version, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithNonStringTrigger) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "trigger": 1 } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_TriggerNotString, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithEmptyStringTrigger) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "trigger": "" } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_TriggerNotString, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithNonNumericDivision) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "trigger": "my-trigger", "division": "not-a-number" } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_DivisionNumber, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithNonIntegerDivision) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "trigger": "my-trigger", "division": 2.1 } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_DivisionNumber, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithZeroDivision) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "trigger": "my-trigger", "division": 0 } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_DivisionNumber, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithNegativeDivision) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "trigger": "my-trigger", "division": -1 } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_DivisionNumber, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithDivisionWithoutTrigger) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "millis": 5, "division": 2 } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_DivisionWithoutTrigger, "/timelines/0/lanes/0/segments/0/duration");
+}
+
+TEST(TimeSeqJsonScriptSegment, ParseScriptShouldFailOnDurationWithTriggerAndOtherTimeIndication) {
+	vector<ValidationError> validationErrors;
+	JsonLoader jsonLoader;
+    json json = R"({
+		"type": "not-things_timeseq_script",
+		"version": ")" SCRIPT_VERSION_1_4_0 R"(",
+		"timelines": [
+			{ "lanes": [
+				{
+					"segments": [
+						{ "duration": { "millis": 5, "trigger": "my-trigger" } }
+					]
+				}
+			] }
+		]
+	})"_json;
+
+	shared_ptr<Script> script = loadScript(jsonLoader, json, validationErrors);
+	ASSERT_EQ(validationErrors.size(), 1u);
+	expectError(validationErrors, ValidationErrorCode::Duration_EitherSamplesOrMillisOrBeatsOrHzOrTrigger, "/timelines/0/lanes/0/segments/0/duration");
+}
+
 TEST(TimeSeqJsonScriptSegment, ParseScriptShouldSucceedWithoutActions) {
 	vector<ValidationError> validationErrors;
 	JsonLoader jsonLoader;

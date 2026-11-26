@@ -165,7 +165,7 @@ ScriptDuration JsonScriptParser::parseDuration(const json& durationJson) {
 
 	json::const_iterator division = durationJson.find("division");
 	if (division != durationJson.end()) {
-		if ((division->is_number()) && (division->get<int>() > 0)) {
+		if ((division->is_number_integer()) && (division->get<int>() > 0)) {
 			duration.triggerDivision.reset(new int(division->get<int>()));
 		} else {
 			addValidationError(&m_context.validationErrors, m_context.location, ValidationErrorCode::Duration_DivisionNumber, "'division' must be a positive integer number.");
